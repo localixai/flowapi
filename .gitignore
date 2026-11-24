@@ -6,3 +6,4 @@ node_modules/
 /conformance/out/
 /conformance/suite-rust/out/
 /conformance/sdk-rust/out/
+/bench/*.log
