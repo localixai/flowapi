@@ -75,11 +75,18 @@ impl Builder<'_, '_> {
             named_vocab("/vocab/validation"),
         );
         let loc = docs.loc(at.doc, at.node);
-        if !core {
+        // The core vocabulary is named, and required: `false` would let a schema skip what
+        // reading it depends on (2020-12 §8.1.2).
+        let core_required = meta.members(vocabularies).iter().any(|m| {
+            meta.string(m.key)
+                .is_some_and(|k| k.ends_with("/vocab/core"))
+                && meta.as_bool(m.value) == Some(true)
+        });
+        if !core || !core_required {
             self.diags.error(
                 "jsonschema-2020-12.core.$vocabulary",
                 loc,
-                format!("the meta-schema {meta_uri} names no core vocabulary"),
+                format!("the meta-schema {meta_uri} does not require the core vocabulary"),
             );
         }
         for m in meta.members(vocabularies) {

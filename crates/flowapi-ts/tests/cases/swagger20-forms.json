@@ -1,0 +1,22 @@
+{"swagger":"2.0","info":{"title":"forms","version":"1"},
+ "paths":{
+  "/pet/{petId}":{
+   "parameters":[{"name":"petId","in":"path","required":true,"type":"integer"},{"name":"note","in":"formData","type":"string"}],
+   "post":{"operationId":"updatePetWithForm","consumes":["application/x-www-form-urlencoded"],
+     "parameters":[{"name":"name","in":"formData","description":"Updated name of the pet","required":true,"type":"string"},
+       {"name":"status","in":"formData","type":"string","enum":["available","sold"]},
+       {"name":"note","in":"formData","type":"integer"}],
+     "responses":{"405":{"description":"Invalid input"}}}},
+  "/pet/{petId}/uploadImage":{
+   "post":{"operationId":"uploadFile","consumes":["multipart/form-data; charset=utf-8","application/x-www-form-urlencoded"],
+     "parameters":[{"name":"petId","in":"path","required":true,"type":"integer","format":"int64"},
+       {"name":"additionalMetadata","in":"formData","type":"string"},
+       {"name":"file","in":"formData","required":true,"type":"file"},
+       {"name":"sizes","in":"formData","type":"array","items":{"type":"integer"},"collectionFormat":"csv"}],
+     "responses":{"200":{"description":"ok","schema":{"type":"file"}}},"produces":["application/octet-stream"]}},
+  "/avatar":{
+   "put":{"operationId":"putAvatar","parameters":[{"name":"image","in":"formData","type":"file"}],"responses":{"204":{"description":"done"}}},
+   "post":{"operationId":"postAvatar","consumes":[],"parameters":[{"name":"url","in":"formData","type":"string"}],"responses":{"204":{"description":"done"}}},
+   "patch":{"operationId":"patchAvatar","parameters":[{"name":"body","in":"body","schema":{"type":"string"}},{"name":"url","in":"formData","type":"string"}],"responses":{"204":{"description":"done"}}},
+   "delete":{"operationId":"deleteAvatar","parameters":[{"name":"reason","in":"body","schema":{"type":"string"}}],"responses":{"204":{"description":"done"}}}}},
+ "consumes":["text/plain"]}

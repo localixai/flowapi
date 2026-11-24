@@ -9,6 +9,7 @@ use super::{Kind, Kinds};
 use crate::id::{NodeId, TypeId};
 use crate::json::{Tree, Value};
 use crate::schema::{Keyword, Resource};
+use crate::source::Dialect;
 
 impl Builder<'_, '_> {
     pub(super) fn keyword(
@@ -45,6 +46,19 @@ impl Builder<'_, '_> {
             Keyword::Then => read.then_else.0 = Some(value),
             Keyword::Else => read.then_else.1 = Some(value),
             Keyword::If => read.has_if = true,
+            // Swagger 2.0's `file`, of a form field or a response: bytes, which no JSON type
+            // describes, so any value (sound), the narrowing recorded as lost.
+            Keyword::Type
+                if at.dialect == Dialect::Swagger20
+                    && tree.and_then(|t| t.as_str(value)).as_deref() == Some("file") =>
+            {
+                read.lossy.push(keyword);
+            }
+            // A Swagger 2.0 parameter or header read as its own schema: its `required` is the
+            // parameter's flag (the operation reads it), not the keyword's list of names.
+            Keyword::Required
+                if at.dialect == Dialect::Swagger20
+                    && tree.and_then(|t| t.as_bool(value)).is_some() => {}
             Keyword::Type
             | Keyword::Enum
             | Keyword::Const

@@ -13,9 +13,9 @@
         "valid_cases": 779,
         "valid_accepted": 779,
         "invalid_cases": 540,
-        "invalid_rejected": 336,
+        "invalid_rejected": 342,
         "soundness_percent": "100.0",
-        "precision_percent": "62.2"
+        "precision_percent": "63.3"
       },
       "common_groups": {
         "valid_cases": 713,
@@ -1197,7 +1197,7 @@
         "valid_cases": 12,
         "valid_accepted": 12,
         "invalid_cases": 9,
-        "invalid_rejected": 5
+        "invalid_rejected": 8
       },
       "openapi-typescript": {
         "groups_run": 9,
@@ -1313,7 +1313,7 @@
         "valid_cases": 12,
         "valid_accepted": 12,
         "invalid_cases": 6,
-        "invalid_rejected": 3
+        "invalid_rejected": 4
       },
       "openapi-typescript": {
         "groups_run": 8,
@@ -2792,7 +2792,7 @@
         "valid_cases": 12,
         "valid_accepted": 12,
         "invalid_cases": 15,
-        "invalid_rejected": 5
+        "invalid_rejected": 6
       },
       "openapi-typescript": {
         "groups_run": 11,
@@ -3111,7 +3111,7 @@
         "valid_cases": 67,
         "valid_accepted": 67,
         "invalid_cases": 62,
-        "invalid_rejected": 34
+        "invalid_rejected": 35
       },
       "openapi-typescript": {
         "groups_run": 44,

@@ -6,7 +6,7 @@
 use super::build::Builder;
 use super::{Branches, Kind, Kinds, Object, Prop, Root, Type};
 use crate::id::TypeId;
-use crate::spec::{Location, Media, Operation, Param, Response};
+use crate::spec::{Location, Media, Operation, Param, Payload, Response};
 use std::borrow::Cow;
 
 impl<'t> Builder<'_, 't> {
@@ -132,7 +132,21 @@ impl<'t> Builder<'_, 't> {
         let props = content
             .iter()
             .map(|m| {
-                let ty = m.schema.as_ref().map_or(self.any, |s| self.type_of(s));
+                let ty = match &m.payload {
+                    Payload::Schema(s) => s.as_ref().map_or(self.any, |s| self.type_of(s)),
+                    // A Swagger 2.0 form is closed as the operation's parameters are: its
+                    // fields are parameters there.
+                    Payload::Form(fields) => {
+                        let props = fields
+                            .iter()
+                            .map(|f| {
+                                let ty = f.schema.as_ref().map_or(self.any, |s| self.type_of(s));
+                                (f.name.clone(), ty, f.required)
+                            })
+                            .collect();
+                        self.closed(props)
+                    }
+                };
                 (m.media_type.clone(), ty, true)
             })
             .collect();

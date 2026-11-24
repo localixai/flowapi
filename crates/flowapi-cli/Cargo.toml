@@ -16,6 +16,7 @@ path = "src/main.rs"
 [dependencies]
 flowapi = { path = "../flowapi" }
 flowapi-ts = { path = "../flowapi-ts" }
+flowapi-rust = { path = "../flowapi-rust" }
 # YAML 1.2 read as events, each with its line and column: the CLI writes JSON for the core (which
 # reads JSON only, G5) and maps a diagnostic back to the YAML line, and expands aliases itself,
 # within a bound. Maintained (0.4.0, 2026-11), built to pass the YAML test suite (our own run of

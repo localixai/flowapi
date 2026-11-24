@@ -38,10 +38,16 @@ fn crate_sources(name: &str) -> Vec<PathBuf> {
 }
 
 fn all_sources() -> Vec<PathBuf> {
-    ["flowapi", "flowapi-ts", "flowapi-cli"]
-        .iter()
-        .flat_map(|c| crate_sources(c))
-        .collect()
+    [
+        "flowapi",
+        "flowapi-ts",
+        "flowapi-cli",
+        "flowapi-rust",
+        "flowapi-wasm",
+    ]
+    .iter()
+    .flat_map(|c| crate_sources(c))
+    .collect()
 }
 
 fn working_lines(text: &str) -> usize {

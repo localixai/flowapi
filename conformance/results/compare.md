@@ -6,7 +6,7 @@ TypeScript 7.0.2; flowapi 0.1.0, openapi-typescript 7.13.0, hey-api 0.99.0.
 
 | Tool | Version | Groups run | Gen. errors | Invalid TS | Valid | Accepted | Sound % | Invalid | Rejected | Precision % |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| flowapi | 0.1.0 | 409 | 0 | 0 | 779 | 779 | 100.0 | 540 | 336 | 62.2 |
+| flowapi | 0.1.0 | 409 | 0 | 0 | 779 | 779 | 100.0 | 540 | 342 | 63.3 |
 | openapi-typescript | 7.13.0 | 409 | 7 | 49 | 714 | 647 | 90.6 | 470 | 242 | 51.4 |
 | hey-api | 0.99.0 | 409 | 7 | 0 | 773 | 732 | 94.6 | 530 | 224 | 42.2 |
 

@@ -1,7 +1,7 @@
 <h1 align="center">flowapi</h1>
 
 <p align="center"><b>Types from API descriptions that follow the specification.</b><br>
-OpenAPI 3.0, 3.1 and 3.2 and JSON Schema in, TypeScript out (Rust next). Every value a schema
+Swagger 2.0, OpenAPI 3.0, 3.1 and 3.2 and JSON Schema in, TypeScript or Rust out. Every value a schema
 accepts, its type accepts: checked on the official JSON Schema Test Suite.</p>
 
 <p align="center"><a href="#how-it-holds-to-the-specification">Conformance</a> ·
@@ -12,7 +12,7 @@ accepts, its type accepts: checked on the official JSON Schema Test Suite.</p>
 </p>
 
 <p align="center">
-  <img src="assets/compare-dark.png" alt="flowapi beside openapi-typescript and hey-api: valid values accepted on the official JSON Schema Test Suite (100% against 90.6% and 94.6%), invalid values rejected (62.2% against 51.4% and 42.2%), broken output (0 against 56 and 7 groups), and the time to generate Slack's, Stripe's, GitHub's and Cloudflare's descriptions, peak memory on Cloudflare's and how many outputs type-check" width="860">
+  <img src="assets/compare-dark.png" alt="flowapi beside openapi-typescript and hey-api: valid values accepted on the official JSON Schema Test Suite (100% against 90.6% and 94.6%), invalid values rejected (63.3% against 51.4% and 42.2%), broken output (0 against 56 and 7 groups), and the time to generate Slack's, Stripe's, GitHub's and Cloudflare's descriptions, peak memory on Cloudflare's and how many outputs type-check" width="860">
 </p>
 
 ## How it holds to the specification
@@ -26,7 +26,7 @@ is wrong. If it refuses an invalid one, the type caught it.
 | Draft 2020-12 | Result |
 | --- | --- |
 | Valid values accepted (soundness) | **100.0%** (779 of 779) |
-| Invalid values rejected (precision) | 62.2% (336 of 540) |
+| Invalid values rejected (precision) | 63.3% (342 of 540) |
 | Groups that failed to generate, or printed invalid TypeScript | 0 of 409 |
 
 From [conformance/results/suite.md](conformance/results/suite.md). The same measurement, each
@@ -35,7 +35,7 @@ schema wrapped as an OpenAPI 3.1 component and each tool run with its defaults
 
 | Generator | Valid accepted | Invalid rejected | Failed to generate | Invalid TypeScript |
 | --- | ---: | ---: | ---: | ---: |
-| flowapi 0.1.0 | **100.0%** | **62.2%** | 0 | 0 |
+| flowapi 0.1.0 | **100.0%** | **63.3%** | 0 | 0 |
 | openapi-typescript 7.13.0 | 90.6% | 51.4% | 7 | 49 |
 | @hey-api/openapi-ts 0.99.0 | 94.6% | 42.2% | 7 | 0 |
 
@@ -44,6 +44,20 @@ accepts more than the schema does, and a comment above it names the keywords it 
 Every keyword of every dialect is handled one of three ways: it becomes part of the type, it is
 listed in that comment, or it is read as an annotation. The JSON reader is our own and passes
 [JSONTestSuite](https://github.com/nst/JSONTestSuite).
+
+The suite has a few hundred schemas, so two more checks look past it. Thousands of random
+schemas and values are generated from fixed seeds; our own validator, flowschema (which passes
+the whole suite), says which values are valid, and every valid one must type-check against
+flowapi's type ([conformance/results/props.md](conformance/results/props.md)). And every valid
+example description the OAI keeps beside its schemas generates and type-checks
+([conformance/results/oai.md](conformance/results/oai.md)). A requirements ledger lists every
+MUST, SHOULD and MAY of OpenAPI 3.0.4, 3.1.2, 3.2.1 and JSON Schema 2020-12 that a types
+generator answers to, each held by a test or named as something a type cannot state
+([conformance/REPORT.md](conformance/REPORT.md)).
+
+One TypeScript limit shows in rare cases: an object literal with a key named like a member
+every object inherits (`constructor`, `toString`) is checked against `Object`'s member when the
+key is not declared, so `{ constructor: [0] }` can be refused by a type that allows it.
 
 ## Speed
 
@@ -102,6 +116,11 @@ export type Paths = {
 ```
 
 If the schema lets an object hold other properties, its type has an index signature for them.
+Swagger 2.0 descriptions are read too, into the same types as 3.x: `definitions` are the named
+types, a `body` or `formData` parameter is the request body under each media type the
+operation consumes, and a response's `schema` is its content under each type it produces.
+A relative `$ref` resolves against the document's own URI: the path you give the command, or
+the URI the library is given with each document; flowapi assumes no other base.
 Files that a `$ref` names by relative path are read too, and so are YAML descriptions (`.yaml`,
 `.yml`, or any file that does not open with `{` or `[`). YAML is read as JSON's data model under
 YAML 1.2's core schema: a key that is not a string becomes its JSON text (`200:` is `"200"`) and

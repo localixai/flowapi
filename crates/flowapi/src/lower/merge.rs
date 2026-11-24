@@ -20,6 +20,7 @@ pub(super) struct Merger<'g, 't> {
     made: HashMap<Vec<TypeId>, TypeId>,
     named: Vec<bool>,
     pub(super) budget: usize,
+    changed: bool,
 }
 
 /// Simplifies every union and intersection, those it makes among them.
@@ -37,15 +38,27 @@ pub(super) fn simplify(graph: &mut Graph<'_>, kinds: &mut Vec<Kinds>) {
         made: HashMap::new(),
         named,
         budget,
+        changed: false,
     };
-    let mut i = 0;
-    while i < m.graph.len() {
-        if let Some(id) = TypeId::new(i) {
-            m.simplify(id);
+    // Children before parents: a schema's parts are queued after it, so they have higher ids,
+    // and so have the types the merging makes; a union must be flat before an intersection meets
+    // it. A pass that changed something is followed by another, so a part made late is met by
+    // its parent too; a loop, not recursion (G1), bounded by `ROUNDS`.
+    for _ in 0..ROUNDS {
+        m.changed = false;
+        for i in (0..m.graph.len()).rev() {
+            if let Some(id) = TypeId::new(i) {
+                m.simplify(id);
+            }
         }
-        i += 1;
+        if !m.changed {
+            break;
+        }
     }
 }
+
+/// The most passes over the graph; past it a type stays as the last pass left it, which is sound.
+const ROUNDS: usize = 8;
 
 impl<'t> Merger<'_, 't> {
     pub(super) fn kind_of(&self, id: TypeId) -> Kinds {
@@ -57,8 +70,11 @@ impl<'t> Merger<'_, 't> {
     }
 
     fn set(&mut self, id: TypeId, kind: Kind<'t>) {
-        if let Some(ty) = self.graph.types.get_mut(id.index()) {
+        if let Some(ty) = self.graph.types.get_mut(id.index())
+            && ty.kind != kind
+        {
             ty.kind = kind;
+            self.changed = true;
         }
         let k = step(self.graph, self.kinds, id);
         if let Some(slot) = self.kinds.get_mut(id.index()) {
@@ -98,6 +114,8 @@ impl<'t> Merger<'_, 't> {
     fn union(&mut self, id: TypeId, ms: &[TypeId]) {
         let mut out: Vec<TypeId> = Vec::new();
         for &m in ms {
+            // An unnamed alias is what it stands for: `Any` or `Never` behind one counts as such.
+            let m = self.through(m).unwrap_or(m);
             match &self.graph.get(m).kind {
                 Kind::Any => return self.set(id, Kind::Any),
                 Kind::Never => {}
@@ -121,6 +139,7 @@ impl<'t> Merger<'_, 't> {
     fn intersection(&mut self, id: TypeId, ms: &[TypeId]) {
         let mut parts: Vec<TypeId> = Vec::new();
         for &m in ms {
+            let m = self.through(m).unwrap_or(m);
             match &self.graph.get(m).kind {
                 Kind::Any => {}
                 Kind::Never => return self.set(id, Kind::Never),
@@ -140,8 +159,10 @@ impl<'t> Merger<'_, 't> {
         if allowed.is_empty() {
             return self.set(id, Kind::Never);
         }
+        // A part that is an unnamed shape, or an unnamed alias of one, merges with the others.
         let (own, mut others): (Vec<TypeId>, Vec<TypeId>) = parts
             .into_iter()
+            .map(|m| self.unnamed_shape(m).unwrap_or(m))
             .partition(|&m| matches!(self.graph.get(m).kind, Kind::Value(_)) && !self.is_named(m));
         let mut merged: Option<Branches<'t>> = None;
         for m in own {
@@ -165,7 +186,13 @@ impl<'t> Merger<'_, 't> {
             if others.is_empty() {
                 return self.set(id, Kind::Value(b));
             }
-            if !branch::narrows(&b, allowed) {
+            // The shape adds nothing only when it says no more than "these kinds" and the other
+            // parts allow no kind outside them.
+            let rest = others
+                .iter()
+                .map(|&m| self.kind_of(m))
+                .fold(Kinds::ALL, Kinds::meet);
+            if !branch::narrows(&b, allowed) && b.kinds().has(rest) {
                 return self.set(id, collapse(others));
             }
             if self.distribute(&b, &mut others, allowed) {
@@ -174,6 +201,9 @@ impl<'t> Merger<'_, 't> {
             let k = b.kinds();
             others.push(self.graph.push(Type::of(Kind::Value(b))));
             self.kinds.push(k);
+        }
+        if let Some(kind) = self.split(&others) {
+            return self.set(id, kind);
         }
         self.set(id, collapse(others));
     }

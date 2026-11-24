@@ -1,0 +1,16 @@
+# Oracle O5: random schemas and random values, the verdict of an independent validator (our
+# flowschema, which passes the whole official suite) against the TypeScript compiler's on the
+# types flowapi prints. A crate of its own, outside the workspace.
+[package]
+name = "flowapi-props"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+flowapi = { path = "../../crates/flowapi" }
+flowapi-ts = { path = "../../crates/flowapi-ts" }
+flowschema = { path = "../../../flowschema" }
+serde_json = "1.0.154"

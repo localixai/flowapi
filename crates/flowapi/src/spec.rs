@@ -1,9 +1,9 @@
-//! What a description names: for an OpenAPI description, its components' schemas and its
-//! operations; for a JSON Schema document, its root.
+//! What a description names: for an OpenAPI description, its components' schemas (Swagger
+//! 2.0's `definitions`) and its operations; for a JSON Schema document, its root.
 
 mod operations;
 
-pub use operations::{Body, Location, Media, Operation, Param, Response};
+pub use operations::{Body, Field, Location, Media, Operation, Param, Payload, Response};
 
 use crate::diag::Diagnostics;
 use crate::id::DocId;
@@ -38,9 +38,13 @@ pub fn roots(docs: &Documents<'_>) -> (Vec<(String, Resource)>, Vec<Resource>, D
                 let base: Arc<str> =
                     Arc::from(self_uri(docs, doc).unwrap_or_else(|| d.uri.clone()));
                 let dialect = default_dialect(docs, doc, version);
-                let schemas = tree
-                    .get(root, "components")
-                    .and_then(|c| tree.get(c, "schemas"));
+                // Swagger 2.0 names its schemas under `definitions`.
+                let schemas = if version == Version::V20 {
+                    tree.get(root, "definitions")
+                } else {
+                    tree.get(root, "components")
+                        .and_then(|c| tree.get(c, "schemas"))
+                };
                 for m in schemas.map_or(&[][..], |s| tree.members(s)) {
                     let r = Resource {
                         doc,
@@ -90,12 +94,12 @@ pub fn read(docs: &Documents<'_>) -> (Description, Diagnostics) {
                 .body
                 .iter()
                 .flat_map(|b| b.content.iter())
-                .filter_map(|m| m.schema.as_ref());
+                .flat_map(Media::schemas);
             let responses = op
                 .responses
                 .iter()
                 .flat_map(|r| r.content.iter())
-                .filter_map(|m| m.schema.as_ref());
+                .flat_map(Media::schemas);
             let headers = op
                 .responses
                 .iter()
@@ -149,11 +153,13 @@ fn self_uri(docs: &Documents<'_>, doc: DocId) -> Option<String> {
     Some(crate::uri::resolve(&d.uri, &own))
 }
 
-/// The dialect a description's Schema Objects are read by: 3.0's own, or `jsonSchemaDialect`, or
-/// JSON Schema 2020-12 with the OpenAPI vocabulary.
+/// The dialect a description's Schema Objects are read by: 2.0's or 3.0's own, or
+/// `jsonSchemaDialect`, or JSON Schema 2020-12 with the OpenAPI vocabulary.
 fn default_dialect(docs: &Documents<'_>, doc: DocId, version: Version) -> Dialect {
-    if version == Version::V30 {
-        return Dialect::Oas30;
+    match version {
+        Version::V20 => return Dialect::Swagger20,
+        Version::V30 => return Dialect::Oas30,
+        Version::V31 | Version::V32 => {}
     }
     docs.get(doc)
         .and_then(|d| {

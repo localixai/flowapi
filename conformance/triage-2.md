@@ -228,3 +228,66 @@ Path Item has no such field.
   (3.2: flowapi also resolves by the retrieval URI when `$self` is set, a MAY, untested),
   `jsonschema-2020-12.core.initial-base.recommended-implementations-document-any-default-base-uri`
   (the host gives every URI and flowapi assumes no default; the README does not say so yet).
+
+## 6. Third pass (2026-11-24): the 48 ids left after the fixes
+
+Markers were added in three new test files, each run as a named target:
+
+- `crates/flowapi/tests/documents.rs` (`cargo test -p flowapi --test documents`): several
+  documents given to `Documents::add`, generated through a small target written in the test (it
+  prints each declaration's shape, so no real target's output is needed). A `$ref` to a document
+  added after the referring one; an `$id` and an `$anchor` deep inside another document and
+  another description's `$self` as targets; one description spread over a second description and
+  a JSON Schema, in 3.0, 3.1 and 3.2; documents told apart by `openapi` and `$schema`; a
+  description reached both by its `$self` and by the URI it was given under; a meta-schema found
+  by its `$id`, and a target outside the core reading an `x-` field through a type's origin
+  (the specification-extensions RECOMMENDED; the core gives the field no meaning).
+- `crates/flowapi-cli/tests/documents_cli.rs` (`--test documents_cli`): three files in two
+  directories reached by relative `$ref`s, and a missing one an error; the base a document is
+  read against (the path as typed); meta-schemas beside the schema: an unknown vocabulary refused
+  when `true` and passed over when `false`, validation off (`type`, `required` annotations),
+  applicator off (lossy, below), core absent (an error).
+- `crates/flowapi-cli/tests/openapi_cli.rs` (`--test openapi_cli`): response headers in each
+  version (by reference to `components/headers`, by `schema`, by `content`, `required`, `x-`
+  fields beside them, `Content-Type` in any case left out), `@deprecated` on operations,
+  parameters and headers, and binary bodies (raw binary `unknown`, base64 `string`, a
+  contradicting `contentMediaType` narrowing nothing, multipart parts read apart, 3.0's
+  `format: binary` a `string`).
+
+The tests pass on the last commit's core (a copy made by `git archive HEAD`, while the working
+tree's core was being changed for Swagger 2.0) and on the working tree once it compiled again.
+
+One id is lossy: `jsonschema-2020-12.core.$vocabulary.must-any-vocabulary-understood-…`. A
+meta-schema without the applicator vocabulary makes the whole schema `unknown` (recorded lossy on
+`$vocabulary`), wider than the validation vocabulary alone would give.
+
+One id stays missing, a violation:
+
+**T1. A meta-schema whose `$vocabulary` marks the core vocabulary `false` is not refused.** The
+specification leaves the case undefined and RECOMMENDS an error, as for a `$vocabulary` without
+core, which flowapi does refuse. Id:
+`jsonschema-2020-12.core.the-json-schema-core-vocabulary.recommended-however-implementations-detect-cases-raise-error`.
+Code: `graph/vocab.rs`, where the core vocabulary's absence is checked.
+
+```sh
+echo '{"$vocabulary":{"https://json-schema.org/draft/2020-12/vocab/core":false,"https://json-schema.org/draft/2020-12/vocab/applicator":true,"https://json-schema.org/draft/2020-12/vocab/validation":true}}' > meta.json
+echo '{"$schema":"meta.json","type":"string"}' > s.json
+target/release/flowapi s.json   # prints Root = string, exit 0; expected error[jsonschema-2020-12.core.$vocabulary]
+```
+
+Noted, not a requirement flowapi answers for: **T2.** A Header Object (and, by the same reader, a
+parameter) whose `content` holds two media types, which the specification forbids ("MUST only
+contain one entry"), takes the first one's schema without a diagnostic: `X-Two` below prints
+`number`, and the `string` of the second entry is lost. An error or a warning naming the rule
+would follow G8.
+
+```json
+{"openapi":"3.1.2","info":{"title":"t","version":"1"},"paths":{"/a":{"get":{"operationId":"g",
+ "responses":{"200":{"description":"ok","headers":{"X-Two":{"content":{
+   "text/plain":{"schema":{"type":"integer"}},"application/json":{"schema":{"type":"string"}}}}}}}}}}}
+```
+
+**T3.** The default base URI marker rests on the API documentation (`Document::uri`: "a
+retrieval URI, a path, or any name the host gives it") and the CLI test. The README says nothing
+of it; one sentence there ("flowapi assumes no base URI: each document's is the one the host
+gives it, the CLI's the path as typed") would make the documentation easy to find.

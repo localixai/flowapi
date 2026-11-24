@@ -12,8 +12,8 @@ step() { printf '\n== %s\n' "$*"; "$@"; }
 step cargo fmt --check
 step cargo clippy --locked --all-targets -- -D warnings
 step cargo test --locked
-step cargo build --locked --release -p flowapi -p flowapi-ts --target wasm32-unknown-unknown
-for crate in bench conformance/suite conformance/ledger; do
+step cargo build --locked --release -p flowapi -p flowapi-ts -p flowapi-wasm --target wasm32-unknown-unknown
+for crate in bench conformance/suite conformance/suite-rust conformance/ledger conformance/props; do
     step cargo fmt --check --manifest-path "$crate/Cargo.toml"
 done
 if [ ! -x conformance/ts/node_modules/.bin/tsc ]; then
@@ -21,5 +21,9 @@ if [ ! -x conformance/ts/node_modules/.bin/tsc ]; then
     exit 1
 fi
 (cd conformance/suite && step cargo run --locked --release --quiet)
+(cd conformance/suite-rust && step cargo run --locked --release --quiet -j 1 --bin suite-rust)
+(cd conformance/props && step cargo run --locked --release --quiet)
+step cargo build --locked --release --quiet -p flowapi-cli
+step node conformance/oai/run.mjs
 (cd conformance/ledger && step cargo run --locked --release --quiet --bin report -- --check)
 printf '\nall checks passed\n'

@@ -49,32 +49,79 @@ impl<'t> Merger<'_, 't> {
         true
     }
 
-    /// The shapes of an unnamed union of unnamed shapes, at most [`MAX_BRANCHES`] of them.
+    /// The shapes of an unnamed union of unnamed shapes, nested unnamed unions flattened and
+    /// `Never` dropped, at most [`MAX_BRANCHES`] of them.
     fn shapes(&self, id: TypeId) -> Option<Vec<Branches<'t>>> {
-        let Kind::Union(members) = &self.graph.get(id).kind else {
-            return None;
-        };
-        if self.is_named(id) || members.len() > MAX_BRANCHES || self.graph.len() >= self.budget {
+        let id = self.through(id)?;
+        // A union of one member is an alias by now: its one shape is distributed over as well.
+        if !matches!(self.graph.get(id).kind, Kind::Union(_) | Kind::Value(_)) {
             return None;
         }
-        members
+        if self.is_named(id) || self.graph.len() >= self.budget {
+            return None;
+        }
+        let mut out = Vec::new();
+        let mut stack = vec![id];
+        while let Some(at) = stack.pop() {
+            let at = self.through(at)?;
+            match &self.graph.get(at).kind {
+                Kind::Value(b) => out.push(b.clone()),
+                Kind::Never => {}
+                Kind::Union(members) if !self.is_named(at) => stack.extend(members.iter().rev()),
+                Kind::Any | Kind::Union(_) | Kind::Intersection(_) | Kind::Alias(_) => return None,
+            }
+            if out.len() > MAX_BRANCHES {
+                return None;
+            }
+        }
+        Some(out)
+    }
+
+    /// `(A | B) & R` as `(A & R) | (B & R)` when no part is a shape of the schema's own, so each
+    /// branch is one shape the parts after it meet; the parts are unnamed (a named one keeps
+    /// its name in the output). `None` when no part is such a union.
+    pub(super) fn split(&mut self, others: &[TypeId]) -> Option<Kind<'t>> {
+        if others.len() < 2 || others.iter().any(|&m| self.is_named(m)) {
+            return None;
+        }
+        let (at, shapes) = others.iter().enumerate().find_map(|(i, &m)| {
+            // Only a union is split: a lone shape is merged, not split.
+            let union = matches!(self.graph.get(self.through(m)?).kind, Kind::Union(_));
+            Some((i, self.shapes(m).filter(|_| union)?))
+        })?;
+        let rest: Vec<TypeId> = others
             .iter()
-            .map(|&m| {
-                let m = self.through(m)?;
-                match &self.graph.get(m).kind {
-                    Kind::Value(b) => Some(b.clone()),
-                    Kind::Any
-                    | Kind::Never
-                    | Kind::Union(_)
-                    | Kind::Intersection(_)
-                    | Kind::Alias(_) => None,
-                }
-            })
-            .collect()
+            .enumerate()
+            .filter(|(i, _)| *i != at)
+            .map(|(_, &m)| m)
+            .collect();
+        let mut branches = Vec::with_capacity(shapes.len());
+        for b in shapes {
+            let k = b.kinds();
+            let value = self.graph.push(Type::of(Kind::Value(b)));
+            self.kinds.push(k);
+            let mut parts = vec![value];
+            parts.extend(rest.iter().copied());
+            let both = self.graph.push(Type::of(Kind::Intersection(parts)));
+            let k = super::super::kinds::step(self.graph, self.kinds, both);
+            self.kinds.push(k);
+            branches.push(both);
+        }
+        Some(match branches.as_slice() {
+            [] => Kind::Never,
+            [one] => Kind::Alias(*one),
+            _ => Kind::Union(branches),
+        })
+    }
+
+    /// The unnamed shape an unnamed alias stands for, if that is what it is.
+    pub(super) fn unnamed_shape(&self, id: TypeId) -> Option<TypeId> {
+        let at = self.through(id)?;
+        matches!(self.graph.get(at).kind, Kind::Value(_)).then_some(at)
     }
 
     /// An unnamed alias followed to what it names; `None` at a named type.
-    fn through(&self, id: TypeId) -> Option<TypeId> {
+    pub(super) fn through(&self, id: TypeId) -> Option<TypeId> {
         let mut at = id;
         for _ in 0..=self.graph.len() {
             if self.is_named(at) {

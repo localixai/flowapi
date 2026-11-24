@@ -44,9 +44,13 @@ fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     }
-    let target =
-        flowapi_ts::TypeScript::new(args.output.clone().unwrap_or_else(|| String::from("-")));
-    let (output, diags) = flowapi::generate(&docs, &target);
+    let path = args.output.clone().unwrap_or_else(|| String::from("-"));
+    let target: Box<dyn flowapi::Target> = if args.rust {
+        Box::new(flowapi_rust::Rust::new(path))
+    } else {
+        Box::new(flowapi_ts::TypeScript::new(path))
+    };
+    let (output, diags) = flowapi::generate(&docs, target.as_ref());
     for d in diags.all() {
         if d.severity == Severity::Error || !args.quiet {
             let at = texts.get(d.at.doc.index()).map_or_else(

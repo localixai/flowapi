@@ -3,17 +3,17 @@
 Written by `cd conformance/suite && cargo run --release`; do not edit.
 
 - Soundness: 100.0% (779 of 779 valid cases accepted)
-- Precision: 62.2% (336 of 540 invalid cases rejected)
+- Precision: 63.3% (342 of 540 invalid cases rejected)
 - Groups: 613 in the suite, 409 run, 409 generated
 - Generation errors: 0; invalid TypeScript: 0
 
 | File | Groups | Run | Gen. errors | Invalid TS | Valid | Accepted | Sound % | Invalid | Rejected | Precision % |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| additionalProperties | 10 | 9 | 0 | 0 | 12 | 12 | 100.0 | 9 | 5 | 55.5 |
+| additionalProperties | 10 | 9 | 0 | 0 | 12 | 12 | 100.0 | 9 | 8 | 88.8 |
 | allOf | 12 | 12 | 0 | 0 | 10 | 10 | 100.0 | 20 | 12 | 60.0 |
 | anchor-legacy | 14 | 0 | 0 | 0 | 0 | 0 | - | 0 | 0 | - |
 | anchor | 9 | 9 | 0 | 0 | 9 | 9 | 100.0 | 9 | 9 | 100.0 |
-| anyOf | 8 | 8 | 0 | 0 | 12 | 12 | 100.0 | 6 | 3 | 50.0 |
+| anyOf | 8 | 8 | 0 | 0 | 12 | 12 | 100.0 | 6 | 4 | 66.6 |
 | boolean_schema | 2 | 2 | 0 | 0 | 9 | 9 | 100.0 | 9 | 9 | 100.0 |
 | const | 17 | 17 | 0 | 0 | 22 | 22 | 100.0 | 32 | 32 | 100.0 |
 | contains | 21 | 20 | 0 | 0 | 37 | 37 | 100.0 | 31 | 0 | 0.0 |
@@ -64,7 +64,7 @@ Written by `cd conformance/suite && cargo run --release`; do not edit.
 | minimum | 5 | 3 | 0 | 0 | 10 | 10 | 100.0 | 5 | 0 | 0.0 |
 | multipleOf | 12 | 6 | 0 | 0 | 8 | 8 | 100.0 | 5 | 0 | 0.0 |
 | not | 9 | 9 | 0 | 0 | 16 | 16 | 100.0 | 24 | 20 | 83.3 |
-| oneOf | 11 | 11 | 0 | 0 | 12 | 12 | 100.0 | 15 | 5 | 33.3 |
+| oneOf | 11 | 11 | 0 | 0 | 12 | 12 | 100.0 | 15 | 6 | 40.0 |
 | pattern | 4 | 4 | 0 | 0 | 12 | 12 | 100.0 | 3 | 0 | 0.0 |
 | patternProperties | 6 | 6 | 0 | 0 | 15 | 15 | 100.0 | 11 | 0 | 0.0 |
 | properties | 6 | 6 | 0 | 0 | 16 | 16 | 100.0 | 12 | 9 | 75.0 |
@@ -75,10 +75,10 @@ Written by `cd conformance/suite && cargo run --release`; do not edit.
 | required | 7 | 5 | 0 | 0 | 12 | 12 | 100.0 | 6 | 5 | 83.3 |
 | type | 16 | 12 | 0 | 0 | 21 | 21 | 100.0 | 59 | 57 | 96.6 |
 | unevaluatedItems | 48 | 29 | 0 | 0 | 42 | 42 | 100.0 | 29 | 14 | 48.2 |
-| unevaluatedProperties | 46 | 44 | 0 | 0 | 67 | 67 | 100.0 | 62 | 34 | 54.8 |
+| unevaluatedProperties | 46 | 44 | 0 | 0 | 67 | 67 | 100.0 | 62 | 35 | 56.4 |
 | uniqueItems | 10 | 6 | 0 | 0 | 46 | 46 | 100.0 | 19 | 2 | 10.5 |
 | vocabulary | 4 | 2 | 0 | 0 | 3 | 3 | 100.0 | 2 | 1 | 50.0 |
-| **total** | 613 | 409 | 0 | 0 | 779 | 779 | 100.0 | 540 | 336 | 62.2 |
+| **total** | 613 | 409 | 0 | 0 | 779 | 779 | 100.0 | 540 | 342 | 63.3 |
 
 ## Unsound cases
 

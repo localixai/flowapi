@@ -158,8 +158,19 @@ impl Keyword {
         if dialect == Dialect::Draft2020Annotations && keyword.validates() {
             return Self::Unknown;
         }
-        if dialect == Dialect::Oas30 && !keyword.in_oas30() {
-            // OpenAPI 3.0's Schema Object takes a fixed list; any other key means nothing there.
+        let listed = match dialect {
+            Dialect::Oas30 => keyword.in_oas30(),
+            Dialect::Swagger20 => keyword.in_swagger20(),
+            Dialect::Draft4
+            | Dialect::Draft6
+            | Dialect::Draft7
+            | Dialect::Draft2019
+            | Dialect::Draft2020
+            | Dialect::Draft2020Annotations => true,
+        };
+        if !listed {
+            // Swagger 2.0's and OpenAPI 3.0's Schema Objects take a fixed list; any other key
+            // means nothing there.
             return if key.starts_with("x-") {
                 Self::Extension
             } else {
@@ -241,7 +252,18 @@ impl Keyword {
         )
     }
 
-    /// The keyword a key is in a dialect, before OpenAPI 3.0's list is applied.
+    /// Whether Swagger 2.0's Schema Object has the keyword (2.0, "Schema Object"): 3.0's list
+    /// without `anyOf`, `oneOf`, `not`, `deprecated`, `writeOnly` and `nullable`, which came
+    /// in 3.0; `Nullable` stands for the `x-nullable` extension here.
+    fn in_swagger20(self) -> bool {
+        self.in_oas30()
+            && !matches!(
+                self,
+                Self::AnyOf | Self::OneOf | Self::Not | Self::Deprecated | Self::WriteOnly
+            )
+    }
+
+    /// The keyword a key is in a dialect, before Swagger 2.0's or OpenAPI 3.0's list is applied.
     fn any_of(key: &str, dialect: Dialect) -> Self {
         match key {
             "$schema" => Self::Schema,
@@ -311,6 +333,9 @@ impl Keyword {
             "externalDocs" => Self::ExternalDocs,
             "example" => Self::Example,
             "nullable" if dialect == Dialect::Oas30 => Self::Nullable,
+            // A vendor extension most Swagger 2.0 tools honour as 3.0's `nullable`. It only adds
+            // `null` to what the schema accepts, so reading it keeps every type sound.
+            "x-nullable" if dialect == Dialect::Swagger20 => Self::Nullable,
             _ if key.starts_with("x-") => Self::Extension,
             _ => Self::Unknown,
         }

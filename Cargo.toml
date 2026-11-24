@@ -4,7 +4,7 @@
 # their own, outside this workspace: the tools compared with and the suites never reach a build.
 [workspace]
 resolver = "3"
-members = ["crates/flowapi", "crates/flowapi-ts", "crates/flowapi-cli"]
+members = ["crates/flowapi", "crates/flowapi-ts", "crates/flowapi-cli", "crates/flowapi-rust", "crates/flowapi-wasm"]
 exclude = ["bench", "conformance"]
 
 [workspace.package]

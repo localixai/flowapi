@@ -1,0 +1,41 @@
+# Oracle O3 for the Rust target: the official JSON-Schema-Test-Suite through serde. Each group's
+# types are generated into one crate (`out/gen`), built once; each case's data is deserialized
+# into the root type and, when it is read, serialized back and compared with the input. A crate
+# of its own, outside the workspace: the suite and the generated crate never reach a build of
+# flowapi.
+[package]
+name = "flowapi-suite-rust"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "suite-rust"
+path = "src/main.rs"
+
+[[bin]]
+name = "corpus"
+path = "src/bin/corpus.rs"
+
+[workspace]
+
+[dependencies]
+flowapi = { path = "../../crates/flowapi" }
+flowapi-rust = { path = "../../crates/flowapi-rust" }
+# Numbers as written: a case's data is handed to the generated crate as the token it was.
+serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+unused_qualifications = "deny"
+
+[lints.clippy]
+dbg_macro = "deny"
+wildcard_imports = "deny"
+redundant_clone = "deny"
+format_push_string = "deny"
+iter_over_hash_type = "deny"
+too_many_lines = "deny"
+
+[profile.release]
+opt-level = 3

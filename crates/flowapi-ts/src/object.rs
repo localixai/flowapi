@@ -70,6 +70,8 @@ pub(crate) fn object(out: &mut String, p: &Program<'_>, o: &Object<'_>) {
             }
             let mut ty = String::new();
             union_of(&mut ty, p, &members);
+            let matching = o.props.iter().filter(|q| t.matches(&q.name));
+            inherited(&mut ty, matching.map(|q| (q.name.as_ref(), q.required)));
             indented(out, &ty);
             out.push_str(";\n");
         }
@@ -101,6 +103,19 @@ fn index(out: &mut String, p: &Program<'_>, o: &Object<'_>) {
         }
     }
     union_of(out, p, &members);
+    inherited(out, o.props.iter().map(|q| (q.name.as_ref(), q.required)));
+}
+
+/// For each optional property named like a member every object inherits, the inherited member's
+/// type, which a signature it falls under must take too (TS2411 otherwise).
+fn inherited<'n>(out: &mut String, props: impl Iterator<Item = (&'n str, bool)>) {
+    for (name, required) in props {
+        if !required && INHERITED.contains(&name) {
+            out.push_str(" | Object[\"");
+            out.push_str(name);
+            out.push_str("\"]");
+        }
+    }
 }
 
 /// Types joined by `|`; `unknown` when one allows every value, `never` for none.

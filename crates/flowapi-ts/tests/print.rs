@@ -328,6 +328,14 @@ fn generate(uri: &str, text: &str) -> String {
 // req: oas-3.1.header-object.deprecated — headers.json: @deprecated on the header X-Old
 // req: oas-3.0.header-object.deprecated — headers.json's reader serves 3.0 the same way
 // req: oas-3.2.header-object.deprecated — headers.json's reader serves 3.2 the same way
+// swagger20-*.json: Swagger 2.0, which the ledger does not hold (no requirement ids). Petstore:
+// `definitions` as named types, `body` under each type of `consumes`, a response's `schema` under
+// each of `produces`, non-body parameters and headers as their own schemas, `#/parameters/…`
+// and `#/responses/…` followed, `trace` not a method. Forms: `formData` as a closed form under
+// the form types of `consumes`, the operation's fields winning over the Path Item's, `file` as
+// any value, a body beside a form warned about. Schema: `x-nullable`, `discriminator` as a name,
+// `$ref` overriding its siblings, 3.x-only keywords (`anyOf`, `nullable`, `writeOnly`, `const`)
+// meaning nothing, a required `readOnly` property optional.
 #[test]
 fn cases_print_as_kept() {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/cases");

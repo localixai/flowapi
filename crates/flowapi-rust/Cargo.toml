@@ -1,0 +1,19 @@
+[package]
+name = "flowapi-rust"
+description = "flowapi's Rust target: a type graph printed as Rust types with serde derives"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords = ["openapi", "json-schema", "codegen", "serde"]
+categories = ["development-tools"]
+publish = false
+
+# The generated code needs serde (with `derive`) and serde_json; this crate itself needs neither.
+[dependencies]
+flowapi = { path = "../flowapi" }
+
+[lints]
+workspace = true

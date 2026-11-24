@@ -1,7 +1,7 @@
 //! Reading one operation's parts, Reference Objects followed: a reference that names nothing is
 //! an error that names it, never a part dropped in silence.
 
-use super::{Body, Location, METHODS, Media, Operation, Param, Response};
+use super::{Body, Location, METHODS, Media, Operation, Param, Payload};
 use crate::diag::Diagnostics;
 use crate::id::{DocId, NodeId};
 use crate::json::Tree;
@@ -10,7 +10,8 @@ use crate::source::{Dialect, Documents, Version, resolve_pointer};
 use crate::uri;
 use std::sync::Arc;
 
-/// Header parameters the spec says SHALL be ignored, compared without case.
+/// Header parameters the spec says SHALL be ignored, compared without case (in Swagger 2.0 too,
+/// where `consumes`, `produces` and security say what they would).
 const IGNORED_HEADERS: [&str; 3] = ["accept", "content-type", "authorization"];
 
 pub(super) struct Reader<'d, 't> {
@@ -22,12 +23,12 @@ pub(super) struct Reader<'d, 't> {
 }
 
 impl<'t> Reader<'_, 't> {
-    fn tree(&self, doc: DocId) -> Option<&Tree<'t>> {
+    pub(super) fn tree(&self, doc: DocId) -> Option<&Tree<'t>> {
         self.docs.get(doc).map(|d| &d.tree)
     }
 
     /// A Reference Object followed to what it names, at most 32 times; any other node as it is.
-    fn follow(&self, doc: DocId, node: NodeId) -> Option<(DocId, NodeId)> {
+    pub(super) fn follow(&self, doc: DocId, node: NodeId) -> Option<(DocId, NodeId)> {
         let (mut doc, mut node) = (doc, node);
         for _ in 0..32 {
             let d = self.docs.get(doc)?;
@@ -82,6 +83,8 @@ impl<'t> Reader<'_, 't> {
     /// The requirement a dangling Reference Object breaks, in the document's version.
     fn reference_rule(&self) -> &'static str {
         match self.version {
+            // Swagger 2.0 is not in the requirements ledger: our own code.
+            Version::V20 => "swagger.ref",
             Version::V30 => "oas-3.0.reference-object.$ref",
             Version::V31 => "oas-3.1.reference-object.$ref",
             Version::V32 => "oas-3.2.reference-object.$ref",
@@ -92,9 +95,14 @@ impl<'t> Reader<'_, 't> {
     /// methods in the spec's order, then 3.2's `additionalOperations` as written.
     pub(super) fn methods(&self, items: &[(DocId, NodeId)]) -> Vec<(String, (DocId, NodeId))> {
         let mut out: Vec<(String, (DocId, NodeId))> = Vec::new();
-        // `query` and `additionalOperations` are 3.2's: in 3.0 and 3.1 they are not fields.
+        // `query` and `additionalOperations` are 3.2's: in 3.0 and 3.1 they are not fields;
+        // `trace` is not one in Swagger 2.0.
         let v32 = self.version == Version::V32;
-        for method in METHODS.iter().filter(|m| v32 || **m != "query") {
+        let v20 = self.version == Version::V20;
+        let fields = METHODS
+            .iter()
+            .filter(|m| (v32 || **m != "query") && !(v20 && **m == "trace"));
+        for method in fields {
             if let Some(found) = items
                 .iter()
                 .find_map(|&(doc, item)| Some((doc, self.tree(doc)?.get(item, method)?)))
@@ -119,7 +127,7 @@ impl<'t> Reader<'_, 't> {
         out
     }
 
-    fn schema(&self, doc: DocId, node: NodeId) -> Resource {
+    pub(super) fn schema(&self, doc: DocId, node: NodeId) -> Resource {
         let base = match self.docs.get(doc) {
             Some(d) if doc != DocId::FIRST => Arc::from(d.uri.as_str()),
             Some(_) | None => Arc::clone(&self.shared),
@@ -132,15 +140,34 @@ impl<'t> Reader<'_, 't> {
         }
     }
 
-    fn flag(&self, doc: DocId, node: NodeId, key: &str) -> bool {
+    pub(super) fn flag(&self, doc: DocId, node: NodeId, key: &str) -> bool {
         self.tree(doc)
             .and_then(|t| t.get(node, key).and_then(|n| t.as_bool(n)))
             == Some(true)
     }
 
-    /// A parameter's or a header's schema: `schema`, or that of its one media type.
-    fn value_schema(&self, doc: DocId, node: NodeId) -> Option<Resource> {
+    /// A parameter's or a header's schema: `schema`, or that of its one media type. In Swagger
+    /// 2.0 a parameter other than `body`, or a header, is its own schema: its `type`, `format`,
+    /// `items`, `enum` and bounds are the Schema Object's keywords, read in the same dialect
+    /// (`collectionFormat` says how a value is written, not what it is).
+    pub(super) fn value_schema(
+        &self,
+        doc: DocId,
+        node: NodeId,
+        diags: &mut Diagnostics,
+    ) -> Option<Resource> {
+        if self.version == Version::V20 {
+            return Some(self.schema(doc, node));
+        }
         let t = self.tree(doc)?;
+        // `content` of a parameter or a header holds one media type (the spec's MUST).
+        if let Some(c) = t.get(node, "content").filter(|&c| t.members(c).len() > 1) {
+            diags.warn(
+                "oas-3.1.parameter-object.content.must-map-only-contain-one-entry",
+                self.docs.loc(doc, c),
+                "`content` names more than one media type; the first one's schema is read",
+            );
+        }
         let s = t.get(node, "schema").or_else(|| {
             t.get(node, "content")
                 .and_then(|c| t.members(c).first().and_then(|m| t.get(m.value, "schema")))
@@ -186,13 +213,13 @@ impl<'t> Reader<'_, 't> {
                 location,
                 required,
                 deprecated,
-                schema: self.value_schema(pd, p),
+                schema: self.value_schema(pd, p, diags),
             });
         }
         Some(out)
     }
 
-    fn content(&self, doc: DocId, owner: NodeId, diags: &mut Diagnostics) -> Vec<Media> {
+    pub(super) fn content(&self, doc: DocId, owner: NodeId, diags: &mut Diagnostics) -> Vec<Media> {
         let Some(t) = self.tree(doc) else {
             return Vec::new();
         };
@@ -215,7 +242,7 @@ impl<'t> Reader<'_, 't> {
                 .map(|s| self.schema(md, s));
             out.push(Media {
                 media_type: media_type.into_owned(),
-                schema,
+                payload: Payload::Schema(schema),
             });
         }
         out
@@ -227,61 +254,6 @@ impl<'t> Reader<'_, 't> {
             required: self.flag(bd, b, "required"),
             content: self.content(bd, b, diags),
         })
-    }
-
-    fn headers(&self, doc: DocId, response: NodeId, diags: &mut Diagnostics) -> Vec<Param> {
-        let Some(t) = self.tree(doc) else {
-            return Vec::new();
-        };
-        let mut out = Vec::new();
-        for m in t.get(response, "headers").map_or(&[][..], |n| t.members(n)) {
-            let Some(name) = t.string(m.key) else {
-                continue;
-            };
-            if name.eq_ignore_ascii_case("content-type") {
-                continue;
-            }
-            let Some((hd, h)) = self.follow_or_report(doc, m.value, "a header", diags) else {
-                continue;
-            };
-            let (required, deprecated) =
-                (self.flag(hd, h, "required"), self.flag(hd, h, "deprecated"));
-            let schema = self.value_schema(hd, h);
-            out.push(Param {
-                name: name.into_owned(),
-                location: Location::Header,
-                required,
-                deprecated,
-                schema,
-            });
-        }
-        out
-    }
-
-    fn responses(&self, doc: DocId, node: NodeId, diags: &mut Diagnostics) -> Vec<Response> {
-        let Some(t) = self.tree(doc) else {
-            return Vec::new();
-        };
-        let mut out = Vec::new();
-        for m in t.members(node) {
-            let Some(status) = t.string(m.key) else {
-                continue;
-            };
-            if status.starts_with("x-") {
-                continue;
-            }
-            let what = format!("the response {status}");
-            let Some((rd, r)) = self.follow_or_report(doc, m.value, &what, diags) else {
-                continue;
-            };
-            let headers = self.headers(rd, r, diags);
-            out.push(Response {
-                status: status.into_owned(),
-                headers,
-                content: self.content(rd, r, diags),
-            });
-        }
-        out
     }
 
     /// One operation, its parameters already merged with its Path Item's.
@@ -304,9 +276,14 @@ impl<'t> Reader<'_, 't> {
             .and_then(|t| t.get(op, "requestBody"))
             .filter(|_| !no_body)
             .and_then(|b| self.body(doc, b, diags));
+        // Swagger 2.0: a response's schema is its content under each media type it produces.
+        let produces = match self.version {
+            Version::V20 => self.media_types(doc, op, "produces"),
+            Version::V30 | Version::V31 | Version::V32 => Vec::new(),
+        };
         let responses = t
             .and_then(|t| t.get(op, "responses"))
-            .map(|n| self.responses(doc, n, diags))
+            .map(|n| self.responses(doc, n, &produces, diags))
             .unwrap_or_default();
         Operation {
             name,

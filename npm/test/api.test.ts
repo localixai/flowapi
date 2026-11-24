@@ -1,0 +1,110 @@
+// The package's API, run on the built package (dist/), as a user imports it.
+
+import { describe, expect, test } from 'bun:test'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { formatDiagnostic, generate, load, type Diagnostic } from '../dist/index.js'
+import { ReadError, generateFile, readDescription } from '../dist/node.js'
+
+const root = join(import.meta.dir, '..', '..')
+const petstore = join(root, 'crates', 'flowapi-cli', 'tests', 'yaml', 'petstore.json')
+
+describe('generate', () => {
+  test('a description as text, one file at the path given', async () => {
+    const result = await generate(readFileSync(petstore, 'utf8'), { output: 'pets.ts' })
+    expect(result.diagnostics).toEqual([])
+    expect(result.files.map((f) => f.path)).toEqual(['pets.ts'])
+    expect(result.files[0]?.text).toContain('export type Pet')
+  })
+
+  test('the same bytes from text, a document, a list and a file', async () => {
+    const text = readFileSync(petstore, 'utf8')
+    const flowapi = await load()
+    const outputs = [
+      (await generate(text)).files,
+      flowapi.generate({ uri: petstore, text }).files,
+      flowapi.generate([{ uri: petstore, text }]).files,
+      (await generateFile(petstore)).files,
+    ]
+    for (const files of outputs) expect(files).toEqual(outputs[0] as typeof files)
+    expect(outputs[0]?.[0]?.path).toBe('types.ts')
+  })
+
+  test('a document that is not JSON is an error with its line and column, and no file', async () => {
+    const result = await generate('{\n  "openapi": "3.1.0",\n  "info": tru\n}')
+    expect(result.files).toEqual([])
+    const [d] = result.diagnostics as [Diagnostic]
+    expect(result.diagnostics).toHaveLength(1)
+    expect(d).toMatchObject({ severity: 'error', code: 'json.syntax', uri: 'input.json' })
+    expect({ line: d.line, column: d.column, offset: d.offset }).toEqual({
+      line: 3,
+      column: 11,
+      offset: 34,
+    })
+    expect(formatDiagnostic(d)).toMatch(/^error\[json\.syntax\]: .*\n {2}at input\.json:3:11$/u)
+  })
+
+  test('a column counts characters, an offset counts UTF-8 bytes', async () => {
+    const result = await generate('{"é€": tru}')
+    const [d] = result.diagnostics as [Diagnostic]
+    expect({ offset: d.offset, column: d.column }).toEqual({ offset: 10, column: 8 })
+  })
+
+  test('a warning names its document, line and column', async () => {
+    const uri = 'warn.json'
+    const text =
+      '{\n  "$defs": {\n    "a": { "$id": "https://example.com/x" },\n' +
+      '    "b": { "$id": "https://example.com/x" }\n  }\n}'
+    const { files, diagnostics } = await generate({ uri, text })
+    expect(files).toHaveLength(1)
+    expect(diagnostics).toHaveLength(1)
+    const [d] = diagnostics as [Diagnostic]
+    expect(d).toMatchObject({ severity: 'warning', code: 'jsonschema-2020-12.core.$id', uri })
+    const before = new TextDecoder().decode(new TextEncoder().encode(text).subarray(0, d.offset))
+    expect(d.line).toBe(before.split('\n').length)
+    expect(d.column).toBe([...(before.split('\n').at(-1) ?? '')].length + 1)
+    expect(d.line).toBeGreaterThan(1)
+  })
+
+  test('an empty list is refused, not thrown', async () => {
+    const result = await generate([])
+    expect(result.files).toEqual([])
+    expect(result.diagnostics[0]).toMatchObject({ severity: 'error', code: 'flowapi.request' })
+  })
+})
+
+describe('load', () => {
+  test('references name other documents, in order', async () => {
+    const flowapi = await load()
+    const text = JSON.stringify({
+      a: { $ref: '#/b' },
+      c: [{ $ref: 'other.json#/x' }, { $schema: 'https://json-schema.org/draft/2020-12/schema' }],
+    })
+    expect(flowapi.references(text)).toEqual([
+      'other.json#/x',
+      'https://json-schema.org/draft/2020-12/schema',
+    ])
+    expect(flowapi.references('not json')).toEqual([])
+  })
+
+  test('a thousand calls hold no memory between them', async () => {
+    const flowapi = await load()
+    const text = readFileSync(petstore, 'utf8')
+    const first = flowapi.generate(text)
+    for (let i = 0; i < 1000; i++) flowapi.generate(text)
+    expect(flowapi.generate(text)).toEqual(first)
+  })
+})
+
+describe('readDescription', () => {
+  test('a YAML file is refused with a message that says so', async () => {
+    const yaml = join(root, 'crates', 'flowapi-cli', 'tests', 'yaml', 'petstore.yaml')
+    const read = readDescription(yaml)
+    expect(read).rejects.toBeInstanceOf(ReadError)
+    expect(read).rejects.toThrow(/YAML is not read by the npm package/u)
+  })
+
+  test('a missing file is a ReadError', async () => {
+    expect(readDescription(join(root, 'missing.json'))).rejects.toBeInstanceOf(ReadError)
+  })
+})

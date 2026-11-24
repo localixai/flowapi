@@ -4,3 +4,4 @@ node_modules/
 /bench/target/
 /conformance/target/
 /conformance/out/
+/conformance/suite-rust/out/

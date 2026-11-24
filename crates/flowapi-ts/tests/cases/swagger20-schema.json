@@ -1,0 +1,17 @@
+{"swagger":"2.0","info":{"title":"schema","version":"1"},"paths":{},
+ "definitions":{
+  "Pet":{"type":"object","discriminator":"petType","required":["name","petType","id"],
+   "properties":{"id":{"type":"integer","readOnly":true},"name":{"type":"string"},"petType":{"type":"string"}}},
+  "Cat":{"description":"A cat.","allOf":[{"$ref":"#/definitions/Pet"},{"type":"object","properties":{"huntingSkill":{"type":"string","enum":["clueless","lazy","aggressive"]}},"required":["huntingSkill"]}]},
+  "Nullable":{"type":"object","properties":{
+    "maybe":{"type":"string","x-nullable":true},
+    "plain":{"type":"string","nullable":true},
+    "refNull":{"$ref":"#/definitions/Pet","x-nullable":true},
+    "refSiblings":{"$ref":"#/definitions/Pet","type":"string","description":"ignored beside $ref"},
+    "both":{"anyOf":[{"type":"string"}],"oneOf":[{"type":"integer"}],"not":{"type":"string"},"type":"boolean"},
+    "secret":{"type":"string","writeOnly":true},
+    "count":{"type":"integer","minimum":0,"exclusiveMinimum":true},
+    "map":{"type":"object","additionalProperties":{"type":"integer","x-nullable":true}}},
+   "required":["secret"]},
+  "Upload":{"type":"file"},
+  "Ext":{"type":"string","x-internal":true,"const":"a","$id":"other.json","definitions":{"inner":{"type":"string"}}}}}

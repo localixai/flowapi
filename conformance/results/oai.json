@@ -1,0 +1,983 @@
+[
+  {
+    "version": "v3.0",
+    "kind": "pass",
+    "file": "api-with-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.0",
+    "kind": "pass",
+    "file": "callback-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.0",
+    "kind": "pass",
+    "file": "link-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.0",
+    "kind": "pass",
+    "file": "petstore-expanded.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.0",
+    "kind": "pass",
+    "file": "petstore.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.0",
+    "kind": "pass",
+    "file": "uspto.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "callback-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "comp_pathitems.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "components-object-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "example-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "header-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "info-object-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "info_summary.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "json_schema_dialect.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "license_identifier.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "link-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "media-type-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "mega.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "minimal_comp.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "minimal_hooks.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "minimal_paths.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "non-oauth-scopes.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "operation-object-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "parameter-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "parameter-object-query-allowReserved.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "path-item-object-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "path_item_servers_parameters.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "path_no_response.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "path_var_empty_pathitem.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "paths-object-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "request-body-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "response-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "schema-object-deprecated-example-keyword.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "schema.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "security-scheme-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "servers.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "specification-extensions.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "style-defaults.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "tag-object-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "valid_schema_types.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "pass",
+    "file": "webhook-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "fail",
+    "file": "example-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "fail",
+    "file": "header-object-allowReserved.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "fail",
+    "file": "invalid_schema_types.yaml",
+    "generated": false,
+    "errors": [
+      "schema.shape",
+      "schema.shape",
+      "schema.shape"
+    ],
+    "typeChecks": null
+  },
+  {
+    "version": "v3.1",
+    "kind": "fail",
+    "file": "link-object-no-body.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "fail",
+    "file": "no_containers.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "fail",
+    "file": "openapi-version.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "fail",
+    "file": "parameter-object-cookie-form-allowReserved.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "fail",
+    "file": "parameter-object-header-allowReserved.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "fail",
+    "file": "parameter-object-path-allowReserved.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "fail",
+    "file": "server_enum_empty.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "fail",
+    "file": "servers.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.1",
+    "kind": "fail",
+    "file": "unknown_container.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "callback-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "comp_pathitems.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "components-object-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "example-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "header-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "info-object-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "info_summary.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "json_schema_dialect.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "license_identifier.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "link-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "media-type-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "mega.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "minimal_comp.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "minimal_hooks.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "minimal_paths.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "non-oauth-scopes.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "operation-object-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "parameter-object-cookie-form-allowReserved.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "parameter-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "parameter-object-path-allowReserved.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "parameter-object-query-allowReserved.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "path-item-object-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "path_item_servers_parameters.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "path_no_response.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "path_var_empty_pathitem.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "paths-object-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "request-body-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "response-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "schema-object-deprecated-example-keyword.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "schema.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "security-scheme-object-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "servers.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "specification-extensions.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "style-defaults.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "tag-object-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "valid_schema_types.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "pass",
+    "file": "webhook-example.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "encoding-enc-item-exclusion.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "encoding-enc-prefix-exclusion.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "example-examples.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "example-object-old-exclusions.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "example-object-old-vs-data.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "example-object-old-vs-ser.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "example-object-ser-exclusions.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "header-object-allowReserved.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "header-object-name.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "invalid_schema_types.yaml",
+    "generated": false,
+    "errors": [
+      "schema.shape",
+      "schema.shape",
+      "schema.shape"
+    ],
+    "typeChecks": null
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "media-type-description.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "media-type-enc-item-exclusion.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "media-type-enc-prefix-exclusion.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "no_containers.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "openapi-version.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "operation-object-query-with-querystring.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "operation-object-two-querystrings.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "parameter-object-content-not-with-style.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "parameter-object-cookie-allowReserved.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "parameter-object-header-allowReserved.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "parameter-object-header-name.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "parameter-object-path-name.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "parameter-object-querystring-not-with-schema.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "path-item-object-conflicting-additional-operation.yaml",
+    "generated": false,
+    "errors": [
+      "schema.ref",
+      "schema.ref",
+      "schema.ref",
+      "schema.ref"
+    ],
+    "typeChecks": null
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "path-item-object-query-with-querystring.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "path-item-object-two-querystrings.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "server_enum_empty.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "servers.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "unknown_container.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "xml-attr-exclusion.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  },
+  {
+    "version": "v3.2",
+    "kind": "fail",
+    "file": "xml-wrapped-exclusion.yaml",
+    "generated": true,
+    "errors": [],
+    "typeChecks": true
+  }
+]

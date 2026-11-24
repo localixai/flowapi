@@ -36,8 +36,19 @@ impl<'t> Builder<'_, 't> {
             let raw = tree.raw(span);
             let name = tree.string(span).unwrap_or(Cow::Borrowed(raw));
             // OpenAPI 3.0: a required property that is read-only is required in responses only,
-            // and a write-only one in requests only; one type serves both, so neither is.
-            if at.dialect == Dialect::Oas30 && one_way(tree, own.properties, &name) {
+            // and a write-only one in requests only; one type serves both, so neither is. Swagger
+            // 2.0 says the same of a read-only one (it MUST NOT be sent in a request).
+            let one_way_keys: &[&str] = match at.dialect {
+                Dialect::Oas30 => &["readOnly", "writeOnly"],
+                Dialect::Swagger20 => &["readOnly"],
+                Dialect::Draft4
+                | Dialect::Draft6
+                | Dialect::Draft7
+                | Dialect::Draft2019
+                | Dialect::Draft2020
+                | Dialect::Draft2020Annotations => &[],
+            };
+            if one_way(tree, own.properties, &name, one_way_keys) {
                 continue;
             }
             match props.iter_mut().find(|p| p.name == name) {
@@ -100,12 +111,11 @@ impl<'t> Builder<'_, 't> {
     }
 }
 
-/// Whether the property `name` is `readOnly` or `writeOnly`.
-fn one_way(tree: &Tree<'_>, properties: Option<NodeId>, name: &str) -> bool {
+/// Whether the property `name` is `true` under one of `keys` (`readOnly`, `writeOnly`).
+fn one_way(tree: &Tree<'_>, properties: Option<NodeId>, name: &str, keys: &[&str]) -> bool {
     let Some(schema) = properties.and_then(|p| tree.get(p, name)) else {
         return false;
     };
-    ["readOnly", "writeOnly"]
-        .iter()
+    keys.iter()
         .any(|k| tree.get(schema, k).and_then(|n| tree.as_bool(n)) == Some(true))
 }

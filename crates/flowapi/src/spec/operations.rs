@@ -2,9 +2,12 @@
 //! their parameters (the path item's and the operation's own, the latter winning), request
 //! bodies, and responses with their headers, Reference Objects followed and a dangling one
 //! reported. What each holds is a schema the graph reads; nothing else of an operation
-//! (servers, security, callbacks, links) says what a value is.
+//! (servers, security, callbacks, links; Swagger 2.0's `host`, `basePath`, `schemes`) says what
+//! a value is. Swagger 2.0's operations are lifted into the same model (`swagger.rs`).
 
 mod reader;
+mod responses;
+mod swagger;
 
 use crate::diag::Diagnostics;
 use crate::id::DocId;
@@ -57,12 +60,44 @@ pub struct Param {
     pub schema: Option<Resource>,
 }
 
-/// A body's representations: a media type each, with its schema.
+/// A body's representations: a media type each, with what it holds.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Media {
     /// The media type or range, as written (`application/json`, `text/*`).
     pub media_type: String,
-    /// Its schema; `None` for any value.
+    /// What it holds.
+    pub payload: Payload,
+}
+
+impl Media {
+    /// The schemas it holds.
+    #[must_use]
+    pub fn schemas(&self) -> Vec<&Resource> {
+        match &self.payload {
+            Payload::Schema(schema) => schema.iter().collect(),
+            Payload::Form(fields) => fields.iter().filter_map(|f| f.schema.as_ref()).collect(),
+        }
+    }
+}
+
+/// What a representation holds.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Payload {
+    /// A schema's values; `None` for any value.
+    Schema(Option<Resource>),
+    /// Swagger 2.0's `formData` parameters: an object of these fields and no other, as the
+    /// operation's parameters are.
+    Form(Vec<Field>),
+}
+
+/// A field of a Swagger 2.0 form: a `formData` parameter.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Field {
+    /// Its name.
+    pub name: String,
+    /// Whether it must be given.
+    pub required: bool,
+    /// Its schema: the parameter itself, read as a Schema Object.
     pub schema: Option<Resource>,
 }
 
@@ -157,7 +192,11 @@ pub(super) fn read(
                 params.retain(|q| !(q.name == p.name && q.location == p.location));
                 params.push(p);
             }
-            out.push(r.operation(&path, &method, doc, op, params, diags));
+            let mut operation = r.operation(&path, &method, doc, op, params, diags);
+            if version == Version::V20 {
+                operation.body = r.swagger_body(&items, doc, op, diags);
+            }
+            out.push(operation);
         }
     }
     out

@@ -2,11 +2,16 @@
 //! names. The schema dialect decides which keywords a Schema Object takes.
 
 use super::DocKind;
-use crate::json::Tree;
+use crate::json::{Tree, Value};
+use std::borrow::Cow;
 
 /// An OpenAPI version this build reads.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Version {
+    /// Swagger 2.0 (OpenAPI 2.0), lifted into the same model: `definitions` are the named
+    /// schemas, `body` and `formData` parameters the request body, a response's `schema` its
+    /// content under each `produces` media type.
+    V20,
     /// 3.0.x: Schema Objects are the extended subset of JSON Schema Wright draft 00.
     V30,
     /// 3.1.x: Schema Objects are JSON Schema 2020-12 with the OpenAPI vocabulary.
@@ -18,6 +23,10 @@ pub enum Version {
 /// The rules a Schema Object is read by.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Dialect {
+    /// Swagger 2.0's Schema Object: a subset of draft 4 with `discriminator` (a name),
+    /// `readOnly`, `xml`, `externalDocs` and `example`; `$ref` with its siblings ignored; the
+    /// `file` type; and the `x-nullable` extension read as `nullable`.
+    Swagger20,
     /// OpenAPI 3.0's Schema Object: `nullable`, `$ref` with its siblings ignored, no `const`,
     /// no type arrays.
     Oas30,
@@ -69,12 +78,13 @@ impl Dialect {
         )
     }
 
-    /// Whether a `$ref`'s sibling keywords are ignored: OpenAPI 3.0 and drafts before 2019-09.
+    /// Whether a `$ref`'s sibling keywords are ignored: Swagger 2.0, OpenAPI 3.0 and drafts
+    /// before 2019-09.
     #[must_use]
     pub fn ref_overrides(self) -> bool {
         matches!(
             self,
-            Self::Oas30 | Self::Draft4 | Self::Draft6 | Self::Draft7
+            Self::Swagger20 | Self::Oas30 | Self::Draft4 | Self::Draft6 | Self::Draft7
         )
     }
 
@@ -98,10 +108,21 @@ pub(super) fn detect(tree: &Tree<'_>) -> Result<DocKind, String> {
             )),
         };
     }
-    if tree.get(root, "swagger").is_some() {
-        return Err(String::from(
-            "Swagger 2.0 is not read yet (OpenAPI 3.0, 3.1 and 3.2 are)",
-        ));
+    if let Some(v) = tree.get(root, "swagger") {
+        // The spec asks for the string "2.0"; YAML written `swagger: 2.0` reads as a number.
+        let named = match tree.value(v) {
+            Value::String(_) => tree.as_str(v).map(Cow::into_owned),
+            Value::Number(span) => Some(tree.raw(span).to_owned()),
+            Value::Null | Value::Bool(_) | Value::Array(_) | Value::Object(_) => None,
+        };
+        let two = named.as_deref().and_then(|n| n.parse::<f64>().ok()) == Some(2.0);
+        return match named {
+            Some(_) if two => Ok(DocKind::OpenApi(Version::V20)),
+            Some(other) => Err(format!(
+                "Swagger {other} is not read by this version (2.0 is, and OpenAPI 3.0, 3.1 and 3.2)"
+            )),
+            None => Err(String::from("`swagger` must be the string \"2.0\"")),
+        };
     }
     let named = tree.get(root, "$schema").and_then(|n| tree.as_str(n));
     Ok(DocKind::Schema(

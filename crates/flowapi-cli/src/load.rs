@@ -69,7 +69,11 @@ fn normal(path: &Path) -> PathBuf {
         match part {
             std::path::Component::CurDir => {}
             std::path::Component::ParentDir => {
-                if !out.pop() {
+                // A `..` cancels the name before it, never another `..`: `../../x` stays so.
+                let last = out.components().next_back();
+                if matches!(last, Some(std::path::Component::Normal(_))) {
+                    out.pop();
+                } else {
                     out.push("..");
                 }
             }

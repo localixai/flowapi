@@ -99,6 +99,14 @@ fn body(out: &mut String, p: &Program<'_>, id: TypeId, ctx: Prec) {
                 out.push(')');
             }
         }
+        Kind::Union(ms) if ms.iter().any(|&m| p.is_never(m)) => {
+            // A member that allows no value adds nothing to a union.
+            let kept: Vec<TypeId> = ms.iter().copied().filter(|&m| !p.is_never(m)).collect();
+            match kept.as_slice() {
+                [] => out.push_str("never"),
+                _ => list(out, p, &kept, " | ", Prec::Union, ctx),
+            }
+        }
         Kind::Union(ms) => list(out, p, ms, " | ", Prec::Union, ctx),
         Kind::Intersection(ms) => list(out, p, ms, " & ", Prec::Intersection, ctx),
         Kind::Value(b) => value(out, p, b, ctx),
