@@ -1,0 +1,36 @@
+# Oracle O3 and O3': the official JSON-Schema-Test-Suite through the TypeScript compiler. Each
+# case's data is checked against the type flowapi generates for its schema. A crate of its own,
+# outside the workspace: the suite and the compiler never reach a build of flowapi.
+[package]
+name = "flowapi-suite"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "suite"
+path = "src/main.rs"
+
+[workspace]
+
+[dependencies]
+flowapi = { path = "../../crates/flowapi" }
+flowapi-ts = { path = "../../crates/flowapi-ts" }
+# Key order kept and numbers as written: a case's data is printed back as the literal it was.
+serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+unused_qualifications = "deny"
+
+[lints.clippy]
+dbg_macro = "deny"
+wildcard_imports = "deny"
+redundant_clone = "deny"
+format_push_string = "deny"
+iter_over_hash_type = "deny"
+too_many_lines = "deny"
+
+[profile.release]
+codegen-units = 1
+opt-level = 3

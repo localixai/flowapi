@@ -1,0 +1,35 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Pets", "version": "1" },
+  "paths": {
+    "/pets/{id}": {
+      "get": {
+        "operationId": "getPet",
+        "parameters": [{
+          "name": "id", "in": "path", "required": true,
+          "schema": { "type": "integer" }
+        }],
+        "responses": {
+          "200": {
+            "description": "The pet",
+            "content": { "application/json": {
+              "schema": { "$ref": "#/components/schemas/Pet" }
+            } }
+          }
+        }
+      }
+    }
+  },
+  "components": { "schemas": { "Pet": {
+    "type": "object",
+    "required": ["id", "kind"],
+    "properties": {
+      "id": { "type": "integer", "description": "Unique within the store." },
+      "kind": { "enum": ["cat", "dog"] },
+      "tags": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+      "owner": { "type": ["string", "null"] }
+    },
+    "patternProperties": { "^x-": { "type": "string" } },
+    "additionalProperties": false
+  } } }
+}

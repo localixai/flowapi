@@ -1,0 +1,25 @@
+#!/bin/sh
+# The repository's checks from one entry point: formatting, the lints, the tests (the
+# repository's rules, the JSON reader on JSONTestSuite, the TypeScript kept for each case), a
+# WebAssembly build of the core and the TypeScript target (which proves they hold no I/O), and
+# the oracles: O3 on the JSON Schema Test Suite (soundness 100%, precision never lower) and the
+# requirements ledger's report (never stale). The benchmarks are not among them: bench/run.sh.
+#
+#   scripts/check          every check, in order; stops at the first failure
+set -eu
+cd "$(dirname "$0")/.."
+step() { printf '\n== %s\n' "$*"; "$@"; }
+step cargo fmt --check
+step cargo clippy --locked --all-targets -- -D warnings
+step cargo test --locked
+step cargo build --locked --release -p flowapi -p flowapi-ts --target wasm32-unknown-unknown
+for crate in bench conformance/suite conformance/ledger; do
+    step cargo fmt --check --manifest-path "$crate/Cargo.toml"
+done
+if [ ! -x conformance/ts/node_modules/.bin/tsc ]; then
+    printf '\nO3 needs the TypeScript compiler: run `npm ci` in conformance/ts first\n'
+    exit 1
+fi
+(cd conformance/suite && step cargo run --locked --release --quiet)
+(cd conformance/ledger && step cargo run --locked --release --quiet --bin report -- --check)
+printf '\nall checks passed\n'

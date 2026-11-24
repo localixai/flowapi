@@ -1,0 +1,11 @@
+# The descriptions the benchmarks read, each pinned: the repository's commit and the sha256 and size of
+# the JSON measured. A YAML source (APIs-guru keeps only YAML) is converted by
+# competitors/yaml2json.mjs; source_sha256 is the YAML's, and is - where the source is the JSON itself.
+# Columns are separated by one tab. fetch.sh reads this file.
+name	url	commit	sha256	bytes	source_sha256
+slack	https://raw.githubusercontent.com/APIs-guru/openapi-directory/f04b8d0bcd39c52e1cf3ad7a5fe744709832ae49/APIs/slack.com/1.7.0/openapi.yaml	f04b8d0bcd39c52e1cf3ad7a5fe744709832ae49	3b76bbbd66e694b91e9728f61d984d73882c27bcbbef52af94b965e0b7ab772a	998589	01c97099c4eb149567d42eb870cb2e0b89e68dabf8bc8ad46f02f448351a5387
+twilio	https://raw.githubusercontent.com/APIs-guru/openapi-directory/f04b8d0bcd39c52e1cf3ad7a5fe744709832ae49/APIs/twilio.com/api/1.55.0/openapi.yaml	f04b8d0bcd39c52e1cf3ad7a5fe744709832ae49	d6287f3e6ac9241f12ffaf3b35c1f3b678ee398816e4ad39072456f689879e62	1373177	f39f225169c44125c4d141601541ea311e7d4baa166b3d59731af69f13f209bf
+digitalocean	https://raw.githubusercontent.com/APIs-guru/openapi-directory/f04b8d0bcd39c52e1cf3ad7a5fe744709832ae49/APIs/digitalocean.com/2.0/openapi.yaml	f04b8d0bcd39c52e1cf3ad7a5fe744709832ae49	7225ea52676d965fe5aab8894cabb06487d12219bcdb9799de5ababe097502d3	1917588	5bd3a4800c4396372cb80d99cc82b49463e4a3f136b63d1794c19f13da37cf63
+stripe	https://raw.githubusercontent.com/stripe/openapi/5237fa08d785bc435df80fe40c2416e2848e49b7/openapi/spec3.json	5237fa08d785bc435df80fe40c2416e2848e49b7	7cff4cc46d0654101a36a3302f7544640f5f73e4f3cad6f264f0e23c19fa1776	8317513	-
+github	https://raw.githubusercontent.com/github/rest-api-description/c9c95fe34ced05fe076001f5c55704742bc8e7f8/descriptions/api.github.com/api.github.com.json	c9c95fe34ced05fe076001f5c55704742bc8e7f8	6d9bbb20d8865b01464028937f2403954ad46598b4ebd3513dcb1a15b1a84aa7	14275550	-
+cloudflare	https://raw.githubusercontent.com/cloudflare/api-schemas/5aec9e4e3a074fa419d2fe1b7c0894e513c29a3e/openapi.json	5aec9e4e3a074fa419d2fe1b7c0894e513c29a3e	70640e42c9d9bd8b6fa9ad78d8e6e025860536d28b458cb502ca7876974fd9be	29773340	-

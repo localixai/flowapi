@@ -1,0 +1,4 @@
+{"openapi":"3.2.0","info":{"title":"t","version":"1"},"paths":{"/a":{"get":{"operationId":"g",
+ "parameters":[{"name":"Authorization","in":"header","required":true,"schema":{"type":"string"}},
+   {"name":"accept","in":"header","schema":{"type":"string"}}],
+ "responses":{"200":{"description":"ok"}}}}}}

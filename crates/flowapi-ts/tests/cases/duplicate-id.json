@@ -1,0 +1,1 @@
+{"$defs":{"a":{"$id":"https://example.com/x","type":"string"},"b":{"$id":"https://example.com/x","type":"number"}},"$ref":"https://example.com/x"}

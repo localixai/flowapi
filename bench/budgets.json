@@ -1,0 +1,19 @@
+{
+  "$comment": "What flowapi holds itself to against the other generators. `cargo run --release --bin check` reads results/speed.json and fails on any rule a run breaks. A ratio is the best other tool's figure over flowapi's on each description; `except` lowers it for one description, where the measurement says less. Change a number only together with its reason, in the change that moves it.",
+  "rules": [
+    {
+      "id": "flowapi-type-checks",
+      "about": "flowapi's output type-checks on every description, with tsc --strict --exactOptionalPropertyTypes."
+    },
+    {
+      "id": "faster",
+      "about": "flowapi, the whole process timed, is at least 10x faster than the fastest other generator on every description.",
+      "minRatio": 10.0
+    },
+    {
+      "id": "memory",
+      "about": "flowapi's peak resident memory is no more than the leanest other generator's on every description.",
+      "maxRatio": 1.0
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://example.com/root.json",
+ "type":"object","required":["tree","map"],
+ "properties":{
+   "tree":{"$ref":"#/$defs/node"},
+   "map":{"type":"object","patternProperties":{"^x-":{"type":"string"}},"additionalProperties":{"type":"number"}},
+   "constant":{"const":{"a":1}},
+   "self":{"$ref":"#"},
+   "byAnchor":{"$ref":"#leaf"},
+   "byId":{"$ref":"https://example.com/leaf.json"},
+   "mixed":{"type":["string","integer","null"],"enum":["a",1,1.5,null,true]},
+   "never":false,
+   "both":{"allOf":[{"type":"object","properties":{"a":{"type":"string"}}},{"type":"object","properties":{"b":{"type":"integer"}},"required":["b"]}]},
+   "conflict":{"allOf":[{"type":"string"},{"type":"integer"}]},
+   "loop":{"$ref":"#/$defs/loop"}
+ },
+ "$defs":{
+   "node":{"type":"object","properties":{"children":{"type":"array","items":{"$ref":"#/$defs/node"}},"value":{"type":"string","minLength":1}}},
+   "leaf":{"$id":"leaf.json","type":"boolean"},
+   "anchored":{"$anchor":"leaf","type":"integer"},
+   "loop":{"anyOf":[{"$ref":"#/$defs/loop"},{"type":"null"}]}
+ }}

@@ -1,0 +1,18 @@
+[package]
+name = "flowapi-ts"
+description = "flowapi's TypeScript target: a type graph printed as TypeScript types"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords = ["openapi", "json-schema", "codegen", "typescript"]
+categories = ["development-tools"]
+publish = false
+
+[dependencies]
+flowapi = { path = "../flowapi" }
+
+[lints]
+workspace = true

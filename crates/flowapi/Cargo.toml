@@ -1,0 +1,21 @@
+[package]
+name = "flowapi"
+description = "Types from API descriptions: OpenAPI and JSON Schema read into a type graph, sound by the specification"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "../../README.md"
+keywords = ["openapi", "json-schema", "codegen", "typescript", "types"]
+categories = ["development-tools", "parser-implementations"]
+# Published from a git tag for now; crates.io comes later (AGENTS.md).
+publish = false
+include = ["/src/**", "/README.md", "/LICENSE", "/CHANGELOG.md"]
+
+# No dependency (G11): the JSON reader is our own, for the byte offset of every node (G8).
+[dependencies]
+
+[lints]
+workspace = true

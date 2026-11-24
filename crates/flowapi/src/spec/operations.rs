@@ -1,0 +1,164 @@
+//! An OpenAPI description's operations: each path's methods (and 3.2's `additionalOperations`),
+//! their parameters (the path item's and the operation's own, the latter winning), request
+//! bodies, and responses with their headers, Reference Objects followed and a dangling one
+//! reported. What each holds is a schema the graph reads; nothing else of an operation
+//! (servers, security, callbacks, links) says what a value is.
+
+mod reader;
+
+use crate::diag::Diagnostics;
+use crate::id::DocId;
+use crate::schema::Resource;
+use crate::source::{Dialect, Documents, Version};
+use reader::Reader;
+use std::sync::Arc;
+
+/// Where a parameter goes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Location {
+    /// A path template's expression; always required.
+    Path,
+    /// A query parameter.
+    Query,
+    /// The whole query string (3.2).
+    QueryString,
+    /// A header.
+    Header,
+    /// A cookie.
+    Cookie,
+}
+
+impl Location {
+    /// The `in` value, as the description writes it.
+    #[must_use]
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Path => "path",
+            Self::Query => "query",
+            Self::QueryString => "querystring",
+            Self::Header => "header",
+            Self::Cookie => "cookie",
+        }
+    }
+}
+
+/// A parameter, or a response's header.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Param {
+    /// Its name.
+    pub name: String,
+    /// Where it goes (`Header` for a response's header).
+    pub location: Location,
+    /// Whether it must be given.
+    pub required: bool,
+    /// Whether it is deprecated.
+    pub deprecated: bool,
+    /// Its schema (or the schema of its one media type); `None` for any value.
+    pub schema: Option<Resource>,
+}
+
+/// A body's representations: a media type each, with its schema.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Media {
+    /// The media type or range, as written (`application/json`, `text/*`).
+    pub media_type: String,
+    /// Its schema; `None` for any value.
+    pub schema: Option<Resource>,
+}
+
+/// A request body.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Body {
+    /// Whether it must be sent.
+    pub required: bool,
+    /// Its representations.
+    pub content: Vec<Media>,
+}
+
+/// A response.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Response {
+    /// The status code, a range (`4XX`) or `default`.
+    pub status: String,
+    /// Its headers, `Content-Type` left out (the spec says it SHALL be ignored).
+    pub headers: Vec<Param>,
+    /// Its representations; empty for a response with no body.
+    pub content: Vec<Media>,
+}
+
+/// An operation.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Operation {
+    /// Its `operationId`, or its method and path.
+    pub name: String,
+    /// The path template.
+    pub path: String,
+    /// The method, as the Path Item names it.
+    pub method: String,
+    /// Whether it is deprecated.
+    pub deprecated: bool,
+    /// Its parameters, path item's first.
+    pub params: Vec<Param>,
+    /// Its request body.
+    pub body: Option<Body>,
+    /// Its responses, in the order written.
+    pub responses: Vec<Response>,
+}
+
+const METHODS: [&str; 9] = [
+    "get", "put", "post", "delete", "options", "head", "patch", "trace", "query",
+];
+
+/// Every operation of the first document, in the order written.
+#[must_use]
+pub(super) fn read(
+    docs: &Documents<'_>,
+    base: &str,
+    dialect: Dialect,
+    version: Version,
+    diags: &mut Diagnostics,
+) -> Vec<Operation> {
+    let mut out = Vec::new();
+    let Some(d) = docs.get(DocId::FIRST) else {
+        return out;
+    };
+    let tree = &d.tree;
+    let Some(paths) = tree.get(tree.root(), "paths") else {
+        return out;
+    };
+    let r = Reader {
+        docs,
+        base,
+        shared: Arc::from(base),
+        dialect,
+        version,
+    };
+    for m in tree.members(paths) {
+        let Some(path) = tree.string(m.key) else {
+            continue;
+        };
+        // The Path Item's own fields win over those of what its `$ref` names (3.1, 3.2).
+        let mut items = vec![(DocId::FIRST, m.value)];
+        if let Some(target) = r.follow_or_report(
+            DocId::FIRST,
+            m.value,
+            &format!("the Path Item of `{path}`"),
+            diags,
+        ) && target != (DocId::FIRST, m.value)
+        {
+            items.push(target);
+        }
+        let shared = items
+            .iter()
+            .find_map(|&(doc, item)| r.params(doc, item, diags));
+        for (method, (doc, op)) in r.methods(&items) {
+            let mut params = shared.clone().unwrap_or_default();
+            for p in r.params(doc, op, diags).unwrap_or_default() {
+                params.retain(|q| !(q.name == p.name && q.location == p.location));
+                params.push(p);
+            }
+            out.push(r.operation(&path, &method, doc, op, params, diags));
+        }
+    }
+    out
+}

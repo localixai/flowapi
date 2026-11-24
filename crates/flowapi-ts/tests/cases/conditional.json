@@ -1,0 +1,1 @@
+{"properties":{"noIf":{"then":{"type":"string"},"else":{"type":"number"}},"withIf":{"if":{"type":"string"},"then":{"const":"a"},"else":{"type":"number"}}}}

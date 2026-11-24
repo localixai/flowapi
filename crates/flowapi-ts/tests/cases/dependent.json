@@ -1,0 +1,1 @@
+{"type":"object","properties":{"a":{"type":"string"},"b":{"type":"integer"}},"dependentRequired":{"a":["b"]},"not":{"type":"null"},"minItems":1}

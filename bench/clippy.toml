@@ -1,0 +1,2 @@
+# The bench's own: the workspace's clippy.toml forbids the clock and threads to the library (its
+# output never depends on them), and a benchmark is made of both.

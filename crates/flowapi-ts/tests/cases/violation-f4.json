@@ -1,0 +1,2 @@
+{"openapi":"3.2.0","info":{"title":"t","version":"1"},"paths":{"/a":{
+ "additionalOperations":{"LINK":{"operationId":"link","responses":{"200":{"description":"ok"}}}}}}}

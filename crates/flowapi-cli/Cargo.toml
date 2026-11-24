@@ -1,0 +1,32 @@
+[package]
+name = "flowapi-cli"
+description = "The flowapi command: types from an OpenAPI description or a JSON Schema, written to a file"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish = false
+
+[[bin]]
+name = "flowapi"
+path = "src/main.rs"
+
+[dependencies]
+flowapi = { path = "../flowapi" }
+flowapi-ts = { path = "../flowapi-ts" }
+# YAML 1.2 read as events, each with its line and column: the CLI writes JSON for the core (which
+# reads JSON only, G5) and maps a diagnostic back to the YAML line, and expands aliases itself,
+# within a bound. Maintained (0.4.0, 2026-11), built to pass the YAML test suite (our own run of
+# it: tests/yaml_suite.rs), its own state stack rather than recursion, two small dependencies.
+# serde_yaml is no longer maintained; yaml-rust2 is the YAML 1.2 line this parser continues.
+saphyr-parser = "=0.4.0"
+
+[dev-dependencies]
+# The yaml-test-suite's JSON read by a reader that is not ours (tests/yaml_suite.rs): an oracle
+# independent of the core's reader, and a stream of several JSON values.
+serde_json = "=1.0.154"
+
+[lints]
+workspace = true

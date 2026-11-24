@@ -1,0 +1,17 @@
+# The requirements ledger (oracle O1): reads the pinned specification texts in ../specs/, writes
+# ../requirements.json, classifies it by ../scope.json and writes ../REPORT.md from the `req:`
+# markers in flowapi's tests. A crate of its own, outside flowapi's workspace: it never reaches a
+# build of flowapi.
+[package]
+name = "flowapi-ledger"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.89"
+publish = false
+license = "MIT"
+description = "The requirements ledger of flowapi: every normative statement of OpenAPI and JSON Schema, by id"
+
+[workspace]
+
+[dependencies]
+serde_json = "1.0.154"

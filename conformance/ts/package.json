@@ -1,0 +1,9 @@
+{
+  "name": "flowapi-conformance-ts",
+  "private": true,
+  "description": "The TypeScript compiler the conformance oracle checks flowapi's output with",
+  "type": "module",
+  "dependencies": {
+    "typescript": "7.0.2"
+  }
+}

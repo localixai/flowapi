@@ -1,0 +1,371 @@
+{
+  "date": "2026-11-24",
+  "machine": {
+    "cores": 4,
+    "cpu": "Intel(R) N150",
+    "memoryGb": 16.5,
+    "os": "Ubuntu 24.04.5 LTS, Linux 7.0.0-43-generic"
+  },
+  "rounds": 5,
+  "rows": [
+    {
+      "bytes": 998589,
+      "error": null,
+      "file": "slack",
+      "medianMs": 13.675889,
+      "ok": true,
+      "outputBytes": 261189,
+      "peakRssKb": 7300,
+      "roundsMs": [
+        13.952756,
+        13.364489,
+        13.320613999999999,
+        13.979588,
+        13.675889
+      ],
+      "tool": "flowapi",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 998589,
+      "error": null,
+      "file": "slack",
+      "medianMs": 892.102497,
+      "ok": true,
+      "outputBytes": 464133,
+      "peakRssKb": 184892,
+      "roundsMs": [
+        884.790807,
+        903.1496970000001,
+        894.8955189999999,
+        892.102497,
+        888.437324
+      ],
+      "tool": "openapi-typescript",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 998589,
+      "error": null,
+      "file": "slack",
+      "medianMs": 992.0074020000001,
+      "ok": true,
+      "outputBytes": 307966,
+      "peakRssKb": 197620,
+      "roundsMs": [
+        990.026525,
+        989.461643,
+        992.0074020000001,
+        1019.0274740000001,
+        993.067071
+      ],
+      "tool": "hey-api",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 1373177,
+      "error": null,
+      "file": "twilio",
+      "medianMs": 16.729694,
+      "ok": true,
+      "outputBytes": 455788,
+      "peakRssKb": 8596,
+      "roundsMs": [
+        19.2707,
+        17.745839999999998,
+        16.559515,
+        16.492290999999998,
+        16.729694
+      ],
+      "tool": "flowapi",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 1373177,
+      "error": null,
+      "file": "twilio",
+      "medianMs": 923.2864010000001,
+      "ok": true,
+      "outputBytes": 823204,
+      "peakRssKb": 182036,
+      "roundsMs": [
+        929.5870600000001,
+        923.2864010000001,
+        925.463363,
+        920.919162,
+        922.41239
+      ],
+      "tool": "openapi-typescript",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 1373177,
+      "error": null,
+      "file": "twilio",
+      "medianMs": 1134.0289269999998,
+      "ok": true,
+      "outputBytes": 620915,
+      "peakRssKb": 202284,
+      "roundsMs": [
+        1142.933507,
+        1126.10637,
+        1129.12202,
+        1155.320774,
+        1134.0289269999998
+      ],
+      "tool": "hey-api",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 1917588,
+      "error": null,
+      "file": "digitalocean",
+      "medianMs": 50.221305,
+      "ok": true,
+      "outputBytes": 706699,
+      "peakRssKb": 12708,
+      "roundsMs": [
+        53.640324,
+        50.332278,
+        50.221305,
+        50.19875,
+        50.168974
+      ],
+      "tool": "flowapi",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 1917588,
+      "error": "exited with 1: ✘  Can't resolve $ref: ENOENT: no such file or directory 'bench/data/models/domain_record_types.yml' at #/paths/~1v2~1domains~1{domain_name}~1records/post/requestBody/content/application~1json/schema/discriminator/mapping/A\n✘  Can't resolve $ref: ENOENT: no such file or directory 'bench/data/models/domain_record_types.yml' at #/paths/~1v2~1domains~1{domain_name}~1records/post/requestBody/content/application~1json/schema/discriminator/mapping/AAAA\n✘  Can't resolve $ref: ENOENT: no such file or directory 'bench/data/models/domain_record_types.yml' at #/paths/~1v2~1domains~1{domain_name}~1records/post/requestBody/content/application~1json/schema/discriminator/mapping/CAA\n✘  Can't resolve $ref: ENOENT: no such file or directory 'bench/data/models/domain_record_types.yml' at #/paths/~1v2~1domains~1{domain_name}~1records/post/requestBody/content/application~1json/schema/discriminator/mapping/CNAME",
+      "failedAfterMs": 871.221492,
+      "file": "digitalocean",
+      "ok": false,
+      "peakRssKb": 189804,
+      "tool": "openapi-typescript"
+    },
+    {
+      "bytes": 1917588,
+      "error": "exited with 1: if (error instanceof Error) throw new JobError(\"\", {\nJobError\noriginalError: {\nerror: Error: Symbol finalName has not been resolved yet for ~ Symbol#54 \"\"",
+      "failedAfterMs": 1335.1812459999999,
+      "file": "digitalocean",
+      "ok": false,
+      "peakRssKb": 258712,
+      "tool": "hey-api"
+    },
+    {
+      "bytes": 8317513,
+      "error": null,
+      "file": "stripe",
+      "medianMs": 113.536244,
+      "ok": true,
+      "outputBytes": 2945059,
+      "peakRssKb": 42936,
+      "roundsMs": [
+        113.536244,
+        114.270786,
+        112.83672899999999,
+        113.912609,
+        113.410168
+      ],
+      "tool": "flowapi",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 8317513,
+      "error": null,
+      "file": "stripe",
+      "medianMs": 2437.901276,
+      "ok": true,
+      "outputBytes": 4610909,
+      "peakRssKb": 337420,
+      "roundsMs": [
+        2437.901276,
+        2440.891733,
+        2434.866916,
+        2447.524493,
+        2427.350569
+      ],
+      "tool": "openapi-typescript",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 8317513,
+      "error": null,
+      "file": "stripe",
+      "medianMs": 10569.365387,
+      "ok": true,
+      "outputBytes": 3459420,
+      "peakRssKb": 657020,
+      "roundsMs": [
+        10567.110569,
+        10574.933933,
+        10569.365387,
+        10586.036805,
+        10542.665344
+      ],
+      "tool": "hey-api",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 14275550,
+      "error": null,
+      "file": "github",
+      "medianMs": 184.75263,
+      "ok": true,
+      "outputBytes": 3219918,
+      "peakRssKb": 63168,
+      "roundsMs": [
+        185.087565,
+        184.75263,
+        184.901259,
+        184.749259,
+        183.241191
+      ],
+      "tool": "flowapi",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 14275550,
+      "error": null,
+      "file": "github",
+      "medianMs": 3730.0064810000003,
+      "ok": true,
+      "outputBytes": 7364268,
+      "peakRssKb": 481112,
+      "roundsMs": [
+        3710.5405490000003,
+        3718.7820970000002,
+        3752.90334,
+        3735.299034,
+        3730.0064810000003
+      ],
+      "tool": "openapi-typescript",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 14275550,
+      "error": null,
+      "file": "github",
+      "medianMs": 4492.728488,
+      "ok": true,
+      "outputBytes": 4509843,
+      "peakRssKb": 495520,
+      "roundsMs": [
+        4492.728488,
+        4522.407225,
+        4479.700957,
+        4489.851887000001,
+        4503.850578
+      ],
+      "tool": "hey-api",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 29773340,
+      "error": null,
+      "file": "cloudflare",
+      "medianMs": 435.36976100000004,
+      "ok": true,
+      "outputBytes": 8113783,
+      "peakRssKb": 142852,
+      "roundsMs": [
+        437.423476,
+        433.731586,
+        435.045673,
+        435.80873599999995,
+        435.36976100000004
+      ],
+      "tool": "flowapi",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    },
+    {
+      "bytes": 29773340,
+      "error": null,
+      "file": "cloudflare",
+      "medianMs": 7960.060238,
+      "ok": true,
+      "outputBytes": 16151520,
+      "peakRssKb": 959328,
+      "roundsMs": [
+        8080.554160000001,
+        7920.818292,
+        7960.060238,
+        7930.490399,
+        7973.193123999999
+      ],
+      "tool": "openapi-typescript",
+      "typeChecks": false,
+      "typeErrorSample": "data/out/openapi-typescript/cloudflare.ts(70987,9): error TS2502: 'brapi_CrawlJsonValue' is referenced directly or indirectly in its own type annotation.\ndata/out/openapi-typescript/cloudflare.ts(78485,9): error TS2502: 'cws_JSONValue' is referenced directly or indirectly in its own type annotation.\ndata/out/openapi-typescript/cloudflare.ts(88665,9): error TS2502: 'flagship_JsonValue' is referenced directly or indirectly in its own type annotation.\ndata/out/openapi-typescript/cloudflare.ts(102148,9): error TS2502: 'organizations_UserTenantAllocationValue' is referenced directly or indirectly in its own type annotation.\ndata/out/openapi-typescript/cloudflare.ts(127545,9): error TS2502: '\"workers-kv_any\"' is referenced directly or indirectly in its own type annotation.",
+      "typeErrors": 5
+    },
+    {
+      "bytes": 29773340,
+      "error": null,
+      "file": "cloudflare",
+      "medianMs": 12153.772457000001,
+      "ok": true,
+      "outputBytes": 10255687,
+      "peakRssKb": 1051784,
+      "roundsMs": [
+        12427.83296,
+        11853.702938,
+        12153.772457000001,
+        12085.405824000001,
+        12174.027069
+      ],
+      "tool": "hey-api",
+      "typeChecks": true,
+      "typeErrorSample": "",
+      "typeErrors": 0
+    }
+  ],
+  "timeoutS": 300,
+  "tools": [
+    "flowapi",
+    "openapi-typescript",
+    "hey-api"
+  ],
+  "typeCheck": {
+    "available": true,
+    "command": "tsc --ignoreConfig --strict --exactOptionalPropertyTypes --noEmit --target es2022 --skipLibCheck"
+  },
+  "versions": {
+    "@hey-api/openapi-ts": "0.99.0",
+    "flowapi": "flowapi 0.1.0",
+    "flowapiCommit": "no commit yet",
+    "flowapiUncommitted": true,
+    "node": "v22.23.5",
+    "openapi-typescript": "7.13.0",
+    "rustc": "rustc 1.100.0 (0ef1bc386 2026-11-09)",
+    "tsc": "Version 7.0.2",
+    "typescriptOfTheGenerators": "5.9.3"
+  }
+}

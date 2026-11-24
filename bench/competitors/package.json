@@ -1,0 +1,15 @@
+{
+  "name": "flowapi-bench-competitors",
+  "private": true,
+  "description": "The other TypeScript type generators flowapi is measured against, at exact versions, and the YAML reader that turns APIs-guru's descriptions into JSON",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "dependencies": {
+    "@hey-api/openapi-ts": "0.99.0",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "yaml": "2.9.1"
+  }
+}

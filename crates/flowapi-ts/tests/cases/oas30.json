@@ -1,0 +1,9 @@
+{"openapi":"3.0.3","info":{"title":"t","version":"1"},"paths":{},
+ "components":{"schemas":{
+  "Maybe":{"type":"string","nullable":true},
+  "NoType":{"nullable":true},
+  "Overridden":{"$ref":"#/components/schemas/Maybe","type":"integer"},
+  "Choice":{"oneOf":[{"$ref":"#/components/schemas/Cat"},{"$ref":"#/components/schemas/Dog"}],"discriminator":{"propertyName":"kind"}},
+  "Cat":{"type":"object","required":["kind"],"properties":{"kind":{"type":"string","enum":["cat"]},"lives":{"type":"integer"}}},
+  "Dog":{"type":"object","required":["kind"],"properties":{"kind":{"type":"string","enum":["dog"]}}}
+}}}

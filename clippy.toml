@@ -1,0 +1,31 @@
+# The lints are in Cargo.toml; this is their configuration (AGENTS.md, G1).
+
+# Tests may unwrap, panic and print: a failed test is the panic's job (G1).
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
+allow-print-in-tests = true
+allow-dbg-in-tests = true
+
+too-many-lines-threshold = 100
+cognitive-complexity-threshold = 25
+max-fn-params-bools = 2
+max-struct-bools = 3
+
+# The core does no I/O and keeps no state between calls (G5, G6). The CLI crate is the shell and
+# sets these aside where it reads files, with a reason.
+disallowed-methods = [
+    { path = "std::process::exit", reason = "a library never ends the process: return what was found" },
+    { path = "std::env::var", reason = "a library reads nothing from the environment: take it as an argument" },
+    { path = "std::env::set_var", reason = "a library never changes the environment" },
+    { path = "std::thread::spawn", reason = "generation runs on its caller's thread" },
+    { path = "std::thread::sleep", reason = "generation never waits" },
+    { path = "std::time::Instant::now", reason = "output never depends on the clock (G4)" },
+    { path = "std::time::SystemTime::now", reason = "output never depends on the clock (G4)" },
+]
+disallowed-types = [
+    { path = "std::cell::RefCell", reason = "no shared mutable state: a stage returns a new value (G6, G7)" },
+    { path = "std::cell::Cell", reason = "no shared mutable state: a stage returns a new value (G6, G7)" },
+    { path = "std::rc::Rc", reason = "the arena holds every node; ids, not pointers (G6)" },
+    { path = "std::collections::HashSet", reason = "deterministic output: an ordered set or a Vec (G4)" },
+]

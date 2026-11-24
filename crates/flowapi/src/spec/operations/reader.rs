@@ -1,0 +1,321 @@
+//! Reading one operation's parts, Reference Objects followed: a reference that names nothing is
+//! an error that names it, never a part dropped in silence.
+
+use super::{Body, Location, METHODS, Media, Operation, Param, Response};
+use crate::diag::Diagnostics;
+use crate::id::{DocId, NodeId};
+use crate::json::Tree;
+use crate::schema::Resource;
+use crate::source::{Dialect, Documents, Version, resolve_pointer};
+use crate::uri;
+use std::sync::Arc;
+
+/// Header parameters the spec says SHALL be ignored, compared without case.
+const IGNORED_HEADERS: [&str; 3] = ["accept", "content-type", "authorization"];
+
+pub(super) struct Reader<'d, 't> {
+    pub(super) docs: &'d Documents<'t>,
+    pub(super) base: &'d str,
+    pub(super) shared: Arc<str>,
+    pub(super) dialect: Dialect,
+    pub(super) version: Version,
+}
+
+impl<'t> Reader<'_, 't> {
+    fn tree(&self, doc: DocId) -> Option<&Tree<'t>> {
+        self.docs.get(doc).map(|d| &d.tree)
+    }
+
+    /// A Reference Object followed to what it names, at most 32 times; any other node as it is.
+    fn follow(&self, doc: DocId, node: NodeId) -> Option<(DocId, NodeId)> {
+        let (mut doc, mut node) = (doc, node);
+        for _ in 0..32 {
+            let d = self.docs.get(doc)?;
+            let Some(r) = d.tree.get(node, "$ref").and_then(|n| d.tree.as_str(n)) else {
+                return Some((doc, node));
+            };
+            let absolute = uri::resolve(
+                if doc == DocId::FIRST {
+                    self.base
+                } else {
+                    &d.uri
+                },
+                &r,
+            );
+            let (resource, fragment) = uri::split_fragment(&absolute);
+            let target = if resource == self.base || resource.is_empty() {
+                DocId::FIRST
+            } else {
+                self.docs.find(resource)?
+            };
+            let t = self.tree(target)?;
+            node = resolve_pointer(t, t.root(), fragment)?;
+            doc = target;
+        }
+        None
+    }
+
+    /// [`Self::follow`], reporting a reference that names nothing.
+    pub(super) fn follow_or_report(
+        &self,
+        doc: DocId,
+        node: NodeId,
+        what: &str,
+        diags: &mut Diagnostics,
+    ) -> Option<(DocId, NodeId)> {
+        let found = self.follow(doc, node);
+        if found.is_none() {
+            let r = self
+                .tree(doc)
+                .and_then(|t| t.get(node, "$ref"))
+                .and_then(|n| self.tree(doc)?.as_str(n));
+            let r = r.as_deref().unwrap_or("?");
+            diags.error(
+                self.reference_rule(),
+                self.docs.loc(doc, node),
+                format!("{what} is a reference that names nothing: {r}"),
+            );
+        }
+        found
+    }
+
+    /// The requirement a dangling Reference Object breaks, in the document's version.
+    fn reference_rule(&self) -> &'static str {
+        match self.version {
+            Version::V30 => "oas-3.0.reference-object.$ref",
+            Version::V31 => "oas-3.1.reference-object.$ref",
+            Version::V32 => "oas-3.2.reference-object.$ref",
+        }
+    }
+
+    /// The operations of a Path Item, the first item's before those its `$ref` names: the fixed
+    /// methods in the spec's order, then 3.2's `additionalOperations` as written.
+    pub(super) fn methods(&self, items: &[(DocId, NodeId)]) -> Vec<(String, (DocId, NodeId))> {
+        let mut out: Vec<(String, (DocId, NodeId))> = Vec::new();
+        // `query` and `additionalOperations` are 3.2's: in 3.0 and 3.1 they are not fields.
+        let v32 = self.version == Version::V32;
+        for method in METHODS.iter().filter(|m| v32 || **m != "query") {
+            if let Some(found) = items
+                .iter()
+                .find_map(|&(doc, item)| Some((doc, self.tree(doc)?.get(item, method)?)))
+            {
+                out.push(((*method).to_owned(), found));
+            }
+        }
+        for &(doc, item) in items.iter().filter(|_| v32) {
+            let Some(t) = self.tree(doc) else { continue };
+            for m in t
+                .get(item, "additionalOperations")
+                .map_or(&[][..], |n| t.members(n))
+            {
+                let Some(name) = t.string(m.key) else {
+                    continue;
+                };
+                if out.iter().all(|(n, _)| *n != name) {
+                    out.push((name.into_owned(), (doc, m.value)));
+                }
+            }
+        }
+        out
+    }
+
+    fn schema(&self, doc: DocId, node: NodeId) -> Resource {
+        let base = match self.docs.get(doc) {
+            Some(d) if doc != DocId::FIRST => Arc::from(d.uri.as_str()),
+            Some(_) | None => Arc::clone(&self.shared),
+        };
+        Resource {
+            doc,
+            node,
+            base,
+            dialect: self.dialect,
+        }
+    }
+
+    fn flag(&self, doc: DocId, node: NodeId, key: &str) -> bool {
+        self.tree(doc)
+            .and_then(|t| t.get(node, key).and_then(|n| t.as_bool(n)))
+            == Some(true)
+    }
+
+    /// A parameter's or a header's schema: `schema`, or that of its one media type.
+    fn value_schema(&self, doc: DocId, node: NodeId) -> Option<Resource> {
+        let t = self.tree(doc)?;
+        let s = t.get(node, "schema").or_else(|| {
+            t.get(node, "content")
+                .and_then(|c| t.members(c).first().and_then(|m| t.get(m.value, "schema")))
+        })?;
+        Some(self.schema(doc, s))
+    }
+
+    /// The `parameters` of a Path Item or an operation; `None` when it has none.
+    pub(super) fn params(
+        &self,
+        doc: DocId,
+        owner: NodeId,
+        diags: &mut Diagnostics,
+    ) -> Option<Vec<Param>> {
+        let t = self.tree(doc)?;
+        let list = t.get(owner, "parameters")?;
+        let mut out = Vec::new();
+        for &n in t.items(list) {
+            let Some((pd, p)) = self.follow_or_report(doc, n, "a parameter", diags) else {
+                continue;
+            };
+            let Some(pt) = self.tree(pd) else { continue };
+            let location = match pt.get(p, "in").and_then(|n| pt.as_str(n)).as_deref() {
+                Some("path") => Location::Path,
+                Some("query") => Location::Query,
+                Some("querystring") => Location::QueryString,
+                Some("header") => Location::Header,
+                Some("cookie") => Location::Cookie,
+                Some(_) | None => continue,
+            };
+            let Some(name) = pt.get(p, "name").and_then(|n| pt.as_str(n)) else {
+                continue;
+            };
+            if location == Location::Header
+                && IGNORED_HEADERS.contains(&name.to_ascii_lowercase().as_str())
+            {
+                continue;
+            }
+            let required = location == Location::Path || self.flag(pd, p, "required");
+            let deprecated = self.flag(pd, p, "deprecated");
+            out.push(Param {
+                name: name.into_owned(),
+                location,
+                required,
+                deprecated,
+                schema: self.value_schema(pd, p),
+            });
+        }
+        Some(out)
+    }
+
+    fn content(&self, doc: DocId, owner: NodeId, diags: &mut Diagnostics) -> Vec<Media> {
+        let Some(t) = self.tree(doc) else {
+            return Vec::new();
+        };
+        let Some(content) = t.get(owner, "content") else {
+            return Vec::new();
+        };
+        let mut out = Vec::new();
+        for m in t.members(content) {
+            let Some(media_type) = t.string(m.key) else {
+                continue;
+            };
+            // 3.2: a Media Type Object may be a reference (`components/mediaTypes`).
+            let Some((md, media)) = self.follow_or_report(doc, m.value, "a media type", diags)
+            else {
+                continue;
+            };
+            let schema = self
+                .tree(md)
+                .and_then(|mt| mt.get(media, "schema"))
+                .map(|s| self.schema(md, s));
+            out.push(Media {
+                media_type: media_type.into_owned(),
+                schema,
+            });
+        }
+        out
+    }
+
+    fn body(&self, doc: DocId, node: NodeId, diags: &mut Diagnostics) -> Option<Body> {
+        let (bd, b) = self.follow_or_report(doc, node, "a request body", diags)?;
+        Some(Body {
+            required: self.flag(bd, b, "required"),
+            content: self.content(bd, b, diags),
+        })
+    }
+
+    fn headers(&self, doc: DocId, response: NodeId, diags: &mut Diagnostics) -> Vec<Param> {
+        let Some(t) = self.tree(doc) else {
+            return Vec::new();
+        };
+        let mut out = Vec::new();
+        for m in t.get(response, "headers").map_or(&[][..], |n| t.members(n)) {
+            let Some(name) = t.string(m.key) else {
+                continue;
+            };
+            if name.eq_ignore_ascii_case("content-type") {
+                continue;
+            }
+            let Some((hd, h)) = self.follow_or_report(doc, m.value, "a header", diags) else {
+                continue;
+            };
+            let (required, deprecated) =
+                (self.flag(hd, h, "required"), self.flag(hd, h, "deprecated"));
+            let schema = self.value_schema(hd, h);
+            out.push(Param {
+                name: name.into_owned(),
+                location: Location::Header,
+                required,
+                deprecated,
+                schema,
+            });
+        }
+        out
+    }
+
+    fn responses(&self, doc: DocId, node: NodeId, diags: &mut Diagnostics) -> Vec<Response> {
+        let Some(t) = self.tree(doc) else {
+            return Vec::new();
+        };
+        let mut out = Vec::new();
+        for m in t.members(node) {
+            let Some(status) = t.string(m.key) else {
+                continue;
+            };
+            if status.starts_with("x-") {
+                continue;
+            }
+            let what = format!("the response {status}");
+            let Some((rd, r)) = self.follow_or_report(doc, m.value, &what, diags) else {
+                continue;
+            };
+            let headers = self.headers(rd, r, diags);
+            out.push(Response {
+                status: status.into_owned(),
+                headers,
+                content: self.content(rd, r, diags),
+            });
+        }
+        out
+    }
+
+    /// One operation, its parameters already merged with its Path Item's.
+    pub(super) fn operation(
+        &self,
+        path: &str,
+        method: &str,
+        doc: DocId,
+        op: NodeId,
+        params: Vec<Param>,
+        diags: &mut Diagnostics,
+    ) -> Operation {
+        let t = self.tree(doc);
+        let name = t
+            .and_then(|t| t.get(op, "operationId").and_then(|n| t.as_str(n)))
+            .map_or_else(|| format!("{method} {path}"), std::borrow::Cow::into_owned);
+        // 3.0: a body on GET, HEAD or DELETE SHALL be ignored.
+        let no_body = self.version == Version::V30 && matches!(method, "get" | "head" | "delete");
+        let body = t
+            .and_then(|t| t.get(op, "requestBody"))
+            .filter(|_| !no_body)
+            .and_then(|b| self.body(doc, b, diags));
+        let responses = t
+            .and_then(|t| t.get(op, "responses"))
+            .map(|n| self.responses(doc, n, diags))
+            .unwrap_or_default();
+        Operation {
+            name,
+            path: path.to_owned(),
+            method: method.to_owned(),
+            deprecated: self.flag(doc, op, "deprecated"),
+            params,
+            body,
+            responses,
+        }
+    }
+}

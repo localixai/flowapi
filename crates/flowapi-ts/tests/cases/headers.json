@@ -1,0 +1,5 @@
+{"openapi":"3.1.0","info":{"title":"t","version":"1"},"paths":{"/a":{"get":{"operationId":"old","deprecated":true,
+ "parameters":[{"name":"q","in":"query","deprecated":true,"schema":{"type":"string"}}],
+ "responses":{"200":{"description":"ok",
+   "headers":{"X-Rate":{"required":true,"schema":{"type":"integer"}},"Content-Type":{"schema":{"type":"string"}},"X-Old":{"deprecated":true,"schema":{"type":"string"}}},
+   "content":{"application/json":{"schema":{"type":"string"}}}}}}}}}

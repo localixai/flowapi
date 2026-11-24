@@ -1,0 +1,26 @@
+# flowapi's benchmarks: the time and memory of each stage on large real descriptions (`phases`),
+# and the flowapi command against the other generators on the same inputs (`speed`, held to
+# budgets.json by `check`). A crate of its own, outside the workspace: nothing it measures with or
+# against reaches a build of flowapi.
+[package]
+name = "flowapi-bench"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+flowapi = { path = "../crates/flowapi" }
+flowapi-ts = { path = "../crates/flowapi-ts" }
+# A process's peak memory, from the kernel's account of it (`wait4`).
+libc = "0.2.191"
+serde_json = "1.0.154"
+# The README's chart as a PNG (`charts`): the same picture in every reader, whatever its fonts.
+resvg = { version = "0.50.0", default-features = false, features = ["text", "system-fonts"] }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = 3
+debug = 1

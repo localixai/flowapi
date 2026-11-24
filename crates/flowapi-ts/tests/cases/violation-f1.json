@@ -1,0 +1,4 @@
+{"openapi":"3.1.0","info":{"title":"t","version":"1"},"paths":{"/a":{"post":{"operationId":"p",
+ "parameters":[{"$ref":"#/components/parameters/Missing"}],
+ "requestBody":{"$ref":"#/components/requestBodies/Missing"},
+ "responses":{"200":{"$ref":"#/components/responses/Missing"}}}}}}

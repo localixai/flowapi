@@ -1,0 +1,12 @@
+{"type":"object","title":"Thing","description":"A thing.","$comment":"not for users","x-unknown-keyword":{"type":"string"},"made-up":5,"$vocabulary":{"https://unknown.example/v":true},
+ "properties":{
+  "old":{"type":"string","deprecated":true,"description":"Use new.","examples":["a"],"default":"b"},
+  "ro":{"type":"integer","readOnly":true},"wo":{"type":"string","writeOnly":true},
+  "emb":{"$id":"https://ex.com/emb","$schema":"http://json-schema.org/draft-07/schema#","items":[{"type":"string"}],"additionalItems":false},
+  "inner":{"$id":"https://ex.com/inner","prefixItems":[{"type":"string"}],"items":false},
+  "split":{"allOf":[{"if":{"type":"string"}},{"then":{"const":"x"},"else":{"type":"number"}}]},
+  "def":{"$ref":"https://ex.com/d"}
+ },
+ "required":["ro","wo"],
+ "patternProperties":{"id":{"type":"integer"}},
+ "definitions":{"d":{"$id":"https://ex.com/d","type":"boolean"}}}

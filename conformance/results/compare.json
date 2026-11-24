@@ -1,0 +1,3194 @@
+{
+  "suite": "json-schema-test-suite",
+  "dialect": "2020-12",
+  "typescript": "7.0.2",
+  "common_groups": 352,
+  "tools": {
+    "flowapi": {
+      "version": "0.1.0",
+      "totals": {
+        "groups_run": 409,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 779,
+        "valid_accepted": 779,
+        "invalid_cases": 540,
+        "invalid_rejected": 336,
+        "soundness_percent": "100.0",
+        "precision_percent": "62.2"
+      },
+      "common_groups": {
+        "valid_cases": 713,
+        "valid_accepted": 713,
+        "soundness_percent": "100.0"
+      },
+      "unsound_total": 0,
+      "unsound": [],
+      "generation_errors": [],
+      "invalid_typescript": [],
+      "compiler_other": []
+    },
+    "openapi-typescript": {
+      "version": "7.13.0",
+      "totals": {
+        "groups_run": 409,
+        "generation_errors": 7,
+        "invalid_typescript": 49,
+        "valid_cases": 714,
+        "valid_accepted": 647,
+        "invalid_cases": 470,
+        "invalid_rejected": 242,
+        "soundness_percent": "90.6",
+        "precision_percent": "51.4"
+      },
+      "common_groups": {
+        "valid_cases": 713,
+        "valid_accepted": 646,
+        "soundness_percent": "90.6"
+      },
+      "unsound_total": 67,
+      "unsound": [
+        {
+          "file": "additionalProperties",
+          "group": 0,
+          "group_description": "additionalProperties being false does not allow other properties",
+          "description": "ignores arrays",
+          "data": "[1,2,3]",
+          "error": "error TS2322: Type 'number[]' is not assignable to type '{ foo?: unknown; bar?: unknown; } & { [key: string]: unknown; }'."
+        },
+        {
+          "file": "additionalProperties",
+          "group": 0,
+          "group_description": "additionalProperties being false does not allow other properties",
+          "description": "ignores strings",
+          "data": "\"foobarbaz\"",
+          "error": "error TS2322: Type 'string' is not assignable to type '{ foo?: unknown; bar?: unknown; } & { [key: string]: unknown; }'."
+        },
+        {
+          "file": "additionalProperties",
+          "group": 0,
+          "group_description": "additionalProperties being false does not allow other properties",
+          "description": "ignores other non-objects",
+          "data": "12",
+          "error": "error TS2322: Type 'number' is not assignable to type '{ foo?: unknown; bar?: unknown; } & { [key: string]: unknown; }'."
+        },
+        {
+          "file": "additionalProperties",
+          "group": 2,
+          "group_description": "additionalProperties with schema",
+          "description": "no additional properties is valid",
+          "data": "{\"foo\":1}",
+          "error": "error TS2322: Type '{ foo: number; }' is not assignable to type '{ foo?: unknown; bar?: unknown; } & { [key: string]: boolean; }'."
+        },
+        {
+          "file": "additionalProperties",
+          "group": 2,
+          "group_description": "additionalProperties with schema",
+          "description": "an additional valid property is valid",
+          "data": "{\"foo\":1,\"bar\":2,\"quux\":true}",
+          "error": "error TS2322: Type '{ foo: number; bar: number; quux: true; }' is not assignable to type '{ foo?: unknown; bar?: unknown; } & { [key: string]: boolean; }'."
+        },
+        {
+          "file": "additionalProperties",
+          "group": 4,
+          "group_description": "additionalProperties are allowed by default",
+          "description": "additional properties are allowed",
+          "data": "{\"foo\":1,\"bar\":2,\"quux\":true}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"quux\"' does not exist in type '{ foo?: unknown; bar?: unknown; }'."
+        },
+        {
+          "file": "anchor",
+          "group": 5,
+          "group_description": "URN base URI with URN and anchor ref",
+          "description": "a string is valid",
+          "data": "{\"foo\":\"bar\"}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ foo: string; }' but required in type '{ foo?: string; $defs: { bar: string; }; }'."
+        },
+        {
+          "file": "default",
+          "group": 0,
+          "group_description": "invalid type for default",
+          "description": "still valid when the invalid default is used",
+          "data": "{}",
+          "error": "error TS2741: Property 'foo' is missing in type '{}' but required in type '{ foo: number; }'."
+        },
+        {
+          "file": "default",
+          "group": 1,
+          "group_description": "invalid string value for default",
+          "description": "still valid when the invalid default is used",
+          "data": "{}",
+          "error": "error TS2741: Property 'bar' is missing in type '{}' but required in type '{ bar: string; }'."
+        },
+        {
+          "file": "default",
+          "group": 2,
+          "group_description": "the default keyword does not do anything if the property is missing",
+          "description": "missing properties are not filled in with the default",
+          "data": "{}",
+          "error": "error TS2741: Property 'alpha' is missing in type '{}' but required in type '{ alpha: number; }'."
+        },
+        {
+          "file": "dependentSchemas",
+          "group": 6,
+          "group_description": "dependent subschema incompatible with root",
+          "description": "matches dependency",
+          "data": "{\"bar\":1}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"bar\"' does not exist in type '{ foo?: unknown; }'."
+        },
+        {
+          "file": "dependentSchemas",
+          "group": 6,
+          "group_description": "dependent subschema incompatible with root",
+          "description": "no dependency",
+          "data": "{\"baz\":1}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"baz\"' does not exist in type '{ foo?: unknown; }'."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 9,
+          "group_description": "after leaving a dynamic scope, it is not used by a $dynamicRef (2020)",
+          "description": "/then/$defs/thingy is the final stop for the $dynamicRef",
+          "data": "null",
+          "error": "error TS2322: Type 'null' is not assignable to type '{ $defs: { start: unknown; thingy: string; }; }'."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 13,
+          "group_description": "tests for implementation dynamic anchor and reference link (2020)",
+          "description": "correct extended schema",
+          "data": "{\"elements\":[{\"a\":1}]}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ elements: { a: number; }[]; }' but required in type '{ elements: unknown[]; $defs: { elements: unknown; }; }'."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 15,
+          "group_description": "$ref and $dynamicAnchor are independent of order - $defs first (2020)",
+          "description": "correct extended schema",
+          "data": "{\"elements\":[{\"a\":1}]}",
+          "error": "error TS2322: Type '{ elements: { a: number; }[]; }' is not assignable to type '{ elements: unknown[]; $defs: { elements: unknown; }; } & { $defs: { elements: { a: unknown; }; }; }'."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 17,
+          "group_description": "$ref and $dynamicAnchor are independent of order - $ref first (2020)",
+          "description": "correct extended schema",
+          "data": "{\"elements\":[{\"a\":1}]}",
+          "error": "error TS2322: Type '{ elements: { a: number; }[]; }' is not assignable to type '{ $defs: { elements: { a: unknown; }; }; } & { elements: unknown[]; $defs: { elements: unknown; }; }'."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 31,
+          "group_description": "multiple dynamic paths to the $dynamicRef keyword (2020)",
+          "description": "number list with number values",
+          "data": "{\"kindOfList\":\"numbers\",\"list\":[1.1]}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"kindOfList\"' does not exist in type '{ $defs: { genericList: { list?: unknown; $defs: { defaultItemType: unknown; }; }; numberList: { list?: unknown; $defs: { defaultItemType: unknown; }; }; stringList: { list?: unknown; $defs: { defaultItemType: unknown; }; }; }; }'."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 31,
+          "group_description": "multiple dynamic paths to the $dynamicRef keyword (2020)",
+          "description": "string list with string values",
+          "data": "{\"kindOfList\":\"strings\",\"list\":[\"foo\"]}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"kindOfList\"' does not exist in type '{ $defs: { genericList: { list?: unknown; $defs: { defaultItemType: unknown; }; }; numberList: { list?: unknown; $defs: { defaultItemType: unknown; }; }; stringList: { list?: unknown; $defs: { defaultItemType: unknown; }; }; }; }'."
+        },
+        {
+          "file": "id",
+          "group": 1,
+          "group_description": "base URI change - change folder",
+          "description": "number is valid",
+          "data": "{\"list\":[1]}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ list: number[]; }' but required in type '{ list?: number[]; $defs: { baz: number[]; }; }'."
+        },
+        {
+          "file": "id",
+          "group": 2,
+          "group_description": "base URI change - change folder in subschema",
+          "description": "number is valid",
+          "data": "{\"list\":[1]}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ list: number[]; }' but required in type '{ list?: number[]; $defs: { baz: { $defs: { bar: number[]; }; }; }; }'."
+        },
+        {
+          "file": "id",
+          "group": 9,
+          "group_description": "simple URN base URI with $ref via the URN",
+          "description": "valid under the URN IDed schema",
+          "data": "{\"foo\":37}",
+          "error": "error TS2559: Type 'number' has no properties in common with type '{ foo?: ...; }'."
+        },
+        {
+          "file": "id",
+          "group": 10,
+          "group_description": "simple tag URI base URI with $ref via the tag URI",
+          "description": "valid under the tag URI IDed schema",
+          "data": "{\"foo\":37}",
+          "error": "error TS2559: Type 'number' has no properties in common with type '{ foo?: ...; }'."
+        },
+        {
+          "file": "id",
+          "group": 11,
+          "group_description": "simple base URI using an arbitrary URI scheme with $ref to that URI",
+          "description": "valid under the arbitrary scheme IDed schema",
+          "data": "{\"foo\":37}",
+          "error": "error TS2559: Type 'number' has no properties in common with type '{ foo?: ...; }'."
+        },
+        {
+          "file": "id",
+          "group": 12,
+          "group_description": "simple URN base URI with JSON pointer",
+          "description": "a string is valid",
+          "data": "{\"foo\":\"bar\"}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ foo: string; }' but required in type '{ foo?: string; $defs: { bar: string; }; }'."
+        },
+        {
+          "file": "id",
+          "group": 13,
+          "group_description": "URN base URI with NSS",
+          "description": "a string is valid",
+          "data": "{\"foo\":\"bar\"}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ foo: string; }' but required in type '{ foo?: string; $defs: { bar: string; }; }'."
+        },
+        {
+          "file": "id",
+          "group": 14,
+          "group_description": "URN base URI with r-component",
+          "description": "a string is valid",
+          "data": "{\"foo\":\"bar\"}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ foo: string; }' but required in type '{ foo?: string; $defs: { bar: string; }; }'."
+        },
+        {
+          "file": "id",
+          "group": 15,
+          "group_description": "URN base URI with q-component",
+          "description": "a string is valid",
+          "data": "{\"foo\":\"bar\"}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ foo: string; }' but required in type '{ foo?: string; $defs: { bar: string; }; }'."
+        },
+        {
+          "file": "id",
+          "group": 16,
+          "group_description": "URN base URI with URN and JSON pointer ref",
+          "description": "a string is valid",
+          "data": "{\"foo\":\"bar\"}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ foo: string; }' but required in type '{ foo?: string; $defs: { bar: string; }; }'."
+        },
+        {
+          "file": "infinite-loop-detection",
+          "group": 0,
+          "group_description": "evaluating the same schema location against the same data location twice is not a sign of an infinite loop",
+          "description": "passing case",
+          "data": "{\"foo\":1}",
+          "error": "error TS2322: Type '{ foo: number; }' is not assignable to type '{ $defs: { int: number; }; } & { foo?: number; } & { [key: string]: number; }'."
+        },
+        {
+          "file": "not",
+          "group": 3,
+          "group_description": "forbidden property",
+          "description": "property absent",
+          "data": "{\"bar\":1,\"baz\":2}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"bar\"' does not exist in type '{ foo?: unknown; }'."
+        },
+        {
+          "file": "patternProperties",
+          "group": 0,
+          "group_description": "patternProperties validates properties matching a regex",
+          "description": "ignores arrays",
+          "data": "[\"foo\"]",
+          "error": "error TS2322: Type 'string' is not assignable to type 'number'."
+        },
+        {
+          "file": "patternProperties",
+          "group": 0,
+          "group_description": "patternProperties validates properties matching a regex",
+          "description": "ignores strings",
+          "data": "\"foo\"",
+          "error": "error TS2322: Type 'string' is not assignable to type '{ [key: string]: number; }'."
+        },
+        {
+          "file": "patternProperties",
+          "group": 0,
+          "group_description": "patternProperties validates properties matching a regex",
+          "description": "ignores other non-objects",
+          "data": "12",
+          "error": "error TS2322: Type 'number' is not assignable to type '{ [key: string]: number; }'."
+        },
+        {
+          "file": "patternProperties",
+          "group": 2,
+          "group_description": "regexes are not anchored by default and are case sensitive",
+          "description": "regexes are case sensitive",
+          "data": "{\"a_x_3\":3}",
+          "error": "error TS2322: Type 'number' is not assignable to type 'string | boolean'."
+        },
+        {
+          "file": "properties",
+          "group": 0,
+          "group_description": "object properties validation",
+          "description": "doesn't invalidate other properties",
+          "data": "{\"quux\":[]}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"quux\"' does not exist in type '{ foo?: number; bar?: string; }'."
+        },
+        {
+          "file": "properties",
+          "group": 0,
+          "group_description": "object properties validation",
+          "description": "ignores arrays",
+          "data": "[]",
+          "error": "error TS2559: Type 'never[]' has no properties in common with type '{ foo?: number; bar?: string; }'."
+        },
+        {
+          "file": "properties",
+          "group": 0,
+          "group_description": "object properties validation",
+          "description": "ignores other non-objects",
+          "data": "12",
+          "error": "error TS2559: Type '12' has no properties in common with type '{ foo?: number; bar?: string; }'."
+        },
+        {
+          "file": "properties",
+          "group": 5,
+          "group_description": "properties whose names are Javascript object property names",
+          "description": "ignores arrays",
+          "data": "[]",
+          "error": "error TS2322: Type 'never[]' is not assignable to type '{ __proto__?: number; toString?: { length?: string; }; constructor?: number; }'."
+        },
+        {
+          "file": "properties",
+          "group": 5,
+          "group_description": "properties whose names are Javascript object property names",
+          "description": "ignores other non-objects",
+          "data": "12",
+          "error": "error TS2322: Type 'number' is not assignable to type '{ __proto__?: number; toString?: { length?: string; }; constructor?: number; }'."
+        },
+        {
+          "file": "properties",
+          "group": 5,
+          "group_description": "properties whose names are Javascript object property names",
+          "description": "none of the properties mentioned",
+          "data": "{}",
+          "error": "error TS2322: Type '{}' is not assignable to type '{ __proto__?: number; toString?: { length?: string; }; constructor?: number; }'."
+        },
+        {
+          "file": "ref",
+          "group": 0,
+          "group_description": "root pointer ref",
+          "description": "match",
+          "data": "{\"foo\":false}",
+          "error": "error TS2559: Type 'false' has no properties in common with type '{ foo?: ...; }'."
+        },
+        {
+          "file": "ref",
+          "group": 0,
+          "group_description": "root pointer ref",
+          "description": "recursive match",
+          "data": "{\"foo\":{\"foo\":false}}",
+          "error": "error TS2559: Type 'false' has no properties in common with type '{ foo?: ...; }'."
+        },
+        {
+          "file": "ref",
+          "group": 3,
+          "group_description": "escaped pointer ref",
+          "description": "slash valid",
+          "data": "{\"slash\":123}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ slash: number; }' but required in type '{ tilde?: number; slash?: number; percent?: number; $defs: { \"tilde~field\": number; \"slash/field\": number; \"percent%field\": number; }; }'."
+        },
+        {
+          "file": "ref",
+          "group": 3,
+          "group_description": "escaped pointer ref",
+          "description": "tilde valid",
+          "data": "{\"tilde\":123}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ tilde: number; }' but required in type '{ tilde?: number; slash?: number; percent?: number; $defs: { \"tilde~field\": number; \"slash/field\": number; \"percent%field\": number; }; }'."
+        },
+        {
+          "file": "ref",
+          "group": 3,
+          "group_description": "escaped pointer ref",
+          "description": "percent valid",
+          "data": "{\"percent\":123}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ percent: number; }' but required in type '{ tilde?: number; slash?: number; percent?: number; $defs: { \"tilde~field\": number; \"slash/field\": number; \"percent%field\": number; }; }'."
+        },
+        {
+          "file": "ref",
+          "group": 5,
+          "group_description": "ref applies alongside sibling keywords",
+          "description": "ref valid, maxItems valid",
+          "data": "{\"foo\":[]}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ foo: never[]; }' but required in type '{ foo?: unknown[]; $defs: { reffed: unknown[]; }; }'."
+        },
+        {
+          "file": "ref",
+          "group": 7,
+          "group_description": "property named $ref, containing an actual $ref",
+          "description": "property named $ref valid",
+          "data": "{\"$ref\":\"a\"}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ $ref: string; }' but required in type '{ $ref?: string; $defs: { \"is-string\": string; }; }'."
+        },
+        {
+          "file": "ref",
+          "group": 12,
+          "group_description": "refs with quote",
+          "description": "object with numbers is valid",
+          "data": "{\"foo\\\"bar\":1}",
+          "error": "error TS2741: Property '$defs' is missing in type '{ \"foo\\\"bar\": number; }' but required in type '{ \"foo\\\"bar\"?: number; $defs: { \"foo\\\"bar\": number; }; }'."
+        },
+        {
+          "file": "required",
+          "group": 1,
+          "group_description": "required validation",
+          "description": "ignores arrays",
+          "data": "[]",
+          "error": "error TS2741: Property 'foo' is missing in type 'never[]' but required in type '{ foo: unknown; bar?: unknown; }'."
+        },
+        {
+          "file": "required",
+          "group": 1,
+          "group_description": "required validation",
+          "description": "ignores strings",
+          "data": "\"\"",
+          "error": "error TS2322: Type 'string' is not assignable to type '{ foo: unknown; bar?: unknown; }'."
+        }
+      ],
+      "generation_errors": [
+        {
+          "file": "allOf",
+          "group": 3,
+          "description": "allOf with boolean schemas, all true",
+          "message": "Cannot use 'in' operator to search for '$ref' in true"
+        },
+        {
+          "file": "allOf",
+          "group": 4,
+          "description": "allOf with boolean schemas, some false",
+          "message": "Cannot use 'in' operator to search for '$ref' in true"
+        },
+        {
+          "file": "allOf",
+          "group": 5,
+          "description": "allOf with boolean schemas, all false",
+          "message": "Cannot use 'in' operator to search for '$ref' in false"
+        },
+        {
+          "file": "dynamicRef",
+          "group": 32,
+          "description": "$dynamicRef points to a boolean schema",
+          "message": "Cannot use 'in' operator to search for 'readOnly' in true"
+        },
+        {
+          "file": "ref",
+          "group": 17,
+          "description": "empty tokens in $ref json-pointer",
+          "message": "Can't resolve $ref at #/components/schemas/Root/allOf/0"
+        },
+        {
+          "file": "unevaluatedItems",
+          "group": 26,
+          "description": "unevaluatedItems with boolean schemas",
+          "message": "Cannot use 'in' operator to search for '$ref' in true"
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 18,
+          "description": "unevaluatedProperties with boolean schemas",
+          "message": "Cannot use 'in' operator to search for '$ref' in true"
+        }
+      ],
+      "invalid_typescript": [
+        {
+          "file": "anchor",
+          "group": 0,
+          "description": "Location-independent identifier",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "anchor",
+          "group": 1,
+          "description": "Location-independent identifier with absolute URI",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "anchor",
+          "group": 2,
+          "description": "Location-independent identifier with base URI change in subschema",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "anchor",
+          "group": 3,
+          "description": "same $anchor with different base uri",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "anchor",
+          "group": 4,
+          "description": "Reference an anchor with a non-relative URI",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 3,
+          "description": "A $dynamicRef resolves to the first $dynamicAnchor still in scope that is encountered when the schema is evaluated (2020)",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 5,
+          "description": "A $dynamicRef with intermediate scopes that don't include a matching $dynamicAnchor does not affect dynamic scope resolution (2020)",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 7,
+          "description": "An $anchor with the same name as a $dynamicAnchor is not used for dynamic scope resolution (2020)",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 21,
+          "description": "$dynamicRef skips over intermediate resources - direct reference (2020)",
+          "message": "line 8: error TS2502: 'bar' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 23,
+          "description": "$dynamicRef avoids the root of each schema, but scopes are still registered (2020)",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 25,
+          "description": "A $ref to a $dynamicAnchor in the same schema resource behaves like a normal $ref to an $anchor",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 26,
+          "description": "A $dynamicRef without anchor in fragment behaves identical to $ref",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 27,
+          "description": "A $dynamicRef without a matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 28,
+          "description": "A $dynamicRef with a non-matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 29,
+          "description": "A $dynamicRef that initially resolves to a schema with a matching $dynamicAnchor resolves to the first $dynamicAnchor in the dynamic scope",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 30,
+          "description": "A $dynamicRef that initially resolves to a schema without a matching $dynamicAnchor behaves like a normal $ref to $anchor",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "id",
+          "group": 3,
+          "description": "refs with relative uris and defs",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "id",
+          "group": 4,
+          "description": "relative refs with absolute uris and defs",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "id",
+          "group": 5,
+          "description": "$id must be resolved against nearest parent, not just immediate parent",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "id",
+          "group": 6,
+          "description": "order of evaluation: $id and $ref",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "id",
+          "group": 7,
+          "description": "order of evaluation: $id and $anchor and $ref",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "id",
+          "group": 8,
+          "description": "order of evaluation: $id and $ref on nested schema",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "id",
+          "group": 17,
+          "description": "ref with absolute-path-reference",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "id",
+          "group": 18,
+          "description": "$id with file URI still resolves pointers - *nix",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "id",
+          "group": 19,
+          "description": "$id with file URI still resolves pointers - windows",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "id",
+          "group": 20,
+          "description": "URN ref with nested pointer ref",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "id",
+          "group": 22,
+          "description": "remote HTTP ref with different $id",
+          "message": "line 6: error TS2502: 'Remote0' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "id",
+          "group": 23,
+          "description": "remote HTTP ref with different URN $id",
+          "message": "line 6: error TS2502: 'Remote0' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "id",
+          "group": 24,
+          "description": "remote HTTP ref with nested absolute ref",
+          "message": "line 6: error TS2502: 'Remote0' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "items",
+          "group": 7,
+          "description": "items and subitems",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "ref",
+          "group": 4,
+          "description": "nested refs",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "ref",
+          "group": 9,
+          "description": "$ref to boolean schema true",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "ref",
+          "group": 10,
+          "description": "$ref to boolean schema false",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "ref",
+          "group": 13,
+          "description": "ref creates new scope when adjacent to keywords",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "ref",
+          "group": 14,
+          "description": "ref to if",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "ref",
+          "group": 15,
+          "description": "ref to then",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "ref",
+          "group": 16,
+          "description": "ref to else",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "ref",
+          "group": 21,
+          "description": "root ref in remote ref",
+          "message": "line 6: error TS2339: Property '$defs' does not exist on type 'String'."
+        },
+        {
+          "file": "ref",
+          "group": 22,
+          "description": "remote ref with ref to defs",
+          "message": "line 6: error TS2502: 'Remote0' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "unevaluatedItems",
+          "group": 27,
+          "description": "unevaluatedItems with $ref (prefixItems)",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "unevaluatedItems",
+          "group": 29,
+          "description": "unevaluatedItems before $ref (prefixItems)",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "unevaluatedItems",
+          "group": 32,
+          "description": "unevaluatedItems with $dynamicRef (2020-12)",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 19,
+          "description": "unevaluatedProperties with $ref",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 20,
+          "description": "unevaluatedProperties before $ref",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 22,
+          "description": "unevaluatedProperties with $dynamicRef (2020)",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 36,
+          "description": "unevaluatedProperties + ref inside allOf / oneOf",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 37,
+          "description": "dynamic evaluation inside nested refs",
+          "message": "line 5: error TS2502: 'Root' is referenced directly or indirectly in its own type annotation."
+        },
+        {
+          "file": "vocabulary",
+          "group": 2,
+          "description": "schema that uses custom metaschema with no validation vocabulary",
+          "message": "line 58: error TS2300: Duplicate identifier '$defs'."
+        },
+        {
+          "file": "vocabulary",
+          "group": 3,
+          "description": "ignore unrecognized optional vocabulary (dynamic anchor)",
+          "message": "line 66: error TS2300: Duplicate identifier '$defs'."
+        }
+      ],
+      "compiler_other": []
+    },
+    "hey-api": {
+      "version": "0.99.0",
+      "totals": {
+        "groups_run": 409,
+        "generation_errors": 7,
+        "invalid_typescript": 0,
+        "valid_cases": 773,
+        "valid_accepted": 732,
+        "invalid_cases": 530,
+        "invalid_rejected": 224,
+        "soundness_percent": "94.6",
+        "precision_percent": "42.2"
+      },
+      "common_groups": {
+        "valid_cases": 713,
+        "valid_accepted": 680,
+        "soundness_percent": "95.3"
+      },
+      "unsound_total": 41,
+      "unsound": [
+        {
+          "file": "additionalProperties",
+          "group": 0,
+          "group_description": "additionalProperties being false does not allow other properties",
+          "description": "ignores arrays",
+          "data": "[1,2,3]",
+          "error": "error TS2322: Type 'number[]' is not assignable to type 'Root'."
+        },
+        {
+          "file": "additionalProperties",
+          "group": 0,
+          "group_description": "additionalProperties being false does not allow other properties",
+          "description": "ignores strings",
+          "data": "\"foobarbaz\"",
+          "error": "error TS2322: Type 'string' is not assignable to type 'Root'."
+        },
+        {
+          "file": "additionalProperties",
+          "group": 0,
+          "group_description": "additionalProperties being false does not allow other properties",
+          "description": "ignores other non-objects",
+          "data": "12",
+          "error": "error TS2322: Type 'number' is not assignable to type 'Root'."
+        },
+        {
+          "file": "additionalProperties",
+          "group": 4,
+          "group_description": "additionalProperties are allowed by default",
+          "description": "additional properties are allowed",
+          "data": "{\"foo\":1,\"bar\":2,\"quux\":true}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"quux\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "dependentSchemas",
+          "group": 6,
+          "group_description": "dependent subschema incompatible with root",
+          "description": "matches dependency",
+          "data": "{\"bar\":1}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"bar\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "dependentSchemas",
+          "group": 6,
+          "group_description": "dependent subschema incompatible with root",
+          "description": "no dependency",
+          "data": "{\"baz\":1}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"baz\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 29,
+          "group_description": "A $dynamicRef that initially resolves to a schema with a matching $dynamicAnchor resolves to the first $dynamicAnchor in the dynamic scope",
+          "description": "The recursive part is valid against the root",
+          "data": "{\"foo\":\"pass\",\"bar\":{\"baz\":{\"foo\":\"pass\"}}}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"foo\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "dynamicRef",
+          "group": 30,
+          "group_description": "A $dynamicRef that initially resolves to a schema without a matching $dynamicAnchor behaves like a normal $ref to $anchor",
+          "description": "The recursive part doesn't need to validate against the root",
+          "data": "{\"foo\":\"pass\",\"bar\":{\"baz\":{\"foo\":\"fail\"}}}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"foo\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "enum",
+          "group": 1,
+          "group_description": "heterogeneous enum validation",
+          "description": "valid object matches",
+          "data": "{\"foo\":12}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"foo\"' does not exist in type '[]'."
+        },
+        {
+          "file": "enum",
+          "group": 2,
+          "group_description": "heterogeneous enum-with-null validation",
+          "description": "null is valid",
+          "data": "null",
+          "error": "error TS2322: Type 'null' is not assignable to type '6'."
+        },
+        {
+          "file": "id",
+          "group": 3,
+          "group_description": "refs with relative uris and defs",
+          "description": "valid on both fields",
+          "data": "{\"foo\":{\"bar\":\"a\"},\"bar\":\"a\"}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"foo\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "id",
+          "group": 4,
+          "group_description": "relative refs with absolute uris and defs",
+          "description": "valid on both fields",
+          "data": "{\"foo\":{\"bar\":\"a\"},\"bar\":\"a\"}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"foo\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "id",
+          "group": 9,
+          "group_description": "simple URN base URI with $ref via the URN",
+          "description": "valid under the URN IDed schema",
+          "data": "{\"foo\":37}",
+          "error": "error TS2559: Type 'number' has no properties in common with type 'Root'."
+        },
+        {
+          "file": "id",
+          "group": 10,
+          "group_description": "simple tag URI base URI with $ref via the tag URI",
+          "description": "valid under the tag URI IDed schema",
+          "data": "{\"foo\":37}",
+          "error": "error TS2559: Type 'number' has no properties in common with type 'Root'."
+        },
+        {
+          "file": "id",
+          "group": 11,
+          "group_description": "simple base URI using an arbitrary URI scheme with $ref to that URI",
+          "description": "valid under the arbitrary scheme IDed schema",
+          "data": "{\"foo\":37}",
+          "error": "error TS2559: Type 'number' has no properties in common with type 'Root'."
+        },
+        {
+          "file": "not",
+          "group": 3,
+          "group_description": "forbidden property",
+          "description": "property absent",
+          "data": "{\"bar\":1,\"baz\":2}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"bar\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "properties",
+          "group": 0,
+          "group_description": "object properties validation",
+          "description": "doesn't invalidate other properties",
+          "data": "{\"quux\":[]}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"quux\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "properties",
+          "group": 0,
+          "group_description": "object properties validation",
+          "description": "ignores arrays",
+          "data": "[]",
+          "error": "error TS2559: Type 'never[]' has no properties in common with type 'Root'."
+        },
+        {
+          "file": "properties",
+          "group": 0,
+          "group_description": "object properties validation",
+          "description": "ignores other non-objects",
+          "data": "12",
+          "error": "error TS2559: Type '12' has no properties in common with type 'Root'."
+        },
+        {
+          "file": "properties",
+          "group": 5,
+          "group_description": "properties whose names are Javascript object property names",
+          "description": "ignores arrays",
+          "data": "[]",
+          "error": "error TS2322: Type 'never[]' is not assignable to type 'Root'."
+        },
+        {
+          "file": "properties",
+          "group": 5,
+          "group_description": "properties whose names are Javascript object property names",
+          "description": "ignores other non-objects",
+          "data": "12",
+          "error": "error TS2322: Type 'number' is not assignable to type 'Root'."
+        },
+        {
+          "file": "properties",
+          "group": 5,
+          "group_description": "properties whose names are Javascript object property names",
+          "description": "none of the properties mentioned",
+          "data": "{}",
+          "error": "error TS2322: Type '{}' is not assignable to type 'Root'."
+        },
+        {
+          "file": "properties",
+          "group": 5,
+          "group_description": "properties whose names are Javascript object property names",
+          "description": "all present and valid",
+          "data": "{\"__proto__\":12,\"toString\":{\"length\":\"foo\"},\"constructor\":37}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"__proto__\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "ref",
+          "group": 0,
+          "group_description": "root pointer ref",
+          "description": "match",
+          "data": "{\"foo\":false}",
+          "error": "error TS2559: Type 'false' has no properties in common with type 'Root'."
+        },
+        {
+          "file": "ref",
+          "group": 0,
+          "group_description": "root pointer ref",
+          "description": "recursive match",
+          "data": "{\"foo\":{\"foo\":false}}",
+          "error": "error TS2559: Type 'false' has no properties in common with type 'Root'."
+        },
+        {
+          "file": "required",
+          "group": 1,
+          "group_description": "required validation",
+          "description": "ignores arrays",
+          "data": "[]",
+          "error": "error TS2741: Property 'foo' is missing in type 'never[]' but required in type 'Root'."
+        },
+        {
+          "file": "required",
+          "group": 1,
+          "group_description": "required validation",
+          "description": "ignores strings",
+          "data": "\"\"",
+          "error": "error TS2322: Type 'string' is not assignable to type 'Root'."
+        },
+        {
+          "file": "required",
+          "group": 1,
+          "group_description": "required validation",
+          "description": "ignores other non-objects",
+          "data": "12",
+          "error": "error TS2322: Type 'number' is not assignable to type 'Root'."
+        },
+        {
+          "file": "required",
+          "group": 1,
+          "group_description": "required validation",
+          "description": "ignores null",
+          "data": "null",
+          "error": "error TS2322: Type 'null' is not assignable to type 'Root'."
+        },
+        {
+          "file": "required",
+          "group": 1,
+          "group_description": "required validation",
+          "description": "ignores boolean",
+          "data": "true",
+          "error": "error TS2322: Type 'boolean' is not assignable to type 'Root'."
+        },
+        {
+          "file": "unevaluatedItems",
+          "group": 32,
+          "group_description": "unevaluatedItems with $dynamicRef (2020-12)",
+          "description": "with no unevaluated items",
+          "data": "[\"foo\",\"bar\"]",
+          "error": "error TS2322: Type '[string, string]' is not assignable to type 'Root'."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 8,
+          "group_description": "unevaluatedProperties with nested patternProperties",
+          "description": "with no additional properties",
+          "data": "{\"foo\":\"foo\",\"bar\":\"bar\"}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"bar\"' does not exist in type '{ foo?: string; }'."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 9,
+          "group_description": "unevaluatedProperties with nested additionalProperties",
+          "description": "with additional properties",
+          "data": "{\"foo\":\"foo\",\"bar\":\"bar\"}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"bar\"' does not exist in type '{ foo?: string; }'."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 10,
+          "group_description": "unevaluatedProperties with nested unevaluatedProperties",
+          "description": "with nested unevaluated properties",
+          "data": "{\"foo\":\"foo\",\"bar\":\"bar\"}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"bar\"' does not exist in type '{ foo?: string; }'."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 17,
+          "group_description": "unevaluatedProperties with dependentSchemas",
+          "description": "with no unevaluated properties",
+          "data": "{\"foo\":\"foo\",\"bar\":\"bar\"}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"bar\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 19,
+          "group_description": "unevaluatedProperties with $ref",
+          "description": "with no unevaluated properties",
+          "data": "{\"foo\":\"foo\",\"bar\":\"bar\"}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"foo\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 20,
+          "group_description": "unevaluatedProperties before $ref",
+          "description": "with no unevaluated properties",
+          "data": "{\"foo\":\"foo\",\"bar\":\"bar\"}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"foo\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 22,
+          "group_description": "unevaluatedProperties with $dynamicRef (2020)",
+          "description": "with no unevaluated properties",
+          "data": "{\"foo\":\"foo\",\"bar\":\"bar\"}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"bar\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 26,
+          "group_description": "nested unevaluatedProperties, outer false, inner true, properties outside",
+          "description": "with nested unevaluated properties",
+          "data": "{\"foo\":\"foo\",\"bar\":\"bar\"}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"bar\"' does not exist in type '{ foo?: string; }'."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 27,
+          "group_description": "nested unevaluatedProperties, outer false, inner true, properties inside",
+          "description": "with nested unevaluated properties",
+          "data": "{\"foo\":\"foo\",\"bar\":\"bar\"}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"bar\"' does not exist in type 'Root'."
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 42,
+          "group_description": "dependentSchemas with unevaluatedProperties",
+          "description": "unevaluatedProperties sees bar when foo2 is present",
+          "data": "{\"foo2\":\"\",\"bar\":\"\"}",
+          "error": "error TS2353: Object literal may only specify known properties, and '\"bar\"' does not exist in type 'Root'."
+        }
+      ],
+      "generation_errors": [
+        {
+          "file": "allOf",
+          "group": 3,
+          "description": "allOf with boolean schemas, all true",
+          "message": "Cannot use 'in' operator to search for '$ref' in true"
+        },
+        {
+          "file": "allOf",
+          "group": 4,
+          "description": "allOf with boolean schemas, some false",
+          "message": "Cannot use 'in' operator to search for '$ref' in true"
+        },
+        {
+          "file": "allOf",
+          "group": 5,
+          "description": "allOf with boolean schemas, all false",
+          "message": "Cannot use 'in' operator to search for '$ref' in false"
+        },
+        {
+          "file": "items",
+          "group": 7,
+          "description": "items and subitems",
+          "message": "Symbol finalName has not been resolved yet for ~ Symbol#1 \"\""
+        },
+        {
+          "file": "ref",
+          "group": 8,
+          "description": "naive replacement of $ref with its destination is not correct",
+          "message": "Cannot read properties of null (reading 'a_string')"
+        },
+        {
+          "file": "unevaluatedItems",
+          "group": 26,
+          "description": "unevaluatedItems with boolean schemas",
+          "message": "Cannot use 'in' operator to search for '$ref' in true"
+        },
+        {
+          "file": "unevaluatedProperties",
+          "group": 18,
+          "description": "unevaluatedProperties with boolean schemas",
+          "message": "Cannot use 'in' operator to search for '$ref' in true"
+        }
+      ],
+      "invalid_typescript": [],
+      "compiler_other": []
+    }
+  },
+  "files": {
+    "additionalProperties": {
+      "flowapi": {
+        "groups_run": 9,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 12,
+        "invalid_cases": 9,
+        "invalid_rejected": 5
+      },
+      "openapi-typescript": {
+        "groups_run": 9,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 6,
+        "invalid_cases": 9,
+        "invalid_rejected": 7
+      },
+      "hey-api": {
+        "groups_run": 9,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 8,
+        "invalid_cases": 9,
+        "invalid_rejected": 4
+      }
+    },
+    "allOf": {
+      "flowapi": {
+        "groups_run": 12,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 10,
+        "valid_accepted": 10,
+        "invalid_cases": 20,
+        "invalid_rejected": 12
+      },
+      "openapi-typescript": {
+        "groups_run": 12,
+        "generation_errors": 3,
+        "invalid_typescript": 0,
+        "valid_cases": 9,
+        "valid_accepted": 9,
+        "invalid_cases": 18,
+        "invalid_rejected": 10
+      },
+      "hey-api": {
+        "groups_run": 12,
+        "generation_errors": 3,
+        "invalid_typescript": 0,
+        "valid_cases": 9,
+        "valid_accepted": 9,
+        "invalid_cases": 18,
+        "invalid_rejected": 10
+      }
+    },
+    "anchor-legacy": {
+      "flowapi": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "anchor": {
+      "flowapi": {
+        "groups_run": 9,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 9,
+        "valid_accepted": 9,
+        "invalid_cases": 9,
+        "invalid_rejected": 9
+      },
+      "openapi-typescript": {
+        "groups_run": 9,
+        "generation_errors": 0,
+        "invalid_typescript": 5,
+        "valid_cases": 4,
+        "valid_accepted": 3,
+        "invalid_cases": 4,
+        "invalid_rejected": 4
+      },
+      "hey-api": {
+        "groups_run": 9,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 9,
+        "valid_accepted": 9,
+        "invalid_cases": 9,
+        "invalid_rejected": 9
+      }
+    },
+    "anyOf": {
+      "flowapi": {
+        "groups_run": 8,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 12,
+        "invalid_cases": 6,
+        "invalid_rejected": 3
+      },
+      "openapi-typescript": {
+        "groups_run": 8,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 12,
+        "invalid_cases": 6,
+        "invalid_rejected": 3
+      },
+      "hey-api": {
+        "groups_run": 8,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 12,
+        "invalid_cases": 6,
+        "invalid_rejected": 2
+      }
+    },
+    "boolean_schema": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 9,
+        "valid_accepted": 9,
+        "invalid_cases": 9,
+        "invalid_rejected": 9
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 9,
+        "valid_accepted": 9,
+        "invalid_cases": 9,
+        "invalid_rejected": 9
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 9,
+        "valid_accepted": 9,
+        "invalid_cases": 9,
+        "invalid_rejected": 0
+      }
+    },
+    "const": {
+      "flowapi": {
+        "groups_run": 17,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 22,
+        "valid_accepted": 22,
+        "invalid_cases": 32,
+        "invalid_rejected": 32
+      },
+      "openapi-typescript": {
+        "groups_run": 17,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 22,
+        "valid_accepted": 22,
+        "invalid_cases": 32,
+        "invalid_rejected": 31
+      },
+      "hey-api": {
+        "groups_run": 17,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 22,
+        "valid_accepted": 22,
+        "invalid_cases": 32,
+        "invalid_rejected": 20
+      }
+    },
+    "contains": {
+      "flowapi": {
+        "groups_run": 20,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 37,
+        "valid_accepted": 37,
+        "invalid_cases": 31,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 20,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 37,
+        "valid_accepted": 37,
+        "invalid_cases": 31,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 20,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 37,
+        "valid_accepted": 37,
+        "invalid_cases": 31,
+        "invalid_rejected": 0
+      }
+    },
+    "content": {
+      "flowapi": {
+        "groups_run": 4,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 18,
+        "valid_accepted": 18,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 4,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 18,
+        "valid_accepted": 18,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 4,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 18,
+        "valid_accepted": 18,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "default": {
+      "flowapi": {
+        "groups_run": 3,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 6,
+        "valid_accepted": 6,
+        "invalid_cases": 1,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 3,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 6,
+        "valid_accepted": 3,
+        "invalid_cases": 1,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 3,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 6,
+        "valid_accepted": 6,
+        "invalid_cases": 1,
+        "invalid_rejected": 0
+      }
+    },
+    "dependentRequired": {
+      "flowapi": {
+        "groups_run": 4,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 14,
+        "valid_accepted": 14,
+        "invalid_cases": 6,
+        "invalid_rejected": 6
+      },
+      "openapi-typescript": {
+        "groups_run": 4,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 14,
+        "valid_accepted": 14,
+        "invalid_cases": 6,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 4,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 14,
+        "valid_accepted": 14,
+        "invalid_cases": 6,
+        "invalid_rejected": 0
+      }
+    },
+    "dependentSchemas": {
+      "flowapi": {
+        "groups_run": 4,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 10,
+        "valid_accepted": 10,
+        "invalid_cases": 10,
+        "invalid_rejected": 9
+      },
+      "openapi-typescript": {
+        "groups_run": 4,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 10,
+        "valid_accepted": 8,
+        "invalid_cases": 10,
+        "invalid_rejected": 1
+      },
+      "hey-api": {
+        "groups_run": 4,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 10,
+        "valid_accepted": 8,
+        "invalid_cases": 10,
+        "invalid_rejected": 1
+      }
+    },
+    "disallow": {
+      "flowapi": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "dynamicRef": {
+      "flowapi": {
+        "groups_run": 21,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 22,
+        "valid_accepted": 22,
+        "invalid_cases": 22,
+        "invalid_rejected": 4
+      },
+      "openapi-typescript": {
+        "groups_run": 21,
+        "generation_errors": 1,
+        "invalid_typescript": 11,
+        "valid_cases": 10,
+        "valid_accepted": 4,
+        "invalid_cases": 14,
+        "invalid_rejected": 10
+      },
+      "hey-api": {
+        "groups_run": 21,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 22,
+        "valid_accepted": 20,
+        "invalid_cases": 22,
+        "invalid_rejected": 5
+      }
+    },
+    "enum": {
+      "flowapi": {
+        "groups_run": 17,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 24,
+        "valid_accepted": 24,
+        "invalid_cases": 31,
+        "invalid_rejected": 31
+      },
+      "openapi-typescript": {
+        "groups_run": 17,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 24,
+        "valid_accepted": 24,
+        "invalid_cases": 31,
+        "invalid_rejected": 31
+      },
+      "hey-api": {
+        "groups_run": 17,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 24,
+        "valid_accepted": 22,
+        "invalid_cases": 31,
+        "invalid_rejected": 31
+      }
+    },
+    "extends": {
+      "flowapi": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-color": {
+      "flowapi": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-date-time": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-date": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-duration": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-email": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-host-name": {
+      "flowapi": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-hostname": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-idn-email": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-idn-hostname": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-ip-address": {
+      "flowapi": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-ipv4": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-ipv6": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-iri-reference": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-iri": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-json-pointer": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-regex": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-relative-json-pointer": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-time": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-unknown": {
+      "flowapi": {
+        "groups_run": 1,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 1,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 1,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-uri-reference": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-uri-template": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-uri": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "format-uuid": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "id-legacy": {
+      "flowapi": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "id": {
+      "flowapi": {
+        "groups_run": 25,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 25,
+        "valid_accepted": 25,
+        "invalid_cases": 27,
+        "invalid_rejected": 22
+      },
+      "openapi-typescript": {
+        "groups_run": 25,
+        "generation_errors": 0,
+        "invalid_typescript": 13,
+        "valid_cases": 12,
+        "valid_accepted": 2,
+        "invalid_cases": 12,
+        "invalid_rejected": 11
+      },
+      "hey-api": {
+        "groups_run": 25,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 25,
+        "valid_accepted": 20,
+        "invalid_cases": 27,
+        "invalid_rejected": 24
+      }
+    },
+    "if-then-else": {
+      "flowapi": {
+        "groups_run": 12,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 20,
+        "valid_accepted": 20,
+        "invalid_cases": 10,
+        "invalid_rejected": 2
+      },
+      "openapi-typescript": {
+        "groups_run": 12,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 20,
+        "valid_accepted": 20,
+        "invalid_cases": 10,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 12,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 20,
+        "valid_accepted": 20,
+        "invalid_cases": 10,
+        "invalid_rejected": 0
+      }
+    },
+    "infinite-loop-detection-legacy": {
+      "flowapi": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "infinite-loop-detection": {
+      "flowapi": {
+        "groups_run": 1,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 1,
+        "valid_accepted": 1,
+        "invalid_cases": 1,
+        "invalid_rejected": 1
+      },
+      "openapi-typescript": {
+        "groups_run": 1,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 1,
+        "valid_accepted": 0,
+        "invalid_cases": 1,
+        "invalid_rejected": 1
+      },
+      "hey-api": {
+        "groups_run": 1,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 1,
+        "valid_accepted": 1,
+        "invalid_cases": 1,
+        "invalid_rejected": 1
+      }
+    },
+    "items": {
+      "flowapi": {
+        "groups_run": 14,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 26,
+        "valid_accepted": 26,
+        "invalid_cases": 14,
+        "invalid_rejected": 13
+      },
+      "openapi-typescript": {
+        "groups_run": 14,
+        "generation_errors": 0,
+        "invalid_typescript": 1,
+        "valid_cases": 24,
+        "valid_accepted": 24,
+        "invalid_cases": 10,
+        "invalid_rejected": 2
+      },
+      "hey-api": {
+        "groups_run": 14,
+        "generation_errors": 1,
+        "invalid_typescript": 0,
+        "valid_cases": 24,
+        "valid_accepted": 24,
+        "invalid_cases": 10,
+        "invalid_rejected": 2
+      }
+    },
+    "maxItems": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 4,
+        "valid_accepted": 4,
+        "invalid_cases": 2,
+        "invalid_rejected": 2
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 4,
+        "valid_accepted": 4,
+        "invalid_cases": 2,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 4,
+        "valid_accepted": 4,
+        "invalid_cases": 2,
+        "invalid_rejected": 0
+      }
+    },
+    "maxLength": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 5,
+        "valid_accepted": 5,
+        "invalid_cases": 2,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 5,
+        "valid_accepted": 5,
+        "invalid_cases": 2,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 5,
+        "valid_accepted": 5,
+        "invalid_cases": 2,
+        "invalid_rejected": 0
+      }
+    },
+    "maxProperties": {
+      "flowapi": {
+        "groups_run": 3,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 3,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 3,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 3,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 3,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 7,
+        "valid_accepted": 7,
+        "invalid_cases": 3,
+        "invalid_rejected": 0
+      }
+    },
+    "maximum": {
+      "flowapi": {
+        "groups_run": 3,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 8,
+        "valid_accepted": 8,
+        "invalid_cases": 4,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 3,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 8,
+        "valid_accepted": 8,
+        "invalid_cases": 4,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 3,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 8,
+        "valid_accepted": 8,
+        "invalid_cases": 4,
+        "invalid_rejected": 0
+      }
+    },
+    "minItems": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 4,
+        "valid_accepted": 4,
+        "invalid_cases": 2,
+        "invalid_rejected": 2
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 4,
+        "valid_accepted": 4,
+        "invalid_cases": 2,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 4,
+        "valid_accepted": 4,
+        "invalid_cases": 2,
+        "invalid_rejected": 0
+      }
+    },
+    "minLength": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 4,
+        "valid_accepted": 4,
+        "invalid_cases": 3,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 4,
+        "valid_accepted": 4,
+        "invalid_cases": 3,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 4,
+        "valid_accepted": 4,
+        "invalid_cases": 3,
+        "invalid_rejected": 0
+      }
+    },
+    "minProperties": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 8,
+        "valid_accepted": 8,
+        "invalid_cases": 2,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 8,
+        "valid_accepted": 8,
+        "invalid_cases": 2,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 8,
+        "valid_accepted": 8,
+        "invalid_cases": 2,
+        "invalid_rejected": 0
+      }
+    },
+    "minimum": {
+      "flowapi": {
+        "groups_run": 3,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 10,
+        "valid_accepted": 10,
+        "invalid_cases": 5,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 3,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 10,
+        "valid_accepted": 10,
+        "invalid_cases": 5,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 3,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 10,
+        "valid_accepted": 10,
+        "invalid_cases": 5,
+        "invalid_rejected": 0
+      }
+    },
+    "multipleOf": {
+      "flowapi": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 8,
+        "valid_accepted": 8,
+        "invalid_cases": 5,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 8,
+        "valid_accepted": 8,
+        "invalid_cases": 5,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 8,
+        "valid_accepted": 8,
+        "invalid_cases": 5,
+        "invalid_rejected": 0
+      }
+    },
+    "not": {
+      "flowapi": {
+        "groups_run": 9,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 16,
+        "valid_accepted": 16,
+        "invalid_cases": 24,
+        "invalid_rejected": 20
+      },
+      "openapi-typescript": {
+        "groups_run": 9,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 16,
+        "valid_accepted": 15,
+        "invalid_cases": 24,
+        "invalid_rejected": 1
+      },
+      "hey-api": {
+        "groups_run": 9,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 16,
+        "valid_accepted": 15,
+        "invalid_cases": 24,
+        "invalid_rejected": 1
+      }
+    },
+    "oneOf": {
+      "flowapi": {
+        "groups_run": 11,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 12,
+        "invalid_cases": 15,
+        "invalid_rejected": 5
+      },
+      "openapi-typescript": {
+        "groups_run": 11,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 12,
+        "invalid_cases": 15,
+        "invalid_rejected": 5
+      },
+      "hey-api": {
+        "groups_run": 11,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 12,
+        "invalid_cases": 15,
+        "invalid_rejected": 3
+      }
+    },
+    "pattern": {
+      "flowapi": {
+        "groups_run": 4,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 12,
+        "invalid_cases": 3,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 4,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 12,
+        "invalid_cases": 3,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 4,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 12,
+        "invalid_cases": 3,
+        "invalid_rejected": 0
+      }
+    },
+    "patternProperties": {
+      "flowapi": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 15,
+        "valid_accepted": 15,
+        "invalid_cases": 11,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 15,
+        "valid_accepted": 11,
+        "invalid_cases": 11,
+        "invalid_rejected": 5
+      },
+      "hey-api": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 15,
+        "valid_accepted": 15,
+        "invalid_cases": 11,
+        "invalid_rejected": 0
+      }
+    },
+    "properties": {
+      "flowapi": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 16,
+        "valid_accepted": 16,
+        "invalid_cases": 12,
+        "invalid_rejected": 9
+      },
+      "openapi-typescript": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 16,
+        "valid_accepted": 10,
+        "invalid_cases": 12,
+        "invalid_rejected": 8
+      },
+      "hey-api": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 16,
+        "valid_accepted": 9,
+        "invalid_cases": 12,
+        "invalid_rejected": 6
+      }
+    },
+    "propertyNames": {
+      "flowapi": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 17,
+        "valid_accepted": 17,
+        "invalid_cases": 5,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 17,
+        "valid_accepted": 17,
+        "invalid_cases": 5,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 17,
+        "valid_accepted": 17,
+        "invalid_cases": 5,
+        "invalid_rejected": 0
+      }
+    },
+    "recursiveRef": {
+      "flowapi": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "ref-legacy": {
+      "flowapi": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "openapi-typescript": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 0,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      }
+    },
+    "ref": {
+      "flowapi": {
+        "groups_run": 23,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 25,
+        "valid_accepted": 25,
+        "invalid_cases": 27,
+        "invalid_rejected": 27
+      },
+      "openapi-typescript": {
+        "groups_run": 23,
+        "generation_errors": 1,
+        "invalid_typescript": 9,
+        "valid_cases": 16,
+        "valid_accepted": 8,
+        "invalid_cases": 18,
+        "invalid_rejected": 17
+      },
+      "hey-api": {
+        "groups_run": 23,
+        "generation_errors": 1,
+        "invalid_typescript": 0,
+        "valid_cases": 24,
+        "valid_accepted": 22,
+        "invalid_cases": 25,
+        "invalid_rejected": 21
+      }
+    },
+    "required": {
+      "flowapi": {
+        "groups_run": 5,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 12,
+        "invalid_cases": 6,
+        "invalid_rejected": 5
+      },
+      "openapi-typescript": {
+        "groups_run": 5,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 7,
+        "invalid_cases": 6,
+        "invalid_rejected": 1
+      },
+      "hey-api": {
+        "groups_run": 5,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 12,
+        "valid_accepted": 7,
+        "invalid_cases": 6,
+        "invalid_rejected": 1
+      }
+    },
+    "type": {
+      "flowapi": {
+        "groups_run": 12,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 21,
+        "valid_accepted": 21,
+        "invalid_cases": 59,
+        "invalid_rejected": 57
+      },
+      "openapi-typescript": {
+        "groups_run": 12,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 21,
+        "valid_accepted": 19,
+        "invalid_cases": 59,
+        "invalid_rejected": 57
+      },
+      "hey-api": {
+        "groups_run": 12,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 21,
+        "valid_accepted": 21,
+        "invalid_cases": 59,
+        "invalid_rejected": 57
+      }
+    },
+    "unevaluatedItems": {
+      "flowapi": {
+        "groups_run": 29,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 42,
+        "valid_accepted": 42,
+        "invalid_cases": 29,
+        "invalid_rejected": 14
+      },
+      "openapi-typescript": {
+        "groups_run": 29,
+        "generation_errors": 1,
+        "invalid_typescript": 3,
+        "valid_cases": 38,
+        "valid_accepted": 38,
+        "invalid_cases": 25,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 29,
+        "generation_errors": 1,
+        "invalid_typescript": 0,
+        "valid_cases": 41,
+        "valid_accepted": 40,
+        "invalid_cases": 28,
+        "invalid_rejected": 1
+      }
+    },
+    "unevaluatedProperties": {
+      "flowapi": {
+        "groups_run": 44,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 67,
+        "valid_accepted": 67,
+        "invalid_cases": 62,
+        "invalid_rejected": 34
+      },
+      "openapi-typescript": {
+        "groups_run": 44,
+        "generation_errors": 1,
+        "invalid_typescript": 5,
+        "valid_cases": 51,
+        "valid_accepted": 39,
+        "invalid_cases": 41,
+        "invalid_rejected": 28
+      },
+      "hey-api": {
+        "groups_run": 44,
+        "generation_errors": 1,
+        "invalid_typescript": 0,
+        "valid_cases": 66,
+        "valid_accepted": 56,
+        "invalid_cases": 61,
+        "invalid_rejected": 23
+      }
+    },
+    "uniqueItems": {
+      "flowapi": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 46,
+        "valid_accepted": 46,
+        "invalid_cases": 19,
+        "invalid_rejected": 2
+      },
+      "openapi-typescript": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 46,
+        "valid_accepted": 46,
+        "invalid_cases": 19,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 6,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 46,
+        "valid_accepted": 46,
+        "invalid_cases": 19,
+        "invalid_rejected": 0
+      }
+    },
+    "vocabulary": {
+      "flowapi": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 3,
+        "valid_accepted": 3,
+        "invalid_cases": 2,
+        "invalid_rejected": 1
+      },
+      "openapi-typescript": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 2,
+        "valid_cases": 0,
+        "valid_accepted": 0,
+        "invalid_cases": 0,
+        "invalid_rejected": 0
+      },
+      "hey-api": {
+        "groups_run": 2,
+        "generation_errors": 0,
+        "invalid_typescript": 0,
+        "valid_cases": 3,
+        "valid_accepted": 3,
+        "invalid_cases": 2,
+        "invalid_rejected": 2
+      }
+    }
+  }
+}
