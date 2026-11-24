@@ -4,7 +4,7 @@
 
 use crate::doc::{self, Says};
 use crate::emit::Emitter;
-use crate::ident::{Taken, literal, pascal, snake};
+use crate::ident::{Taken, literal, pascal};
 use crate::shape::{Choice, Part, Shape, Slot, expand, nullable};
 use flowapi::graph::{Kind, Lit};
 use flowapi::id::TypeId;
@@ -97,8 +97,8 @@ fn body_struct(e: &mut Emitter<'_, '_>, i: usize, s: &Shape<'_>, out: &mut Strin
         out.push_str("#[serde(deny_unknown_fields)]\n");
     }
     let _ = writeln!(out, "pub struct {} {{", e.name(i));
-    let mut idents = Taken::default();
-    for f in &s.fields {
+    let (names, mut idents) = crate::ident::fields(s.fields.iter().map(|f| f.name));
+    for (f, ident) in s.fields.iter().zip(names) {
         if let Some(d) = f.doc {
             let says = Says {
                 text: true,
@@ -107,7 +107,6 @@ fn body_struct(e: &mut Emitter<'_, '_>, i: usize, s: &Shape<'_>, out: &mut Strin
             };
             doc::write(out, INDENT, &doc::lines(p.get(d), says));
         }
-        let ident = idents.take(&snake(f.name));
         let mut attrs: Vec<String> = Vec::new();
         if ident.strip_prefix("r#").unwrap_or(&ident) != f.name {
             attrs.push(format!("rename = {}", literal(f.name)));

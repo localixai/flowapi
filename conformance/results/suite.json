@@ -10,9 +10,9 @@
     "valid_cases": 779,
     "valid_accepted": 779,
     "invalid_cases": 540,
-    "invalid_rejected": 342,
+    "invalid_rejected": 373,
     "soundness_percent": "100.0",
-    "precision_percent": "63.3"
+    "precision_percent": "69.0"
   },
   "compiler_other": [],
   "files": {
@@ -117,7 +117,7 @@
       "valid_cases": 37,
       "valid_accepted": 37,
       "invalid_cases": 31,
-      "invalid_rejected": 0,
+      "invalid_rejected": 17,
       "unsound": []
     },
     "content": {
@@ -559,7 +559,7 @@
       "valid_cases": 20,
       "valid_accepted": 20,
       "invalid_cases": 10,
-      "invalid_rejected": 2,
+      "invalid_rejected": 5,
       "unsound": []
     },
     "infinite-loop-detection-legacy": {
@@ -637,7 +637,7 @@
       "valid_cases": 7,
       "valid_accepted": 7,
       "invalid_cases": 3,
-      "invalid_rejected": 0,
+      "invalid_rejected": 1,
       "unsound": []
     },
     "maximum": {
@@ -741,7 +741,7 @@
       "valid_cases": 12,
       "valid_accepted": 12,
       "invalid_cases": 15,
-      "invalid_rejected": 6,
+      "invalid_rejected": 9,
       "unsound": []
     },
     "pattern": {
@@ -767,7 +767,7 @@
       "valid_cases": 15,
       "valid_accepted": 15,
       "invalid_cases": 11,
-      "invalid_rejected": 0,
+      "invalid_rejected": 4,
       "unsound": []
     },
     "properties": {
@@ -793,7 +793,7 @@
       "valid_cases": 17,
       "valid_accepted": 17,
       "invalid_cases": 5,
-      "invalid_rejected": 0,
+      "invalid_rejected": 3,
       "unsound": []
     },
     "recursiveRef": {

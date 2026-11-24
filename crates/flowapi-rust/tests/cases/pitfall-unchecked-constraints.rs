@@ -2,27 +2,20 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Not checked by this type: minimum.
 pub type EnumMinimum = Integer;
 
-/// Not checked by this type: maxLength.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum EnumMaxLength {
     #[serde(rename = "a")]
     A,
     #[serde(rename = "b")]
     B,
-    #[serde(rename = "cee")]
-    Cee,
 }
 
-/// Not checked by this type: pattern.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum EnumPattern {
     #[serde(rename = "ab")]
     Ab,
-    #[serde(rename = "xy")]
-    Xy,
 }
 
 /// Not checked by this type: not.

@@ -12,7 +12,7 @@ accepts, its type accepts: checked on the official JSON Schema Test Suite.</p>
 </p>
 
 <p align="center">
-  <img src="assets/compare-dark.png" alt="flowapi beside openapi-typescript and hey-api: valid values accepted on the official JSON Schema Test Suite (100% against 90.6% and 94.6%), invalid values rejected (63.3% against 51.4% and 42.2%), broken output (0 against 56 and 7 groups), and the time to generate Slack's, Stripe's, GitHub's and Cloudflare's descriptions, peak memory on Cloudflare's and how many outputs type-check" width="860">
+  <img src="assets/compare-dark.png" alt="flowapi beside openapi-typescript and hey-api: valid values accepted on the official JSON Schema Test Suite (100% against 90.6% and 94.6%), invalid values rejected (69.0% against 51.4% and 42.2%), broken output (0 against 56 and 7 groups), and the time to generate Slack's, Stripe's, GitHub's and Cloudflare's descriptions, peak memory on Cloudflare's and how many outputs type-check" width="860">
 </p>
 
 ## How it holds to the specification
@@ -26,7 +26,7 @@ is wrong. If it refuses an invalid one, the type caught it.
 | Draft 2020-12 | Result |
 | --- | --- |
 | Valid values accepted (soundness) | **100.0%** (779 of 779) |
-| Invalid values rejected (precision) | 63.3% (342 of 540) |
+| Invalid values rejected (precision) | 69.0% (373 of 540) |
 | Groups that failed to generate, or printed invalid TypeScript | 0 of 409 |
 
 From [conformance/results/suite.md](conformance/results/suite.md). The same measurement, each
@@ -35,7 +35,7 @@ schema wrapped as an OpenAPI 3.1 component and each tool run with its defaults
 
 | Generator | Valid accepted | Invalid rejected | Failed to generate | Invalid TypeScript |
 | --- | ---: | ---: | ---: | ---: |
-| flowapi 0.1.0 | **100.0%** | **63.3%** | 0 | 0 |
+| flowapi 0.1.0 | **100.0%** | **69.0%** | 0 | 0 |
 | openapi-typescript 7.13.0 | 90.6% | 51.4% | 7 | 49 |
 | @hey-api/openapi-ts 0.99.0 | 94.6% | 42.2% | 7 | 0 |
 
@@ -161,6 +161,41 @@ Style Examples table, the pitfalls other generators fixed, and the SDKs of GitHu
 Cloudflare's descriptions are run or type-checked
 ([conformance/results/sdk.md](conformance/results/sdk.md)); writing a request against
 openapi-fetch's serializers: [bench/results/sdk.md](bench/results/sdk.md).
+
+For Rust, `--target rust --sdk` prints the same after the serde types: per operation an input
+struct, `<op>_request(&input)`, which returns an `sdk::Request` (method, path, query, headers, and
+the body's content type and bytes), and `<op>_response(status, headers, body)`, which returns an
+enum of the operation's responses or an `sdk::Error` holding the answer. No I/O, no async; the
+runtime is a module printed once (`pub mod sdk`) and needs serde and serde_json, as the types do.
+
+```sh
+cargo run --release -p flowapi-cli -- openapi.json --target rust --sdk -o src/api.rs
+```
+
+```rust
+let r = api::get_pet_request(&api::GetPetInput { parameters: params });
+// sdk::Request { method: "GET", path: "/pets/7", query: "tags=a%20b&tags=c", headers: [], body: None }
+let res = client.get(format!("{base}{}?{}", r.path, r.query)).send()?;
+let headers: Vec<(String, String)> = /* the answer's headers as text */;
+match api::get_pet_response(res.status().as_u16(), &headers, &res.bytes()?)? {
+    api::GetPetResponse::Status200(pet) => { /* Pet, read by serde_json */ }
+    api::GetPetResponse::Default(status, body) => { /* any other status, and its bytes */ }
+}
+```
+
+Each parameter is written by the same rules, through a serde `Serializer` that writes straight
+into the request; members of a struct go in the order its schema names them, a map's
+(`additionalProperties`) in key order. The body is an enum of the media types: JSON and form
+bodies take their type, a multipart body or a media range its content type and bytes, any other
+bytes; parameters of a content type (`; charset=utf-8`) are yours to add to `body`. A response
+is an enum variant per status and media type: JSON read into its type (an empty or broken body is
+an error, never a default), `text/*` a `String`, other bodies bytes; a range or `default` keeps
+the status. The same table, the cases and Rust's own (numbers as JavaScript writes them, integers
+past 2^53 exact, enums as their strings) are compiled into one crate and run
+([conformance/results/sdk-rust.md](conformance/results/sdk-rust.md)); generating the SDK of
+GitHub's, Stripe's and Cloudflare's descriptions:
+[conformance/results/sdk-rust-corpus.md](conformance/results/sdk-rust-corpus.md); writing a
+request against progenitor's way: [bench/results/sdk-rust.md](bench/results/sdk-rust.md).
 
 ## How it works
 

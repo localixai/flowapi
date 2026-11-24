@@ -4,7 +4,7 @@ Written by `cd conformance/props && cargo run --release`; do not edit. 600 schem
 
 | Valid values | Accepted | Invalid values | Rejected | Diagnostics outside the cases |
 | ---: | ---: | ---: | ---: | ---: |
-| 3968 | 3968 | 3232 | 2588 | 0 |
+| 4319 | 4319 | 2881 | 2260 | 0 |
 
 ## Unsound
 

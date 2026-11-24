@@ -10,6 +10,7 @@ mod emit;
 mod ident;
 mod item;
 mod print;
+mod sdk;
 mod shape;
 
 use flowapi::lower::Capabilities;
@@ -20,6 +21,9 @@ use flowapi::{File, IdentifierRules, Output, Program, Target};
 pub struct Rust {
     /// The path of the file written.
     pub path: String,
+    /// Whether the SDK follows the types: per operation a function that writes its request and
+    /// one that reads its response, sending nothing (`sdk.rs`).
+    pub sdk: bool,
 }
 
 impl Default for Rust {
@@ -32,13 +36,31 @@ impl Rust {
     /// The target writing `path`.
     #[must_use]
     pub fn new(path: impl Into<String>) -> Self {
-        Self { path: path.into() }
+        Self {
+            path: path.into(),
+            sdk: false,
+        }
+    }
+
+    /// The target with the SDK after the types.
+    #[must_use]
+    pub fn with_sdk(self) -> Self {
+        Self { sdk: true, ..self }
     }
 }
 
-/// Names no item may take: Rust's keywords, its primitive types, the prelude's types and
-/// variants the output uses, the crates it names, and the output's own helpers.
-pub(crate) const RESERVED: &[&str] = &[
+/// The names no item may take, and those the SDK adds: its runtime's module.
+macro_rules! reserved {
+    ($($name:literal,)*) => {
+        /// Names no item may take: Rust's keywords, its primitive types, the prelude's types
+        /// and variants the output uses, the crates it names, and the output's own helpers.
+        pub(crate) const RESERVED: &[&str] = &[$($name,)*];
+        /// With the SDK: its runtime's module, `sdk`, too.
+        pub(crate) const RESERVED_SDK: &[&str] = &[$($name,)* "sdk"];
+    };
+}
+
+reserved! {
     "bool",
     "char",
     "str",
@@ -129,7 +151,7 @@ pub(crate) const RESERVED: &[&str] = &[
     "try",
     "gen",
     "_",
-];
+}
 
 impl Target for Rust {
     /// The lowering keeps intersections and unions whatever is asked; this target states a
@@ -143,14 +165,16 @@ impl Target for Rust {
     }
 
     fn identifiers(&self) -> IdentifierRules {
-        IdentifierRules { reserved: RESERVED }
+        IdentifierRules {
+            reserved: if self.sdk { RESERVED_SDK } else { RESERVED },
+        }
     }
 
     fn emit(&self, program: &Program<'_>) -> Output {
         Output {
             files: vec![File {
                 path: self.path.clone(),
-                text: print::program(program),
+                text: print::program(program, self.sdk),
             }],
             diagnostics: flowapi::Diagnostics::default(),
         }

@@ -2,7 +2,7 @@
 //! then the index signature when the object takes other properties. Nested shapes are printed
 //! first and indented as they are placed.
 
-use crate::pattern::Template;
+use crate::pattern::template;
 use crate::print::{Prec, reference};
 use flowapi::Program;
 use flowapi::graph::{Kind, Object, Type};
@@ -48,35 +48,52 @@ pub(crate) fn object(out: &mut String, p: &Program<'_>, o: &Object<'_>) {
         indented(out, &ty);
         out.push_str(";\n");
     }
-    let templates: Option<Vec<Template>> = o
+    // Each pattern a template literal type can state has its own signature; the others fall
+    // under the string signature, whose type allows their values too.
+    let templates: Vec<Option<String>> = o
         .patterns
         .iter()
-        .map(|pat| Template::of(&pat.regex))
+        .map(|pat| pat.affix.as_ref().and_then(template))
         .collect();
-    let templates = templates.filter(|t| !t.is_empty());
-    if let Some(templates) = &templates {
-        for (t, pat) in templates.iter().zip(&o.patterns) {
-            out.push_str(INDENT);
-            out.push_str("[key: ");
-            t.print(out);
-            out.push_str("]: ");
-            // A named property this pattern matches must fit its signature too.
-            let mut members: Vec<TypeId> = vec![p.resolve(pat.ty)];
-            for q in o.props.iter().filter(|q| t.matches(&q.name)) {
-                let r = p.resolve(q.ty);
-                if !members.contains(&r) {
-                    members.push(r);
-                }
-            }
-            let mut ty = String::new();
-            union_of(&mut ty, p, &members);
-            let matching = o.props.iter().filter(|q| t.matches(&q.name));
-            inherited(&mut ty, matching.map(|q| (q.name.as_ref(), q.required)));
-            indented(out, &ty);
-            out.push_str(";\n");
+    for (i, (t, pat)) in templates.iter().zip(&o.patterns).enumerate() {
+        let (Some(t), Some(affix)) = (t, &pat.affix) else {
+            continue;
+        };
+        if templates.iter().take(i).any(|u| u.as_ref() == Some(t)) {
+            continue;
         }
+        out.push_str(INDENT);
+        out.push_str("[key: ");
+        out.push_str(t);
+        out.push_str("]: ");
+        // Patterns of one template share its signature (TypeScript allows one), which takes the
+        // values of each; a named property it matches must fit the signature too.
+        let same = templates
+            .iter()
+            .zip(&o.patterns)
+            .filter(|(u, _)| u.as_ref() == Some(t));
+        let mut members: Vec<TypeId> = Vec::new();
+        for (_, q) in same {
+            let r = p.resolve(q.ty);
+            if !members.contains(&r) {
+                members.push(r);
+            }
+        }
+        for q in o.props.iter().filter(|q| affix.matches(&q.name)) {
+            let r = p.resolve(q.ty);
+            if !members.contains(&r) {
+                members.push(r);
+            }
+        }
+        let mut ty = String::new();
+        union_of(&mut ty, p, &members);
+        let matching = o.props.iter().filter(|q| affix.matches(&q.name));
+        inherited(&mut ty, matching.map(|q| (q.name.as_ref(), q.required)));
+        indented(out, &ty);
+        out.push_str(";\n");
     }
-    let closed = templates.is_some() && p.is_never(o.rest);
+    let closed =
+        !templates.is_empty() && templates.iter().all(Option::is_some) && p.is_never(o.rest);
     if !closed && (!p.is_never(o.extra) || o.props.is_empty()) {
         out.push_str(INDENT);
         out.push_str("[key: string]: ");

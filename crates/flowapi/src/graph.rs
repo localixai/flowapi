@@ -3,11 +3,17 @@
 //! other types. Every type is sound: it accepts every value its schema accepts (G3); what it
 //! cannot narrow, it records in [`Type::lossy`].
 
+mod affix;
 mod arrays;
 mod branches;
 mod build;
+mod conditional;
 mod dependent;
+mod exclusive;
+mod keys;
+mod limits;
 mod literal;
+mod local;
 mod narrow;
 mod objects;
 mod ops;
@@ -16,6 +22,7 @@ mod read;
 mod unevaluated;
 mod vocab;
 
+pub use affix::Affix;
 pub use branches::{Array, Bools, Branches, Kinds, Lit, Numbers, Object, Pattern, Prop, Strings};
 pub use build::{build, build_with};
 

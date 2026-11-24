@@ -48,7 +48,11 @@ pub fn generate(request: &[u8]) -> String {
         }
     }
     let target = flowapi_ts::TypeScript::new(request.output.as_ref());
-    let target = if request.sdk { target.with_sdk() } else { target };
+    let target = if request.sdk {
+        target.with_sdk()
+    } else {
+        target
+    };
     let (output, diags) = flowapi::generate(&docs, &target);
     let diags: Vec<Found<'_>> = diags.all().iter().map(|d| found(&request, d)).collect();
     let files = output.map(|o| o.files).unwrap_or_default();

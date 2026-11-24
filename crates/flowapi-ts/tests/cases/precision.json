@@ -1,0 +1,56 @@
+{
+  "openapi": "3.1.0",
+  "info": {"title": "precision", "version": "1"},
+  "components": {
+    "schemas": {
+      "NamesFalse": {"type": "object", "propertyNames": false},
+      "NamesEnum": {
+        "type": "object",
+        "propertyNames": {"enum": ["a", "b", "x-c"]},
+        "properties": {"a": {"type": "string"}, "z": {"type": "string"}},
+        "patternProperties": {"^x-": {"type": "integer"}},
+        "additionalProperties": {"type": "boolean"}
+      },
+      "NamesRequiredOut": {"type": "object", "required": ["c"], "propertyNames": {"const": "a"}},
+      "NamesPattern": {"type": "object", "propertyNames": {"pattern": "^x-"}, "additionalProperties": {"type": "string"}},
+      "NamesPatternOverlap": {
+        "type": "object",
+        "propertyNames": {"pattern": "^x-"},
+        "patternProperties": {"^x-a": {"type": "string"}, "^x-.*": {"type": "string", "minLength": 1}},
+        "additionalProperties": false
+      },
+      "NamesUnchecked": {"type": "object", "propertyNames": {"pattern": "^[a-z]+$"}},
+      "NamesEmpty": {"type": "object", "propertyNames": {"maxLength": 0}},
+      "NoProperties": {"type": "object", "properties": {"a": {"type": "string"}}, "maxProperties": 0},
+      "EnumBounds": {"enum": [0, 1, 2, 3, 10, "a", "abc", true], "minimum": 1, "exclusiveMaximum": 10, "multipleOf": 2, "maxLength": 2},
+      "EnumUnsure": {"type": "number", "enum": [0.1, 0.3], "multipleOf": 0.1},
+      "OnePoint": {"type": "number", "minimum": 5, "maximum": 5},
+      "NoNumber": {"type": ["number", "string"], "minimum": 5, "maximum": 3},
+      "EmptyString": {"type": "string", "maxLength": 0},
+      "ContainsTwo": {"type": "array", "contains": {"type": "string"}, "minContains": 2},
+      "ContainsNone": {"type": "array", "items": {"type": ["string", "number"]}, "contains": {"type": "string"}, "minContains": 0, "maxContains": 0},
+      "ContainsAll": {"type": "array", "contains": true, "maxContains": 2},
+      "ContainsFalse": {"type": "array", "contains": false},
+      "IfRequired": {
+        "type": "object",
+        "if": {"required": ["kind"]},
+        "then": {"required": ["value"]},
+        "else": {"properties": {"value": false}}
+      },
+      "IfTrue": {"if": true, "then": {"const": "then"}, "else": {"const": "else"}},
+      "OneOfKinds": {"oneOf": [{"type": "number"}, {}]},
+      "OneOfApart": {"oneOf": [{"type": "string"}, {"type": "integer"}]},
+      "OneOfTwoAll": {"oneOf": [true, true]},
+      "OneOfOverlap": {"oneOf": [{"type": "string", "minLength": 2}, {"type": "string"}]},
+      "Draft7Contains": {"$schema": "http://json-schema.org/draft-07/schema#", "type": "array", "contains": true, "maxContains": 0},
+      "NotInteger": {"not": {"type": "integer"}},
+      "NotNull": {"not": {"enum": [null]}},
+      "PatternsPartial": {
+        "type": "object",
+        "patternProperties": {"^x-": {"type": "string"}, "[0-9]{2}": {"type": "boolean"}},
+        "additionalProperties": false
+      },
+      "PatternDotStar": {"type": "object", "patternProperties": {"b.*": false, "f.*": true}}
+    }
+  }
+}

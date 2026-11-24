@@ -74,11 +74,9 @@ export type ApNull = {
   [key: string]: string | null;
 };
 
-/**
- * Not checked by this type: propertyNames.
- */
 export type PropNames = {
-  [key: string]: number;
+  a?: number;
+  b?: number;
 };
 
 export type Merged = string | number;

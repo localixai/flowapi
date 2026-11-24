@@ -141,12 +141,13 @@ pub struct ApNull {
     pub extra: BTreeMap<String, Option<String>>,
 }
 
-/// Not checked by this type: propertyNames.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct PropNames {
-    /// Every other property.
-    #[serde(flatten)]
-    pub extra: BTreeMap<String, Integer>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub a: Option<Integer>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub b: Option<Integer>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

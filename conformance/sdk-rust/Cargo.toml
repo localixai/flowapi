@@ -1,0 +1,38 @@
+# Oracle O8 for the Rust target: the SDK (`flowapi --target rust --sdk`) run, not read. Each row of
+# the spec's Style Examples and each case of conformance/sdk/cases.json becomes an operation; the
+# SDK of every version is generated into one crate (`out/gen`), built once with `-j 1`, and every
+# request and response function is called; the strings are compared exactly. A crate of its own,
+# outside the workspace: the generated crate never reaches a build of flowapi.
+[package]
+name = "flowapi-sdk-rust"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "sdk-rust"
+path = "src/main.rs"
+
+[[bin]]
+name = "corpus"
+path = "src/bin/corpus.rs"
+
+[workspace]
+
+[dependencies]
+flowapi = { path = "../../crates/flowapi" }
+flowapi-rust = { path = "../../crates/flowapi-rust" }
+# The cases' members kept in the order written: an operation's parameters and an input's
+# object members reach the generated crate as the TypeScript oracle hands them to Node.
+serde_json = { version = "1", features = ["preserve_order"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+unused_qualifications = "deny"
+
+[lints.clippy]
+dbg_macro = "deny"
+wildcard_imports = "deny"
+redundant_clone = "deny"
+format_push_string = "deny"
+too_many_lines = "deny"

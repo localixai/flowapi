@@ -69,8 +69,8 @@ pub(super) struct Read {
     pub(super) reference: Option<TypeId>,
     pub(super) parts: Vec<TypeId>,
     pub(super) then_else: (Option<NodeId>, Option<NodeId>),
-    /// Whether the schema has an `if`: without one, `then` and `else` do nothing (2020-12 §10.2.2).
-    pub(super) has_if: bool,
+    /// The schema's `if`: without one, `then` and `else` do nothing (2020-12 §10.2.2).
+    pub(super) test: Option<NodeId>,
     pub(super) lossy: Vec<Keyword>,
     /// The kinds a `not` rules out.
     pub(super) exclude: Kinds,
@@ -168,11 +168,9 @@ impl<'d, 't> Builder<'d, 't> {
         ty.read_only = bool_of("readOnly");
         ty.write_only = bool_of("writeOnly");
         let (mut read, own) = self.read(&at);
-        if read.has_if && read.then_else != (None, None) {
-            read.lossy.push(Keyword::If);
-        }
-        ty.lossy = std::mem::take(&mut read.lossy);
-        ty.kind = self.combine(&at, read, &own);
+        let mut lossy = std::mem::take(&mut read.lossy);
+        ty.kind = self.combine(&at, read, &own, &mut lossy);
+        ty.lossy = lossy;
         ty
     }
 
@@ -182,7 +180,7 @@ impl<'d, 't> Builder<'d, 't> {
             .map_or_else(|| at.clone(), |d| scoped(&d.tree, at))
     }
 
-    fn read(&mut self, at: &Resource) -> (Read, Own) {
+    pub(super) fn read(&mut self, at: &Resource) -> (Read, Own) {
         let docs = self.docs;
         let tree = docs.get(at.doc).map(|d| &d.tree);
         let mut read = Read::default();
@@ -227,19 +225,24 @@ impl<'d, 't> Builder<'d, 't> {
         }
     }
 
-    fn combine(&mut self, at: &Resource, read: Read, own: &Own) -> Kind<'t> {
+    fn combine(
+        &mut self,
+        at: &Resource,
+        read: Read,
+        own: &Own,
+        lossy: &mut Vec<Keyword>,
+    ) -> Kind<'t> {
         if let (Some(target), true) = (read.reference, at.dialect.ref_overrides()) {
             return Kind::Alias(target);
         }
         let mut parts: Vec<TypeId> = read.reference.into_iter().collect();
         parts.extend(read.parts);
-        if let (true, (Some(then), Some(otherwise))) = (read.has_if, read.then_else) {
-            // (if ∧ then) ∨ (¬if ∧ else) lies within then ∨ else.
-            let members = vec![self.sub(at, then), self.sub(at, otherwise)];
-            parts.push(self.make(Kind::Union(members)));
+        if let Some(test) = read.test {
+            let (then, otherwise) = read.then_else;
+            parts.extend(self.conditional(at, test, then, otherwise, lossy));
         }
         let mut literal = Vec::new();
-        let mut value = self.own(at, own, &mut literal);
+        let mut value = self.own(at, own, &mut literal, lossy);
         parts.extend(literal);
         if !read.exclude.is_empty() {
             let keep = Kinds::ALL.without(read.exclude);

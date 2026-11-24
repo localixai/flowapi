@@ -3,7 +3,8 @@
 //! them, the values are a union of exact types, which the schema's other keywords meet.
 
 use super::build::Builder;
-use super::{Array, Bools, Branches, Kind, Kinds, Lit, Numbers, Object, Prop, Strings};
+use super::narrow::{number_lit, string_lit};
+use super::{Array, Bools, Branches, Kind, Kinds, Numbers, Object, Prop, Strings};
 use crate::id::{NodeId, TypeId};
 use crate::json::{Tree, Value};
 use std::borrow::Cow;
@@ -36,31 +37,15 @@ impl<'t> Builder<'_, 't> {
                 }
             }
             Value::Number(span) => {
-                let raw = tree.raw(span);
-                let norm = raw.parse::<f64>().map_or_else(
-                    |_| raw.to_owned(),
-                    |v| {
-                        if v == 0.0 {
-                            String::from("0")
-                        } else {
-                            v.to_string()
-                        }
-                    },
-                );
                 b.number = Some(Numbers {
                     integer: false,
-                    lits: Some(vec![Lit {
-                        raw,
-                        norm: Cow::Owned(norm),
-                    }]),
+                    lits: Some(vec![number_lit(tree.raw(span))]),
                 });
             }
             Value::String(span) => {
-                let raw = tree.raw(span);
-                let norm = tree.string(span).unwrap_or(Cow::Borrowed(raw));
                 b.string = Some(Strings {
                     format: None,
-                    lits: Some(vec![Lit { raw, norm }]),
+                    lits: Some(vec![string_lit(tree, span)]),
                 });
             }
             Value::Array(_) => {

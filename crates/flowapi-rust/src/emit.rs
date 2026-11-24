@@ -133,6 +133,16 @@ impl<'p, 't> Emitter<'p, 't> {
         }
     }
 
+    /// The item of a declaration's type.
+    pub(crate) fn decl_item(&self, ty: TypeId) -> Option<usize> {
+        self.decl_of.get(&ty.index()).copied()
+    }
+
+    /// A name no item and no reserved word has, now taken: for the SDK's own items.
+    pub(crate) fn fresh(&mut self, base: &str) -> String {
+        self.names.take(base)
+    }
+
     pub(crate) fn name(&self, i: usize) -> &str {
         self.items.get(i).map_or("Never", |it| it.name.as_str())
     }

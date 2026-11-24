@@ -1,0 +1,15 @@
+{
+ "about": "Calls of conformance/sdk/cases.json whose expectation the Rust types change, merged over it by conformance/sdk-rust: an object schema with no properties is a struct of a BTreeMap in Rust, whose members iterate in key order, where a JavaScript object keeps the order written. The string is the same members, in that order; nothing else differs.",
+ "calls": [
+  {
+   "case": "headers pass unchanged and carry no name",
+   "call": 0,
+   "expect": { "headers": { "X-Tag": "W/\"a b\"; q=1 %20", "X-Token": "12345678,90099", "X-Color": "G=200,R=100" } }
+  },
+  {
+   "case": "in: querystring as a form",
+   "call": 0,
+   "expect": { "query": "n=1&n=2&text=a%20b%26c", "pairs": [["n", "1"], ["n", "2"], ["text", "a b&c"]] }
+  }
+ ]
+}

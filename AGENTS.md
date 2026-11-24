@@ -32,6 +32,10 @@ work here.
   `src/sdk.rs` the opt-in SDK (`--sdk`): `sdk/request.rs`, `sdk/response.rs` and the runtime
   printed once (`sdk/runtime.ts`); `tests/sdk/*.json` kept like the cases.
 - `crates/flowapi-rust`: the Rust target (serde types). `tests/cases/*.rs`, kept like the TypeScript ones.
+  `src/sdk.rs` the opt-in SDK (`--target rust --sdk`): `sdk/request.rs`, `sdk/param.rs`,
+  `sdk/response.rs`, and the runtime printed once as `pub mod sdk` (`sdk/runtime.rs`,
+  `sdk/write.rs`, `sdk/expand.rs`, never compiled here: this crate has no serde);
+  `tests/sdk/*.rs` kept for the TypeScript SDK's cases and `tests/sdk/names.json`.
 - `crates/flowapi-cli`: the `flowapi` command, all of flowapi's I/O.
 - `crates/flowapi-wasm`: the core and the TypeScript target as a WebAssembly module for the npm
   package, behind four exports of its own (`src/abi.rs`: JSON in and out through linear memory,
@@ -43,7 +47,8 @@ work here.
   ([conformance/README.md](conformance/README.md)): the official suites' pinned copies
   (`suites/`), the suite oracle (`suite/`, O3; `suite-rust/` for the Rust target), the same
   oracle run on the other generators (`compare/`), random schemas against flowschema (`props/`, O5),
-  the OAI's example descriptions (`oai/`, O2), the SDK run under Node (`sdk/`, O8), the
+  the OAI's example descriptions (`oai/`, O2), the SDK run under Node (`sdk/`, O8; `sdk-rust/` for
+  the Rust SDK, its own cases in `sdk-rust/cases.json`), the
   requirements ledger (`ledger/`, O1), the
   TypeScript compiler they check with (`ts/`), and their results (`results/`, `REPORT.md`).
 - `bench/`: the benchmarks against the other generators, their budgets and results
@@ -64,6 +69,10 @@ node conformance/compare/compare.mjs                   # O3 on the other generat
 node conformance/oai/run.mjs                           # O2, after cargo build --release
 node conformance/sdk/run.mjs --corpus                  # O8, the SDK; after cargo build --release
 node bench/competitors/sdk.mjs                         # writing requests against openapi-fetch
+cargo test -p flowapi-rust --test sdk                  # the Rust SDK kept for each case (FLOWAPI_BLESS=1)
+(cd conformance/sdk-rust && cargo run --release -j 1 --bin sdk-rust)   # O8 for the Rust SDK
+(cd conformance/sdk-rust && cargo run --release -j 1 --bin corpus -- --build)   # its corpus
+(cd bench/sdk-rust && cargo run --release -j 1)        # writing requests against progenitor's way
 cargo test -p flowapi-ts --test fuzz                   # O7, no input panics
 cargo run --release -p flowapi-cli -- <description.json> -o types.ts
 bench/run.sh                          # the benchmarks, then held to bench/budgets.json

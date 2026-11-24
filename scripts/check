@@ -27,5 +27,6 @@ step cargo build --locked --release --quiet -p flowapi-cli
 step node conformance/oai/run.mjs
 step node conformance/sdk/run.mjs
 step node conformance/sdk/extract.mjs --check
+(cd conformance/sdk-rust && step cargo run --locked --release --quiet -j 1 --bin sdk-rust)
 (cd conformance/ledger && step cargo run --locked --release --quiet --bin report -- --check)
 printf '\nall checks passed\n'

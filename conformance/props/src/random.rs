@@ -52,7 +52,7 @@ pub(crate) fn schema(r: &mut Rng, depth: u32) -> Value {
     }
     let mut s = Map::new();
     for _ in 0..r.below(4) + 1 {
-        match r.below(12) {
+        match r.below(18) {
             0 => drop(s.insert("type".into(), json!(TYPES[r.below(7)]))),
             1 => {
                 let mut props = Map::new();
@@ -85,10 +85,79 @@ pub(crate) fn schema(r: &mut Rng, depth: u32) -> Value {
                 "patternProperties".into(),
                 json!({ "^x-": schema(r, depth - 1) }),
             )),
-            _ => drop(s.insert("unevaluatedProperties".into(), json!(false))),
+            11 => drop(s.insert("unevaluatedProperties".into(), json!(false))),
+            12 => {
+                let names = [
+                    json!(false),
+                    json!({ "enum": ["a", "x-c"] }),
+                    json!({ "pattern": "^x-" }),
+                    json!({ "maxLength": 1 }),
+                    json!({ "const": "constructor" }),
+                ];
+                s.insert("propertyNames".into(), names[r.below(5)].clone());
+            }
+            13 => {
+                s.insert("contains".into(), schema(r, depth - 1));
+                for key in ["minContains", "maxContains"] {
+                    if r.below(2) == 0 {
+                        s.insert(key.into(), json!(r.below(3)));
+                    }
+                }
+            }
+            14 => {
+                let tests = [
+                    json!({ "type": TYPES[r.below(7)] }),
+                    json!({ "required": ["a"] }),
+                    json!({ "type": "object", "required": ["a", "b"] }),
+                    json!(r.below(2) == 0),
+                    json!({ "const": 1 }),
+                ];
+                s.insert("if".into(), tests[r.below(5)].clone());
+                for key in ["then", "else"] {
+                    if r.below(3) > 0 {
+                        s.insert(key.into(), schema(r, depth - 1));
+                    }
+                }
+            }
+            15 => {
+                let keys = [
+                    "minimum",
+                    "maximum",
+                    "exclusiveMinimum",
+                    "exclusiveMaximum",
+                    "multipleOf",
+                ];
+                let key = keys[r.below(5)];
+                let values = if key == "multipleOf" {
+                    [json!(1), json!(2), json!(0.25)]
+                } else {
+                    [json!(0), json!(1), json!(-3)]
+                };
+                s.insert(key.into(), values[r.below(3)].clone());
+                scalars(r, &mut s);
+            }
+            16 => {
+                let key = ["minLength", "maxLength", "pattern"][r.below(3)];
+                let value = if key == "pattern" {
+                    json!(["^a", "c$", "x-"][r.below(3)])
+                } else {
+                    json!(r.below(3))
+                };
+                s.insert(key.into(), value);
+                scalars(r, &mut s);
+            }
+            _ => drop(s.insert("maxProperties".into(), json!(r.below(3)))),
         }
     }
     Value::Object(s)
+}
+
+/// Sometimes an `enum` of scalars beside a schema's bounds, which the bounds filter.
+fn scalars(r: &mut Rng, s: &mut Map<String, Value>) {
+    if r.below(2) == 0 {
+        let all = json!([0, 1, 2, -3, 0.25, 1.5, "a", "", "x-c", "abc"]);
+        s.insert("enum".into(), all);
+    }
 }
 
 /// A value drawn near the schema: its kinds, names and literals.

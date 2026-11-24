@@ -1,0 +1,28 @@
+# What writing a request costs in the Rust SDK flowapi generates (`flowapi --target rust --sdk`)
+# against the way progenitor's generated clients write one (percent-encoding's path set for each
+# path value, the query's pairs through serde_urlencoded, serde_json for the body), on the same
+# operation shapes as bench/competitors/sdk.mjs. build.rs generates the SDK from api.json with the
+# flowapi crates. A crate of its own, outside the workspace.
+#   cargo run --release -j 1      (from here; writes bench/results/sdk-rust.md)
+[package]
+name = "flowapi-bench-sdk-rust"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# progenitor-client's own: its query and path encoding (progenitor-client/Cargo.toml).
+serde_urlencoded = "0.7"
+percent-encoding = "2"
+form_urlencoded = "1"
+
+[build-dependencies]
+flowapi = { path = "../../crates/flowapi" }
+flowapi-rust = { path = "../../crates/flowapi-rust" }
+
+[profile.release]
+codegen-units = 1

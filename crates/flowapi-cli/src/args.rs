@@ -7,8 +7,9 @@ Usage: flowapi <description> [-o <types.ts>] [--target ts|rust] [--sdk] [--quiet
 
   -o, --output <file>   where to write the types (standard output by default)
   -t, --target <lang>   the language of the types: ts (the default) or rust (serde)
-      --sdk             TypeScript: also a function per operation that writes its request
-                        and one that reads its response, with no HTTP library and no I/O
+      --sdk             also a function per operation that writes its request and one that
+                        reads its response, with no HTTP library and no I/O (Rust: serde and
+                        serde_json only, as the types)
   -q, --quiet           print errors only, not warnings
   -h, --help            this help
   -V, --version         the version
@@ -23,7 +24,7 @@ pub(crate) struct Generate {
     pub(crate) quiet: bool,
     /// The Rust target rather than TypeScript.
     pub(crate) rust: bool,
-    /// The TypeScript SDK after the types.
+    /// The SDK after the types.
     pub(crate) sdk: bool,
 }
 
@@ -62,11 +63,6 @@ pub(crate) fn parse(mut args: impl Iterator<Item = String>) -> Result<Command, S
         }
     }
     let input = input.ok_or("a description to read")?;
-    if sdk && rust {
-        return Err(String::from(
-            "`--sdk` is TypeScript's: the Rust target has none yet",
-        ));
-    }
     Ok(Command::Generate(Generate {
         input,
         output,

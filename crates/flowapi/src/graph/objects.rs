@@ -1,21 +1,32 @@
 //! A schema's own object keywords as the object branch: `properties` and `required`, the type of
 //! any other property (`additionalProperties`, `patternProperties`), and `unevaluatedProperties:
-//! false` closing it where every name it may take is known.
+//! false` closing it where every name it may take is known; then the names `propertyNames` and
+//! `maxProperties` allow (`keys.rs`).
 
 use super::build::Builder;
 use super::own::Own;
-use super::{Kind, Object, Pattern, Prop};
+use super::{Affix, Kind, Object, Pattern, Prop};
 use crate::id::NodeId;
 use crate::id::TypeId;
 use crate::json::{Tree, Value};
-use crate::schema::Resource;
+use crate::schema::{Keyword, Resource};
 use crate::source::Dialect;
 use std::borrow::Cow;
 
 impl<'t> Builder<'_, 't> {
-    pub(super) fn object(&mut self, tree: &Tree<'t>, at: &Resource, own: &Own) -> Object<'t> {
+    /// The object branch; `None` when no object passes (`keys.rs`).
+    pub(super) fn object(
+        &mut self,
+        tree: &Tree<'t>,
+        at: &Resource,
+        own: &Own,
+        lossy: &mut Vec<Keyword>,
+    ) -> Option<Object<'t>> {
         let mut props: Vec<Prop<'t>> = Vec::new();
-        for m in own.properties.map_or(&[][..], |n| tree.members(n)) {
+        for m in own
+            .get(Keyword::Properties)
+            .map_or(&[][..], |n| tree.members(n))
+        {
             let raw = tree.raw(m.key);
             let name = tree.string(m.key).unwrap_or(Cow::Borrowed(raw));
             let ty = self.sub(at, m.value);
@@ -30,7 +41,10 @@ impl<'t> Builder<'_, 't> {
             }
         }
         let mut unnamed: Vec<usize> = Vec::new();
-        for &n in own.required.map_or(&[][..], |n| tree.items(n)) {
+        for &n in own
+            .get(Keyword::Required)
+            .map_or(&[][..], |n| tree.items(n))
+        {
             let Value::String(span) = tree.value(n) else {
                 continue;
             };
@@ -49,7 +63,7 @@ impl<'t> Builder<'_, 't> {
                 | Dialect::Draft2020
                 | Dialect::Draft2020Annotations => &[],
             };
-            if one_way(tree, own.properties, &name, one_way_keys) {
+            if one_way(tree, own.get(Keyword::Properties), &name, one_way_keys) {
                 continue;
             }
             match props.iter_mut().find(|p| p.name == name) {
@@ -66,17 +80,11 @@ impl<'t> Builder<'_, 't> {
                 }
             }
         }
-        let rest = own.additional.map_or(self.any, |n| self.sub(at, n));
+        let rest = own
+            .get(Keyword::AdditionalProperties)
+            .map_or(self.any, |n| self.sub(at, n));
         let mut extra = rest;
-        let mut patterns: Vec<Pattern<'t>> = Vec::new();
-        for m in own.patterns.map_or(&[][..], |n| tree.members(n)) {
-            let raw = tree.raw(m.key);
-            let regex = tree.string(m.key).unwrap_or(Cow::Borrowed(raw));
-            patterns.push(Pattern {
-                regex,
-                ty: self.sub(at, m.value),
-            });
-        }
+        let patterns = self.patterns(tree, at, own);
         if !patterns.is_empty() && extra != self.any {
             let mut members = vec![extra];
             members.extend(patterns.iter().map(|p| p.ty));
@@ -91,9 +99,10 @@ impl<'t> Builder<'_, 't> {
         }
         // `unevaluatedProperties: false`: no name but those some schema applied here could
         // evaluate (unevaluated.rs); `additionalProperties` evaluates every name, so it wins.
-        if own.unevaluated_props.is_some()
-            && own.additional.is_none()
-            && own.patterns.is_none()
+        let mut rest = rest;
+        if own.get(Keyword::UnevaluatedProperties).is_some()
+            && own.get(Keyword::AdditionalProperties).is_none()
+            && own.get(Keyword::PatternProperties).is_none()
             && let Some(found) = self.evaluated(at, true)
         {
             for (raw, name) in found.names {
@@ -107,19 +116,32 @@ impl<'t> Builder<'_, 't> {
                 }
             }
             extra = TypeId::new(1).unwrap_or(extra);
-            return Object {
-                props,
-                patterns,
-                rest: extra,
-                extra,
-            };
+            rest = extra;
         }
-        Object {
+        let object = Object {
             props,
             patterns,
             rest,
             extra,
-        }
+        };
+        self.keys(at, object, own, lossy)
+    }
+
+    /// `patternProperties`: each regular expression with the type of a matching value.
+    fn patterns(&mut self, tree: &Tree<'t>, at: &Resource, own: &Own) -> Vec<Pattern<'t>> {
+        let members = own
+            .get(Keyword::PatternProperties)
+            .map_or(&[][..], |n| tree.members(n));
+        let pattern = |m: &crate::json::Member| {
+            let raw = tree.raw(m.key);
+            let regex = tree.string(m.key).unwrap_or(Cow::Borrowed(raw));
+            Pattern {
+                affix: Affix::of(&regex),
+                regex,
+                ty: self.sub(at, m.value),
+            }
+        };
+        members.iter().map(pattern).collect()
     }
 }
 

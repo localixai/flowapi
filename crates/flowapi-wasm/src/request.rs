@@ -44,8 +44,15 @@ pub(crate) fn read<'t>(tree: &Tree<'t>) -> Result<Request<'t>, String> {
         .and_then(|options| string(tree, options, "output"))
         .unwrap_or(Cow::Borrowed(OUTPUT));
     // `sdk: true` adds the request and response functions after the types, as `--sdk` does.
-    let sdk = options.and_then(|o| tree.get(o, "sdk")).and_then(|n| tree.as_bool(n)) == Some(true);
-    Ok(Request { documents, output, sdk })
+    let sdk = options
+        .and_then(|o| tree.get(o, "sdk"))
+        .and_then(|n| tree.as_bool(n))
+        == Some(true);
+    Ok(Request {
+        documents,
+        output,
+        sdk,
+    })
 }
 
 /// An object's member `key`, when it is a string.

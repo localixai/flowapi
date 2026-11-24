@@ -38,6 +38,14 @@ impl Taken {
     }
 }
 
+/// The fields' identifiers of a struct whose keys are `names`, in order, and the scope they
+/// leave for what follows (`extra`). The SDK reads a field by the same identifiers.
+pub(crate) fn fields<'a>(names: impl IntoIterator<Item = &'a str>) -> (Vec<String>, Taken) {
+    let mut taken = Taken::default();
+    let idents = names.into_iter().map(|n| taken.take(&snake(n))).collect();
+    (idents, taken)
+}
+
 /// `pet owner`, `pet-owner`, `pet_owner` and `petOwner` are `PetOwner`; what holds no ASCII
 /// letter or digit is `fallback`, and a name that starts with a digit is given `prefix`.
 pub(crate) fn pascal(text: &str, fallback: &str, prefix: &str) -> String {

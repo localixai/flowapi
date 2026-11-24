@@ -83,7 +83,7 @@ fn is_integer(raw: &str) -> bool {
         .is_ok_and(|v| v.is_finite() && v.fract() == 0.0)
 }
 
-fn number_lit(raw: &str) -> Lit<'_> {
+pub(super) fn number_lit(raw: &str) -> Lit<'_> {
     let norm = raw.parse::<f64>().map_or_else(
         |_| raw.to_owned(),
         |v| {
@@ -100,7 +100,7 @@ fn number_lit(raw: &str) -> Lit<'_> {
     }
 }
 
-fn string_lit<'t>(tree: &Tree<'t>, span: Span) -> Lit<'t> {
+pub(super) fn string_lit<'t>(tree: &Tree<'t>, span: Span) -> Lit<'t> {
     let raw = tree.raw(span);
     Lit {
         raw,

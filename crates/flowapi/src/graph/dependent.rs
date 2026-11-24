@@ -34,22 +34,27 @@ impl<'t> Builder<'_, 't> {
                 Value::Object(_) | Value::Bool(_) => Some(self.sub(at, m.value)),
                 Value::Null | Value::Number(_) | Value::String(_) => return None,
             };
-            let present = self.object_only(needed, true);
+            let present = self.object_only(needed, true, Kinds::OBJECT);
             let present = match schema {
                 Some(s) => self.make(Kind::Intersection(vec![present, s])),
                 None => present,
             };
-            let absent = self.object_only(vec![(Cow::Borrowed(raw), name)], false);
+            let absent = self.object_only(vec![(Cow::Borrowed(raw), name)], false, Kinds::ALL);
             unions.push(self.make(Kind::Union(vec![present, absent])));
         }
         Some(unions)
     }
 
-    /// Objects with the keys given all there (`present`), or the one key given not there, every
-    /// other value besides when not `present`.
-    fn object_only(&mut self, keys: Vec<(Cow<'t, str>, Cow<'t, str>)>, present: bool) -> TypeId {
+    /// Values of `kinds`, objects among them with the keys given all there (`present`) or none
+    /// of them there.
+    pub(super) fn object_only(
+        &mut self,
+        keys: Vec<(Cow<'t, str>, Cow<'t, str>)>,
+        present: bool,
+        kinds: Kinds,
+    ) -> TypeId {
         let never = TypeId::new(1).unwrap_or(self.any);
-        let mut b = Branches::of(if present { Kinds::OBJECT } else { Kinds::ALL }, self.any);
+        let mut b = Branches::of(kinds, self.any);
         let props = keys
             .into_iter()
             .map(|(raw, name)| Prop {
@@ -70,7 +75,10 @@ impl<'t> Builder<'_, 't> {
 }
 
 /// The keys of a `dependentRequired` list.
-fn names<'t>(tree: &Tree<'t>, list: NodeId) -> Option<Vec<(Cow<'t, str>, Cow<'t, str>)>> {
+pub(super) fn names<'t>(
+    tree: &Tree<'t>,
+    list: NodeId,
+) -> Option<Vec<(Cow<'t, str>, Cow<'t, str>)>> {
     tree.items(list)
         .iter()
         .map(|&n| match tree.value(n) {

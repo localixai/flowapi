@@ -16,7 +16,4 @@ export type EmptyEnum = never;
 
 export type EnumWrongType = "a";
 
-/**
- * Not checked by this type: oneOf.
- */
 export type OneOfConst = 0 | 1;

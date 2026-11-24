@@ -87,7 +87,6 @@ pub enum EnumWrongType {
     A,
 }
 
-/// Not checked by this type: oneOf.
 pub type OneOfConst = f64;
 
 /// No value: what a schema allows none of. It deserializes nothing.

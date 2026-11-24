@@ -3,11 +3,10 @@
 //! `own.rs`, one no type expresses recorded as lossy, an annotation passed by. The match has no
 //! `_` arm: a keyword added to [`Keyword`] does not build until it is placed here (G2).
 
+use super::Kind;
 use super::build::{Builder, Read};
 use super::own::Own;
-use super::{Kind, Kinds};
 use crate::id::{NodeId, TypeId};
-use crate::json::{Tree, Value};
 use crate::schema::{Keyword, Resource};
 use crate::source::Dialect;
 
@@ -35,17 +34,19 @@ impl Builder<'_, '_> {
                 }
             }
             Keyword::AnyOf | Keyword::OneOf => {
-                let members: Vec<TypeId> =
-                    items(value).into_iter().map(|n| self.sub(at, n)).collect();
+                let nodes = items(value);
+                let members: Vec<TypeId> = nodes.iter().map(|&n| self.sub(at, n)).collect();
                 let union = self.make(Kind::Union(members));
-                read.parts.push(union);
-                if keyword == Keyword::OneOf {
-                    read.lossy.push(keyword);
-                }
+                let part = if keyword == Keyword::OneOf {
+                    self.one_of(at, &nodes, union, &mut read.lossy)
+                } else {
+                    union
+                };
+                read.parts.push(part);
             }
             Keyword::Then => read.then_else.0 = Some(value),
             Keyword::Else => read.then_else.1 = Some(value),
-            Keyword::If => read.has_if = true,
+            Keyword::If => read.test = Some(value),
             // Swagger 2.0's `file`, of a form field or a response: bytes, which no JSON type
             // describes, so any value (sound), the narrowing recorded as lost.
             Keyword::Type
@@ -72,15 +73,8 @@ impl Builder<'_, '_> {
             | Keyword::MinItems
             | Keyword::MaxItems
             | Keyword::Nullable
-            | Keyword::Format => own.set(keyword, value),
-            Keyword::UnevaluatedItems | Keyword::UnevaluatedProperties => {
-                self.unevaluated_keyword(at, keyword, value, read, own);
-            }
-            Keyword::DependentRequired | Keyword::DependentSchemas | Keyword::Dependencies => {
-                self.dependent_keyword(at, keyword, value, read);
-            }
-            Keyword::Not => self.not_keyword(at, value, read),
-            Keyword::Contains
+            | Keyword::Format
+            | Keyword::Contains
             | Keyword::PropertyNames
             | Keyword::MultipleOf
             | Keyword::Maximum
@@ -90,11 +84,17 @@ impl Builder<'_, '_> {
             | Keyword::MaxLength
             | Keyword::MinLength
             | Keyword::Pattern
-            | Keyword::UniqueItems
             | Keyword::MaxContains
             | Keyword::MinContains
-            | Keyword::MaxProperties
-            | Keyword::MinProperties => {
+            | Keyword::MaxProperties => own.set(keyword, value),
+            Keyword::UnevaluatedItems | Keyword::UnevaluatedProperties => {
+                self.unevaluated_keyword(at, keyword, value, read, own);
+            }
+            Keyword::DependentRequired | Keyword::DependentSchemas | Keyword::Dependencies => {
+                self.dependent_keyword(at, keyword, value, read);
+            }
+            Keyword::Not => self.not_keyword(at, value, read),
+            Keyword::UniqueItems | Keyword::MinProperties => {
                 read.lossy.push(keyword);
             }
             Keyword::Schema
@@ -123,52 +123,6 @@ impl Builder<'_, '_> {
             | Keyword::Unknown => {}
         }
     }
-}
-
-impl Builder<'_, '_> {
-    /// The kinds a `not` rules out, when it is a boolean or names only a `type` (beside
-    /// annotations): `not: {"type": "string"}` is every value but strings. `integer` rules out
-    /// nothing a type can show (numbers stay). `None` for any other `not`.
-    fn excluded(&self, at: &Resource, node: NodeId) -> Option<Kinds> {
-        let tree = &self.docs.get(at.doc)?.tree;
-        match tree.value(node) {
-            Value::Bool(b) => return Some(if b { Kinds::ALL } else { Kinds::NONE }),
-            Value::Object(_) => {}
-            Value::Null | Value::Number(_) | Value::String(_) | Value::Array(_) => return None,
-        }
-        let mut kinds = Kinds::ALL;
-        for m in tree.members(node) {
-            let key = tree.string(m.key)?;
-            match key.as_ref() {
-                "type" => kinds = named_kinds(tree, m.value)?,
-                "title" | "description" | "$comment" | "examples" | "default" => {}
-                _ => return None,
-            }
-        }
-        Some(kinds)
-    }
-}
-
-fn named_kinds(tree: &Tree<'_>, node: NodeId) -> Option<Kinds> {
-    let names: Vec<NodeId> = match tree.value(node) {
-        Value::String(_) => vec![node],
-        Value::Array(_) => tree.items(node).to_vec(),
-        Value::Null | Value::Bool(_) | Value::Number(_) | Value::Object(_) => return None,
-    };
-    let mut kinds = Kinds::NONE;
-    for n in names {
-        kinds = kinds.union(match tree.as_str(n)?.as_ref() {
-            "null" => Kinds::NULL,
-            "boolean" => Kinds::BOOLEAN,
-            "number" => Kinds::NUMBER,
-            "integer" => Kinds::NONE,
-            "string" => Kinds::STRING,
-            "array" => Kinds::ARRAY,
-            "object" => Kinds::OBJECT,
-            _ => return None,
-        });
-    }
-    Some(kinds)
 }
 
 impl Builder<'_, '_> {
@@ -204,11 +158,15 @@ impl Builder<'_, '_> {
         }
     }
 
-    /// `not`: the kinds it rules out, when it only names a type.
+    /// `not`: the kinds its schema accepts every value of are ruled out (`not: {"type":
+    /// "string"}` is every value but strings); stated in full when it tests kinds alone.
     fn not_keyword(&mut self, at: &Resource, value: NodeId, read: &mut Read) {
-        match self.excluded(at, value) {
-            Some(kinds) => read.exclude = read.exclude.union(kinds),
-            None => read.lossy.push(Keyword::Not),
+        let local = self.local(at, value);
+        if let Some(l) = &local {
+            read.exclude = read.exclude.union(l.lower());
+        }
+        if !local.is_some_and(|l| l.kinds_only()) {
+            read.lossy.push(Keyword::Not);
         }
     }
 }

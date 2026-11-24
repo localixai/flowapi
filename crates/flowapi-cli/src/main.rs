@@ -46,7 +46,8 @@ fn main() -> ExitCode {
     }
     let path = args.output.clone().unwrap_or_else(|| String::from("-"));
     let target: Box<dyn flowapi::Target> = if args.rust {
-        Box::new(flowapi_rust::Rust::new(path))
+        let rust = flowapi_rust::Rust::new(path);
+        Box::new(if args.sdk { rust.with_sdk() } else { rust })
     } else {
         let ts = flowapi_ts::TypeScript::new(path);
         Box::new(if args.sdk { ts.with_sdk() } else { ts })

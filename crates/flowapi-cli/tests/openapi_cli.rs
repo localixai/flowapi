@@ -1,5 +1,6 @@
 //! The `flowapi` command on OpenAPI descriptions in each version: a response's headers, what is
-//! deprecated, and binary bodies, each read from the TypeScript it prints.
+//! deprecated, and binary bodies, each read from the TypeScript it prints; `--sdk` with each
+//! target.
 #![expect(
     clippy::expect_used,
     reason = "the helpers fail the test by panicking, as a test does"
@@ -12,6 +13,11 @@ const VERSIONS: [&str; 3] = ["3.0.4", "3.1.2", "3.2.0"];
 
 /// The TypeScript the command prints for one description, written to a fresh directory.
 fn generate(test: &str, text: &str) -> String {
+    generate_with(test, text, &[])
+}
+
+/// What the command prints for one description with `flags` after it.
+fn generate_with(test: &str, text: &str, flags: &[&str]) -> String {
     let dir = Path::new(env!("CARGO_TARGET_TMPDIR"))
         .join("openapi_cli")
         .join(test);
@@ -21,6 +27,7 @@ fn generate(test: &str, text: &str) -> String {
     std::fs::write(&path, text).expect("written");
     let out = Command::new(env!("CARGO_BIN_EXE_flowapi"))
         .arg(&path)
+        .args(flags)
         .output()
         .expect("the command runs");
     assert!(
@@ -144,4 +151,18 @@ fn binary_data_is_never_narrowed() {
         ts.contains("\"application/octet-stream\": string;\n    \"application/json\": string;"),
         "{ts}"
     );
+}
+
+/// `--sdk` with each target: the TypeScript functions, or the Rust ones and their runtime.
+#[test]
+fn the_sdk_with_each_target() {
+    let text = r#"{"openapi":"3.1.0","info":{"title":"t","version":"1"},"paths":{"/pets/{id}":{"get":{"operationId":"getPet","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}],"responses":{"200":{"description":"ok"}}}}}}"#;
+    let ts = generate_with("sdk_ts", text, &["--sdk"]);
+    assert!(ts.contains("export function getPetRequest("));
+    let rust = generate_with("sdk_rust", text, &["--target", "rust", "--sdk"]);
+    assert!(rust.contains("\npub mod sdk {\n"));
+    assert!(rust.contains("pub fn get_pet_request(input: &"));
+    assert!(rust.contains("pub fn get_pet_response(status: u16,"));
+    let plain = generate_with("plain_rust", text, &["--target", "rust"]);
+    assert!(!plain.contains("pub mod sdk"));
 }

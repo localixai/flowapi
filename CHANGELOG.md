@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+- More of a schema is stated by the type (O3 precision 63.3% to 69.0%, soundness still 100%):
+  `propertyNames` (`false`, an `enum` or `const` of names as a closed object, `maxLength: 0` as
+  the empty key, a literal `pattern` as a template signature) and `maxProperties: 0`; `contains`
+  with `minContains` and `maxContains` as the array's length, `contains: false` and
+  `maxContains: 0` of a kind test as the items' kinds; `if` that tests kinds or `required` as
+  (if and then) or (not if and else); `oneOf` exact where its branches cannot overlap (kinds,
+  literals) and kinds two branches both accept ruled out; `not` of any kind test (`enum: [null]`);
+  `enum` and `const` values filtered by `minimum`, `maximum`, the exclusive bounds, `multipleOf`,
+  `minLength`, `maxLength` and a literal `pattern`, each decided only where it is certain (no
+  float tolerance). A keyword the type now states is no longer listed as unchecked; `not` of
+  `integer`, which states nothing, now is.
+- `patternProperties`: each literal pattern gets its template signature even beside patterns
+  that have none, an unanchored `.*` at either end is read as nothing, and patterns of one
+  template share a signature. The core reads a literal pattern (`graph::Affix`); the TypeScript
+  target prints it.
+- A keyword a later JSON Schema draft brought (`const`, `contains`, `propertyNames` in draft 6;
+  `if`, `then`, `else` in 7; `minContains`, `maxContains`, `dependent*`, `unevaluated*` in
+  2019-09; `prefixItems` in 2020-12) means nothing under an earlier draft's `$schema`.
+- O5's random schemas also draw `propertyNames`, `contains` with its counts, `if`/`then`/`else`,
+  the numeric and string bounds beside an `enum`, and `maxProperties`.
+
 - An SDK with no HTTP library (`flowapi --sdk`, `TypeScript::with_sdk`): per operation a
   function that writes its request (path, query, headers, body by `style`, `explode`,
   `allowReserved` and media type) and one that reads its response (by status, range, `default`
@@ -9,6 +30,15 @@
   of other generators run under Node (`conformance/sdk`, O8). The core's parameters gain their
   serialization (`spec::Serialization`; Swagger 2.0's `collectionFormat` mapped, `tsv` warned
   about) and the program its operations (`Program::endpoints`).
+- The SDK for Rust too (`flowapi --target rust --sdk`, `Rust::with_sdk`): per operation an
+  input struct, `<op>_request(&input) -> sdk::Request` (method, path, query, headers, the body's
+  content type and bytes) and `<op>_response(status, headers, body)` into an enum of the
+  responses (exact status, then `NXX`, then `default`; JSON by serde_json, `text/*` as a
+  `String`, other bodies as bytes), or an `sdk::Error` that keeps the answer. A runtime module
+  printed once (`pub mod sdk`) needs serde and serde_json only: a serde `Serializer` writes each
+  value by RFC 6570 straight into the request, percent-encoding written by byte, numbers as
+  JavaScript writes them. Held by oracle O8 for Rust (`conformance/sdk-rust`: the Style Examples,
+  `conformance/sdk/cases.json`, and Rust's own cases, compiled into one crate and run).
 - A schema named `Record` or `Object`, global types the output refers to, is declared under
   another name, with a warning.
 - The Rust target (`crates/flowapi-rust`, `flowapi --target rust`): serde types, untagged enums

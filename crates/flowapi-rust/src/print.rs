@@ -92,8 +92,13 @@ where
 }
 ";
 
-pub(crate) fn program(p: &Program<'_>) -> String {
-    let mut first = Emitter::new(p, Plan::default(), crate::RESERVED);
+pub(crate) fn program(p: &Program<'_>, sdk: bool) -> String {
+    let reserved = if sdk {
+        crate::RESERVED_SDK
+    } else {
+        crate::RESERVED
+    };
+    let mut first = Emitter::new(p, Plan::default(), reserved);
     first.run();
     let n = first.items.len();
     let direct: Vec<(usize, usize)> = first
@@ -116,7 +121,7 @@ pub(crate) fn program(p: &Program<'_>) -> String {
         boxed: on_cycle(n, &direct),
         newtype,
     };
-    let mut second = Emitter::new(p, plan, crate::RESERVED);
+    let mut second = Emitter::new(p, plan, reserved);
     let order = second.run();
     let mut out = String::with_capacity(4096 + n * 256);
     out.push_str(HEADER);
@@ -141,6 +146,9 @@ pub(crate) fn program(p: &Program<'_>) -> String {
     if second.uses.helpers.integer {
         out.push('\n');
         out.push_str(INTEGER);
+    }
+    if sdk {
+        crate::sdk::write(&mut second, &mut out);
     }
     out
 }

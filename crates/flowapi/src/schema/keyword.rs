@@ -1,6 +1,7 @@
 //! The keywords: each key of a Schema Object read as one, in its dialect.
 
 mod name;
+mod since;
 
 use crate::source::Dialect;
 
@@ -156,6 +157,11 @@ impl Keyword {
     pub fn of(key: &str, dialect: Dialect) -> Self {
         let keyword = Self::any_of(key, dialect);
         if dialect == Dialect::Draft2020Annotations && keyword.validates() {
+            return Self::Unknown;
+        }
+        // A keyword a later draft brought is an unknown word, so nothing, in an earlier one.
+        let since = keyword.since();
+        if dialect >= Dialect::Draft4 && dialect < since {
             return Self::Unknown;
         }
         let listed = match dialect {

@@ -5,3 +5,4 @@ node_modules/
 /conformance/target/
 /conformance/out/
 /conformance/suite-rust/out/
+/conformance/sdk-rust/out/

@@ -80,3 +80,20 @@ generates the SDK of GitHub's, Stripe's and Cloudflare's descriptions (`bench/da
     cargo build --release && node conformance/sdk/run.mjs --corpus
 
 It writes `results/sdk.md` and exits 1 on any difference.
+
+The Rust SDK (`flowapi --target rust --sdk`) has its own run, [`sdk-rust/`](sdk-rust/), a crate
+outside the workspace. It makes the same descriptions from the same table and cases, plus its own
+([`sdk-rust/cases.json`](sdk-rust/cases.json): numbers as JavaScript writes them, integers past
+2^53, enums, a struct's member order, a media range's body), generates each version's SDK with
+the flowapi crates into one generated crate with the SDKs kept by
+`crates/flowapi-rust/tests/sdk.rs`, builds it once (`-j 1`; a warning about it is a difference),
+and runs every call, comparing as `run.mjs` does. An object with no named properties is a
+`BTreeMap` in Rust, its members in key order: the calls that changes are held to
+[`sdk-rust/order.json`](sdk-rust/order.json). Its `corpus` binary times generating the SDK of
+GitHub's, Stripe's and Cloudflare's descriptions (never compiled: rustc needs more than 16 GB for GitHub's types)
+and, with `--build`, builds Slack's under `/usr/bin/time -v`.
+
+    cd conformance/sdk-rust && cargo run --release -j 1 --bin sdk-rust
+    cd conformance/sdk-rust && cargo run --release -j 1 --bin corpus -- --build
+
+They write `results/sdk-rust.md` (exit 1 on any difference) and `results/sdk-rust-corpus.md`.

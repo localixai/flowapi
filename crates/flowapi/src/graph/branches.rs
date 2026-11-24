@@ -50,6 +50,11 @@ impl Kinds {
         self.0 & other.0 == other.0
     }
 
+    /// Each kind of the set, alone.
+    pub fn each(self) -> impl Iterator<Item = Self> {
+        (0..6).map(|i| Self(1 << i)).filter(move |k| self.has(*k))
+    }
+
     /// Whether the set is empty.
     #[must_use]
     pub fn is_empty(self) -> bool {
@@ -126,6 +131,8 @@ pub struct Prop<'t> {
 pub struct Pattern<'t> {
     /// The regular expression, as written (ECMA-262, not anchored unless it says so).
     pub regex: Cow<'t, str>,
+    /// The expression as a literal text, when it is one.
+    pub affix: Option<super::Affix>,
     /// The type of a matching property's value.
     pub ty: TypeId,
 }

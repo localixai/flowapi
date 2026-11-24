@@ -1,0 +1,61 @@
+{
+ "about": "Cases of oracle O8 for the Rust SDK only, in the format of conformance/sdk/cases.json (operations r<i>): the pitfalls the Rust references show (map/research/codegen-2026-11/08-rust-sdk.md) where the Rust types meet serialization: numbers as JavaScript writes them (as the TypeScript SDK does), integers past 2^53 kept exact, enums as their strings, a struct's members in the order its schema names them, a media range's body with its content type.",
+ "cases": [
+  {
+   "name": "numbers as JavaScript's String(n) writes them; integers past 2^53 exact",
+   "parameters": [
+    { "name": "big", "in": "query", "schema": { "type": "number" } },
+    { "name": "small", "in": "query", "schema": { "type": "number" } },
+    { "name": "whole", "in": "query", "schema": { "type": "number" } },
+    { "name": "neg", "in": "query", "schema": { "type": "number" } },
+    { "name": "id", "in": "query", "schema": { "type": "integer" } },
+    { "name": "min", "in": "query", "schema": { "type": "integer" } }
+   ],
+   "calls": [
+    {
+     "input": { "query": { "big": 1e21, "small": 1e-7, "whole": 2.0, "neg": -0.5, "id": 9007199254740993, "min": -9223372036854775808 } },
+     "expect": { "query": "big=1e%2B21&small=1e-7&whole=2&neg=-0.5&id=9007199254740993&min=-9223372036854775808" }
+    },
+    { "input": { "query": { "big": 123456789012345680000, "small": 0.000001 } }, "expect": { "query": "big=123456789012345680000&small=0.000001" } }
+   ]
+  },
+  {
+   "name": "an enum is its string as the schema writes it, in a list and in a path",
+   "path": "/{kind}",
+   "parameters": [
+    { "name": "kind", "in": "path", "required": true, "schema": { "type": "string", "enum": ["a b", "C"] } },
+    { "name": "e", "in": "query", "schema": { "type": "string", "enum": ["a-b", "C", "x/y"] } },
+    { "name": "es", "in": "query", "explode": false, "schema": { "type": "array", "items": { "type": "string", "enum": ["a-b", "C", "x/y"] } } }
+   ],
+   "calls": [
+    { "input": { "path": { "kind": "a b" }, "query": { "e": "x/y", "es": ["C", "a-b"] } }, "expect": { "path": "/a%20b", "query": "e=x%2Fy&es=C,a-b" } }
+   ]
+  },
+  {
+   "name": "a struct's members in the order its schema names them, not in key order",
+   "parameters": [
+    { "name": "o", "in": "query", "explode": false, "schema": { "type": "object", "properties": { "z": { "type": "integer" }, "a": { "type": "string" } } } },
+    { "name": "d", "in": "query", "style": "deepObject", "schema": { "type": "object", "properties": { "z": { "type": "integer" }, "a": { "type": "object", "properties": { "y": { "type": "string" }, "b": { "type": "string" } } } } } },
+    { "name": "X-O", "in": "header", "explode": true, "schema": { "type": "object", "properties": { "z": { "type": "integer" }, "a": { "type": "string" } } } }
+   ],
+   "calls": [
+    {
+     "input": { "query": { "o": { "z": 1, "a": "x" }, "d": { "z": 1, "a": { "y": "1", "b": "2" } } }, "header": { "X-O": { "z": 1, "a": "x" } } },
+     "expect": { "query": "o=z,1,a,x&d%5Bz%5D=1&d%5Ba%5D%5By%5D=1&d%5Ba%5D%5Bb%5D=2", "headers": { "X-O": "z=1,a=x" } }
+    }
+   ]
+  },
+  {
+   "name": "a JSON response's integer past 2^53 is read exactly; a media range keeps the bytes",
+   "responses": {
+    "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object", "properties": { "id": { "type": "integer" } } } } } },
+    "2XX": { "description": "other", "content": { "image/*": { "schema": {} } } }
+   },
+   "calls": [
+    { "status": 200, "headers": { "content-type": "application/json" }, "body": "{\"id\":9007199254740993}", "expect": { "response": "200", "body": { "id": 9007199254740993 } } },
+    { "status": 202, "headers": { "content-type": "image/png" }, "body": "PNG", "expect": { "response": "2XX", "mediaType": "image/*", "body": "PNG" } },
+    { "status": 200, "headers": { "content-type": "application/json" }, "body": "{\"id\":1.5}", "expect": { "response": null, "body": "{\"id\":1.5}" } }
+   ]
+  }
+ ]
+}
