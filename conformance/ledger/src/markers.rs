@@ -4,7 +4,7 @@
 //!
 //! Every `.rs`, `.ts` and `.json` file under `crates/` and `conformance/` is read, and the `.md`
 //! files of `conformance/coverage/` (evidence grouped by oracle), except build output (`target/`,
-//! `conformance/out/`), installed packages (`node_modules/`), the pinned texts and suites
+//! `out/`), installed packages (`node_modules/`), ignored work folders (`scratch/`), the pinned texts and suites
 //! (`conformance/specs/`, `conformance/suites/`) and the ledger's own files. A marker is `req:` or
 //! `lossy:` followed by an id that starts with `oas-` or `jsonschema-`, so `req: Request` in code
 //! is not one.
@@ -38,7 +38,10 @@ pub struct Marker {
 const EXTENSIONS: [&str; 3] = ["rs", "ts", "json"];
 /// Where `.md` files are read too: the evidence grouped by oracle.
 const MARKDOWN_UNDER: &str = "conformance/coverage/";
-const SKIPPED_DIRS: [&str; 3] = ["target", "node_modules", ".git"];
+/// Names of folders never read, wherever they are: build output, installed packages, git's own,
+/// and the ignored work folders a tool writes (`out/`, `scratch/`), which a fresh clone lacks:
+/// the report must be the same from any checkout.
+const SKIPPED_DIRS: [&str; 5] = ["target", "node_modules", ".git", "out", "scratch"];
 /// Relative to the repository's root: the ledger itself and what it reads and writes, the pinned
 /// texts and suites (other people's files), and generated output.
 const SKIPPED: [&str; 6] = [

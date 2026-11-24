@@ -319,13 +319,6 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | File | Requirements |
 | --- | ---: |
 | `conformance/coverage/suite.md` | 134 |
-| `conformance/props/scratch/snap/crates/flowapi-ts/tests/print.rs` | 267 |
-| `conformance/props/scratch/snap/crates/flowapi/tests/repo.rs` | 2 |
-| `conformance/props/scratch/snap2/crates/flowapi-ts/tests/print.rs` | 267 |
-| `conformance/props/scratch/snap2/crates/flowapi/tests/repo.rs` | 2 |
-| `conformance/props/scratch/snap3/crates/flowapi-ts/tests/print.rs` | 267 |
-| `conformance/props/scratch/snap3/crates/flowapi/tests/documents.rs` | 13 |
-| `conformance/props/scratch/snap3/crates/flowapi/tests/repo.rs` | 2 |
 | `conformance/sdk/cases.json` | 46 |
 | `crates/flowapi-cli/tests/documents_cli.rs` | 8 |
 | `crates/flowapi-cli/tests/openapi_cli.rs` | 30 |
