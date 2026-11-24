@@ -78,9 +78,29 @@ held to are in [bench/budgets.json](bench/budgets.json).
 
 ## Use
 
+From npm, the same generator compiled to WebAssembly (JSON descriptions only; [npm/README.md](npm/README.md)
+has its API):
+
 ```sh
-cargo run --release -p flowapi-cli -- openapi.json -o types.ts
+npx @localix-ai/flowapi openapi.json -o types.ts
 ```
+
+The Rust command, which reads YAML too, built from a release tag:
+
+```sh
+cargo install --locked --git https://github.com/localixai/flowapi --tag v0.1.0 flowapi-cli
+flowapi openapi.json -o types.ts
+```
+
+The crates are not on crates.io. A program takes them from the repository at a tag:
+
+```toml
+[dependencies]
+flowapi = { git = "https://github.com/localixai/flowapi", tag = "v0.1.0" }
+flowapi-ts = { git = "https://github.com/localixai/flowapi", tag = "v0.1.0" }
+```
+
+In a checkout, `cargo run --release -p flowapi-cli -- openapi.json -o types.ts` does the same.
 
 ```ts
 // One type for each component schema and each operation, and Paths:

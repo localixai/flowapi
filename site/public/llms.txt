@@ -1,0 +1,12 @@
+# flowapi
+
+> Types from API descriptions that follow the specification: Swagger 2.0, OpenAPI 3.0 to 3.2 and JSON Schema in, TypeScript or Rust out.
+
+flowapi reads an API description into a graph of types and prints it as TypeScript or as Rust
+(serde types). Every value a schema accepts, its type accepts: each schema of the official JSON
+Schema Test Suite is turned into a type and each test value is checked against it by the
+TypeScript compiler, and every valid value passes. With `--sdk` it also prints, per operation, a
+function that writes the request and one that reads the response, sending nothing itself. It is a
+Rust command (`cargo install --git https://github.com/localixai/flowapi --tag v0.1.0
+flowapi-cli`) and an npm package compiled to WebAssembly (`npx @localix-ai/flowapi`), MIT-licensed,
+from https://github.com/localixai/flowapi, made by Localix Lab (https://localix.ai).

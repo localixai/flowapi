@@ -26,6 +26,7 @@ dependencies = [
 [[package]]
 name = "flowschema"
 version = "0.1.0"
+source = "git+https://github.com/localixai/flowschema?rev=90cc34d4e3c841eb364d401c80f505db2a7337ef#90cc34d4e3c841eb364d401c80f505db2a7337ef"
 dependencies = [
  "regex-lite",
  "serde_json",

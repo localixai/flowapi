@@ -12,5 +12,6 @@ publish = false
 [dependencies]
 flowapi = { path = "../../crates/flowapi" }
 flowapi-ts = { path = "../../crates/flowapi-ts" }
-flowschema = { path = "../../../flowschema" }
+# flowschema is not on crates.io: taken from its repository at a commit on its main, as llx takes it.
+flowschema = { git = "https://github.com/localixai/flowschema", rev = "90cc34d4e3c841eb364d401c80f505db2a7337ef" }
 serde_json = "1.0.154"

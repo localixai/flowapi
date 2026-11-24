@@ -1,0 +1,92 @@
+name: Release
+
+# Push a tag `v<version>`, the version in Cargo.toml and in npm/package.json, to release it: the
+# checks run on the tag, a GitHub release is made with that version's part of CHANGELOG.md, and
+# npm/ is published as `@localix-ai/flowapi` with provenance. The crates are not published to
+# crates.io: programs take them as a git dependency on the tag. The npm token is the organisation
+# secret `NPM_TOKEN`. Each step that writes leaves alone what is there already, so a run that
+# failed part way can be run again.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      # For the GitHub release.
+      contents: write
+      # For npm provenance: the package page links the build that published it.
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: The tag names the crates' and the package's version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          package=$(jq -r .version npm/package.json)
+          if [ "$TAG" != "v$version" ] || [ "$TAG" != "v$package" ]; then
+            echo "::error::tag $TAG, but Cargo.toml is $version and npm/package.json is $package"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      # No cache: a build that publishes starts from the toolchains and the registries alone.
+      - run: rustup toolchain install
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.4
+          no-cache: true
+      - run: npm ci
+        working-directory: conformance/ts
+      - run: npm ci
+        working-directory: npm
+      - run: scripts/check
+      # Builds dist/ (the wasm module and the TypeScript) and holds it to the Rust command.
+      - run: bun run check
+        working-directory: npm
+
+      - name: The release, with its changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          # The version's heading, `## 0.1.0` or `## 0.1.0 — <date>`, to the next heading.
+          awk -v v="## $VERSION" '$0 == v || index($0, v " ") == 1 { on = 1; next } on && /^## / { exit } on' \
+            CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "::error::CHANGELOG.md has no section for $VERSION"
+            exit 1
+          fi
+          gh release view "$TAG" > /dev/null 2>&1 ||
+            gh release create "$TAG" --title "flowapi $VERSION" --notes-file notes.md --verify-tag
+
+      - name: Publish to npm
+        working-directory: npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm whoami
+          if npm view "@localix-ai/flowapi@$VERSION" version > /dev/null 2>&1; then
+            echo "npm has @localix-ai/flowapi@$VERSION already"
+          else
+            npm publish --access public --provenance
+          fi

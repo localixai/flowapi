@@ -2,7 +2,7 @@
 
 TypeScript types from OpenAPI 3.0, 3.1 and 3.2 and JSON Schema that follow the specification:
 every value a schema accepts, its type accepts. This is flowapi's Rust generator compiled to
-WebAssembly (about 120 KB gzipped), so it runs in Node 20+, Bun, Deno and browsers and has no
+WebAssembly (about 160 KB gzipped), so it runs in Node 20+, Bun, Deno and browsers and has no
 runtime dependency. Its output is the `flowapi` command's, byte for byte. What it promises, how
 that is checked and how fast it is: [the main README](https://github.com/localixai/flowapi#readme).
 

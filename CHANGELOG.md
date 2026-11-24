@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.0 — 2026-11-24
+
 - Both SDKs refuse a request that would mean something other than it says, rather than write
   it: a CR, LF or NUL in a header's value or a `style: cookie` cookie (header injection; a form
   cookie is percent-encoded as before), a path parameter that leaves its whole segment empty or

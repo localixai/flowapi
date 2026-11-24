@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # scripts/check as it runs locally: formatting, the lints, the tests, the wasm build and the
+  # oracles (O3 for both targets, O5, O2, O8 for both SDKs, the ledger's report); then the npm
+  # package, built and held to the Rust command byte for byte. The benchmarks are not run here.
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      # rust-toolchain.toml names the toolchain, its components and the wasm target.
+      - run: rustup toolchain install
+      # The workspace and each oracle's crate keep their own target/; the crates O3 for Rust and
+      # O8 for Rust write and build (out/gen) are cached as they are.
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: |
+            . -> target
+            conformance/suite -> target
+            conformance/suite-rust -> target
+            conformance/props -> target
+            conformance/ledger -> target
+            conformance/sdk-rust -> target
+          cache-directories: |
+            conformance/suite-rust/out/gen/target
+            conformance/sdk-rust/out/gen/target
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            conformance/ts/package-lock.json
+            npm/package-lock.json
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.4
+      # The TypeScript compiler the oracles check with, and the package's tools.
+      - run: npm ci
+        working-directory: conformance/ts
+      - run: npm ci
+        working-directory: npm
+      - run: scripts/check
+      - run: bun run check
+        working-directory: npm

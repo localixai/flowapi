@@ -1,6 +1,6 @@
 # @localix-ai/flowapi
 
-## 0.1.0
+## 0.1.0 — 2026-11-24
 
 - First version: flowapi's generator compiled to WebAssembly, with `generate`, `load`,
   `formatDiagnostic`, `@localix-ai/flowapi/node` (`generateFile`, `readDescription`) and the

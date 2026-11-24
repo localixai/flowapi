@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex">
+  <title>Social card</title>
+  <!-- The source of og.png, the picture a link preview shows. Edit the words, then render it at
+       twice 1200×630 with a headless browser:
+       chrome --headless --hide-scrollbars --force-device-scale-factor=2 --screenshot=public/og.png --window-size=1200,630 public/og-card.html -->
+  <style>
+    @font-face { font-family: 'Display'; src: url(fonts/dm-sans.woff2) format('woff2'); font-weight: 100 1000; }
+    @font-face { font-family: 'Text'; src: url(fonts/inter.woff2) format('woff2'); font-weight: 100 900; }
+    @font-face { font-family: 'Mono'; src: url(fonts/jetbrains-mono.woff2) format('woff2'); font-weight: 100 800; }
+    html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #050505; color: #f4f4f2; }
+    body { position: relative; }
+    .og-head { position: absolute; left: 80px; top: 56px; }
+    .og-name { font: 600 58px/1 'Display', sans-serif; letter-spacing: -0.04em; }
+    .og-tag { margin-top: 18px; color: #b0b0ad; font: 400 26px/1.35 'Text', sans-serif; letter-spacing: -0.01em; }
+    .og-url { position: absolute; right: 80px; top: 72px; color: #8b8b87; font: 400 20px/1 'Mono', monospace; }
+    /* A schema of an OpenAPI description and the type flowapi prints for it (crates/flowapi-ts). */
+    .og-frame { position: absolute; left: 80px; right: 80px; top: 216px; bottom: 64px; box-sizing: border-box; padding: 26px 40px; border: 1px solid #2a2a28; border-radius: 20px; background: #0b0b0b; font: 400 20px/1.5 'Mono', monospace; font-variant-ligatures: none; white-space: pre; }
+    .og-dim { color: #8b8b87; }
+    .og-soft { color: #b0b0ad; }
+  </style>
+</head>
+<body>
+  <div class="og-head">
+    <div class="og-name">flowapi</div>
+    <div class="og-tag">Types from API descriptions that follow the specification</div>
+  </div>
+  <div class="og-url">flowapi.localix.ai</div>
+  <div class="og-frame"><span class="og-dim">the schema</span>
+<span class="og-soft">{"type": "object", "required": ["id", "kind"], "properties": {</span>
+<span class="og-soft">  "id": {"type": "integer"}, "kind": {"enum": ["cat", "dog"]}}}</span>
+
+<span class="og-dim">the type flowapi prints</span>
+export type Pet = {
+  id: number;
+  kind: "cat" | "dog";
+  [key: string]: unknown;
+};</div>
+</body>
+</html>

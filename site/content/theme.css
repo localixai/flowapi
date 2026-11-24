@@ -1,0 +1,11 @@
+/* This site's own look. The template's tokens are in src/shared/styles/global.css (and the code
+   colours in syntax.css); redefine here the ones this site changes, and nothing else. This file is
+   loaded last on every page, and `npm run sync` never touches it.
+
+   flowapi keeps the template's look, but for one thing: a panel shows code as the generator
+   prints it, character for character, so no two characters are joined into one sign (a panel's
+   `font` shorthand turns the joining back on after the template turned it off for code). */
+.panel {
+  font-variant-ligatures: none;
+  font-feature-settings: 'calt' 0, 'liga' 0;
+}
