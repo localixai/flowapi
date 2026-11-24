@@ -1,0 +1,200 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {
+  "/files/{file-id}": {
+   "parameters": [
+    {
+     "name": "file-id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    },
+    {
+     "name": "limit",
+     "in": "query",
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "get": {
+    "operationId": "Files#Get",
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      }
+     },
+     {
+      "name": "x-trace",
+      "in": "header",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "X-Trace",
+      "in": "cookie",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "a\"b",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "tags",
+      "in": "query",
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok",
+      "headers": {
+       "X-Rate-Limit": {
+        "required": true,
+        "schema": {
+         "type": "integer"
+        }
+       },
+       "Content-Type": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "content": {
+       "application/octet-stream": {},
+       "application/json": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       },
+       "image/png": {
+        "schema": {
+         "type": "string",
+         "contentMediaType": "image/png"
+        }
+       }
+      }
+     },
+     "2XX": {
+      "description": "range"
+     },
+     "default": {
+      "$ref": "#/components/responses/Chain1"
+     }
+    }
+   },
+   "put": {
+    "requestBody": {
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "file": {
+          "type": "string",
+          "format": "binary"
+         },
+         "meta": {
+          "type": "object",
+          "properties": {
+           "n": {
+            "type": "integer"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "default": {
+      "description": "only default"
+     }
+    }
+   }
+  },
+  "/shared": {
+   "$ref": "#/components/pathItems/Shared"
+  },
+  "/twice/{a}/{b}": {
+   "get": {
+    "parameters": [
+     {
+      "name": "a",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "b",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "none"
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "pathItems": {
+   "Shared": {
+    "get": {
+     "responses": {
+      "200": {
+       "$ref": "#/components/responses/Chain1"
+      }
+     }
+    }
+   }
+  },
+  "responses": {
+   "Chain1": {
+    "$ref": "#/components/responses/Chain2"
+   },
+   "Chain2": {
+    "description": "chained",
+    "content": {
+     "application/json": {
+      "schema": {
+       "type": "integer",
+       "format": "int64"
+      }
+     }
+    }
+   }
+  }
+ }
+}

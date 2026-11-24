@@ -22,11 +22,13 @@ pub(crate) fn all(input: &str) -> Result<Vec<Source>, String> {
                 if resource.is_empty() || resource.contains("://") || resource.starts_with("urn:") {
                     continue;
                 }
+                // A reference is a URI: `a%20b.yaml` is the file `a b.yaml`.
+                let resource = flowapi::uri::decoded(resource);
                 let next = normal(
                     &path
                         .parent()
                         .unwrap_or_else(|| Path::new(""))
-                        .join(resource),
+                        .join(resource.as_ref()),
                 );
                 if next.is_file() {
                     queue.push(next);

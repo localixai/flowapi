@@ -1,0 +1,93 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "OddStrings": {
+    "type": "string",
+    "enum": [
+     "a\"b",
+     "c\\d",
+     "it's",
+     "back`tick",
+     "${x}",
+     "new\nline",
+     " ",
+     "</script>",
+     "*/",
+     "",
+     " lead",
+     "trail ",
+     "赤",
+     "😀",
+     "\u0000"
+    ]
+   },
+   "DupEnum": {
+    "enum": [
+     "\"",
+     "\"",
+     "x"
+    ]
+   },
+   "Numbers": {
+    "type": "number",
+    "enum": [
+     -50,
+     0,
+     1.5,
+     1000.0,
+     -0.0,
+     1e-07
+    ]
+   },
+   "Ints": {
+    "type": "integer",
+    "enum": [
+     1,
+     2,
+     9007199254740993
+    ]
+   },
+   "Mixed": {
+    "enum": [
+     1,
+     "1",
+     true,
+     null,
+     {
+      "a": 1
+     },
+     [
+      1,
+      "x"
+     ]
+    ]
+   },
+   "EmptyEnum": {
+    "enum": []
+   },
+   "EnumWrongType": {
+    "type": "string",
+    "enum": [
+     "a",
+     1
+    ]
+   },
+   "OneOfConst": {
+    "oneOf": [
+     {
+      "const": 0
+     },
+     {
+      "const": 1
+     }
+    ]
+   }
+  }
+ }
+}

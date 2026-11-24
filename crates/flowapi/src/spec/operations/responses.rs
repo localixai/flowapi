@@ -26,12 +26,14 @@ impl Reader<'_, '_> {
             let (required, deprecated) =
                 (self.flag(hd, h, "required"), self.flag(hd, h, "deprecated"));
             let schema = self.value_schema(hd, h, diags);
+            let serialization = self.serialization(hd, h, Location::Header, diags);
             out.push(Param {
                 name: name.into_owned(),
                 location: Location::Header,
                 required,
                 deprecated,
                 schema,
+                serialization,
             });
         }
         out

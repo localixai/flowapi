@@ -88,7 +88,7 @@ function request(input: Input, options: Options | undefined): string {
         ? [input as Document]
         : (input as readonly Document[])
   const list = documents.map(({ uri, text }) => ({ uri, text }))
-  return JSON.stringify({ documents: list, options: { output: options?.output } })
+  return JSON.stringify({ documents: list, options: { output: options?.output, sdk: options?.sdk === true } })
 }
 
 function answer(json: string): Result {

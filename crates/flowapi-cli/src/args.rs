@@ -3,10 +3,12 @@
 pub(crate) const HELP: &str = "\
 flowapi: types from an OpenAPI description or a JSON Schema
 
-Usage: flowapi <description> [-o <types.ts>] [--target ts|rust] [--quiet]
+Usage: flowapi <description> [-o <types.ts>] [--target ts|rust] [--sdk] [--quiet]
 
   -o, --output <file>   where to write the types (standard output by default)
   -t, --target <lang>   the language of the types: ts (the default) or rust (serde)
+      --sdk             TypeScript: also a function per operation that writes its request
+                        and one that reads its response, with no HTTP library and no I/O
   -q, --quiet           print errors only, not warnings
   -h, --help            this help
   -V, --version         the version
@@ -21,6 +23,8 @@ pub(crate) struct Generate {
     pub(crate) quiet: bool,
     /// The Rust target rather than TypeScript.
     pub(crate) rust: bool,
+    /// The TypeScript SDK after the types.
+    pub(crate) sdk: bool,
 }
 
 pub(crate) enum Command {
@@ -34,11 +38,13 @@ pub(crate) fn parse(mut args: impl Iterator<Item = String>) -> Result<Command, S
     let mut output = None;
     let mut quiet = false;
     let mut rust = false;
+    let mut sdk = false;
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "-h" | "--help" => return Ok(Command::Help),
             "-V" | "--version" => return Ok(Command::Version),
             "-q" | "--quiet" => quiet = true,
+            "--sdk" => sdk = true,
             "-t" | "--target" => match args.next().as_deref() {
                 Some("ts" | "typescript") => rust = false,
                 Some("rust") => rust = true,
@@ -56,10 +62,16 @@ pub(crate) fn parse(mut args: impl Iterator<Item = String>) -> Result<Command, S
         }
     }
     let input = input.ok_or("a description to read")?;
+    if sdk && rust {
+        return Err(String::from(
+            "`--sdk` is TypeScript's: the Rust target has none yet",
+        ));
+    }
     Ok(Command::Generate(Generate {
         input,
         output,
         quiet,
         rust,
+        sdk,
     }))
 }

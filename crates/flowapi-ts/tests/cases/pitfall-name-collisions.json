@@ -1,0 +1,85 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {
+  "/pets": {
+   "get": {
+    "operationId": "getPets",
+    "responses": {
+     "200": {
+      "description": "ok",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GetPets"
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "responses": {
+     "200": {
+      "description": "ok",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Paths"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/pets/{id}": {
+   "get": {
+    "operationId": "get-pets",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "GetPets": {
+    "type": "string",
+    "const": "schema"
+   },
+   "Paths": {
+    "type": "string",
+    "const": "paths"
+   },
+   "PostPets": {
+    "type": "string",
+    "const": "pp"
+   },
+   "Operations": {
+    "type": "integer"
+   },
+   "Components": {
+    "type": "integer"
+   },
+   "Webhooks": {
+    "type": "integer"
+   }
+  }
+ }
+}

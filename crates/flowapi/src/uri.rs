@@ -35,6 +35,35 @@ pub fn split_fragment(uri: &str) -> (&str, &str) {
     uri.split_once('#').unwrap_or((uri, ""))
 }
 
+/// A URI with its percent-escapes decoded, for comparing two names of one resource; an escape
+/// that is not UTF-8 or not two hex digits is kept as written.
+#[must_use]
+pub fn decoded(uri: &str) -> std::borrow::Cow<'_, str> {
+    if !uri.contains('%') {
+        return std::borrow::Cow::Borrowed(uri);
+    }
+    let bytes = uri.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while let Some(&b) = bytes.get(i) {
+        let hex = bytes
+            .get(i + 1..i + 3)
+            .and_then(|h| std::str::from_utf8(h).ok())
+            .and_then(|h| u8::from_str_radix(h, 16).ok());
+        match (b, hex) {
+            (b'%', Some(v)) => {
+                out.push(v);
+                i += 3;
+            }
+            _ => {
+                out.push(b);
+                i += 1;
+            }
+        }
+    }
+    String::from_utf8(out).map_or(std::borrow::Cow::Borrowed(uri), std::borrow::Cow::Owned)
+}
+
 struct Parts<'u> {
     scheme: Option<&'u str>,
     authority: Option<&'u str>,

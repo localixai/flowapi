@@ -1,0 +1,16 @@
+{"openapi":"3.1.0","info":{"title":"bodies","version":"1"},
+ "paths":{"/pets":{
+   "get":{"responses":{
+     "200":{"description":"ok","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Pet"}}},"text/csv":{"schema":{"type":"string"}}}},
+     "2XX":{"description":"other","content":{"application/*":{"schema":{"type":"object"}}}},
+     "404":{"description":"none"},
+     "default":{"description":"error","content":{"application/problem+json":{"schema":{"type":"object","properties":{"title":{"type":"string"}},"required":["title"]}}}}}},
+   "post":{"operationId":"addPet",
+    "requestBody":{"required":true,"content":{
+      "application/json":{"schema":{"$ref":"#/components/schemas/Pet"}},
+      "application/x-www-form-urlencoded":{"schema":{"$ref":"#/components/schemas/Pet"}},
+      "multipart/form-data":{"schema":{"$ref":"#/components/schemas/Pet"}},
+      "text/*":{"schema":{"type":"string"}}}},
+    "responses":{"201":{"description":"made","headers":{"Location":{"schema":{"type":"string"}}}}}},
+   "patch":{"operationId":"patchPet","requestBody":{"content":{"application/merge-patch+json":{"schema":{"type":"object"}}}},"responses":{}}}},
+ "components":{"schemas":{"Pet":{"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}}}}

@@ -1,0 +1,173 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "OneOfInAllOf": {
+    "allOf": [
+     {
+      "oneOf": [
+       {
+        "type": "object",
+        "required": [
+         "a"
+        ],
+        "properties": {
+         "a": {
+          "type": "string"
+         }
+        }
+       },
+       {
+        "type": "object",
+        "required": [
+         "b"
+        ],
+        "properties": {
+         "b": {
+          "type": "integer"
+         }
+        }
+       }
+      ]
+     },
+     {
+      "type": "object",
+      "required": [
+       "id"
+      ],
+      "properties": {
+       "id": {
+        "type": "string"
+       }
+      }
+     }
+    ]
+   },
+   "PropsAndOneOf": {
+    "type": "object",
+    "properties": {
+     "base": {
+      "type": "string"
+     }
+    },
+    "oneOf": [
+     {
+      "required": [
+       "x"
+      ]
+     },
+     {
+      "required": [
+       "y"
+      ]
+     }
+    ]
+   },
+   "OneOfNullRef": {
+    "oneOf": [
+     {
+      "$ref": "#/components/schemas/Pet"
+     },
+     {
+      "type": "null"
+     }
+    ]
+   },
+   "ConflictAllOf": {
+    "allOf": [
+     {
+      "type": "string"
+     },
+     {
+      "type": "integer"
+     }
+    ]
+   },
+   "EmptyOneOf": {
+    "anyOf": [
+     {},
+     {
+      "type": "string"
+     }
+    ]
+   },
+   "NotString": {
+    "not": {
+     "type": "string"
+    }
+   },
+   "ClosedAllOf": {
+    "allOf": [
+     {
+      "type": "object",
+      "properties": {
+       "a": {
+        "type": "string"
+       }
+      },
+      "additionalProperties": false
+     },
+     {
+      "type": "object",
+      "properties": {
+       "b": {
+        "type": "string"
+       }
+      }
+     }
+    ]
+   },
+   "Unevaluated": {
+    "allOf": [
+     {
+      "type": "object",
+      "properties": {
+       "a": {
+        "type": "string"
+       }
+      }
+     }
+    ],
+    "properties": {
+     "b": {
+      "type": "string"
+     }
+    },
+    "unevaluatedProperties": false
+   },
+   "IntOrNum": {
+    "type": [
+     "integer",
+     "string"
+    ]
+   },
+   "Pet": {
+    "type": "object",
+    "required": [
+     "petType"
+    ],
+    "properties": {
+     "petType": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     }
+    },
+    "discriminator": {
+     "propertyName": "petType",
+     "mapping": {
+      "cat": "#/components/schemas/Cat",
+      "dog": "#/components/schemas/Dog",
+      "poodle": "#/components/schemas/Dog"
+     }
+    }
+   }
+  }
+ }
+}

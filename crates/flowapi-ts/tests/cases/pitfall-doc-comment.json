@@ -1,0 +1,17 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "Comment": {
+    "type": "string",
+    "title": "ends */ here",
+    "description": "line one\n*/ export type Injected = 1; /*\nline three with @deprecated and <b>html</b>"
+   }
+  }
+ }
+}

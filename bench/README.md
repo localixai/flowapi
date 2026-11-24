@@ -20,6 +20,7 @@ build of flowapi.
 | `speed` | Each description of the corpus through each generator, every run a fresh process: its wall time, its peak memory, the size of what it wrote, and whether that output type-checks | `speed.json`, `speed.md` |
 | `check` | The committed `results/` held to [`budgets.json`](budgets.json) | (its exit code) |
 | `phases` | The time of each stage of flowapi (parse, index, graph, lower, names, emit) on one description, in process | (printed) |
+| `competitors/sdk.mjs` | Writing 100,000 requests a round with the SDK flowapi generates (`--sdk`) against openapi-fetch's serializers (pinned in `competitors/package.json`), on the same three operation shapes, each pair first checked to write the same request; one Node process, sequential, the median of 5 rounds | `sdk.md` |
 
 ## The corpus
 

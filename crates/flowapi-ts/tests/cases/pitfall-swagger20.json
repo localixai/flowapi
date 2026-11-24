@@ -1,0 +1,115 @@
+{
+ "swagger": "2.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {
+  "/up": {
+   "post": {
+    "consumes": [
+     "multipart/form-data"
+    ],
+    "parameters": [
+     {
+      "name": "file",
+      "in": "formData",
+      "type": "file",
+      "required": true
+     },
+     {
+      "name": "ids",
+      "in": "query",
+      "type": "array",
+      "items": {
+       "type": "integer"
+      },
+      "collectionFormat": "csv"
+     },
+     {
+      "name": "X-Req",
+      "in": "header",
+      "type": "string",
+      "x-nullable": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "file",
+      "schema": {
+       "type": "file"
+      }
+     },
+     "default": {
+      "description": "err",
+      "schema": {
+       "$ref": "#/definitions/Err"
+      }
+     }
+    }
+   }
+  }
+ },
+ "definitions": {
+  "Err": {
+   "type": "object",
+   "required": [
+    "id",
+    "code"
+   ],
+   "properties": {
+    "id": {
+     "type": "integer",
+     "readOnly": true
+    },
+    "code": {
+     "type": "string",
+     "enum": [
+      "a",
+      null
+     ]
+    },
+    "n": {
+     "type": "string",
+     "x-nullable": true,
+     "enum": [
+      "x"
+     ]
+    }
+   }
+  },
+  "Base": {
+   "type": "object",
+   "discriminator": "kind",
+   "required": [
+    "kind"
+   ],
+   "properties": {
+    "kind": {
+     "type": "string"
+    }
+   }
+  },
+  "Child": {
+   "allOf": [
+    {
+     "$ref": "#/definitions/Base"
+    },
+    {
+     "type": "object",
+     "properties": {
+      "c": {
+       "type": "integer",
+       "format": "int64"
+      }
+     }
+    }
+   ]
+  },
+  "RefSib": {
+   "$ref": "#/definitions/Base",
+   "description": "ignored sibling",
+   "x-nullable": true
+  }
+ }
+}

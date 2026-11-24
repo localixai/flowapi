@@ -1,0 +1,48 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "ConstObj": {
+    "const": {
+     "a": 1,
+     "b": [
+      true,
+      null
+     ],
+     "c": {
+      "d": "e"
+     }
+    }
+   },
+   "ConstArr": {
+    "const": [
+     1,
+     "two",
+     null
+    ]
+   },
+   "ConstNull": {
+    "const": null
+   },
+   "ConstZero": {
+    "type": "number",
+    "const": 0
+   },
+   "ConstFalse": {
+    "const": false
+   },
+   "ConstEmpty": {
+    "const": ""
+   },
+   "ConstWrongType": {
+    "type": "string",
+    "const": 1
+   }
+  }
+ }
+}

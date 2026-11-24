@@ -3,7 +3,9 @@
 
 mod operations;
 
-pub use operations::{Body, Field, Location, Media, Operation, Param, Payload, Response};
+pub use operations::{
+    Body, Field, Location, Media, Operation, Param, Payload, Response, Serialization, Style,
+};
 
 use crate::diag::Diagnostics;
 use crate::id::DocId;

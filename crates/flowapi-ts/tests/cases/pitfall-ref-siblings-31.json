@@ -1,0 +1,47 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "Bar": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "integer"
+     }
+    }
+   },
+   "RefNull": {
+    "$ref": "#/components/schemas/Bar",
+    "type": [
+     "object",
+     "null"
+    ]
+   },
+   "RefRequired": {
+    "$ref": "#/components/schemas/Bar",
+    "required": [
+     "id"
+    ]
+   },
+   "RefDescription": {
+    "$ref": "#/components/schemas/Bar",
+    "description": "only a note"
+   },
+   "RefEnum": {
+    "$ref": "#/components/schemas/Str",
+    "enum": [
+     "a",
+     "b"
+    ]
+   },
+   "Str": {
+    "type": "string"
+   }
+  }
+ }
+}

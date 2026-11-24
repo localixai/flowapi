@@ -1,0 +1,32 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "DT": {
+    "type": "string",
+    "format": "date-time"
+   },
+   "Bin": {
+    "type": "string",
+    "format": "binary"
+   },
+   "Byte": {
+    "type": "string",
+    "contentEncoding": "base64"
+   },
+   "Int64": {
+    "type": "integer",
+    "format": "int64",
+    "const": 9223372036854775807
+   },
+   "OnlyNull": {
+    "type": "null"
+   }
+  }
+ }
+}

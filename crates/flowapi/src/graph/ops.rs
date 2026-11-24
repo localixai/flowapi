@@ -2,9 +2,10 @@
 //! an object of its `parameters` (by location, then by name), its `requestBody` (by media type)
 //! and its `responses` (by status, then media type); `Paths` maps each path and method to its
 //! operation. These objects are closed: a key they do not name is not part of the operation.
+//! Each operation is kept beside its type as an [`Endpoint`], for a target's SDK.
 
 use super::build::Builder;
-use super::{Branches, Kind, Kinds, Object, Prop, Root, Type};
+use super::{Branches, Endpoint, Kind, Kinds, Object, Prop, Root, Type};
 use crate::id::TypeId;
 use crate::spec::{Location, Media, Operation, Param, Payload, Response};
 use std::borrow::Cow;
@@ -19,6 +20,10 @@ impl<'t> Builder<'_, 't> {
             roots.push(Root {
                 name: op.name.clone(),
                 ty,
+            });
+            self.graph.endpoints.push(Endpoint {
+                ty,
+                operation: op.clone(),
             });
             match paths.iter_mut().find(|(p, _)| *p == op.path) {
                 Some((_, methods)) => methods.push((op.method.clone(), ty)),

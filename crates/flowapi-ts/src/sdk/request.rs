@@ -1,0 +1,207 @@
+//! `<name>Request(input)`: the request an operation's input makes. The input is the operation's
+//! `parameters` and, when it has a body, `body: { contentType, value }` of one of its media
+//! types. Each parameter is one call of the runtime with its style already chosen: the RFC 6570
+//! operator's prefix and separators (3.2, Appendix C, "Equivalences Between Fields and RFC6570
+//! Operators"), the encoder (none for headers and `style: cookie`, reserved expansion for
+//! `allowReserved`), and its name percent-encoded where it goes into a URI.
+
+use super::{bare, lit, percent};
+use flowapi::graph::Endpoint;
+use flowapi::spec::{Location, Param, Style};
+use std::fmt::Write;
+
+/// The methods a Path Item names by a field, written in lower case; 3.2's
+/// `additionalOperations` are sent as written.
+const FIELDS: [&str; 9] = [
+    "get", "put", "post", "delete", "options", "head", "patch", "trace", "query",
+];
+
+pub(super) fn write(out: &mut String, e: &Endpoint, decl: &str, base: &str) {
+    let op = &e.operation;
+    let body = op.body.as_ref().filter(|b| !b.content.is_empty());
+    let mut input: Vec<String> = Vec::new();
+    if !op.params.is_empty() {
+        input.push(format!("NonNullable<{decl}[\"parameters\"]>"));
+    }
+    if let Some(b) = body {
+        let members: Vec<String> = b
+            .content
+            .iter()
+            .map(|m| {
+                let t = &m.media_type;
+                let content_type = if t.contains('*') {
+                    String::from("string")
+                } else {
+                    format!(
+                        "{} | `{};${{string}}`",
+                        lit(t),
+                        t.replace(['`', '$', '\\'], "")
+                    )
+                };
+                // A multipart body is the caller's to write: its boundary goes in the type.
+                let value = if bare(t).starts_with("multipart/") {
+                    String::from("string")
+                } else {
+                    format!("NonNullable<{decl}[\"requestBody\"]>[{}]", lit(t))
+                };
+                format!("{{ contentType: {content_type}; value: {value} }}")
+            })
+            .collect();
+        let optional = if b.required { "" } else { "?" };
+        input.push(format!("{{ body{optional}: {} }}", members.join(" | ")));
+    }
+    let _ = write!(out, "export function {base}Request(");
+    if !input.is_empty() {
+        let _ = write!(out, "input: {}", input.join(" & "));
+    }
+    out.push_str("): $Request {\n  const headers: Record<string, string> = {};\n");
+    let has = |l: Location| op.params.iter().any(|p| p.location == l);
+    let query = has(Location::Query) || has(Location::QueryString);
+    if query {
+        out.push_str("  let query = \"\";\n");
+    }
+    if has(Location::Cookie) {
+        out.push_str("  let cookie = \"\";\n");
+    }
+    for p in &op.params {
+        param(out, p);
+    }
+    if has(Location::Cookie) {
+        out.push_str("  if (cookie !== \"\") headers[\"cookie\"] = cookie;\n");
+    }
+    let method = if FIELDS.contains(&op.method.as_str()) {
+        op.method.to_ascii_uppercase()
+    } else {
+        op.method.clone()
+    };
+    let _ = writeln!(
+        out,
+        "  const request: $Request = {{ method: {}, path: {}, query{}, headers }};",
+        lit(&method),
+        path(&op.path, &op.params),
+        if query { "" } else { ": \"\"" }
+    );
+    if body.is_some() {
+        out.push_str(
+            "  if (input.body !== undefined) {\n    headers[\"content-type\"] = \
+             input.body.contentType;\n    request.body = $body(input.body.contentType, \
+             input.body.value);\n  }\n",
+        );
+    }
+    out.push_str("  return request;\n}\n");
+}
+
+/// The value of a parameter in the input.
+fn access(p: &Param) -> String {
+    format!("input.{}?.[{}]", p.location.name(), lit(&p.name))
+}
+
+/// The call that writes one parameter's value, `undefined` when it writes nothing.
+fn expand(p: &Param) -> String {
+    let s = &p.serialization;
+    let mut value = access(p);
+    // A parameter with `content` is its media type's text, then written as a string.
+    if let Some(t) = &s.media_type {
+        value = format!("$content({value}, {})", lit(t));
+    }
+    let style = if s.media_type.is_some() {
+        match p.location {
+            Location::Query | Location::Cookie => Style::Form,
+            Location::Path | Location::Header | Location::QueryString => Style::Simple,
+        }
+    } else {
+        s.style
+    };
+    let raw = p.location == Location::Header || style == Style::Cookie;
+    let enc = if raw {
+        "$raw"
+    } else if s.allow_reserved {
+        "$res"
+    } else {
+        "$enc"
+    };
+    let name = if raw {
+        lit(&p.name)
+    } else {
+        lit(&percent(&p.name))
+    };
+    let (first, sep, named, ifemp, join) = match style {
+        Style::Simple => ("", ",", false, "", ","),
+        Style::Label => (".", ".", false, "", ","),
+        Style::Matrix => (";", ";", true, "", ","),
+        Style::Form => ("", "&", true, "=", ","),
+        Style::SpaceDelimited => ("", "&", true, "=", "%20"),
+        Style::PipeDelimited => ("", "&", true, "=", "%7C"),
+        Style::Cookie => ("", "; ", true, "=", ","),
+        Style::DeepObject => return format!("$deep({value}, {name}, {enc})"),
+    };
+    format!(
+        "$x({value}, {name}, {}, {}, {named}, {}, {}, {}, {enc})",
+        lit(first),
+        lit(sep),
+        lit(ifemp),
+        s.explode,
+        lit(join)
+    )
+}
+
+/// One parameter's statement: added to the query, the cookie header or the headers. A path
+/// parameter goes into the path, written by [`path`].
+fn param(out: &mut String, p: &Param) {
+    let _ = match p.location {
+        Location::Path => Ok(()),
+        Location::Query => writeln!(out, "  query = $add(query, {}, \"&\");", expand(p)),
+        Location::QueryString => {
+            let t = p
+                .serialization
+                .media_type
+                .as_deref()
+                .unwrap_or("text/plain");
+            writeln!(
+                out,
+                "  query = $add(query, $qs({}, {}), \"&\");",
+                access(p),
+                lit(t)
+            )
+        }
+        Location::Header => writeln!(out, "  $set(headers, {}, {});", lit(&p.name), expand(p)),
+        Location::Cookie => writeln!(out, "  cookie = $add(cookie, {}, \"; \");", expand(p)),
+    };
+}
+
+/// The path template filled: its text as written, each `{name}` the path parameter's value. An
+/// expression no parameter names is left as written.
+fn path(template: &str, params: &[Param]) -> String {
+    let mut parts: Vec<String> = Vec::new();
+    let mut text = String::new();
+    let mut rest = template;
+    while let Some((before, after)) = rest.split_once('{') {
+        let Some((name, tail)) = after.split_once('}') else {
+            break;
+        };
+        let found = params
+            .iter()
+            .find(|p| p.location == Location::Path && p.name == name);
+        text.push_str(before);
+        match found {
+            Some(p) => {
+                if !text.is_empty() {
+                    parts.push(lit(&text));
+                    text.clear();
+                }
+                parts.push(format!("({} ?? \"\")", expand(p)));
+            }
+            None => {
+                text.push('{');
+                text.push_str(name);
+                text.push('}');
+            }
+        }
+        rest = tail;
+    }
+    text.push_str(rest);
+    if !text.is_empty() || parts.is_empty() {
+        parts.push(lit(&text));
+    }
+    parts.join(" + ")
+}

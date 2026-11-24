@@ -1,0 +1,114 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "Keys": {
+    "type": "object",
+    "properties": {
+     "a\"b": {
+      "type": "string"
+     },
+     "c\\d": {
+      "type": "string"
+     },
+     "it's": {
+      "type": "string"
+     },
+     "line\nbreak": {
+      "type": "string"
+     },
+     "tab\there": {
+      "type": "string"
+     },
+     "sep x": {
+      "type": "string"
+     },
+     "名前": {
+      "type": "string"
+     },
+     "😀": {
+      "type": "string"
+     },
+     "__proto__": {
+      "type": "string"
+     },
+     "constructor": {
+      "type": "string"
+     },
+     "toString": {
+      "type": "string"
+     },
+     "hasOwnProperty": {
+      "type": "string"
+     },
+     "": {
+      "type": "string"
+     },
+     "123": {
+      "type": "string"
+     },
+     "1.5": {
+      "type": "string"
+     },
+     "-1": {
+      "type": "string"
+     },
+     "a-b": {
+      "type": "string"
+     },
+     "a b": {
+      "type": "string"
+     },
+     "$x": {
+      "type": "string"
+     },
+     "_y": {
+      "type": "string"
+     },
+     "class": {
+      "type": "string"
+     },
+     "default": {
+      "type": "string"
+     },
+     "*/": {
+      "type": "string"
+     },
+     "${x}": {
+      "type": "string"
+     },
+     "</script>": {
+      "type": "string"
+     },
+     "\u0000nul": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "__proto__",
+     "constructor",
+     "",
+     "a\"b",
+     "toString"
+    ],
+    "additionalProperties": false
+   },
+   "Proto": {
+    "type": "object",
+    "properties": {
+     "__proto__": {
+      "type": "integer"
+     }
+    },
+    "required": [
+     "__proto__"
+    ]
+   }
+  }
+ }
+}

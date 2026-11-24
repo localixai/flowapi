@@ -48,7 +48,8 @@ fn main() -> ExitCode {
     let target: Box<dyn flowapi::Target> = if args.rust {
         Box::new(flowapi_rust::Rust::new(path))
     } else {
-        Box::new(flowapi_ts::TypeScript::new(path))
+        let ts = flowapi_ts::TypeScript::new(path);
+        Box::new(if args.sdk { ts.with_sdk() } else { ts })
     };
     let (output, diags) = flowapi::generate(&docs, target.as_ref());
     for d in diags.all() {

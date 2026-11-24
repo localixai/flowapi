@@ -1,0 +1,94 @@
+{
+ "openapi": "3.0.3",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "NullEnumListed": {
+    "type": "string",
+    "nullable": true,
+    "enum": [
+     "a",
+     "b",
+     null
+    ]
+   },
+   "NullEnumUnlisted": {
+    "type": "string",
+    "nullable": true,
+    "enum": [
+     "a",
+     "b"
+    ]
+   },
+   "NullNoType": {
+    "nullable": true,
+    "enum": [
+     "a",
+     null
+    ]
+   },
+   "NullRef": {
+    "nullable": true,
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/Obj"
+     }
+    ]
+   },
+   "NullRefSibling": {
+    "$ref": "#/components/schemas/Obj",
+    "nullable": true
+   },
+   "NullObj": {
+    "type": "object",
+    "nullable": true,
+    "properties": {
+     "x": {
+      "type": "string",
+      "nullable": true
+     }
+    }
+   },
+   "NullArr": {
+    "type": "array",
+    "nullable": true,
+    "items": {
+     "type": "integer",
+     "nullable": true
+    }
+   },
+   "NullFalse": {
+    "type": "string",
+    "nullable": false
+   },
+   "NullDefault": {
+    "type": "string",
+    "nullable": true,
+    "default": "en"
+   },
+   "Obj": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "integer"
+     }
+    }
+   },
+   "OneOfNull": {
+    "oneOf": [
+     {
+      "$ref": "#/components/schemas/Obj"
+     },
+     {
+      "type": "string"
+     }
+    ],
+    "nullable": true
+   }
+  }
+ }
+}

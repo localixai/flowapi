@@ -52,6 +52,16 @@ describe('the command prints what the Rust command prints', () => {
     },
   )
 
+  const sdkCases = readdirSync(join(root, 'crates', 'flowapi-ts', 'tests', 'sdk'))
+    .filter((name) => name.endsWith('.json'))
+    .sort()
+    .map((name) => join('crates', 'flowapi-ts', 'tests', 'sdk', name))
+  test.each(sdkCases)('--sdk %s', (path) => {
+    const { rust: expected, js: actual } = both([path, '--sdk'])
+    expect(expected.stdout.length).toBeGreaterThan(0)
+    expect(actual).toEqual(expected)
+  })
+
   test('a description whose references reach two more files', () => {
     const dir = mkdtempSync(join(tmpdir(), 'flowapi-parity-'))
     mkdirSync(join(dir, 'defs'))

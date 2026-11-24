@@ -5,6 +5,7 @@
 mod object;
 mod pattern;
 mod print;
+mod sdk;
 
 use flowapi::lower::Capabilities;
 use flowapi::{File, IdentifierRules, Output, Program, Target};
@@ -14,18 +15,41 @@ use flowapi::{File, IdentifierRules, Output, Program, Target};
 pub struct TypeScript {
     /// The path of the file written.
     pub path: String,
+    /// Whether the file holds an SDK after the types: for each operation a function that writes
+    /// its request and one that reads its response, sending nothing (`sdk.rs`).
+    pub sdk: bool,
 }
 
 impl TypeScript {
-    /// The target writing `path`.
+    /// The target writing `path`, types only.
     #[must_use]
     pub fn new(path: impl Into<String>) -> Self {
-        Self { path: path.into() }
+        Self {
+            path: path.into(),
+            sdk: false,
+        }
+    }
+
+    /// The same target, writing the SDK after the types.
+    #[must_use]
+    pub fn with_sdk(self) -> Self {
+        Self { sdk: true, ..self }
     }
 }
 
-/// Names TypeScript keeps: its reserved words, and the names a type alias cannot take.
-const RESERVED: &[&str] = &[
+/// Names TypeScript keeps, its reserved words and the names a type alias cannot take, and the
+/// global types the output refers to (`Record`, `Object`), which a declaration of that name
+/// would shadow; with the SDK, also those its functions and runtime name as types. A schema of
+/// one of these names is declared under another, with a warning.
+macro_rules! reserved {
+    ($($word:literal,)*) => {
+        const RESERVED: &[&str] = &[$($word,)* "Record", "Object"];
+        const RESERVED_SDK: &[&str] =
+            &[$($word,)* "Record", "Object", "NonNullable", "ReturnType", "RegExpExecArray"];
+    };
+}
+
+reserved! {
     "any",
     "unknown",
     "never",
@@ -82,7 +106,7 @@ const RESERVED: &[&str] = &[
     "static",
     "yield",
     "await",
-];
+}
 
 impl Target for TypeScript {
     fn capabilities(&self) -> Capabilities {
@@ -93,11 +117,16 @@ impl Target for TypeScript {
     }
 
     fn identifiers(&self) -> IdentifierRules {
-        IdentifierRules { reserved: RESERVED }
+        IdentifierRules {
+            reserved: if self.sdk { RESERVED_SDK } else { RESERVED },
+        }
     }
 
     fn emit(&self, program: &Program<'_>) -> Output {
-        let text = print::program(program);
+        let mut text = print::program(program);
+        if self.sdk {
+            sdk::sdk(&mut text, program);
+        }
         Output {
             files: vec![File {
                 path: self.path.clone(),

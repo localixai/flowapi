@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- An SDK with no HTTP library (`flowapi --sdk`, `TypeScript::with_sdk`): per operation a
+  function that writes its request (path, query, headers, body by `style`, `explode`,
+  `allowReserved` and media type) and one that reads its response (by status, range, `default`
+  and `Content-Type`), sending nothing. Held by the spec's Style Examples table and the pitfalls
+  of other generators run under Node (`conformance/sdk`, O8). The core's parameters gain their
+  serialization (`spec::Serialization`; Swagger 2.0's `collectionFormat` mapped, `tsv` warned
+  about) and the program its operations (`Program::endpoints`).
+- A schema named `Record` or `Object`, global types the output refers to, is declared under
+  another name, with a warning.
 - The Rust target (`crates/flowapi-rust`, `flowapi --target rust`): serde types, untagged enums
   ordered narrow to wide, `Option<Option<T>>` for optional and nullable, an `Integer` that reads
   `1.0`, closed objects with `deny_unknown_fields`, cycles boxed. Sound on the official suite

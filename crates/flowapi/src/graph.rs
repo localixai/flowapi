@@ -21,6 +21,7 @@ pub use build::{build, build_with};
 
 use crate::id::{DocId, NodeId, TypeId};
 use crate::schema::Keyword;
+use crate::spec::Operation;
 use std::borrow::Cow;
 
 /// A type's shape.
@@ -97,11 +98,22 @@ pub struct Root {
     pub ty: TypeId,
 }
 
+/// An operation and the type the graph made of it: what a target needs, beside the types, to
+/// write the operation's requests and read its responses.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Endpoint {
+    /// The operation's type, a root.
+    pub ty: TypeId,
+    /// The operation, as the description gives it.
+    pub operation: Operation,
+}
+
 /// The graph of one run.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Graph<'t> {
     pub(crate) types: Vec<Type<'t>>,
     pub(crate) roots: Vec<Root>,
+    pub(crate) endpoints: Vec<Endpoint>,
 }
 
 impl<'t> Graph<'t> {
@@ -115,6 +127,12 @@ impl<'t> Graph<'t> {
     #[must_use]
     pub fn roots(&self) -> &[Root] {
         &self.roots
+    }
+
+    /// The operations, in the order the description gives them.
+    #[must_use]
+    pub fn endpoints(&self) -> &[Endpoint] {
+        &self.endpoints
     }
 
     /// How many types the graph holds.

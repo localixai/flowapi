@@ -1,0 +1,14 @@
+{"swagger":"2.0","info":{"title":"swagger","version":"1"},"basePath":"/v1",
+ "paths":{"/pets/{ids}":{"get":{"operationId":"listPets",
+  "parameters":[
+   {"name":"ids","in":"path","required":true,"type":"array","items":{"type":"integer"}},
+   {"name":"csv","in":"query","type":"array","items":{"type":"string"}},
+   {"name":"multi","in":"query","type":"array","items":{"type":"string"},"collectionFormat":"multi"},
+   {"name":"ssv","in":"query","type":"array","items":{"type":"string"},"collectionFormat":"ssv"},
+   {"name":"pipes","in":"query","type":"array","items":{"type":"string"},"collectionFormat":"pipes"},
+   {"name":"tsv","in":"query","type":"array","items":{"type":"string"},"collectionFormat":"tsv"},
+   {"name":"X-Ids","in":"header","type":"array","items":{"type":"string"}}],
+  "responses":{"200":{"description":"ok","schema":{"type":"array","items":{"type":"string"}}}}},
+  "post":{"operationId":"addPet","consumes":["application/x-www-form-urlencoded"],
+   "parameters":[{"name":"ids","in":"path","required":true,"type":"string"},{"name":"name","in":"formData","required":true,"type":"string"}],
+   "responses":{"201":{"description":"made"}}}}}}

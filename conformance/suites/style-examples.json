@@ -1,0 +1,296 @@
+{
+ "about": "The table \"Style Examples\" of conformance/specs/openapi/3.2.1.md (OpenAPI 3.2.1, Parameter Object, \"Style Examples\"; https://spec.openapis.org/oas/v3.2.1.html#style-examples), written by conformance/sdk/extract.mjs; do not edit. The parameter is named color; each example's value is one of values, serialized as the spec shows it.",
+ "source": "conformance/specs/openapi/3.2.1.md",
+ "heading": 902,
+ "values": {
+  "undefined": null,
+  "string": "blue",
+  "array": [
+   "blue",
+   "black",
+   "brown"
+  ],
+  "object": {
+   "R": 100,
+   "G": 200,
+   "B": 150
+  }
+ },
+ "rows": [
+  {
+   "line": 923,
+   "style": "matrix",
+   "explode": false,
+   "examples": [
+    {
+     "value": "undefined",
+     "serialized": ""
+    },
+    {
+     "value": "string",
+     "serialized": ";color=blue"
+    },
+    {
+     "value": "array",
+     "serialized": ";color=blue,black,brown"
+    },
+    {
+     "value": "object",
+     "serialized": ";color=R,100,G,200,B,150"
+    }
+   ]
+  },
+  {
+   "line": 924,
+   "style": "matrix",
+   "explode": true,
+   "examples": [
+    {
+     "value": "undefined",
+     "serialized": ""
+    },
+    {
+     "value": "string",
+     "serialized": ";color=blue"
+    },
+    {
+     "value": "array",
+     "serialized": ";color=blue;color=black;color=brown"
+    },
+    {
+     "value": "object",
+     "serialized": ";R=100;G=200;B=150"
+    }
+   ]
+  },
+  {
+   "line": 925,
+   "style": "label",
+   "explode": false,
+   "examples": [
+    {
+     "value": "undefined",
+     "serialized": ""
+    },
+    {
+     "value": "string",
+     "serialized": ".blue"
+    },
+    {
+     "value": "array",
+     "serialized": ".blue,black,brown"
+    },
+    {
+     "value": "object",
+     "serialized": ".R,100,G,200,B,150"
+    }
+   ]
+  },
+  {
+   "line": 926,
+   "style": "label",
+   "explode": true,
+   "examples": [
+    {
+     "value": "undefined",
+     "serialized": ""
+    },
+    {
+     "value": "string",
+     "serialized": ".blue"
+    },
+    {
+     "value": "array",
+     "serialized": ".blue.black.brown"
+    },
+    {
+     "value": "object",
+     "serialized": ".R=100.G=200.B=150"
+    }
+   ]
+  },
+  {
+   "line": 927,
+   "style": "simple",
+   "explode": false,
+   "examples": [
+    {
+     "value": "undefined",
+     "serialized": ""
+    },
+    {
+     "value": "string",
+     "serialized": "blue"
+    },
+    {
+     "value": "array",
+     "serialized": "blue,black,brown"
+    },
+    {
+     "value": "object",
+     "serialized": "R,100,G,200,B,150"
+    }
+   ]
+  },
+  {
+   "line": 928,
+   "style": "simple",
+   "explode": true,
+   "examples": [
+    {
+     "value": "undefined",
+     "serialized": ""
+    },
+    {
+     "value": "string",
+     "serialized": "blue"
+    },
+    {
+     "value": "array",
+     "serialized": "blue,black,brown"
+    },
+    {
+     "value": "object",
+     "serialized": "R=100,G=200,B=150"
+    }
+   ]
+  },
+  {
+   "line": 929,
+   "style": "form",
+   "explode": false,
+   "examples": [
+    {
+     "value": "undefined",
+     "serialized": "color="
+    },
+    {
+     "value": "string",
+     "serialized": "color=blue"
+    },
+    {
+     "value": "array",
+     "serialized": "color=blue,black,brown"
+    },
+    {
+     "value": "object",
+     "serialized": "color=R,100,G,200,B,150"
+    }
+   ]
+  },
+  {
+   "line": 930,
+   "style": "form",
+   "explode": true,
+   "examples": [
+    {
+     "value": "undefined",
+     "serialized": "color="
+    },
+    {
+     "value": "string",
+     "serialized": "color=blue"
+    },
+    {
+     "value": "array",
+     "serialized": "color=blue&color=black&color=brown"
+    },
+    {
+     "value": "object",
+     "serialized": "R=100&G=200&B=150"
+    }
+   ]
+  },
+  {
+   "line": 931,
+   "style": "spaceDelimited",
+   "explode": false,
+   "examples": [
+    {
+     "value": "array",
+     "serialized": "color=blue%20black%20brown"
+    },
+    {
+     "value": "object",
+     "serialized": "color=R%20100%20G%20200%20B%20150"
+    }
+   ]
+  },
+  {
+   "line": 932,
+   "style": "spaceDelimited",
+   "explode": true,
+   "examples": []
+  },
+  {
+   "line": 933,
+   "style": "pipeDelimited",
+   "explode": false,
+   "examples": [
+    {
+     "value": "array",
+     "serialized": "color=blue%7Cblack%7Cbrown"
+    },
+    {
+     "value": "object",
+     "serialized": "color=R%7C100%7CG%7C200%7CB%7C150"
+    }
+   ]
+  },
+  {
+   "line": 934,
+   "style": "pipeDelimited",
+   "explode": true,
+   "examples": []
+  },
+  {
+   "line": 935,
+   "style": "deepObject",
+   "explode": null,
+   "examples": [
+    {
+     "value": "object",
+     "serialized": "color%5BR%5D=100&color%5BG%5D=200&color%5BB%5D=150"
+    }
+   ]
+  },
+  {
+   "line": 936,
+   "style": "cookie",
+   "explode": false,
+   "examples": [
+    {
+     "value": "undefined",
+     "serialized": "color="
+    },
+    {
+     "value": "string",
+     "serialized": "color=blue"
+    }
+   ]
+  },
+  {
+   "line": 937,
+   "style": "cookie",
+   "explode": true,
+   "examples": [
+    {
+     "value": "undefined",
+     "serialized": "color="
+    },
+    {
+     "value": "string",
+     "serialized": "color=blue"
+    },
+    {
+     "value": "array",
+     "serialized": "color=blue; color=black; color=brown"
+    },
+    {
+     "value": "object",
+     "serialized": "R=100; G=200; B=150"
+    }
+   ]
+  }
+ ]
+}

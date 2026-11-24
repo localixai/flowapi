@@ -29,6 +29,7 @@ impl<'t> Builder<'_, 't> {
                 }),
             }
         }
+        let mut unnamed: Vec<usize> = Vec::new();
         for &n in own.required.map_or(&[][..], |n| tree.items(n)) {
             let Value::String(span) = tree.value(n) else {
                 continue;
@@ -53,12 +54,16 @@ impl<'t> Builder<'_, 't> {
             }
             match props.iter_mut().find(|p| p.name == name) {
                 Some(p) => p.required = true,
-                None => props.push(Prop {
-                    raw: Cow::Borrowed(raw),
-                    name,
-                    ty: self.any,
-                    required: true,
-                }),
+                None => {
+                    // Typed below, as any other property: `properties` does not name it.
+                    unnamed.push(props.len());
+                    props.push(Prop {
+                        raw: Cow::Borrowed(raw),
+                        name,
+                        ty: self.any,
+                        required: true,
+                    });
+                }
             }
         }
         let rest = own.additional.map_or(self.any, |n| self.sub(at, n));
@@ -76,6 +81,13 @@ impl<'t> Builder<'_, 't> {
             let mut members = vec![extra];
             members.extend(patterns.iter().map(|p| p.ty));
             extra = self.make(Kind::Union(members));
+        }
+        // A required name `properties` leaves out takes what any other property may hold
+        // (`additionalProperties` or a matching pattern): `never` when nothing else is allowed.
+        for &i in &unnamed {
+            if let Some(prop) = props.get_mut(i) {
+                prop.ty = extra;
+            }
         }
         // `unevaluatedProperties: false`: no name but those some schema applied here could
         // evaluate (unevaluated.rs); `additionalProperties` evaluates every name, so it wins.

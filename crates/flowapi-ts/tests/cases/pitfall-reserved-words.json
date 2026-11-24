@@ -1,0 +1,142 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {
+  "/e": {
+   "get": {
+    "operationId": "getE",
+    "responses": {
+     "204": {
+      "description": "none"
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "Array": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    }
+   },
+   "Partial": {
+    "type": "string"
+   },
+   "Date": {
+    "type": "string",
+    "format": "date-time"
+   },
+   "Object": {
+    "type": "object"
+   },
+   "String": {
+    "type": "string"
+   },
+   "Promise": {
+    "type": "integer"
+   },
+   "Readonly": {
+    "type": "boolean"
+   },
+   "Uint8Array": {
+    "type": "string"
+   },
+   "class": {
+    "type": "string"
+   },
+   "default": {
+    "type": "string"
+   },
+   "unknown": {
+    "type": "string"
+   },
+   "never": {
+    "type": "string"
+   },
+   "type": {
+    "type": "string"
+   },
+   "keyof": {
+    "type": "string"
+   },
+   "infer": {
+    "type": "string"
+   },
+   "is": {
+    "type": "string"
+   },
+   "declare": {
+    "type": "string"
+   },
+   "namespace": {
+    "type": "string"
+   },
+   "module": {
+    "type": "string"
+   },
+   "asserts": {
+    "type": "string"
+   },
+   "satisfies": {
+    "type": "string"
+   },
+   "readonly": {
+    "type": "string"
+   },
+   "abstract": {
+    "type": "string"
+   },
+   "global": {
+    "type": "string"
+   },
+   "require": {
+    "type": "string"
+   },
+   "accessor": {
+    "type": "string"
+   },
+   "out": {
+    "type": "string"
+   },
+   "override": {
+    "type": "string"
+   },
+   "unique": {
+    "type": "string"
+   },
+   "async": {
+    "type": "string"
+   },
+   "of": {
+    "type": "string"
+   },
+   "from": {
+    "type": "string"
+   },
+   "get": {
+    "type": "string"
+   },
+   "set": {
+    "type": "string"
+   },
+   "constructor": {
+    "type": "string"
+   },
+   "arguments": {
+    "type": "string"
+   },
+   "eval": {
+    "type": "string"
+   },
+   "Empty": {
+    "type": "object",
+    "additionalProperties": false
+   }
+  }
+ }
+}

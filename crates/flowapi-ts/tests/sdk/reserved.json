@@ -1,0 +1,12 @@
+{"openapi":"3.1.0","info":{"title":"reserved","version":"1"},
+ "paths":{"/things":{"get":{"operationId":"listThings",
+   "parameters":[{"name":"where","in":"query","schema":{"$ref":"#/components/schemas/Record"}}],
+   "responses":{"200":{"description":"ok","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ReturnType"}}}},"204":{"description":"none"}}}}},
+ "components":{"schemas":{
+  "Record":{"type":"object","properties":{"id":{"type":"string"}}},
+  "Object":{"type":"object","additionalProperties":false},
+  "NonNullable":{"type":"string"},
+  "ReturnType":{"type":"array","items":{"$ref":"#/components/schemas/Record"}},
+  "RegExpExecArray":{"type":"integer"},
+  "Request":{"type":"string"},
+  "JSON":{"type":"string"}}}}

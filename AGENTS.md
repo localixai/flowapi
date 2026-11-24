@@ -19,8 +19,8 @@ work here.
   - `schema`: [`Keyword`](crates/flowapi/src/schema/keyword.rs), every keyword of every dialect;
     where a schema holds schemas (`sub.rs`); the index of `$id`, `$anchor` and big objects.
   - `spec`: what a description names: components, a JSON Schema's root, operations
-    (`operations/reader.rs`, `responses.rs`; Swagger 2.0's bodies, forms and media types lifted
-    into the 3.x model in `swagger.rs`).
+    (`operations/reader.rs`, `responses.rs`, `style.rs` how a parameter is serialized; Swagger
+    2.0's bodies, forms and media types lifted into the 3.x model in `swagger.rs`).
   - `graph`: schemas into types. `build.rs` (a queue, no recursion), `read.rs` (one keyword),
     `own.rs` (a schema's own values), `narrow.rs` and `literal.rs` (`enum`, `const`), `ops.rs`
     (operations as types).
@@ -29,6 +29,8 @@ work here.
   - `program`, `names`: the [`Target`](crates/flowapi/src/program.rs) contract and the one pass
     that names every type.
 - `crates/flowapi-ts`: the TypeScript target. `tests/cases/*.json` and the `.ts` kept beside each.
+  `src/sdk.rs` the opt-in SDK (`--sdk`): `sdk/request.rs`, `sdk/response.rs` and the runtime
+  printed once (`sdk/runtime.ts`); `tests/sdk/*.json` kept like the cases.
 - `crates/flowapi-rust`: the Rust target (serde types). `tests/cases/*.rs`, kept like the TypeScript ones.
 - `crates/flowapi-cli`: the `flowapi` command, all of flowapi's I/O.
 - `crates/flowapi-wasm`: the core and the TypeScript target as a WebAssembly module for the npm
@@ -41,7 +43,8 @@ work here.
   ([conformance/README.md](conformance/README.md)): the official suites' pinned copies
   (`suites/`), the suite oracle (`suite/`, O3; `suite-rust/` for the Rust target), the same
   oracle run on the other generators (`compare/`), random schemas against flowschema (`props/`, O5),
-  the OAI's example descriptions (`oai/`, O2), the requirements ledger (`ledger/`, O1), the
+  the OAI's example descriptions (`oai/`, O2), the SDK run under Node (`sdk/`, O8), the
+  requirements ledger (`ledger/`, O1), the
   TypeScript compiler they check with (`ts/`), and their results (`results/`, `REPORT.md`).
 - `bench/`: the benchmarks against the other generators, their budgets and results
   ([bench/README.md](bench/README.md)); `bench/competitors/` the other tools, pinned.
@@ -59,6 +62,8 @@ node conformance/compare/compare.mjs                   # O3 on the other generat
 (cd conformance/suite-rust && cargo run --release -j 1 --bin suite-rust)   # O3 for Rust
 (cd conformance/props && cargo run --release)           # O5, random schemas; `-- <seed>` for another
 node conformance/oai/run.mjs                           # O2, after cargo build --release
+node conformance/sdk/run.mjs --corpus                  # O8, the SDK; after cargo build --release
+node bench/competitors/sdk.mjs                         # writing requests against openapi-fetch
 cargo test -p flowapi-ts --test fuzz                   # O7, no input panics
 cargo run --release -p flowapi-cli -- <description.json> -o types.ts
 bench/run.sh                          # the benchmarks, then held to bench/budgets.json

@@ -1,0 +1,67 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "Tuple": {
+    "type": "array",
+    "prefixItems": [
+     {
+      "type": "string"
+     },
+     {
+      "type": "integer"
+     }
+    ]
+   },
+   "TupleClosed": {
+    "type": "array",
+    "prefixItems": [
+     {
+      "type": "string"
+     },
+     {
+      "type": "integer"
+     }
+    ],
+    "items": false
+   },
+   "TupleRest": {
+    "type": "array",
+    "prefixItems": [
+     {
+      "type": "string"
+     }
+    ],
+    "items": {
+     "type": "boolean"
+    },
+    "minItems": 2
+   },
+   "MinItems": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    },
+    "minItems": 1
+   },
+   "ItemsNullable": {
+    "type": "array",
+    "items": {
+     "type": [
+      "string",
+      "null"
+     ]
+    }
+   },
+   "ItemsFalse": {
+    "type": "array",
+    "items": false
+   }
+  }
+ }
+}

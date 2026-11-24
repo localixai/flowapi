@@ -5,7 +5,7 @@
 use crate::pattern::Template;
 use crate::print::{Prec, reference};
 use flowapi::Program;
-use flowapi::graph::{Object, Type};
+use flowapi::graph::{Kind, Object, Type};
 use flowapi::id::TypeId;
 
 const INDENT: &str = "  ";
@@ -120,11 +120,26 @@ fn inherited<'n>(out: &mut String, props: impl Iterator<Item = (&'n str, bool)>)
 
 /// Types joined by `|`; `unknown` when one allows every value, `never` for none.
 fn union_of(out: &mut String, p: &Program<'_>, members: &[TypeId]) {
-    let members: Vec<TypeId> = members
-        .iter()
-        .copied()
-        .filter(|&m| !p.is_never(m))
-        .collect();
+    // An unnamed union among the members is its own members, so each prints once.
+    let mut flat: Vec<TypeId> = Vec::with_capacity(members.len());
+    let mut stack: Vec<TypeId> = members.iter().rev().copied().collect();
+    while let Some(m) = stack.pop() {
+        let r = p.resolve(m);
+        match &p.get(r).kind {
+            Kind::Union(inner) if p.name_of(r).is_none() && flat.len() + stack.len() < 256 => {
+                stack.extend(inner.iter().rev());
+            }
+            Kind::Union(_)
+            | Kind::Any
+            | Kind::Never
+            | Kind::Value(_)
+            | Kind::Intersection(_)
+            | Kind::Alias(_) => {
+                flat.push(r);
+            }
+        }
+    }
+    let members: Vec<TypeId> = flat.into_iter().filter(|&m| !p.is_never(m)).collect();
     if members.iter().any(|&m| p.is_any(m)) {
         out.push_str("unknown");
         return;
@@ -159,7 +174,7 @@ fn indented(out: &mut String, text: &str) {
 fn member_doc(out: &mut String, ty: &Type<'_>) {
     let mut lines: Vec<String> = Vec::new();
     for text in [&ty.title, &ty.description].into_iter().flatten() {
-        lines.extend(text.lines().map(|l| l.trim_end().replace("*/", "*\\/")));
+        lines.extend(text.lines().map(crate::print::comment_line));
     }
     if ty.deprecated {
         lines.push(String::from("@deprecated"));

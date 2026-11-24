@@ -1,0 +1,111 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "Node": {
+    "type": "object",
+    "properties": {
+     "value": {
+      "type": "integer"
+     },
+     "children": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Node"
+      }
+     },
+     "parent": {
+      "$ref": "#/components/schemas/Node"
+     }
+    }
+   },
+   "A": {
+    "type": "object",
+    "properties": {
+     "b": {
+      "$ref": "#/components/schemas/B"
+     }
+    }
+   },
+   "B": {
+    "type": "object",
+    "properties": {
+     "a": {
+      "$ref": "#/components/schemas/A"
+     }
+    }
+   },
+   "Loop1": {
+    "$ref": "#/components/schemas/Loop2"
+   },
+   "Loop2": {
+    "$ref": "#/components/schemas/Loop1"
+   },
+   "SelfAllOf": {
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/SelfAllOf"
+     },
+     {
+      "type": "object"
+     }
+    ]
+   },
+   "Json": {
+    "anyOf": [
+     {
+      "type": "string"
+     },
+     {
+      "type": "number"
+     },
+     {
+      "type": "boolean"
+     },
+     {
+      "type": "null"
+     },
+     {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Json"
+      }
+     },
+     {
+      "type": "object",
+      "additionalProperties": {
+       "$ref": "#/components/schemas/Json"
+      }
+     }
+    ]
+   },
+   "ArrSelf": {
+    "type": "array",
+    "items": {
+     "$ref": "#/components/schemas/ArrSelf"
+    }
+   },
+   "Nested": {
+    "type": "object",
+    "properties": {
+     "inner": {
+      "type": "object",
+      "properties": {
+       "deep": {
+        "$ref": "#/components/schemas/Nested/properties/inner"
+       }
+      }
+     }
+    }
+   },
+   "Deep": {
+    "$ref": "#/components/schemas/Node/properties/value"
+   }
+  }
+ }
+}

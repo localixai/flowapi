@@ -1,0 +1,417 @@
+{
+ "about": "The cases of oracle O8 (conformance/sdk/run.mjs) beside the spec's Style Examples table: the spec's own examples (Appendix C, the Parameter Object Examples) and the pitfalls the other generators' tests and changelogs show they fixed (map/research/codegen-2026-11/06-sdk-serialization.md). Each case is an operation (its parameters, requestBody, responses, path after /c<i>, method) generated in each of its versions (3.0.4, 3.1.2 and 3.2.1 when it names none); each call is a request input and what the request must hold (path, query, headers, body exactly; pairs and bodyPairs as WHATWG's form-urlencoded parser reads them), or a response (status, headers, body) and what reading it gives. covers names the requirements each case is evidence for (the ledger reads them).",
+ "cases": [
+  {
+   "name": "the default style and explode of each location",
+   "covers": [
+    "req: oas-3.0.parameter-object.style — no style: path and header simple, query and cookie form",
+    "req: oas-3.1.parameter-object.style — no style: path and header simple, query and cookie form",
+    "req: oas-3.2.parameter-object.style — no style: path and header simple, query and cookie form",
+    "req: oas-3.2.parameter-object.style.should-default-values-based-value-query-form — no style: path and header simple, query and cookie form",
+    "req: oas-3.0.parameter-object.explode — no explode: true for form (one pair per item), false for simple (items joined by a comma)",
+    "req: oas-3.1.parameter-object.explode — no explode: true for form (one pair per item), false for simple (items joined by a comma)",
+    "req: oas-3.2.parameter-object.explode — no explode: true for form (one pair per item), false for simple (items joined by a comma)"
+   ],
+   "path": "/{p}",
+   "parameters": [
+    { "name": "p", "in": "path", "required": true, "schema": { "type": "array", "items": { "type": "string" } } },
+    { "name": "q", "in": "query", "schema": { "type": "array", "items": { "type": "string" } } },
+    { "name": "h", "in": "header", "schema": { "type": "array", "items": { "type": "string" } } },
+    { "name": "k", "in": "cookie", "schema": { "type": "string" } }
+   ],
+   "calls": [
+    {
+     "input": { "path": { "p": ["a", "b"] }, "query": { "q": ["a", "b"] }, "header": { "h": ["a", "b"] }, "cookie": { "k": "v w" } },
+     "expect": { "method": "GET", "path": "/a,b", "query": "q=a&q=b", "headers": { "h": "a,b", "cookie": "k=v%20w" } }
+    }
+   ]
+  },
+  {
+   "name": "Appendix C: {?formulas*,words}",
+   "covers": [
+    "req: oas-3.2.parameter-object.serialization-and-examples.must-not-suitability-either-delimiter-depends-query-string — the query string has no leading ? or &: Appendix C's expansion without its ?",
+    "req: oas-3.1.parameter-object.serialization-and-examples.must-not-suitability-either-delimiter-depends-query-string — the query string has no leading ? or &: Appendix C's expansion without its ?",
+    "req: oas-3.2.parameter-object.url-percent-encoding.must-not-reserved-characters-percent-encoded-being-used — & = and the comma of an unexploded array stay as delimiters; + / ^ in values are encoded",
+    "req: oas-3.1.parameter-object.url-percent-encoding.must-not-reserved-characters-percent-encoded-being-used — & = and the comma of an unexploded array stay as delimiters; + / ^ in values are encoded",
+    "req: oas-3.2.parameter-object.url-percent-encoding.must-content-application-x-www-form-urlencoded — the query parses back with WHATWG's form-urlencoded parser",
+    "req: oas-3.1.parameter-object.url-percent-encoding.must-content-application-x-www-form-urlencoded — the query parses back with WHATWG's form-urlencoded parser"
+   ],
+   "parameters": [
+    { "name": "formulas", "in": "query", "explode": true, "schema": { "type": "object", "additionalProperties": { "type": "string" } } },
+    { "name": "words", "in": "query", "explode": false, "schema": { "type": "array", "items": { "type": "string" } } }
+   ],
+   "calls": [
+    {
+     "input": { "query": { "formulas": { "a": "x+y", "b": "x/y", "c": "x^y" }, "words": ["math", "is", "fun"] } },
+     "expect": { "query": "a=x%2By&b=x%2Fy&c=x%5Ey&words=math,is,fun", "pairs": [["a", "x+y"], ["b", "x/y"], ["c", "x^y"], ["words", "math,is,fun"]] }
+    },
+    { "input": { "query": { "formulas": {}, "words": ["hello", "world"] } }, "expect": { "query": "words=hello,world" } }
+   ]
+  },
+  {
+   "name": "Appendix C: allowReserved and spaceDelimited",
+   "covers": [
+    "req: oas-3.0.parameter-object.allowReserved — reserved characters and percent-encoded triples pass; ^ is still encoded",
+    "req: oas-3.1.parameter-object.allowReserved — reserved characters and percent-encoded triples pass; ^ is still encoded",
+    "req: oas-3.2.parameter-object.allowReserved — reserved characters and percent-encoded triples pass; ^ is still encoded",
+    "req: oas-3.0.non-rfc6570-field-values-and-combinations.should-configurations-no-direct-rfc6570-equivalent-handled — form with allowReserved and spaceDelimited give Appendix C's manually built expansion",
+    "req: oas-3.1.non-rfc6570-field-values-and-combinations.should-configurations-no-direct-rfc6570-equivalent-handled — form with allowReserved and spaceDelimited give Appendix C's manually built expansion",
+    "req: oas-3.2.non-rfc6570-field-values-and-combinations.should-configurations-no-direct-rfc6570-equivalent-handled — form with allowReserved and spaceDelimited give Appendix C's manually built expansion"
+   ],
+   "parameters": [
+    { "name": "formulas", "in": "query", "explode": true, "allowReserved": true, "schema": { "type": "object", "additionalProperties": { "type": "string" } } },
+    { "name": "words", "in": "query", "style": "spaceDelimited", "explode": false, "schema": { "type": "array", "items": { "type": "string" } } }
+   ],
+   "calls": [
+    {
+     "input": { "query": { "formulas": { "a": "x%2By", "b": "x/y", "c": "x^y" }, "words": ["math", "is", "fun"] } },
+     "expect": { "query": "a=x%2By&b=x/y&c=x%5Ey&words=math%20is%20fun" }
+    },
+    { "input": { "query": { "formulas": {}, "words": ["hello", "world"] } }, "expect": { "query": "words=hello%20world" } }
+   ]
+  },
+  {
+   "name": "Appendix C: a name outside RFC 6570's variable names",
+   "covers": [
+    "req: oas-3.0.non-rfc6570-field-values-and-combinations.must-parameter-name-includes-characters-outside-allowed — the heart is percent-encoded in the name",
+    "req: oas-3.1.non-rfc6570-field-values-and-combinations.must-parameter-name-includes-characters-outside-allowed — the heart is percent-encoded in the name",
+    "req: oas-3.2.non-rfc6570-field-values-and-combinations.must-parameter-name-includes-characters-outside-allowed — the heart is percent-encoded in the name"
+   ],
+   "parameters": [
+    { "name": "❤️", "in": "query", "schema": { "type": "string" } },
+    { "name": "a b[]", "in": "query", "schema": { "type": "string" } }
+   ],
+   "calls": [
+    { "input": { "query": { "❤️": "love!", "a b[]": "1" } }, "expect": { "query": "%E2%9D%A4%EF%B8%8F=love%21&a%20b%5B%5D=1", "pairs": [["❤️", "love!"], ["a b[]", "1"]] } }
+   ]
+  },
+  {
+   "name": "every character outside RFC 3986's unreserved set is percent-encoded, as UTF-8",
+   "covers": [
+    "req: oas-3.2.parameter-object.url-percent-encoding.must-all-api-urls-successfully-parse-percent — the path and the query percent-decode back to the values",
+    "req: oas-3.1.parameter-object.url-percent-encoding.must-all-api-urls-successfully-parse-percent — the path and the query percent-decode back to the values"
+   ],
+   "path": "/{p}",
+   "parameters": [
+    { "name": "p", "in": "path", "required": true, "schema": { "type": "string" } },
+    { "name": "q", "in": "query", "schema": { "type": "string" } }
+   ],
+   "calls": [
+    {
+     "input": { "path": { "p": ";/?:@&=+$,# " }, "query": { "q": "-_.~!*'()é😀" } },
+     "expect": { "path": "/%3B%2F%3F%3A%40%26%3D%2B%24%2C%23%20", "decodedPath": "/;/?:@&=+$,# ", "query": "q=-_.~%21%2A%27%28%29%C3%A9%F0%9F%98%80", "pairs": [["q", "-_.~!*'()é😀"]] }
+    }
+   ]
+  },
+  {
+   "name": "a path value's / ? # are encoded",
+   "covers": [
+    "req: oas-3.1.path-templating.must-not-value-path-parameters-contain-any-unescaped — / ? # in a value are percent-encoded (allowReserved false, the default)",
+    "req: oas-3.2.paths-object.path-templating.must-not-value-path-parameters-contain-any-unescaped — / ? # in a value are percent-encoded (allowReserved false, the default)"
+   ],
+   "path": "/files/{name}/raw",
+   "parameters": [{ "name": "name", "in": "path", "required": true, "schema": { "type": "string" } }],
+   "calls": [{ "input": { "path": { "name": "a/b?c#d" } }, "expect": { "path": "/files/a%2Fb%3Fc%23d/raw", "decodedPath": "/files/a/b?c#d/raw" } }]
+  },
+  {
+   "name": "allowReserved on a path keeps reserved characters, encodes the rest and a lone %",
+   "path": "/{p}",
+   "parameters": [{ "name": "p", "in": "path", "required": true, "allowReserved": true, "schema": { "type": "string" } }],
+   "calls": [{ "input": { "path": { "p": "a/b c%2F100%" } }, "expect": { "path": "/a/b%20c%2F100%25" } }]
+  },
+  {
+   "name": "the delimiters of deepObject, pipeDelimited and spaceDelimited are encoded",
+   "covers": [
+    "req: oas-3.0.percent-encoding-and-illegal-or-reserved-delimiters.must-space-characters-used-delimiters-deepobject-pipedelimited — [ ] | and space are %5B %5D %7C %20, as delimiters and in values",
+    "req: oas-3.1.percent-encoding-and-illegal-or-reserved-delimiters.must-space-characters-used-delimiters-deepobject-pipedelimited — [ ] | and space are %5B %5D %7C %20, as delimiters and in values",
+    "req: oas-3.2.percent-encoding-and-illegal-or-reserved-delimiters.must-space-characters-used-delimiters-deepobject-pipedelimited — [ ] | and space are %5B %5D %7C %20, as delimiters and in values"
+   ],
+   "parameters": [
+    { "name": "d", "in": "query", "style": "deepObject", "schema": { "type": "object" } },
+    { "name": "p", "in": "query", "style": "pipeDelimited", "explode": false, "schema": { "type": "array", "items": { "type": "string" } } },
+    { "name": "s", "in": "query", "style": "spaceDelimited", "explode": false, "schema": { "type": "array", "items": { "type": "string" } } }
+   ],
+   "calls": [
+    {
+     "input": { "query": { "d": { "a b": "[x]" }, "p": ["a|b", "c"], "s": ["a b", "c"] } },
+     "expect": { "query": "d%5Ba%20b%5D=%5Bx%5D&p=a%7Cb%7Cc&s=a%20b%20c" }
+    }
+   ]
+  },
+  {
+   "name": "deepObject: members in order, a nested object a level deeper, an array's items repeated",
+   "parameters": [{ "name": "f", "in": "query", "style": "deepObject", "explode": true, "schema": { "type": "object" } }],
+   "calls": [
+    { "input": { "query": { "f": { "a": 1, "b": { "c": "x", "d": null }, "e": [1, 2] } } }, "expect": { "query": "f%5Ba%5D=1&f%5Bb%5D%5Bc%5D=x&f%5Be%5D=1&f%5Be%5D=2" } },
+    { "input": { "query": { "f": {} } }, "expect": { "query": "" } }
+   ]
+  },
+  {
+   "name": "empty arrays and objects write nothing, and leave no stray &",
+   "parameters": [
+    { "name": "a", "in": "query", "schema": { "type": "array", "items": { "type": "string" } } },
+    { "name": "b", "in": "query", "explode": false, "schema": { "type": "array", "items": { "type": "string" } } },
+    { "name": "o", "in": "query", "schema": { "type": "object" } },
+    { "name": "c", "in": "query", "schema": { "type": "string" } }
+   ],
+   "calls": [
+    { "input": { "query": { "a": [], "b": [], "o": {}, "c": "x" } }, "expect": { "query": "c=x" } },
+    { "input": { "query": { "a": [], "o": {} } }, "expect": { "query": "" } }
+   ]
+  },
+  {
+   "name": "null items and members are left out, an absent parameter is not sent, a null one is name=",
+   "parameters": [
+    { "name": "a", "in": "query", "schema": { "type": "array", "items": { "type": ["string", "null"] } } },
+    { "name": "o", "in": "query", "explode": false, "schema": { "type": "object" } },
+    { "name": "n", "in": "query", "schema": { "type": ["string", "null"] } },
+    { "name": "absent", "in": "query", "schema": { "type": "string" } },
+    { "name": "h", "in": "header", "schema": { "type": ["string", "null"] } }
+   ],
+   "versions": ["3.1.2", "3.2.1"],
+   "calls": [
+    { "input": { "query": { "a": ["x", null, "y"], "o": { "k": null, "l": 1 }, "n": null }, "header": { "h": null } }, "expect": { "query": "a=x&a=y&o=l,1&n=", "headers": { "h": "" } } },
+    { "input": {}, "expect": { "query": "", "headers": {} } }
+   ]
+  },
+  {
+   "name": "empty strings by RFC 6570: form name=, matrix ;name, label ., simple nothing",
+   "covers": [
+    "req: oas-3.1.parameter-object.serialization-and-examples.must-matrix-label-styles-produce-leading-delimiter — matrix writes ; and label . before even an empty value (the Style Examples rows too)",
+    "req: oas-3.2.parameter-object.serialization-and-examples.must-matrix-label-styles-produce-leading-delimiter — matrix writes ; and label . before even an empty value (the Style Examples rows too)"
+   ],
+   "path": "/{m}/{l}/{s}",
+   "parameters": [
+    { "name": "m", "in": "path", "required": true, "style": "matrix", "schema": { "type": "string" } },
+    { "name": "l", "in": "path", "required": true, "style": "label", "schema": { "type": "string" } },
+    { "name": "s", "in": "path", "required": true, "schema": { "type": "string" } },
+    { "name": "q", "in": "query", "schema": { "type": "string" } }
+   ],
+   "calls": [{ "input": { "path": { "m": "", "l": "", "s": "" }, "query": { "q": "" } }, "expect": { "path": "/;m/./", "query": "q=" } }]
+  },
+  {
+   "name": "numbers and booleans as JSON writes them; falsy values are sent",
+   "parameters": [
+    { "name": "f", "in": "query", "schema": { "type": "number" } },
+    { "name": "z", "in": "query", "schema": { "type": "integer" } },
+    { "name": "b", "in": "query", "schema": { "type": "boolean" } },
+    { "name": "e", "in": "query", "schema": { "type": "string" } }
+   ],
+   "calls": [{ "input": { "query": { "f": 1.5, "z": 0, "b": false, "e": "" } }, "expect": { "query": "f=1.5&z=0&b=false&e=" } }]
+  },
+  {
+   "name": "a value holding the comma that joins an unexploded array is encoded",
+   "parameters": [{ "name": "c", "in": "query", "explode": false, "schema": { "type": "array", "items": { "type": "string" } } }],
+   "calls": [{ "input": { "query": { "c": ["a,b", "c"] } }, "expect": { "query": "c=a%2Cb,c" } }]
+  },
+  {
+   "name": "headers pass unchanged and carry no name",
+   "covers": [
+    "req: oas-3.1.parameter-object.fixed-fields-for-use-with-schema.must-implementations-pass-header-values-through-unchanged — quotes, ; = % and spaces of a header value are sent as given",
+    "req: oas-3.1.parameter-object.fixed-fields-for-use-with-schema.must-not-serializing-header-parameters-schema-uri-percent — no percent-encoding in a header",
+    "req: oas-3.2.parameter-object.fixed-fields-for-use-with-schema.must-cases-implementations-pass-values-through-unchanged — quotes, ; = % and spaces of a header value are sent as given",
+    "req: oas-3.2.parameter-object.fixed-fields-for-use-with-schema.must-not-serializing-values-uri-percent-encoding-applied — no percent-encoding in a header or a style: cookie cookie",
+    "req: oas-3.2.parameter-object.fixed-fields-for-use-with-schema.must-using-rfc6570-implementation-automatically-performs-encoding — the runtime applies no encoding to headers, so none is undone",
+    "req: oas-3.1.parameter-object.serialization-and-examples.must-not-headers-header-name-included-part-serialization — the value is the header's value, without its name",
+    "req: oas-3.2.parameter-object.serialization-and-examples.must-not-headers-header-name-included-part-serialization — the value is the header's value, without its name",
+    "req: oas-3.1.parameter-object.serialization-and-examples.must-cases-name-inherent-part-constructing-serialization — simple with explode writes each member's name and =",
+    "req: oas-3.2.parameter-object.serialization-and-examples.must-cases-parameter-name-inherent-part-constructing — form writes name=; simple with explode writes each member's name and ="
+   ],
+   "parameters": [
+    { "name": "X-Tag", "in": "header", "schema": { "type": "string" } },
+    { "name": "X-Token", "in": "header", "required": true, "style": "simple", "schema": { "type": "array", "items": { "type": "integer" } } },
+    { "name": "X-Color", "in": "header", "explode": true, "schema": { "type": "object" } }
+   ],
+   "calls": [
+    {
+     "input": { "header": { "X-Tag": "W/\"a b\"; q=1 %20", "X-Token": [12345678, 90099], "X-Color": { "R": 100, "G": 200 } } },
+     "expect": { "headers": { "X-Tag": "W/\"a b\"; q=1 %20", "X-Token": "12345678,90099", "X-Color": "R=100,G=200" } }
+    }
+   ]
+  },
+  {
+   "name": "the Parameter Object Examples: a style: cookie object exploded, values as given",
+   "versions": ["3.2.1"],
+   "covers": [
+    "req: oas-3.2.parameter-object.style-values.must-analogous-form-but-following-rfc6265-cookie — pairs joined by ; and a space, nothing escaped: the spec's own example"
+   ],
+   "parameters": [
+    { "name": "cookie", "in": "cookie", "style": "cookie", "schema": { "type": "object", "properties": { "greeting": { "type": "string" }, "code": { "type": "integer" } } } },
+    { "name": "greeting", "in": "cookie", "schema": { "type": "string" } }
+   ],
+   "calls": [
+    { "input": { "cookie": { "cookie": { "greeting": "Hello%2C%20world!", "code": 42 } } }, "expect": { "headers": { "cookie": "greeting=Hello%2C%20world!; code=42" } } },
+    { "input": { "cookie": { "greeting": "Hello, world!" } }, "expect": { "headers": { "cookie": "greeting=Hello%2C%20world%21" } } }
+   ]
+  },
+  {
+   "name": "several cookies in one header, joined by ; and a space",
+   "parameters": [
+    { "name": "a", "in": "cookie", "schema": { "type": "string" } },
+    { "name": "b", "in": "cookie", "schema": { "type": "string" } }
+   ],
+   "calls": [
+    { "input": { "cookie": { "a": "1", "b": "2" } }, "expect": { "headers": { "cookie": "a=1; b=2" } } },
+    { "input": { "cookie": {} }, "expect": { "headers": {} } }
+   ]
+  },
+  {
+   "name": "a parameter with content: its media type's text, then encoded for where it goes",
+   "path": "/{p}",
+   "parameters": [
+    { "name": "p", "in": "path", "required": true, "content": { "application/json": { "schema": { "type": "object" } } } },
+    { "name": "filter", "in": "query", "content": { "application/json": { "schema": { "type": "object" } } } },
+    { "name": "X-Json", "in": "header", "content": { "application/json": { "schema": { "type": "object" } } } },
+    { "name": "t", "in": "query", "content": { "text/plain": { "schema": { "type": "string" } } } }
+   ],
+   "calls": [
+    {
+     "input": { "path": { "p": { "a": "b/c" } }, "query": { "filter": { "tag": "a b" }, "t": "x&y" }, "header": { "X-Json": { "a": 1 } } },
+     "expect": { "path": "/%7B%22a%22%3A%22b%2Fc%22%7D", "query": "filter=%7B%22tag%22%3A%22a%20b%22%7D&t=x%26y", "headers": { "X-Json": "{\"a\":1}" }, "pairs": [["filter", "{\"tag\":\"a b\"}"], ["t", "x&y"]] }
+    }
+   ]
+  },
+  {
+   "name": "in: querystring as a form",
+   "versions": ["3.2.1"],
+   "parameters": [{ "name": "q", "in": "querystring", "content": { "application/x-www-form-urlencoded": { "schema": { "type": "object" } } } }],
+   "calls": [{ "input": { "querystring": { "q": { "text": "a b&c", "n": [1, 2] } } }, "expect": { "query": "text=a%20b%26c&n=1&n=2", "pairs": [["text", "a b&c"], ["n", "1"], ["n", "2"]] } }]
+  },
+  {
+   "name": "JSON bodies: the content type given, +json and parameters, falsy values",
+   "method": "post",
+   "requestBody": { "required": true, "content": { "application/json": { "schema": {} }, "application/merge-patch+json": { "schema": { "type": "object" } } } },
+   "calls": [
+    { "input": { "body": { "contentType": "application/json", "value": 0 } }, "expect": { "method": "POST", "body": "0", "headers": { "content-type": "application/json" } } },
+    { "input": { "body": { "contentType": "application/json; charset=utf-8", "value": false } }, "expect": { "body": "false", "headers": { "content-type": "application/json; charset=utf-8" } } },
+    { "input": { "body": { "contentType": "application/json", "value": "" } }, "expect": { "body": "\"\"" } },
+    { "input": { "body": { "contentType": "application/json", "value": null } }, "expect": { "body": "null" } },
+    { "input": { "body": { "contentType": "application/merge-patch+json", "value": { "a": [1] } } }, "expect": { "body": "{\"a\":[1]}" } }
+   ]
+  },
+  {
+   "name": "no body, no content type",
+   "method": "post",
+   "requestBody": { "content": { "application/json": { "schema": {} } } },
+   "calls": [{ "input": {}, "expect": { "headers": {} } }]
+  },
+  {
+   "name": "a form body: pairs with no leading ?, arrays repeated, objects as JSON",
+   "method": "post",
+   "covers": [
+    "req: oas-3.0.parameter-object.style-examples.must-note-prefix-not-appropriate-serializing-application — the form body has no ?",
+    "req: oas-3.0.encoding-object.encoding-the-x-www-form-urlencoded-media-type.must-configuration-means-request-body-encoded-per — an object member serialized as JSON, then the pairs percent-encoded; WHATWG's parser reads them back",
+    "req: oas-3.1.encoding-object.encoding-the-x-www-form-urlencoded-media-type.must-configuration-means-request-body-encoded-per — an object member serialized as JSON, then the pairs percent-encoded; WHATWG's parser reads them back",
+    "req: oas-3.2.encoding-object.encoding-the-x-www-form-urlencoded-media-type.must-configuration-means-content-percent-encoded-per — an object member serialized as JSON, then the pairs percent-encoded; WHATWG's parser reads them back"
+   ],
+   "requestBody": { "content": { "application/x-www-form-urlencoded": { "schema": { "type": "object" } } } },
+   "calls": [
+    {
+     "input": { "body": { "contentType": "application/x-www-form-urlencoded", "value": { "a": "x y+z", "b": [1, 2], "c": { "d": 1 }, "e": null } } },
+     "expect": { "body": "a=x%20y%2Bz&b=1&b=2&c=%7B%22d%22%3A1%7D&e=", "bodyPairs": [["a", "x y+z"], ["b", "1"], ["b", "2"], ["c", "{\"d\":1}"], ["e", ""]] }
+    }
+   ]
+  },
+  {
+   "name": "text and multipart bodies are sent as given",
+   "method": "post",
+   "requestBody": { "content": { "text/plain": { "schema": { "type": "string" } }, "multipart/form-data": { "schema": { "type": "object" } } } },
+   "calls": [
+    { "input": { "body": { "contentType": "text/plain", "value": "{\"not\": \"json\"}" } }, "expect": { "body": "{\"not\": \"json\"}" } },
+    { "input": { "body": { "contentType": "multipart/form-data; boundary=x", "value": "--x\r\n\r\n--x--" } }, "expect": { "body": "--x\r\n\r\n--x--", "headers": { "content-type": "multipart/form-data; boundary=x" } } }
+   ]
+  },
+  {
+   "name": "3.2 additionalOperations: the method as written",
+   "versions": ["3.2.1"],
+   "method": "COPY",
+   "calls": [{ "input": {}, "expect": { "method": "COPY", "path": "", "query": "" } }]
+  },
+  {
+   "name": "Swagger 2.0 collectionFormat as 3.x styles",
+   "versions": ["2.0"],
+   "path": "/{p}",
+   "parameters": [
+    { "name": "p", "in": "path", "required": true, "type": "array", "items": { "type": "string" } },
+    { "name": "csv", "in": "query", "type": "array", "items": { "type": "string" } },
+    { "name": "multi", "in": "query", "type": "array", "items": { "type": "string" }, "collectionFormat": "multi" },
+    { "name": "ssv", "in": "query", "type": "array", "items": { "type": "string" }, "collectionFormat": "ssv" },
+    { "name": "pipes", "in": "query", "type": "array", "items": { "type": "string" }, "collectionFormat": "pipes" },
+    { "name": "X-H", "in": "header", "type": "array", "items": { "type": "string" } }
+   ],
+   "calls": [
+    {
+     "input": { "path": { "p": ["a", "b"] }, "query": { "csv": ["a", "b"], "multi": ["a", "b"], "ssv": ["a", "b"], "pipes": ["a", "b"] }, "header": { "X-H": ["a", "b"] } },
+     "expect": { "path": "/a,b", "query": "csv=a,b&multi=a&multi=b&ssv=a%20b&pipes=a%7Cb", "headers": { "X-H": "a,b" } }
+    }
+   ]
+  },
+  {
+   "name": "Swagger 2.0 tsv has no 3.x style: a warning, and csv",
+   "versions": ["2.0"],
+   "warns": "swagger.collectionFormat",
+   "parameters": [{ "name": "t", "in": "query", "type": "array", "items": { "type": "string" }, "collectionFormat": "tsv" }],
+   "calls": [{ "input": { "query": { "t": ["a", "b"] } }, "expect": { "query": "t=a,b" } }]
+  },
+  {
+   "name": "a style a location does not take: a warning, and the default",
+   "warns": "parameter-object.style",
+   "path": "/{p}",
+   "parameters": [{ "name": "p", "in": "path", "required": true, "style": "deepObject", "schema": { "type": "object" } }],
+   "calls": [{ "input": { "path": { "p": { "a": 1 } } }, "expect": { "path": "/a,1" } }]
+  },
+  {
+   "name": "the status picks its code, then its range, then default",
+   "responses": {
+    "200": { "description": "ok", "content": { "application/json": { "schema": {} } } },
+    "2XX": { "description": "other success", "content": { "application/json": { "schema": {} } } },
+    "4xx": { "description": "client error, its range in lower case" },
+    "default": { "description": "else", "content": { "application/problem+json": { "schema": {} } } }
+   },
+   "calls": [
+    { "status": 200, "headers": { "content-type": "application/json" }, "body": "{\"a\":1}", "expect": { "response": "200", "status": 200, "mediaType": "application/json", "body": { "a": 1 } } },
+    { "status": 201, "headers": { "Content-Type": "application/json; charset=utf-8" }, "body": "[1]", "expect": { "response": "2XX", "body": [1] } },
+    { "status": 404, "headers": {}, "body": "nope", "expect": { "response": "4xx", "mediaType": null, "body": "nope" } },
+    { "status": 503, "headers": { "content-type": "application/problem+json" }, "body": "{\"title\":\"down\"}", "expect": { "response": "default", "mediaType": "application/problem+json", "body": { "title": "down" } } }
+   ]
+  },
+  {
+   "name": "a 204 beside a JSON default reads no body",
+   "responses": {
+    "204": { "description": "none" },
+    "default": { "description": "error", "content": { "application/json": { "schema": {} } } }
+   },
+   "calls": [{ "status": 204, "headers": {}, "body": "", "expect": { "response": "204", "mediaType": null, "body": "" } }]
+  },
+  {
+   "name": "a status or a media type the description does not name is not given a type",
+   "responses": {
+    "200": { "description": "ok", "content": { "application/json": { "schema": {} } } },
+    "default": { "description": "else", "content": { "application/json": { "schema": {} } } }
+   },
+   "calls": [
+    { "status": 200, "headers": { "content-type": "text/html" }, "body": "<p>", "expect": { "response": null, "mediaType": "text/html", "body": "<p>" } },
+    { "status": 200, "headers": {}, "body": "{}", "expect": { "response": null, "mediaType": null, "body": "{}" } },
+    { "status": 200, "headers": { "content-type": "application/json" }, "body": "", "expect": { "response": null, "body": "" } },
+    { "status": 200, "headers": { "content-type": "application/json" }, "body": "{\"a\":1} trailing", "expect": { "response": null, "body": "{\"a\":1} trailing" } }
+   ]
+  },
+  {
+   "name": "no response matches and there is no default",
+   "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": {} } } } },
+   "calls": [{ "status": 500, "headers": { "content-type": "application/json" }, "body": "{}", "expect": { "response": null, "status": 500, "body": "{}" } }]
+  },
+  {
+   "name": "several media types: the exact one, then type/*, then */*; text stays text",
+   "responses": {
+    "200": { "description": "ok", "content": { "application/json": { "schema": {} }, "text/plain": { "schema": { "type": "string" } }, "text/*": { "schema": {} }, "*/*": { "schema": {} } } }
+   },
+   "calls": [
+    { "status": 200, "headers": { "content-type": "text/plain" }, "body": "{\"a\":1}", "expect": { "response": "200", "mediaType": "text/plain", "body": "{\"a\":1}" } },
+    { "status": 200, "headers": { "content-type": "text/html; charset=utf-8" }, "body": "<p>", "expect": { "mediaType": "text/*", "body": "<p>" } },
+    { "status": 200, "headers": { "content-type": "image/png" }, "body": "x", "expect": { "mediaType": "*/*", "body": "x" } },
+    { "status": 200, "headers": { "CONTENT-TYPE": "Application/JSON" }, "body": "2", "expect": { "mediaType": "application/json", "body": 2 } }
+   ]
+  }
+ ]
+}

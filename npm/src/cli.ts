@@ -8,14 +8,16 @@ import { readDescription } from './node.ts'
 
 const HELP = `flowapi: types from an OpenAPI description or a JSON Schema
 
-Usage: flowapi <description> [-o <types.ts>] [--quiet]
+Usage: flowapi <description> [-o <types.ts>] [--sdk] [--quiet]
 
   -o, --output <file>   where to write the types (standard output by default)
+      --sdk             also a function per operation that writes its request and one that
+                        reads its response, with no HTTP library and no I/O
   -q, --quiet           print errors only, not warnings
   -h, --help            this help
   -V, --version         the version
 
-The description is OpenAPI 3.0, 3.1 or 3.2, or a JSON Schema (2020-12 when it names no
+The description is Swagger 2.0, OpenAPI 3.0, 3.1 or 3.2, or a JSON Schema (2020-12 when it names no
 $schema), in JSON. Files its $refs name by a relative path are read too. YAML is read by the
 flowapi command built from Rust; this package reads JSON only.`
 
@@ -23,6 +25,7 @@ interface Generate {
   readonly input: string
   readonly output: string | undefined
   readonly quiet: boolean
+  readonly sdk: boolean
 }
 
 type Command = 'help' | 'version' | Generate
@@ -31,11 +34,13 @@ function parse(args: readonly string[]): Command {
   let input: string | undefined
   let output: string | undefined
   let quiet = false
+  let sdk = false
   for (let i = 0; i < args.length; i++) {
     const arg = args[i] as string
     if (arg === '-h' || arg === '--help') return 'help'
     if (arg === '-V' || arg === '--version') return 'version'
     if (arg === '-q' || arg === '--quiet') quiet = true
+    else if (arg === '--sdk') sdk = true
     else if (arg === '-o' || arg === '--output') {
       output = args[++i]
       if (output === undefined) throw new Usage('`-o` needs a file')
@@ -44,7 +49,7 @@ function parse(args: readonly string[]): Command {
     else input = arg
   }
   if (input === undefined) throw new Usage('a description to read')
-  return { input, output, quiet }
+  return { input, output, quiet, sdk }
 }
 
 class Usage extends Error {}
@@ -79,7 +84,7 @@ async function main(args: readonly string[]): Promise<number> {
     return 1
   }
   const flowapi = await load()
-  const result = flowapi.generate(documents, { output: command.output ?? '-' })
+  const result = flowapi.generate(documents, { output: command.output ?? '-', sdk: command.sdk })
   for (const d of result.diagnostics) {
     if (d.severity === 'error' || !command.quiet) process.stderr.write(`${formatDiagnostic(d)}\n`)
   }

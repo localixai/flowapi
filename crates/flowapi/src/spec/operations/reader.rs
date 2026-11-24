@@ -214,6 +214,7 @@ impl<'t> Reader<'_, 't> {
                 required,
                 deprecated,
                 schema: self.value_schema(pd, p, diags),
+                serialization: self.serialization(pd, p, location, diags),
             });
         }
         Some(out)

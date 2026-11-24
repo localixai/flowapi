@@ -93,9 +93,10 @@ impl<'t> Documents<'t> {
     /// The document added under `uri`, compared without its fragment.
     #[must_use]
     pub fn find(&self, uri: &str) -> Option<DocId> {
-        let (resource, _) = crate::uri::split_fragment(uri);
+        // Compared percent-decoded: `a%20b.json` in a reference names the document `a b.json`.
+        let resource = crate::uri::decoded(crate::uri::split_fragment(uri).0);
         self.iter()
-            .find(|(_, d)| crate::uri::split_fragment(&d.uri).0 == resource)
+            .find(|(_, d)| crate::uri::decoded(crate::uri::split_fragment(&d.uri).0) == resource)
             .map(|(id, _)| id)
     }
 

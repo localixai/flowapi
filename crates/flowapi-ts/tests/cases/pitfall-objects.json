@@ -1,0 +1,183 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "ApTrue": {
+    "type": "object",
+    "properties": {
+     "a": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": true
+   },
+   "ApEmpty": {
+    "type": "object",
+    "properties": {
+     "a": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": {}
+   },
+   "ApFalse": {
+    "type": "object",
+    "properties": {
+     "a": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": false
+   },
+   "ApConflict": {
+    "type": "object",
+    "required": [
+     "a"
+    ],
+    "properties": {
+     "a": {
+      "type": "string"
+     },
+     "b": {
+      "type": "boolean"
+     }
+    },
+    "additionalProperties": {
+     "type": "integer"
+    }
+   },
+   "ApOnly": {
+    "type": "object",
+    "additionalProperties": {
+     "type": "integer"
+    }
+   },
+   "ApOneOf": {
+    "type": "object",
+    "additionalProperties": {
+     "oneOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "integer"
+      }
+     ]
+    }
+   },
+   "Bare": {
+    "type": "object"
+   },
+   "NoType": {
+    "properties": {
+     "a": {
+      "type": "string"
+     }
+    }
+   },
+   "RequiredMissing": {
+    "type": "object",
+    "required": [
+     "ghost"
+    ],
+    "properties": {
+     "a": {
+      "type": "string"
+     }
+    }
+   },
+   "BoolProps": {
+    "type": "object",
+    "required": [
+     "truthy"
+    ],
+    "properties": {
+     "truthy": true,
+     "falsy": false
+    }
+   },
+   "RequiredFalse": {
+    "type": "object",
+    "required": [
+     "falsy"
+    ],
+    "properties": {
+     "falsy": false
+    }
+   },
+   "Patterns": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     }
+    },
+    "patternProperties": {
+     "^x-": {
+      "type": "integer"
+     }
+    },
+    "additionalProperties": false
+   },
+   "AllOfRequired": {
+    "required": [
+     "red",
+     "green"
+    ],
+    "allOf": [
+     {
+      "type": "object",
+      "properties": {
+       "red": {
+        "type": "number"
+       }
+      }
+     },
+     {
+      "type": "object",
+      "properties": {
+       "green": {
+        "type": "number"
+       }
+      }
+     }
+    ]
+   },
+   "Defaults": {
+    "type": "object",
+    "properties": {
+     "flag": {
+      "type": "boolean",
+      "default": true
+     }
+    }
+   },
+   "ApNull": {
+    "type": "object",
+    "additionalProperties": {
+     "type": [
+      "string",
+      "null"
+     ]
+    }
+   },
+   "PropNames": {
+    "type": "object",
+    "propertyNames": {
+     "enum": [
+      "a",
+      "b"
+     ]
+    },
+    "additionalProperties": {
+     "type": "integer"
+    }
+   }
+  }
+ }
+}

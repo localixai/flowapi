@@ -1,0 +1,115 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "Foo.Bar": {
+    "type": "string",
+    "const": "dot"
+   },
+   "foo-bar": {
+    "type": "string",
+    "const": "dash"
+   },
+   "foo_bar": {
+    "type": "string",
+    "const": "underscore"
+   },
+   "FooBar": {
+    "type": "string",
+    "const": "pascal"
+   },
+   "foo bar": {
+    "type": "string",
+    "const": "space"
+   },
+   "1Thing": {
+    "type": "string",
+    "const": "digit"
+   },
+   "$dollar": {
+    "type": "string",
+    "const": "dollar"
+   },
+   "Café": {
+    "type": "string",
+    "const": "accent"
+   },
+   "😀": {
+    "type": "string",
+    "const": "emoji"
+   },
+   "Result`1[System.String]": {
+    "type": "string",
+    "const": "generic"
+   },
+   "a/b~c": {
+    "type": "string",
+    "const": "pointer"
+   },
+   "": {
+    "type": "string",
+    "const": "empty"
+   },
+   "Uses": {
+    "type": "object",
+    "required": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e",
+     "f",
+     "g",
+     "h",
+     "i",
+     "j",
+     "k",
+     "l"
+    ],
+    "properties": {
+     "a": {
+      "$ref": "#/components/schemas/Foo.Bar"
+     },
+     "b": {
+      "$ref": "#/components/schemas/foo-bar"
+     },
+     "c": {
+      "$ref": "#/components/schemas/foo_bar"
+     },
+     "d": {
+      "$ref": "#/components/schemas/FooBar"
+     },
+     "e": {
+      "$ref": "#/components/schemas/foo%20bar"
+     },
+     "f": {
+      "$ref": "#/components/schemas/1Thing"
+     },
+     "g": {
+      "$ref": "#/components/schemas/$dollar"
+     },
+     "h": {
+      "$ref": "#/components/schemas/Caf%C3%A9"
+     },
+     "i": {
+      "$ref": "#/components/schemas/%F0%9F%98%80"
+     },
+     "j": {
+      "$ref": "#/components/schemas/Result%601%5BSystem.String%5D"
+     },
+     "k": {
+      "$ref": "#/components/schemas/a~1b~0c"
+     },
+     "l": {
+      "$ref": "#/components/schemas/"
+     }
+    }
+   }
+  }
+ }
+}

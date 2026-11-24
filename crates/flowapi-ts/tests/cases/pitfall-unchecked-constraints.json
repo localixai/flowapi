@@ -1,0 +1,68 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "EnumMinimum": {
+    "type": "integer",
+    "enum": [
+     0,
+     1,
+     2
+    ],
+    "minimum": 1
+   },
+   "EnumMaxLength": {
+    "type": "string",
+    "enum": [
+     "a",
+     "b",
+     "cee"
+    ],
+    "maxLength": 2
+   },
+   "EnumPattern": {
+    "type": "string",
+    "enum": [
+     "ab",
+     "xy"
+    ],
+    "pattern": "^a"
+   },
+   "NotEnum": {
+    "type": "string",
+    "not": {
+     "enum": [
+      "a",
+      "b"
+     ]
+    }
+   },
+   "Unique": {
+    "type": "array",
+    "uniqueItems": true,
+    "items": {
+     "type": "string"
+    }
+   },
+   "BadDefault": {
+    "type": "integer",
+    "default": "not a number"
+   },
+   "NumInt": {
+    "allOf": [
+     {
+      "type": "number"
+     },
+     {
+      "type": "integer"
+     }
+    ]
+   }
+  }
+ }
+}

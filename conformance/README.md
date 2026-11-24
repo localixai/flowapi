@@ -60,3 +60,23 @@ a diff of `results/`. Commit them with the change that moved them.
 | Invalid / Rejected / Precision % | Invalid cases, those the type rejects, the share. |
 
 Percentages are rounded down, so 100.0 means every case.
+
+## O8: the SDK, run
+
+`flowapi --sdk` prints functions, so its oracle runs them. [`sdk/run.mjs`](sdk/run.mjs) turns
+each row of OpenAPI 3.2.1's "Style Examples" table ([`suites/style-examples.json`](suites/style-examples.json),
+written from the pinned text by [`sdk/extract.mjs`](sdk/extract.mjs); `--check` says whether it is
+stale) and each case of [`sdk/cases.json`](sdk/cases.json) into an operation, generates the SDK,
+type-checks and compiles it with the pinned TypeScript (`strict`, `exactOptionalPropertyTypes`),
+and calls every request and response function under Node, comparing the strings exactly; a query
+or a form body is also parsed back with WHATWG's `URLSearchParams`, a path percent-decoded. The
+cases are the specification's own examples (Appendix C, the Parameter Object Examples) and the
+pitfalls other generators' tests and changelogs show they fixed; each names the requirements it
+covers, which the ledger reads. A case runs in 3.0.4, 3.1.2 and 3.2.1 unless it names its
+versions (Swagger 2.0's `collectionFormat`, 3.2's `cookie` and `querystring`). `--corpus` also
+generates the SDK of GitHub's, Stripe's and Cloudflare's descriptions (`bench/data`, from
+`bench/corpus/fetch.sh`) and type-checks each.
+
+    cargo build --release && node conformance/sdk/run.mjs --corpus
+
+It writes `results/sdk.md` and exits 1 on any difference.

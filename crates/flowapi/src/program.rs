@@ -3,7 +3,7 @@
 //! document (G9).
 
 use crate::diag::Diagnostics;
-use crate::graph::{Graph, Kind, Type};
+use crate::graph::{Endpoint, Graph, Kind, Type};
 use crate::id::TypeId;
 use crate::lower::Capabilities;
 
@@ -87,6 +87,12 @@ impl<'t> Program<'t> {
     #[must_use]
     pub fn is_never(&self, id: TypeId) -> bool {
         matches!(self.get(self.resolve(id)).kind, Kind::Never)
+    }
+
+    /// The operations, each with its type (a declaration), in the description's order.
+    #[must_use]
+    pub fn endpoints(&self) -> &[Endpoint] {
+        self.graph.endpoints()
     }
 
     /// The capabilities the graph was lowered for.

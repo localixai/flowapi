@@ -36,7 +36,7 @@ pub(crate) fn program(p: &Program<'_>) -> String {
 fn doc(out: &mut String, ty: &Type<'_>) {
     let mut lines: Vec<String> = Vec::new();
     for text in [&ty.title, &ty.description].into_iter().flatten() {
-        lines.extend(text.lines().map(|l| l.replace("*/", "*\\/")));
+        lines.extend(text.lines().map(comment_line));
     }
     if ty.deprecated {
         lines.push(String::from("@deprecated"));
@@ -256,4 +256,16 @@ fn array(out: &mut String, p: &Program<'_>, a: &Array) {
         out.push_str("[]");
     }
     out.push(']');
+}
+
+/// A line of a schema's own text as it can sit in a doc comment: `*/` would end the comment, and
+/// a line that starts with `@` would read as a tag (`@deprecated` in a description must not
+/// deprecate the type).
+pub(crate) fn comment_line(line: &str) -> String {
+    let line = line.trim_end().replace("*/", "*\\/");
+    if line.trim_start().starts_with('@') {
+        line.replacen('@', "\\@", 1)
+    } else {
+        line
+    }
 }

@@ -1,0 +1,45 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "paths": {},
+ "components": {
+  "schemas": {
+   "EnumNullNoType": {
+    "enum": [
+     "a",
+     null
+    ]
+   },
+   "EnumNullTyped": {
+    "type": "string",
+    "enum": [
+     "a",
+     null
+    ]
+   },
+   "EnumNullTypeArray": {
+    "type": [
+     "string",
+     "null"
+    ],
+    "enum": [
+     "a",
+     null
+    ]
+   },
+   "EnumNullTypeArrayMissing": {
+    "type": [
+     "string",
+     "null"
+    ],
+    "enum": [
+     "a",
+     "b"
+    ]
+   }
+  }
+ }
+}

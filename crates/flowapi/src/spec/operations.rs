@@ -7,6 +7,7 @@
 
 mod reader;
 mod responses;
+mod style;
 mod swagger;
 
 use crate::diag::Diagnostics;
@@ -45,6 +46,61 @@ impl Location {
     }
 }
 
+/// How a parameter's value is written (3.2, "Style Values"): RFC 6570's operators and the three
+/// query styles it has no operator for, and 3.2's `cookie`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Style {
+    /// `;name=value` (RFC 6570 `{;x}`), in a path.
+    Matrix,
+    /// `.value` (RFC 6570 `{.x}`), in a path.
+    Label,
+    /// `value` (RFC 6570 `{x}`), in a path or a header.
+    Simple,
+    /// `name=value` (RFC 6570 `{?x}`), in a query or a cookie.
+    Form,
+    /// Values joined by a space, in a query (2.0's `ssv`).
+    SpaceDelimited,
+    /// Values joined by `|`, in a query (2.0's `pipes`).
+    PipeDelimited,
+    /// `name[key]=value` for each member of an object, in a query.
+    DeepObject,
+    /// `name=value; name=value` with no percent-encoding, in a cookie (3.2).
+    Cookie,
+}
+
+impl Style {
+    /// The `style` value, as the description writes it.
+    #[must_use]
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Matrix => "matrix",
+            Self::Label => "label",
+            Self::Simple => "simple",
+            Self::Form => "form",
+            Self::SpaceDelimited => "spaceDelimited",
+            Self::PipeDelimited => "pipeDelimited",
+            Self::DeepObject => "deepObject",
+            Self::Cookie => "cookie",
+        }
+    }
+}
+
+/// How a parameter or a header is serialized: by `style`, `explode` and `allowReserved`
+/// (a parameter with `schema`), or by its one media type (a parameter with `content`, and
+/// `querystring` always). Defaults are the spec's: `form` for a query or a cookie, `simple` for a
+/// path or a header; `explode` true for `form` and `cookie` only.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Serialization {
+    /// The style.
+    pub style: Style,
+    /// Whether an array or an object makes a pair for each member.
+    pub explode: bool,
+    /// Whether RFC 3986's reserved characters and percent-encoded triples pass unencoded.
+    pub allow_reserved: bool,
+    /// The media type of `content`, when the value is serialized by it rather than by style.
+    pub media_type: Option<String>,
+}
+
 /// A parameter, or a response's header.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Param {
@@ -58,6 +114,8 @@ pub struct Param {
     pub deprecated: bool,
     /// Its schema (or the schema of its one media type); `None` for any value.
     pub schema: Option<Resource>,
+    /// How its value is written.
+    pub serialization: Serialization,
 }
 
 /// A body's representations: a media type each, with what it holds.

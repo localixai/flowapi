@@ -129,6 +129,39 @@ and `.nan`, a mapping as a key, a repeated key, `<<` merge keys, a second docume
 that would copy more than a million nodes. The YAML reader passes the YAML test suite
 (`crates/flowapi-cli/tests/yaml_suite.rs`).
 
+### An SDK, with no HTTP library
+
+`--sdk` adds two functions per operation after the types: `<op>Request(input)` writes the request
+and sends nothing, `<op>Response(status, headers, body)` reads the answer you got back. Use any
+HTTP client, or none in a test.
+
+```sh
+cargo run --release -p flowapi-cli -- openapi.json --sdk -o api.ts
+```
+
+```ts
+const r = getPetRequest({ path: { id: 7 }, query: { tags: ["a b", "c"] } })
+// { method: "GET", path: "/pets/7", query: "tags=a%20b&tags=c", headers: {} }
+const res = await fetch(base + r.path + (r.query && "?" + r.query), r)
+const out = getPetResponse(res.status, Object.fromEntries(res.headers), await res.text())
+if (out.response === "200") out.body // Pet, parsed from JSON
+```
+
+Parameters are written as their `style`, `explode` and `allowReserved` say (`simple`, `label`,
+`matrix`, `form`, `spaceDelimited`, `pipeDelimited`, `deepObject` and 3.2's `cookie`; Swagger
+2.0's `collectionFormat` read as those), percent-encoded per RFC 3986 everywhere but headers and
+`style: cookie`, which pass as given; a parameter with `content` as its media type's text; cookies
+into one `cookie` header. The body is `{ contentType, value }` of one of the operation's media
+types: JSON, a form, or text as given (a multipart body is yours to write). A response is picked
+by its status (the code, then `2XX`, then `default`) and its `Content-Type`; a JSON body is
+parsed, any other is the text, and what the description does not name comes back as
+`response: null` with the text. The output imports nothing: the runtime is a few functions
+printed once. The base URL is yours (servers are not read). Every row of the specification's
+Style Examples table, the pitfalls other generators fixed, and the SDKs of GitHub's, Stripe's and
+Cloudflare's descriptions are run or type-checked
+([conformance/results/sdk.md](conformance/results/sdk.md)); writing a request against
+openapi-fetch's serializers: [bench/results/sdk.md](bench/results/sdk.md).
+
 ## How it works
 
 The core (`crates/flowapi`) reads the documents into a graph of types that belongs to no

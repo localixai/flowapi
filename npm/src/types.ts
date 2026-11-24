@@ -16,6 +16,8 @@ export type Input = string | Document | readonly Document[]
 export interface Options {
   /** The path of the file written, as `-o` gives it to the command. `types.ts` by default. */
   readonly output?: string
+  /** Also write each operation's request and response functions after the types (`--sdk`). */
+  readonly sdk?: boolean
 }
 
 /** A file generated. */

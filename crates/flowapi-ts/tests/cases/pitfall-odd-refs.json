@@ -1,0 +1,122 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "t",
+  "version": "1"
+ },
+ "x-bake": {
+  "schemas": {
+   "Ext": {
+    "type": "string",
+    "const": "ext"
+   }
+  }
+ },
+ "paths": {
+  "/e": {
+   "get": {
+    "parameters": [
+     {
+      "name": "boop",
+      "in": "query",
+      "schema": {
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "properties": {
+           "z": {
+            "type": "boolean"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "examples": {
+   "E": {
+    "value": {
+     "$ref": "#/nowhere"
+    }
+   }
+  },
+  "schemas": {
+   "Partial": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "integer"
+     },
+     "name": {
+      "type": "string"
+     }
+    }
+   },
+   "RequiredSibling": {
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/Partial"
+     },
+     {
+      "required": [
+       "id",
+       "name"
+      ]
+     }
+    ]
+   },
+   "OutsideComponents": {
+    "$ref": "#/x-bake/schemas/Ext"
+   },
+   "ParamRef": {
+    "$ref": "#/paths/~1e/get/parameters/0/schema"
+   },
+   "DeepPathRef": {
+    "$ref": "#/paths/~1e/get/responses/200/content/application~1json/schema/items"
+   },
+   "DollarRefProp": {
+    "type": "object",
+    "required": [
+     "$ref"
+    ],
+    "properties": {
+     "$ref": {
+      "type": "string"
+     },
+     "$id": {
+      "type": "integer"
+     }
+    }
+   },
+   "WithDefs": {
+    "type": "object",
+    "properties": {
+     "k": {
+      "$ref": "#/components/schemas/WithDefs/$defs/K"
+     }
+    },
+    "$defs": {
+     "K": {
+      "type": "string",
+      "const": "k"
+     }
+    }
+   }
+  }
+ }
+}

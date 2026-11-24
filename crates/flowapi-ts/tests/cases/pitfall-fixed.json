@@ -1,0 +1,7 @@
+{"openapi":"3.1.0","info":{"title":"t","version":"1"},"paths":{},
+ "components":{"schemas":{
+  "Ghost":{"type":"object","required":["ghost"],"additionalProperties":{"type":"string"}},
+  "Closed":{"type":"object","required":["ghost"],"additionalProperties":false},
+  "At":{"type":"string","description":"@deprecated is only a word here.\n@see nothing"},
+  "Map":{"type":"object","properties":{"a":{"type":"string"}},"patternProperties":{"^n":{"type":"number"}},"additionalProperties":{"type":"string"}}
+ }}}
