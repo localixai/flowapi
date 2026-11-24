@@ -14,6 +14,12 @@ use std::sync::Arc;
 /// where `consumes`, `produces` and security say what they would).
 const IGNORED_HEADERS: [&str; 3] = ["accept", "content-type", "authorization"];
 
+/// RFC 9110's `token` (5.6.2): what a header's name is, and RFC 6265's cookie name.
+fn token(s: &str) -> bool {
+    let tchar = |b: &u8| b.is_ascii_alphanumeric() || b"!#$%&'*+-.^_`|~".contains(b);
+    !s.is_empty() && s.bytes().all(|b| tchar(&b))
+}
+
 pub(super) struct Reader<'d, 't> {
     pub(super) docs: &'d Documents<'t>,
     pub(super) base: &'d str,
@@ -204,6 +210,16 @@ impl<'t> Reader<'_, 't> {
             if location == Location::Header
                 && IGNORED_HEADERS.contains(&name.to_ascii_lowercase().as_str())
             {
+                continue;
+            }
+            // A header's or a cookie's name goes into the request as written: one that is not a
+            // token could end the header it is written in.
+            if matches!(location, Location::Header | Location::Cookie) && !token(&name) {
+                let message = format!(
+                    "{} name {name:?} is not a token (RFC 9110, 5.6.2): left out",
+                    location.name()
+                );
+                diags.warn("parameter.token", self.docs.loc(pd, p), message);
                 continue;
             }
             let required = location == Location::Path || self.flag(pd, p, "required");

@@ -9,7 +9,8 @@ use std::fmt::Write;
 
 /// The statements that write the path template filled, each `{name}` its parameter's value;
 /// `None` when the template has no parameter in it (it is then a literal). An expression no
-/// parameter names is left as written.
+/// parameter names is left as written. A segment a parameter writes into is held whole to
+/// `sdk::segment` once written: it must not be empty, `.` or `..`.
 pub(super) fn path(
     template: &str,
     params: &[Param],
@@ -18,21 +19,60 @@ pub(super) fn path(
     let mut text = String::new();
     let mut lit = String::new();
     let mut any = false;
+    // The first parameter of the segment being written, and the bytes of it already in `lit`.
+    let mut open: Option<(&str, bool)> = None;
     let mut rest = template;
-    while let Some((before, after)) = rest.split_once('{') {
-        let Some((name, tail)) = after.split_once('}') else {
+    loop {
+        let (before, expr) = match rest.split_once('{') {
+            Some((before, after)) => match after.split_once('}') {
+                Some((name, tail)) => {
+                    rest = tail;
+                    (before, Some(name))
+                }
+                None => (std::mem::take(&mut rest), None),
+            },
+            None => (std::mem::take(&mut rest), None),
+        };
+        // A `/` ends the open segment: it is checked before the literal goes on.
+        let (head, tail) = before
+            .split_once('/')
+            .map_or((before, None), |(h, t)| (h, Some(t)));
+        if let (Some(seg), Some(_)) = (open, tail) {
+            lit.push_str(head);
+            flush(&mut text, &mut lit);
+            check(&mut text, seg);
+            open = None;
+            lit.push('/');
+            lit.push_str(tail.unwrap_or(""));
+        } else {
+            lit.push_str(before);
+        }
+        let Some(name) = expr else {
             break;
         };
-        lit.push_str(before);
         let found = params
             .iter()
             .find(|p| p.location == Location::Path && p.name == name);
         match found.and_then(|p| access(locs, p).map(|a| (p, a))) {
             Some((p, at)) => {
-                if !lit.is_empty() {
-                    let _ = writeln!(text, "    path.push_str({});", literal(&lit));
-                    lit.clear();
+                if open.is_none() {
+                    // The segment starts after the last `/` written.
+                    let k = lit
+                        .rsplit_once('/')
+                        .map_or(lit.len(), |(_, after)| after.len());
+                    flush(&mut text, &mut lit);
+                    let start = if k == 0 {
+                        String::from("path.len()")
+                    } else {
+                        format!("path.len() - {k}")
+                    };
+                    let _ = writeln!(text, "    let s = {start};");
+                    open = Some((&p.name, false));
                 }
+                if let Some(seg) = &mut open {
+                    seg.1 |= p.serialization.allow_reserved;
+                }
+                flush(&mut text, &mut lit);
                 let _ = writeln!(text, "    {}", at.replace("STMT", &call(p, "v")));
                 any = true;
             }
@@ -42,13 +82,29 @@ pub(super) fn path(
                 lit.push('}');
             }
         }
-        rest = tail;
     }
-    lit.push_str(rest);
-    if !lit.is_empty() {
-        let _ = writeln!(text, "    path.push_str({});", literal(&lit));
+    flush(&mut text, &mut lit);
+    if let Some(seg) = open {
+        check(&mut text, seg);
     }
     any.then_some(text)
+}
+
+/// The check of a segment once written: its first parameter, and whether one keeps `/`.
+fn check(text: &mut String, (name, pieces): (&str, bool)) {
+    let _ = writeln!(
+        text,
+        "    sdk::segment(&path, s, {pieces}).map_err(sdk::at(\"path\", {}))?;",
+        literal(name)
+    );
+}
+
+/// The literal text so far, pushed onto the path.
+fn flush(text: &mut String, lit: &mut String) {
+    if !lit.is_empty() {
+        let _ = writeln!(text, "    path.push_str({});", literal(lit));
+        lit.clear();
+    }
 }
 
 /// The statement that reads a parameter as `v` (a reference) and runs `STMT` on it: through
@@ -106,22 +162,29 @@ pub(super) fn call(p: &Param, v: &str) -> String {
         "const {{ sdk::Style::new(sdk::Shape::{shape}, {}, sdk::Enc::{enc}) }}",
         s.explode
     );
+    let at = format!(
+        ".map_err(sdk::at({}, {}))?",
+        literal(p.location.name()),
+        literal(&p.name)
+    );
     let value = match &s.media_type {
-        Some(t) => format!("sdk::content({v}, {}).as_str()", is_json(t)),
+        Some(t) => format!("sdk::content({v}, {}){at}.as_str()", is_json(t)),
         None => v.to_owned(),
     };
     match p.location {
-        Location::Path => format!("sdk::put(&mut path, \"\", {name}, {style}, {value});"),
-        Location::Query => format!("sdk::put(&mut query, \"&\", {name}, {style}, {value});"),
-        Location::Header => format!("sdk::header(&mut headers, {name}, {style}, {value});"),
-        Location::Cookie => format!("sdk::put(&mut cookie, \"; \", {name}, {style}, {value});"),
+        Location::Path => format!("sdk::put(&mut path, \"\", {name}, {style}, {value}){at};"),
+        Location::Query => format!("sdk::put(&mut query, \"&\", {name}, {style}, {value}){at};"),
+        Location::Header => format!("sdk::header(&mut headers, {name}, {style}, {value}){at};"),
+        Location::Cookie => {
+            format!("sdk::put(&mut cookie, \"; \", {name}, {style}, {value}){at};")
+        }
         Location::QueryString => {
             let t = s.media_type.as_deref().unwrap_or("text/plain");
             if bare(t) == "application/x-www-form-urlencoded" {
-                format!("sdk::form(&mut query, \"&\", {v});")
+                format!("sdk::form(&mut query, \"&\", {v}){at};")
             } else {
                 format!(
-                    "sdk::query_string(&mut query, &sdk::content({v}, {}));",
+                    "sdk::query_string(&mut query, &sdk::content({v}, {}){at});",
                     is_json(t)
                 )
             }

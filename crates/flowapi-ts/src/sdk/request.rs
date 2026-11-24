@@ -96,13 +96,33 @@ fn access(p: &Param) -> String {
     format!("input.{}?.[{}]", p.location.name(), lit(&p.name))
 }
 
+/// The value, refused when it holds NaN or an infinity (`$x` refuses them itself).
+fn finite(p: &Param) -> String {
+    format!(
+        "$fin({}, {}, {})",
+        access(p),
+        lit(p.location.name()),
+        lit(&p.name)
+    )
+}
+
+/// `s` checked for a CR, LF or NUL where a cookie is written as it is (`style: cookie`); a
+/// header's value is checked by `$set`.
+fn guarded(p: &Param, s: String) -> String {
+    if p.serialization.style == Style::Cookie && p.serialization.media_type.is_none() {
+        format!("$ctl({s}, {}, {})", lit(p.location.name()), lit(&p.name))
+    } else {
+        s
+    }
+}
+
 /// The call that writes one parameter's value, `undefined` when it writes nothing.
 fn expand(p: &Param) -> String {
     let s = &p.serialization;
     let mut value = access(p);
     // A parameter with `content` is its media type's text, then written as a string.
     if let Some(t) = &s.media_type {
-        value = format!("$content({value}, {})", lit(t));
+        value = format!("$content({}, {})", finite(p), lit(t));
     }
     let style = if s.media_type.is_some() {
         match p.location {
@@ -133,15 +153,17 @@ fn expand(p: &Param) -> String {
         Style::SpaceDelimited => ("", "&", true, "=", "%20"),
         Style::PipeDelimited => ("", "&", true, "=", "%7C"),
         Style::Cookie => ("", "; ", true, "=", ","),
-        Style::DeepObject => return format!("$deep({value}, {name}, {enc})"),
+        Style::DeepObject => return format!("$deep({}, {name}, {enc})", finite(p)),
     };
     format!(
-        "$x({value}, {name}, {}, {}, {named}, {}, {}, {}, {enc})",
+        "$x({value}, {name}, {}, {}, {named}, {}, {}, {}, {enc}, {}, {})",
         lit(first),
         lit(sep),
         lit(ifemp),
         s.explode,
-        lit(join)
+        lit(join),
+        lit(p.location.name()),
+        lit(&p.name)
     )
 }
 
@@ -160,48 +182,105 @@ fn param(out: &mut String, p: &Param) {
             writeln!(
                 out,
                 "  query = $add(query, $qs({}, {}), \"&\");",
-                access(p),
+                finite(p),
                 lit(t)
             )
         }
         Location::Header => writeln!(out, "  $set(headers, {}, {});", lit(&p.name), expand(p)),
-        Location::Cookie => writeln!(out, "  cookie = $add(cookie, {}, \"; \");", expand(p)),
+        Location::Cookie => writeln!(
+            out,
+            "  cookie = $add(cookie, {}, \"; \");",
+            guarded(p, expand(p))
+        ),
     };
 }
 
 /// The path template filled: its text as written, each `{name}` the path parameter's value. An
-/// expression no parameter names is left as written.
+/// expression no parameter names is left as written. A segment a parameter writes into is
+/// `$seg(...)`: refused when it comes out empty, `.` or `..`.
 fn path(template: &str, params: &[Param]) -> String {
     let mut parts: Vec<String> = Vec::new();
+    // The open segment: its first parameter's name, and its pieces so far.
+    let mut seg: Option<(&str, Vec<String>, bool)> = None;
     let mut text = String::new();
     let mut rest = template;
-    while let Some((before, after)) = rest.split_once('{') {
-        let Some((name, tail)) = after.split_once('}') else {
-            break;
+    loop {
+        let (before, expr) = match rest
+            .split_once('{')
+            .and_then(|(b, a)| Some((b, a.split_once('}')?)))
+        {
+            Some((before, (name, tail))) => {
+                rest = tail;
+                (before, Some(name))
+            }
+            None => (std::mem::take(&mut rest), None),
         };
+        match (seg.take(), before.split_once('/')) {
+            (Some((name, mut pieces, reserved)), Some((head, tail))) => {
+                text.push_str(head);
+                if !text.is_empty() {
+                    pieces.push(lit(&text));
+                }
+                parts.push(segment(&pieces, name, reserved));
+                text = format!("/{tail}");
+            }
+            (open, _) => {
+                seg = open;
+                text.push_str(before);
+            }
+        }
+        let Some(name) = expr else { break };
         let found = params
             .iter()
             .find(|p| p.location == Location::Path && p.name == name);
-        text.push_str(before);
-        match found {
-            Some(p) => {
+        let Some(p) = found else {
+            text.push('{');
+            text.push_str(name);
+            text.push('}');
+            continue;
+        };
+        let value = format!("({} ?? \"\")", expand(p));
+        let keeps = p.serialization.allow_reserved;
+        match &mut seg {
+            Some((_, pieces, reserved)) => {
                 if !text.is_empty() {
-                    parts.push(lit(&text));
+                    pieces.push(lit(&text));
                     text.clear();
                 }
-                parts.push(format!("({} ?? \"\")", expand(p)));
+                pieces.push(value);
+                *reserved |= keeps;
             }
             None => {
-                text.push('{');
-                text.push_str(name);
-                text.push('}');
+                // The segment starts after the last `/` of the text before it.
+                let (lead, start) = match text.rsplit_once('/') {
+                    Some((l, s)) => (format!("{l}/"), s.to_owned()),
+                    None => (String::new(), std::mem::take(&mut text)),
+                };
+                if !lead.is_empty() {
+                    parts.push(lit(&lead));
+                }
+                let mut pieces = Vec::new();
+                if !start.is_empty() {
+                    pieces.push(lit(&start));
+                }
+                pieces.push(value);
+                text.clear();
+                seg = Some((&p.name, pieces, keeps));
             }
         }
-        rest = tail;
     }
-    text.push_str(rest);
-    if !text.is_empty() || parts.is_empty() {
+    if let Some((name, mut pieces, reserved)) = seg {
+        if !text.is_empty() {
+            pieces.push(lit(&text));
+        }
+        parts.push(segment(&pieces, name, reserved));
+    } else if !text.is_empty() || parts.is_empty() {
         parts.push(lit(&text));
     }
     parts.join(" + ")
+}
+
+/// A segment's pieces joined, held by `$seg`.
+fn segment(pieces: &[String], name: &str, reserved: bool) -> String {
+    format!("$seg({}, {}, {reserved})", pieces.join(" + "), lit(name))
 }

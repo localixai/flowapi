@@ -93,6 +93,7 @@ reserved! {
     "Never",
     "deserialize_some",
     "Integer",
+    "IntegerRepr",
     "std",
     "core",
     "alloc",

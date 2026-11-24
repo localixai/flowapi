@@ -114,8 +114,12 @@ pub(super) fn write(e: &mut Emitter<'_, '_>, out: &mut String, op: &Op<'_>) {
             );
             let ct = literal(t);
             let made = match kind(t) {
-                Kind::Json => format!("(String::from({ct}), sdk::json_body(v))"),
-                Kind::Form => format!("(String::from({ct}), sdk::form_body(v))"),
+                Kind::Json => {
+                    format!("(String::from({ct}), sdk::json_body(v).map_err(sdk::in_body)?)")
+                }
+                Kind::Form => {
+                    format!("(String::from({ct}), sdk::form_body(v).map_err(sdk::in_body)?)")
+                }
                 Kind::Bytes => format!("(String::from({ct}), v.clone())"),
                 Kind::Typed => String::from("(t.clone(), v.clone())"),
             };
@@ -224,7 +228,8 @@ fn function(
         } else {
             let _ = write!(
                 out,
-                "    let body = input.body.as_ref().map(|b| match b {{\n{arms}    }});\n"
+                "    let body = match &input.body {{\n        None => None,\n        Some(b) => \
+                 Some(match b {{\n{arms}        }}),\n    }};\n"
             );
         }
     }
@@ -236,8 +241,8 @@ fn function(
     let pick = |used: bool, name: &'static str, none: &'static str| if used { name } else { none };
     let _ = writeln!(
         out,
-        "    sdk::Request {{\n        method: {},\n        {path_text},\n        {},\n        \
-         {},\n        {},\n    }}\n}}",
+        "    Ok(sdk::Request {{\n        method: {},\n        {path_text},\n        {},\n        \
+         {},\n        {},\n    }})\n}}",
         literal(&method),
         pick(query, "query", "query: String::new()"),
         pick(headers, "headers", "headers: Vec::new()"),
@@ -261,14 +266,16 @@ fn signature(out: &mut String, op: &Op<'_>, takes: bool, input: &str) -> String 
     if takes {
         let _ = write!(
             out,
-            " `input` makes; it sends nothing.\npub fn {}_request(input: &{input}) -> \
-             sdk::Request {{\n",
+            " `input` makes; it sends nothing, and refuses a value that would change what the \
+             request means (`sdk::RequestError`).\npub fn {}_request(input: &{input}) -> \
+             Result<sdk::Request, sdk::RequestError> {{\n",
             op.base
         );
     } else {
         let _ = write!(
             out,
-            "; it sends nothing.\npub fn {}_request() -> sdk::Request {{\n",
+            "; it sends nothing.\npub fn {}_request() -> Result<sdk::Request, \
+             sdk::RequestError> {{\n",
             op.base
         );
     }

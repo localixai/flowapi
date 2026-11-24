@@ -3,15 +3,15 @@
   "dialect": "2020-12",
   "target": "rust (serde)",
   "totals": {
-    "groups": 613,
-    "groups_run": 409,
-    "generated": 409,
+    "groups": 615,
+    "groups_run": 411,
+    "generated": 411,
     "generation_errors": 0,
     "invalid_rust": 0,
-    "valid_cases": 779,
-    "valid_accepted": 779,
-    "invalid_cases": 540,
-    "invalid_rejected": 328,
+    "valid_cases": 787,
+    "valid_accepted": 787,
+    "invalid_cases": 543,
+    "invalid_rejected": 330,
     "soundness_percent": "100.0",
     "precision_percent": "60.7"
   },
@@ -661,7 +661,7 @@
       "valid_cases": 8,
       "valid_accepted": 8,
       "invalid_cases": 5,
-      "invalid_rejected": 1,
+      "invalid_rejected": 0,
       "unsound": []
     },
     "not": {
@@ -842,6 +842,18 @@
       "valid_accepted": 3,
       "invalid_cases": 2,
       "invalid_rejected": 1,
+      "unsound": []
+    },
+    "flowapi-integers": {
+      "groups": 2,
+      "skipped": 0,
+      "generated": 2,
+      "generation_errors": [],
+      "invalid_rust": [],
+      "valid_cases": 8,
+      "valid_accepted": 8,
+      "invalid_cases": 3,
+      "invalid_rejected": 3,
       "unsound": []
     }
   }

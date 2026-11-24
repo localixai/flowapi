@@ -54,6 +54,27 @@ export type $Request = {
   body?: string;
 };
 
+/**
+ * A request `<op>Request` refuses to write: a value that would change what the request means
+ * rather than what it says. `location` is where it goes (`path`, `query`, `querystring`,
+ * `header`, `cookie` or `body`), `parameter` the parameter's name as the description writes it
+ * (`null` for the body), `reason` why: a CR, LF or NUL in a header or a cookie (it would start
+ * another header), a path segment left empty or made `.` or `..` (a client or a server would
+ * remove it and the one before it), NaN or an infinity (JSON has no number for them).
+ */
+export class FlowapiRequestError extends Error {
+  readonly location: string;
+  readonly parameter: string | null;
+  readonly reason: "control-character" | "empty-segment" | "dot-segment" | "non-finite";
+  constructor(location: string, parameter: string | null, reason: FlowapiRequestError["reason"]) {
+    super(`${parameter === null ? "the body" : `the ${location} parameter \`${parameter}\``}: ${reason}`);
+    this.name = "FlowapiRequestError";
+    this.location = location;
+    this.parameter = parameter;
+    this.reason = reason;
+  }
+}
+
 /** A response read: which response of the description it is (`null` for none), and its body. */
 type $Read = { response: string | null; status: number; mediaType: string | null; body: unknown };
 
@@ -95,6 +116,53 @@ function $raw(s: string): string {
   return s;
 }
 
+const $dot = /^(?:\.|%2e){1,2}$/i;
+
+/** A value written raw, refused if it holds a CR, LF or NUL: it would end its header. */
+function $ctl(s: string | undefined, at: string, name: string): string | undefined {
+  if (s !== undefined && (s.indexOf("\r") >= 0 || s.indexOf("\n") >= 0 || s.indexOf("\0") >= 0)) {
+    throw new FlowapiRequestError(at, name, "control-character");
+  }
+  return s;
+}
+
+/** A path segment a parameter wrote, refused when empty or a dot segment (`.`, `..`, a dot as
+ * `%2E` too, as WHATWG's URL parser reads it). `pieces`: a parameter of it keeps `/`
+ * (`allowReserved`), and each piece between them is held to the same. */
+function $seg(s: string, name: string, pieces: boolean): string {
+  // A dot segment is at most 6 characters (`%2e%2e`) and starts with `.` or `%`: a longer one
+  // is none, and is not read (reading a string made by `+` would flatten it).
+  if (!pieces && s.length > 6) return s;
+  if (s.length === 0) throw new FlowapiRequestError("path", name, "empty-segment");
+  const c = s.charCodeAt(0);
+  if (!pieces && c !== 46 && c !== 37) return s;
+  if ($dot.test(s) || (pieces && s.split("/").some((p) => $dot.test(p)))) {
+    throw new FlowapiRequestError("path", name, "dot-segment");
+  }
+  return s;
+}
+
+/** Whether a value holds NaN or an infinity anywhere. */
+function $bad(v: unknown): boolean {
+  if (typeof v === "number") return v - v !== 0;
+  if (v === null || typeof v !== "object") return false;
+  if (Array.isArray(v)) {
+    for (let i = 0; i < v.length; i++) if ($bad(v[i])) return true;
+    return false;
+  }
+  for (const key in v) if ($bad((v as Record<string, unknown>)[key])) return true;
+  return false;
+}
+
+/** A parameter's value, refused when it holds NaN or an infinity: JSON has no number for them,
+ * and their text would reach the server as a string. */
+function $fin<T>(v: T, at: string, name: string): T {
+  if (typeof v === "number" ? v - v !== 0 : typeof v === "object" && v !== null && $bad(v)) {
+    throw new FlowapiRequestError(at, name, "non-finite");
+  }
+  return v;
+}
+
 /** A value as text: a string as it is, a number, boolean or bigint by `String`, else JSON. */
 function $str(v: unknown): string {
   switch (typeof v) {
@@ -114,7 +182,8 @@ function $str(v: unknown): string {
  * `named` and `ifemp` too; `join` is what separates the members of an unexploded array or
  * object (`,`, or `%20` and `%7C` for the space and pipe styles). `undefined` is nothing to
  * write: an absent value, an empty array or object (§2.3). `null` writes the "undefined" column
- * of the spec's Style Examples: `name=` for form and cookie, nothing else.
+ * of the spec's Style Examples: `name=` for form and cookie, nothing else. NaN or an infinity
+ * anywhere in the value is refused, as the parameter `pname` in `at`.
  */
 function $x(
   v: unknown,
@@ -126,6 +195,8 @@ function $x(
   explode: boolean,
   join: string,
   enc: (s: string) => string,
+  at: string,
+  pname: string,
 ): string | undefined {
   if (v === undefined) return undefined;
   if (v === null) return ifemp === "=" ? name + "=" : "";
@@ -135,6 +206,9 @@ function $x(
     for (let i = 0; i < v.length; i++) {
       const item: unknown = v[i];
       if (item === null || item === undefined) continue;
+      if (typeof item === "number" ? item - item !== 0 : typeof item === "object" && $bad(item)) {
+        throw new FlowapiRequestError(at, pname, "non-finite");
+      }
       const s = enc($str(item));
       if (explode && named) out += (n++ ? sep : "") + name + (s === "" ? ifemp : "=" + s);
       else out += (n++ ? (explode ? sep : join) : "") + s;
@@ -143,12 +217,16 @@ function $x(
     for (const key of Object.keys(v)) {
       const item = (v as Record<string, unknown>)[key];
       if (item === null || item === undefined) continue;
+      if (typeof item === "number" ? item - item !== 0 : typeof item === "object" && $bad(item)) {
+        throw new FlowapiRequestError(at, pname, "non-finite");
+      }
       const k = enc(key);
       const s = enc($str(item));
       if (explode) out += (n++ ? sep : "") + k + (s === "" && named ? ifemp : "=" + s);
       else out += (n++ ? join : "") + k + join + s;
     }
   } else {
+    if (typeof v === "number" && v - v !== 0) throw new FlowapiRequestError(at, pname, "non-finite");
     const s = enc($str(v));
     return first + (named ? name + (s === "" ? ifemp : "=" + s) : s);
   }
@@ -216,11 +294,23 @@ function $form(v: unknown): string {
   return out;
 }
 
-/** A body in its media type: JSON, a form, or text as given (anything else as JSON). */
+/** A body in its media type: JSON, a form, or text as given (anything else as JSON). NaN or an
+ * infinity in a JSON or form body is refused: `JSON.stringify` would write `null`. */
 function $body(type: string, v: unknown): string {
-  if ($json(type)) return JSON.stringify(v);
-  if ($bare(type) === "application/x-www-form-urlencoded") return $form(v);
-  return typeof v === "string" ? v : JSON.stringify(v);
+  if (!$json(type)) {
+    if ($bare(type) === "application/x-www-form-urlencoded") {
+      if ($bad(v)) throw new FlowapiRequestError("body", null, "non-finite");
+      return $form(v);
+    }
+    if (typeof v === "string") return v;
+  }
+  // `JSON.stringify` writes NaN and the infinities as `null`: with no `null` in the text there is
+  // none, and the value is walked only when there is one.
+  const text = JSON.stringify(v);
+  if (text !== undefined && text.indexOf("null") >= 0 && $bad(v)) {
+    throw new FlowapiRequestError("body", null, "non-finite");
+  }
+  return text;
 }
 
 /** A parameter with `content`: its value as its media type's text, then written as a string. */
@@ -236,9 +326,13 @@ function $qs(v: unknown, type: string): string | undefined {
   return $enc($json(type) ? JSON.stringify(v) : $str(v));
 }
 
-/** A header set when it has a value. */
+/** A header set when it has a value; a CR, LF or NUL in it is refused (it would end the header). */
 function $set(headers: Record<string, string>, name: string, s: string | undefined): void {
-  if (s !== undefined) headers[name] = s;
+  if (s === undefined) return;
+  if (s.indexOf("\r") >= 0 || s.indexOf("\n") >= 0 || s.indexOf("\0") >= 0) {
+    throw new FlowapiRequestError("header", name, "control-character");
+  }
+  headers[name] = s;
 }
 
 /** A header, its name compared without case. */
@@ -277,9 +371,11 @@ function $read(table: $Table, status: number, headers: Record<string, string>, b
   const written = hit[1][at];
   if (written === undefined) return { response: null, status, mediaType: type, body };
   if (!$json(type)) return { response: hit[0], status, mediaType: written, body };
-  // An empty or broken JSON body is not the response described: the text, unnamed.
+  // An empty or broken JSON body is not the response described: the text, unnamed. A leading
+  // byte order mark is skipped (RFC 8259, 8.1), as `JSON.parse` would refuse it.
   try {
-    return { response: hit[0], status, mediaType: written, body: JSON.parse(body) };
+    const text = body.charCodeAt(0) === 0xfeff ? body.slice(1) : body;
+    return { response: hit[0], status, mediaType: written, body: JSON.parse(text) };
   } catch {
     return { response: null, status, mediaType: type, body };
   }
@@ -288,7 +384,7 @@ function $read(table: $Table, status: number, headers: Record<string, string>, b
 export function listThingsRequest(input: NonNullable<ListThings["parameters"]>): $Request {
   const headers: Record<string, string> = {};
   let query = "";
-  query = $add(query, $x(input.query?.["where"], "where", "", "&", true, "=", true, ",", $enc), "&");
+  query = $add(query, $x(input.query?.["where"], "where", "", "&", true, "=", true, ",", $enc, "query", "where"), "&");
   const request: $Request = { method: "GET", path: "/things", query, headers };
   return request;
 }

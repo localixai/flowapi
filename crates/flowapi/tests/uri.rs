@@ -1,6 +1,6 @@
 //! RFC 3986 §5.4's examples, against the base it gives.
 
-use super::resolve;
+use flowapi::uri::resolve;
 
 const BASE: &str = "http://a/b/c/d;p?q";
 

@@ -18,10 +18,12 @@ pub(super) struct Ser<'w, 'a> {
 }
 
 /// Why a value was not written: it is a list or an associative array where only its JSON text
-/// goes (caught by the caller, who writes the JSON), or serde's own error.
+/// goes (caught by the caller, who writes the JSON), NaN or an infinity (refused), or serde's
+/// own error.
 #[derive(Debug)]
 pub enum Error {
     Compound,
+    NonFinite,
     Custom(String),
 }
 
@@ -29,6 +31,7 @@ impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Compound => f.write_str("a list or an object where a value goes"),
+            Self::NonFinite => f.write_str("NaN or an infinity, which JSON has no number for"),
             Self::Custom(m) => f.write_str(m),
         }
     }
@@ -51,16 +54,16 @@ impl<'w, 'a> Ser<'w, 'a> {
 
     /// A number as JavaScript's `String(n)` writes it, as the TypeScript SDK does: the
     /// shortest digits that read back, in decimal from 1e-6 up to 1e21 and with an exponent
-    /// outside (`1e+21`, `1e-7`); `0` for both zeros, `Infinity`, `NaN`.
+    /// outside (`1e+21`, `1e-7`); `0` for both zeros. NaN and the infinities are refused: JSON
+    /// has no number for them, and their text would reach the server as a string.
     fn float(self, v: f64) -> Result<bool, Error> {
+        if !v.is_finite() {
+            return Err(Error::NonFinite);
+        }
         let mut d = Digits::default();
         let a = v.abs();
         let _ = if v == 0.0 {
             d.write_str("0")
-        } else if v.is_nan() {
-            d.write_str("NaN")
-        } else if v.is_infinite() {
-            d.write_str(if v > 0.0 { "Infinity" } else { "-Infinity" })
         } else if (1e-6..1e21).contains(&a) {
             write!(d, "{v}")
         } else {
@@ -120,6 +123,10 @@ impl Many<'_, '_> {
             Ok(_) => Ok(()),
             Err(Error::Compound) => {
                 let json = serde_json::to_string(v).map_err(|e| Error::Custom(e.to_string()))?;
+                // A non-finite number is `null` in the text: walked only when there is one.
+                if json.contains("null") && !super::finite::finite(v) {
+                    return Err(Error::NonFinite);
+                }
                 self.w.text(self.at, &json);
                 Ok(())
             }

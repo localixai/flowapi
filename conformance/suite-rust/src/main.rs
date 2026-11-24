@@ -25,7 +25,9 @@ enum Generated {
 fn main() -> std::process::ExitCode {
     let here = Path::new(env!("CARGO_MANIFEST_DIR"));
     let root = here.parent().expect("conformance/").to_path_buf();
-    let suite = load::suite(&root.join("suites/json-schema-test-suite/tests"));
+    let mut suite = load::suite(&root.join("suites/json-schema-test-suite/tests"));
+    // Our own cases in the suite's format (`own/flowapi-*.json`), reported as rows of their own.
+    suite.extend(load::suite(&here.join("own")));
     let out = here.join("out");
     std::fs::create_dir_all(&out).expect("the output directory is creatable");
 

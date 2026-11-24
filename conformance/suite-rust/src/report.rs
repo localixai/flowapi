@@ -93,7 +93,8 @@ pub(crate) fn markdown(files: &[FileReport]) -> String {
     s.push_str("Written by `cd conformance/suite-rust && cargo run --release`; do not edit.\n\n");
     s.push_str(
         "A valid case is accepted when `serde_json::from_str::<Root>` reads it and the value \
-         written back equals it; an invalid case is rejected when it is not read.\n\n",
+         written back equals it; an invalid case is rejected when it is not read. Rows named \
+         `flowapi-*` are our own cases in the suite's format (`own/`), counted in the totals.\n\n",
     );
     let _ = writeln!(
         s,

@@ -70,9 +70,14 @@ stale) and each case of [`sdk/cases.json`](sdk/cases.json) into an operation, ge
 type-checks and compiles it with the pinned TypeScript (`strict`, `exactOptionalPropertyTypes`),
 and calls every request and response function under Node, comparing the strings exactly; a query
 or a form body is also parsed back with WHATWG's `URLSearchParams`, a path percent-decoded. The
+table's path parameter sits after a literal `x` in its segment (`/s<line>p/x{color}`): the table
+is about the expansion, and a whole segment its undefined column leaves empty or `.` is refused. The
 cases are the specification's own examples (Appendix C, the Parameter Object Examples) and the
 pitfalls other generators' tests and changelogs show they fixed; each names the requirements it
-covers, which the ledger reads. A case runs in 3.0.4, 3.1.2 and 3.2.1 unless it names its
+covers, which the ledger reads. Some are refusals: a value the SDK must not write (a CR, LF or
+NUL in a header or a `style: cookie` cookie, a path segment left empty or made `.` or `..`, NaN or
+an infinity, written `{ "$number": "NaN" }` since JSON has none) expects
+`refused: { location, parameter, reason }`. A case runs in 3.0.4, 3.1.2 and 3.2.1 unless it names its
 versions (Swagger 2.0's `collectionFormat`, 3.2's `cookie` and `querystring`). `--corpus` also
 generates the SDK of GitHub's, Stripe's and Cloudflare's descriptions (`bench/data`, from
 `bench/corpus/fetch.sh`) and type-checks each.
@@ -84,7 +89,7 @@ It writes `results/sdk.md` and exits 1 on any difference.
 The Rust SDK (`flowapi --target rust --sdk`) has its own run, [`sdk-rust/`](sdk-rust/), a crate
 outside the workspace. It makes the same descriptions from the same table and cases, plus its own
 ([`sdk-rust/cases.json`](sdk-rust/cases.json): numbers as JavaScript writes them, integers past
-2^53, enums, a struct's member order, a media range's body), generates each version's SDK with
+2^53 and past `i64`, enums, a struct's member order, a media range's body), generates each version's SDK with
 the flowapi crates into one generated crate with the SDKs kept by
 `crates/flowapi-rust/tests/sdk.rs`, builds it once (`-j 1`; a warning about it is a difference),
 and runs every call, comparing as `run.mjs` does. An object with no named properties is a

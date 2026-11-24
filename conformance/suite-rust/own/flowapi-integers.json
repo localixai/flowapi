@@ -1,0 +1,28 @@
+{
+ "about": "Our own cases in the suite's format, run beside it by conformance/suite-rust (rows named flowapi-*): JSON integers past what an i64 holds, which the suite has none of. serde_json reads an integer up to u64::MAX exactly and a larger one as an f64; the Rust type must read and write back each. Past those ranges a value is only as exact as an f64 (-2^63 - 1 reads as -2^63 before the type sees it), so the cases there are values an f64 holds exactly.",
+ "tests": [
+  {
+   "description": "integers past i64",
+   "schema": { "$schema": "https://json-schema.org/draft/2020-12/schema", "type": "integer" },
+   "tests": [
+    { "description": "2^63, one past i64::MAX", "data": 9223372036854775808, "valid": true },
+    { "description": "2^64 - 1, u64::MAX", "data": 18446744073709551615, "valid": true },
+    { "description": "2^64, past u64", "data": 18446744073709551616, "valid": true },
+    { "description": "1e20 written with an exponent", "data": 1e20, "valid": true },
+    { "description": "-1e19, below i64::MIN", "data": -10000000000000000000, "valid": true },
+    { "description": "1e300", "data": 1e300, "valid": true },
+    { "description": "a whole float", "data": 2.0, "valid": true },
+    { "description": "1.5 is not an integer", "data": 1.5, "valid": false },
+    { "description": "a string is not an integer", "data": "1", "valid": false }
+   ]
+  },
+  {
+   "description": "integers past i64 inside an object",
+   "schema": { "$schema": "https://json-schema.org/draft/2020-12/schema", "type": "object", "properties": { "id": { "type": "integer" } }, "required": ["id"] },
+   "tests": [
+    { "description": "u64::MAX as an id", "data": { "id": 18446744073709551615 }, "valid": true },
+    { "description": "a fraction as an id", "data": { "id": 0.5 }, "valid": false }
+   ]
+  }
+ ]
+}

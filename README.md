@@ -155,7 +155,14 @@ into one `cookie` header. The body is `{ contentType, value }` of one of the ope
 types: JSON, a form, or text as given (a multipart body is yours to write). A response is picked
 by its status (the code, then `2XX`, then `default`) and its `Content-Type`; a JSON body is
 parsed, any other is the text, and what the description does not name comes back as
-`response: null` with the text. The output imports nothing: the runtime is a few functions
+`response: null` with the text (a leading byte order mark is skipped before JSON is parsed).
+`<op>Request` throws a `FlowapiRequestError` (exported, with `location`, `parameter` and
+`reason`) rather than write a request that would mean something else: a CR, LF or NUL in a header
+or a `style: cookie` value (`control-character`), a path parameter that leaves its segment empty
+or makes it `.` or `..` (`empty-segment`, `dot-segment`; `%2E` is a dot too), NaN or an infinity
+anywhere in a parameter or a JSON or form body (`non-finite`: JSON has no such number, and
+`JSON.stringify` would write `null`). A header's name that is not a token is left out of the
+operation, with a warning. The output imports nothing: the runtime is a few functions
 printed once. The base URL is yours (servers are not read). Every row of the specification's
 Style Examples table, the pitfalls other generators fixed, and the SDKs of GitHub's, Stripe's and
 Cloudflare's descriptions are run or type-checked
@@ -164,7 +171,8 @@ openapi-fetch's serializers: [bench/results/sdk.md](bench/results/sdk.md).
 
 For Rust, `--target rust --sdk` prints the same after the serde types: per operation an input
 struct, `<op>_request(&input)`, which returns an `sdk::Request` (method, path, query, headers, and
-the body's content type and bytes), and `<op>_response(status, headers, body)`, which returns an
+the body's content type and bytes) or an `sdk::RequestError` for what the TypeScript SDK refuses,
+with the same `reason` codes (`Reason::code()`), and `<op>_response(status, headers, body)`, which returns an
 enum of the operation's responses or an `sdk::Error` holding the answer. No I/O, no async; the
 runtime is a module printed once (`pub mod sdk`) and needs serde and serde_json, as the types do.
 
@@ -173,7 +181,7 @@ cargo run --release -p flowapi-cli -- openapi.json --target rust --sdk -o src/ap
 ```
 
 ```rust
-let r = api::get_pet_request(&api::GetPetInput { parameters: params });
+let r = api::get_pet_request(&api::GetPetInput { parameters: params })?;
 // sdk::Request { method: "GET", path: "/pets/7", query: "tags=a%20b&tags=c", headers: [], body: None }
 let res = client.get(format!("{base}{}?{}", r.path, r.query)).send()?;
 let headers: Vec<(String, String)> = /* the answer's headers as text */;
@@ -189,8 +197,9 @@ into the request; members of a struct go in the order its schema names them, a m
 bodies take their type, a multipart body or a media range its content type and bytes, any other
 bytes; parameters of a content type (`; charset=utf-8`) are yours to add to `body`. A response
 is an enum variant per status and media type: JSON read into its type (an empty or broken body is
-an error, never a default), `text/*` a `String`, other bodies bytes; a range or `default` keeps
-the status. The same table, the cases and Rust's own (numbers as JavaScript writes them, integers
+an error, never a default; a leading byte order mark is skipped), `text/*` a `String`, other
+bodies bytes; a range or `default` keeps the status. A JSON integer is the printed `Integer`:
+exact from `i64::MIN` to `u64::MAX`, past that the whole `f64` serde_json reads it as. The same table, the cases and Rust's own (numbers as JavaScript writes them, integers
 past 2^53 exact, enums as their strings) are compiled into one crate and run
 ([conformance/results/sdk-rust.md](conformance/results/sdk-rust.md)); generating the SDK of
 GitHub's, Stripe's and Cloudflare's descriptions:

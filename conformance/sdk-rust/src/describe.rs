@@ -111,8 +111,10 @@ pub(crate) fn table(docs: &mut Docs, table: &Value, calls: &mut Vec<Call>) {
             if !row["explode"].is_null() {
                 param["explode"] = row["explode"].clone();
             }
+            // After a literal `x`: the table is about the expansion, and a whole segment left
+            // empty or `.` (as it shows for undefined) is refused, by the cases.
             let path = if location == "path" {
-                format!("/{id}/{{color}}")
+                format!("/{id}/x{{color}}")
             } else {
                 format!("/{id}")
             };

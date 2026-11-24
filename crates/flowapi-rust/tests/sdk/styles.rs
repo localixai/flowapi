@@ -201,32 +201,166 @@ pub struct PathsSearch {
     pub copy: CopySearch,
 }
 
-/// A JSON integer: any number with no fraction, `1.0` among them, kept as an `i64`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct Integer(pub i64);
+/// A JSON integer: any number with no fraction, `1.0` and `1e20` among them. Exact from
+/// `i64::MIN` to `u64::MAX`, the integers serde_json reads exactly; past those serde_json reads
+/// a number as an `f64` (without its `arbitrary_precision` feature), so digits past 2^53 are lost
+/// before the value gets here, and it is kept as that `f64`, a whole number still.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct Integer(IntegerRepr);
+
+/// Canonical: a value from `i64::MIN` to `u64::MAX` is always `Exact`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum IntegerRepr {
+    Exact(i128),
+    /// A whole `f64` below `i64::MIN` or above `u64::MAX`.
+    Wide(f64),
+}
+
+impl Default for IntegerRepr {
+    fn default() -> Self {
+        Self::Exact(0)
+    }
+}
+
+impl Integer {
+    /// The value, when an `i64` holds it.
+    pub fn as_i64(&self) -> Option<i64> {
+        match self.0 {
+            IntegerRepr::Exact(v) => i64::try_from(v).ok(),
+            IntegerRepr::Wide(_) => None,
+        }
+    }
+
+    /// The value, when a `u64` holds it.
+    pub fn as_u64(&self) -> Option<u64> {
+        match self.0 {
+            IntegerRepr::Exact(v) => u64::try_from(v).ok(),
+            IntegerRepr::Wide(_) => None,
+        }
+    }
+
+    /// The value, when an `i128` holds it (exact past `u64` only as far as the `f64` was).
+    pub fn as_i128(&self) -> Option<i128> {
+        match self.0 {
+            IntegerRepr::Exact(v) => Some(v),
+            // From -2^127 up to (not including) 2^127.
+            IntegerRepr::Wide(v)
+                if (-1.701_411_834_604_692_3e38..1.701_411_834_604_692_3e38).contains(&v) =>
+            {
+                Some(v as i128)
+            }
+            IntegerRepr::Wide(_) => None,
+        }
+    }
+
+    /// The nearest `f64`.
+    pub fn as_f64(&self) -> f64 {
+        match self.0 {
+            IntegerRepr::Exact(v) => v as f64,
+            IntegerRepr::Wide(v) => v,
+        }
+    }
+
+    /// A whole, finite `f64` as an integer; `None` for a fraction, NaN or an infinity.
+    pub fn from_f64(v: f64) -> Option<Self> {
+        if !v.is_finite() || v.fract() != 0.0 {
+            return None;
+        }
+        // From -2^63 up to (not including) 2^64: what `i64` and `u64` hold together.
+        Some(Self(
+            if (-9_223_372_036_854_775_808.0..18_446_744_073_709_551_616.0).contains(&v) {
+                IntegerRepr::Exact(v as i128)
+            } else {
+                IntegerRepr::Wide(v)
+            },
+        ))
+    }
+}
 
 impl From<i64> for Integer {
     fn from(value: i64) -> Self {
-        Self(value)
+        Self(IntegerRepr::Exact(i128::from(value)))
     }
 }
 
-impl From<Integer> for i64 {
-    fn from(value: Integer) -> Self {
-        value.0
+impl From<u64> for Integer {
+    fn from(value: u64) -> Self {
+        Self(IntegerRepr::Exact(i128::from(value)))
     }
 }
 
-impl std::ops::Deref for Integer {
-    type Target = i64;
-    fn deref(&self) -> &i64 {
-        &self.0
+impl From<i32> for Integer {
+    fn from(value: i32) -> Self {
+        Self(IntegerRepr::Exact(i128::from(value)))
+    }
+}
+
+impl From<u32> for Integer {
+    fn from(value: u32) -> Self {
+        Self(IntegerRepr::Exact(i128::from(value)))
+    }
+}
+
+impl Eq for Integer {}
+
+impl Ord for Integer {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        use std::cmp::Ordering;
+        match (self.0, other.0) {
+            (IntegerRepr::Exact(a), IntegerRepr::Exact(b)) => a.cmp(&b),
+            (IntegerRepr::Wide(a), IntegerRepr::Wide(b)) => a.total_cmp(&b),
+            // A wide value lies past every exact one, on its side of zero.
+            (IntegerRepr::Exact(_), IntegerRepr::Wide(b)) => {
+                if b > 0.0 {
+                    Ordering::Less
+                } else {
+                    Ordering::Greater
+                }
+            }
+            (IntegerRepr::Wide(a), IntegerRepr::Exact(_)) => {
+                if a > 0.0 {
+                    Ordering::Greater
+                } else {
+                    Ordering::Less
+                }
+            }
+        }
+    }
+}
+
+impl PartialOrd for Integer {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl std::hash::Hash for Integer {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self.0 {
+            IntegerRepr::Exact(v) => v.hash(state),
+            IntegerRepr::Wide(v) => v.to_bits().hash(state),
+        }
+    }
+}
+
+impl std::fmt::Display for Integer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.0 {
+            IntegerRepr::Exact(v) => write!(f, "{v}"),
+            IntegerRepr::Wide(v) => write!(f, "{v:.0}"),
+        }
     }
 }
 
 impl Serialize for Integer {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_i64(self.0)
+        match self.0 {
+            IntegerRepr::Exact(v) => match i64::try_from(v) {
+                Ok(i) => serializer.serialize_i64(i),
+                Err(_) => serializer.serialize_u64(u64::try_from(v).unwrap_or(u64::MAX)),
+            },
+            IntegerRepr::Wide(v) => serializer.serialize_f64(v),
+        }
     }
 }
 
@@ -239,14 +373,26 @@ impl<'de> Deserialize<'de> for Integer {
                 f.write_str("an integer")
             }
             fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<Integer, E> {
-                Ok(Integer(v))
+                Ok(Integer::from(v))
             }
             fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Integer, E> {
-                i64::try_from(v).map(Integer).map_err(|_| E::custom("an integer past i64"))
+                Ok(Integer::from(v))
+            }
+            fn visit_i128<E: serde::de::Error>(self, v: i128) -> Result<Integer, E> {
+                match (i64::try_from(v), u64::try_from(v)) {
+                    (Ok(i), _) => Ok(Integer::from(i)),
+                    (_, Ok(u)) => Ok(Integer::from(u)),
+                    _ => Ok(Integer(IntegerRepr::Wide(v as f64))),
+                }
+            }
+            fn visit_u128<E: serde::de::Error>(self, v: u128) -> Result<Integer, E> {
+                match u64::try_from(v) {
+                    Ok(u) => Ok(Integer::from(u)),
+                    Err(_) => Ok(Integer(IntegerRepr::Wide(v as f64))),
+                }
             }
             fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<Integer, E> {
-                let whole = v.fract() == 0.0 && v >= -9_223_372_036_854_775_808.0 && v < 9_223_372_036_854_775_808.0;
-                if whole { Ok(Integer(v as i64)) } else { Err(E::custom("a number with a fraction")) }
+                Integer::from_f64(v).ok_or_else(|| E::custom("a number with a fraction"))
             }
         }
         deserializer.deserialize_any(Reader)
@@ -281,66 +427,6 @@ pub trait Response {
     fn response(&self) -> &'static str;
     /// The media type as written, `None` for a response with no body.
     fn media_type(&self) -> Option<&'static str>;
-}
-
-/// An answer that is not a response the description names, or whose body is not what it says;
-/// the status, the content type and the body are kept, to read by hand.
-#[derive(Debug)]
-pub struct Error {
-    pub status: u16,
-    pub content_type: Option<String>,
-    pub body: Vec<u8>,
-    pub kind: ErrorKind,
-}
-
-/// Why an answer was not read.
-#[derive(Debug)]
-pub enum ErrorKind {
-    /// No response of the operation is for this status, and it has no `default`.
-    Status,
-    /// The response names no media type that the `Content-Type` is (or none was sent).
-    MediaType,
-    /// The body is not the JSON of the media type's type.
-    Json(serde_json::Error),
-    /// A `text/*` body that is not UTF-8.
-    Text,
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let ct = self.content_type.as_deref().unwrap_or("no content type");
-        match &self.kind {
-            ErrorKind::Status => write!(
-                f,
-                "status {} is not a response of the operation",
-                self.status
-            ),
-            ErrorKind::MediaType => write!(
-                f,
-                "status {}: {ct} is not a media type of the response",
-                self.status
-            ),
-            ErrorKind::Json(e) => write!(
-                f,
-                "status {} ({ct}): the body is not its type: {e}",
-                self.status
-            ),
-            ErrorKind::Text => write!(f, "status {} ({ct}): the body is not UTF-8", self.status),
-        }
-    }
-}
-
-impl std::error::Error for Error {}
-
-impl Error {
-    pub fn new(status: u16, content_type: Option<&str>, body: &[u8], kind: ErrorKind) -> Self {
-        Self {
-            status,
-            content_type: content_type.map(str::to_owned),
-            body: body.to_vec(),
-            kind,
-        }
-    }
 }
 
 /// How a style writes a value: RFC 6570's operator (`first`, `sep`, `named`, `ifemp`; 3.2,
@@ -465,21 +551,40 @@ pub fn encode(out: &mut String, t: &str, enc: Enc) {
 }
 
 /// One parameter's value written into `out` by its style, after `sep` when `out` holds
-/// something already; `false` when there was nothing to write (an empty list or object).
+/// something already; `false` when there was nothing to write (an empty list or object). A
+/// value written raw (a header, `style: cookie`) is refused if it holds a CR, LF or NUL, and
+/// NaN or an infinity anywhere in a value is refused.
 pub fn put<T: Serialize + ?Sized>(
     out: &mut String,
     sep: &str,
     name: &str,
     s: Style,
     v: &T,
-) -> bool {
+) -> Result<bool, Reason> {
+    let start = out.len();
     let lead = if out.is_empty() { "" } else { sep };
     let mut w = write::W::new(out, lead, name, s);
-    v.serialize(expand::Ser {
+    let wrote = match v.serialize(expand::Ser {
         w: &mut w,
         at: write::At::Top,
-    })
-    .unwrap_or(false)
+    }) {
+        Ok(wrote) => wrote,
+        Err(expand::Error::NonFinite) => return Err(Reason::NonFinite),
+        Err(expand::Error::Compound | expand::Error::Custom(_)) => false,
+    };
+    if s.enc == Enc::Raw {
+        control(out.get(start..).unwrap_or(""))?;
+    }
+    Ok(wrote)
+}
+
+/// A CR, LF or NUL, which would end a header and start another.
+fn control(text: &str) -> Result<(), Reason> {
+    if text.bytes().any(|b| matches!(b, b'\r' | b'\n' | 0)) {
+        Err(Reason::ControlCharacter)
+    } else {
+        Ok(())
+    }
 }
 
 /// A header, set when its value writes something.
@@ -488,43 +593,80 @@ pub fn header<T: Serialize + ?Sized>(
     name: &str,
     s: Style,
     v: &T,
-) {
+) -> Result<(), Reason> {
     let mut text = String::new();
-    if put(&mut text, "", name, s, v) {
+    if put(&mut text, "", name, s, v)? {
         headers.push((name.to_owned(), text));
+    }
+    Ok(())
+}
+
+/// The path segment written from `start` to the path's end, refused when it is empty or a dot
+/// segment: `.`, `..`, or either with a dot as `%2E` (WHATWG's URL parser reads those as dots
+/// too). `pieces`: a parameter of it keeps `/` (`allowReserved`), and each piece between them is
+/// held to the same.
+#[inline]
+pub fn segment(path: &str, start: usize, pieces: bool) -> Result<(), Reason> {
+    let len = path.len().saturating_sub(start);
+    // A dot segment is at most 6 bytes (`%2e%2e`): a longer one is none, read no further.
+    if len > 6 && !pieces {
+        return Ok(());
+    }
+    if len == 0 {
+        return Err(Reason::EmptySegment);
+    }
+    let s = path.get(start..).unwrap_or("");
+    let dot = |p: &str| after_dot(p).is_some_and(|r| r.is_empty() || after_dot(r) == Some(""));
+    if dot(s) || (pieces && s.split('/').any(dot)) {
+        return Err(Reason::DotSegment);
+    }
+    Ok(())
+}
+
+/// What follows a leading `.` or `%2E`.
+fn after_dot(p: &str) -> Option<&str> {
+    match p.get(..3) {
+        Some(h) if h.eq_ignore_ascii_case("%2e") => p.get(3..),
+        _ => p.strip_prefix('.'),
     }
 }
 
 /// A value as `application/x-www-form-urlencoded`, after `sep` when `out` holds something:
 /// each member a pair, a list's items pairs of the same key, an object member as JSON, `null`
-/// an empty value (the Encoding Object's defaults).
-pub fn form<T: Serialize + ?Sized>(out: &mut String, sep: &str, v: &T) {
+/// an empty value (the Encoding Object's defaults). NaN or an infinity is refused.
+pub fn form<T: Serialize + ?Sized>(out: &mut String, sep: &str, v: &T) -> Result<(), Reason> {
     let lead = if out.is_empty() { "" } else { sep };
     let s = Style::new(Shape::Form, true, Enc::Plain);
     let mut w = write::W::new(out, lead, "", s);
-    let _ = v.serialize(expand::Ser {
+    match v.serialize(expand::Ser {
         w: &mut w,
         at: write::At::Form,
-    });
+    }) {
+        Err(expand::Error::NonFinite) => Err(Reason::NonFinite),
+        Ok(_) | Err(expand::Error::Compound | expand::Error::Custom(_)) => Ok(()),
+    }
 }
 
 /// A form body's bytes.
-pub fn form_body<T: Serialize + ?Sized>(v: &T) -> Vec<u8> {
+pub fn form_body<T: Serialize + ?Sized>(v: &T) -> Result<Vec<u8>, Reason> {
     let mut out = String::new();
-    form(&mut out, "&", v);
-    out.into_bytes()
+    form(&mut out, "&", v)?;
+    Ok(out.into_bytes())
 }
 
-/// A JSON body's bytes. The generated types always serialize (their maps' keys are strings).
-pub fn json_body<T: Serialize + ?Sized>(v: &T) -> Vec<u8> {
-    serde_json::to_vec(v).unwrap_or_default()
+/// A JSON body's bytes; NaN or an infinity anywhere in it is refused (serde_json would write
+/// `null`). The generated types always serialize (their maps' keys are strings).
+#[inline]
+pub fn json_body<T: Serialize + ?Sized>(v: &T) -> Result<Vec<u8>, Reason> {
+    json_text(v).map(String::into_bytes)
 }
 
 /// A parameter with `content`: its JSON for a JSON media type, else its text (a string as it
-/// is, a number or boolean as written, anything else as JSON); then written as a string.
-pub fn content<T: Serialize + ?Sized>(v: &T, json: bool) -> String {
+/// is, a number or boolean as written, anything else as JSON); then written as a string. NaN or
+/// an infinity is refused.
+pub fn content<T: Serialize + ?Sized>(v: &T, json: bool) -> Result<String, Reason> {
     if json {
-        return serde_json::to_string(v).unwrap_or_default();
+        return json_text(v);
     }
     let mut out = String::new();
     let s = Style::new(Shape::Simple, false, Enc::Raw);
@@ -533,9 +675,21 @@ pub fn content<T: Serialize + ?Sized>(v: &T, json: bool) -> String {
         w: &mut w,
         at: write::At::Top,
     }) {
-        Err(expand::Error::Compound) => serde_json::to_string(v).unwrap_or_default(),
-        Ok(_) | Err(_) => out,
+        Err(expand::Error::NonFinite) => Err(Reason::NonFinite),
+        Err(expand::Error::Compound) => json_text(v),
+        Ok(_) | Err(expand::Error::Custom(_)) => Ok(out),
     }
+}
+
+/// A value's JSON text, NaN or an infinity in it refused. serde_json writes a non-finite number
+/// as `null`: with no `null` in the text there is none, and the value is walked only when there
+/// is one.
+fn json_text<T: Serialize + ?Sized>(v: &T) -> Result<String, Reason> {
+    let text = serde_json::to_string(v).unwrap_or_default();
+    if text.contains("null") && !finite::finite(v) {
+        return Err(Reason::NonFinite);
+    }
+    Ok(text)
 }
 
 /// `in: querystring` of a media type other than a form: the text percent-encoded, after `&`.
@@ -572,9 +726,11 @@ pub fn media(content_type: Option<&str>, table: &[&str]) -> Option<usize> {
         .or_else(|| table.iter().position(|t| *t == "*/*"))
 }
 
-/// A JSON body read as its type; an empty or broken body is an error, never a default.
+/// A JSON body read as its type; an empty or broken body is an error, never a default. A
+/// leading byte order mark is skipped (RFC 8259, 8.1 lets a parser ignore it).
 pub fn json<T: DeserializeOwned>(status: u16, ct: Option<&str>, body: &[u8]) -> Result<T, Error> {
-    serde_json::from_slice(body).map_err(|e| Error::new(status, ct, body, ErrorKind::Json(e)))
+    let text = body.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(body);
+    serde_json::from_slice(text).map_err(|e| Error::new(status, ct, body, ErrorKind::Json(e)))
 }
 
 /// A `text/*` body.
@@ -587,6 +743,141 @@ pub fn text(status: u16, ct: Option<&str>, body: &[u8]) -> Result<String, Error>
 /// A body of a media range (`image/*`, `*/*`): the content type sent and the bytes.
 pub fn ranged(ct: Option<&str>, body: &[u8]) -> (String, Vec<u8>) {
     (ct.unwrap_or("").to_owned(), body.to_vec())
+}
+
+/// A request `<name>_request` refuses to write: a value that would change what the request
+/// means, rather than what it says. Nothing of it is sent.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RequestError {
+    /// Where the value goes: `path`, `query`, `querystring`, `header`, `cookie` or `body`.
+    pub location: &'static str,
+    /// The parameter's name as the description writes it; `None` for the body.
+    pub parameter: Option<&'static str>,
+    pub reason: Reason,
+}
+
+/// Why a request was refused.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Reason {
+    /// A CR, LF or NUL in a header's or a cookie's value, which would end the header it is in
+    /// and start another (header injection).
+    ControlCharacter,
+    /// A path parameter that makes a whole segment empty: `/files/` names another resource.
+    EmptySegment,
+    /// A path parameter that makes a segment `.` or `..` (or `%2E` for a dot): a client or a
+    /// server removes it and the one before it (RFC 3986, 5.2.4), so the path names another
+    /// resource (path traversal).
+    DotSegment,
+    /// NaN or an infinity, which JSON has no number for: serde_json would write `null`, and a
+    /// parameter the text `NaN`.
+    NonFinite,
+}
+
+impl Reason {
+    /// The reason as a code, the same as the TypeScript SDK's `FlowapiRequestError.reason`.
+    pub fn code(self) -> &'static str {
+        match self {
+            Self::ControlCharacter => "control-character",
+            Self::EmptySegment => "empty-segment",
+            Self::DotSegment => "dot-segment",
+            Self::NonFinite => "non-finite",
+        }
+    }
+}
+
+impl std::fmt::Display for RequestError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let why = match self.reason {
+            Reason::ControlCharacter => "a CR, LF or NUL in its value",
+            Reason::EmptySegment => "an empty path segment",
+            Reason::DotSegment => "a path segment `.` or `..`",
+            Reason::NonFinite => "NaN or an infinity, which JSON has no number for",
+        };
+        match self.parameter {
+            Some(name) => write!(f, "the {} parameter `{name}`: {why}", self.location),
+            None => write!(f, "the body: {why}"),
+        }
+    }
+}
+
+impl std::error::Error for RequestError {}
+
+/// What turns a refusal into the error of a parameter.
+pub fn at(location: &'static str, parameter: &'static str) -> impl FnOnce(Reason) -> RequestError {
+    move |reason| RequestError {
+        location,
+        parameter: Some(parameter),
+        reason,
+    }
+}
+
+/// A refusal of the body.
+pub fn in_body(reason: Reason) -> RequestError {
+    RequestError {
+        location: "body",
+        parameter: None,
+        reason,
+    }
+}
+
+/// An answer that is not a response the description names, or whose body is not what it says;
+/// the status, the content type and the body are kept, to read by hand.
+#[derive(Debug)]
+pub struct Error {
+    pub status: u16,
+    pub content_type: Option<String>,
+    pub body: Vec<u8>,
+    pub kind: ErrorKind,
+}
+
+/// Why an answer was not read.
+#[derive(Debug)]
+pub enum ErrorKind {
+    /// No response of the operation is for this status, and it has no `default`.
+    Status,
+    /// The response names no media type that the `Content-Type` is (or none was sent).
+    MediaType,
+    /// The body is not the JSON of the media type's type.
+    Json(serde_json::Error),
+    /// A `text/*` body that is not UTF-8.
+    Text,
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let ct = self.content_type.as_deref().unwrap_or("no content type");
+        match &self.kind {
+            ErrorKind::Status => write!(
+                f,
+                "status {} is not a response of the operation",
+                self.status
+            ),
+            ErrorKind::MediaType => write!(
+                f,
+                "status {}: {ct} is not a media type of the response",
+                self.status
+            ),
+            ErrorKind::Json(e) => write!(
+                f,
+                "status {} ({ct}): the body is not its type: {e}",
+                self.status
+            ),
+            ErrorKind::Text => write!(f, "status {} ({ct}): the body is not UTF-8", self.status),
+        }
+    }
+}
+
+impl std::error::Error for Error {}
+
+impl Error {
+    pub fn new(status: u16, content_type: Option<&str>, body: &[u8], kind: ErrorKind) -> Self {
+        Self {
+            status,
+            content_type: content_type.map(str::to_owned),
+            body: body.to_vec(),
+            kind,
+        }
+    }
 }
 
 mod write {
@@ -831,10 +1122,12 @@ pub(super) struct Ser<'w, 'a> {
 }
 
 /// Why a value was not written: it is a list or an associative array where only its JSON text
-/// goes (caught by the caller, who writes the JSON), or serde's own error.
+/// goes (caught by the caller, who writes the JSON), NaN or an infinity (refused), or serde's
+/// own error.
 #[derive(Debug)]
 pub enum Error {
     Compound,
+    NonFinite,
     Custom(String),
 }
 
@@ -842,6 +1135,7 @@ impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Compound => f.write_str("a list or an object where a value goes"),
+            Self::NonFinite => f.write_str("NaN or an infinity, which JSON has no number for"),
             Self::Custom(m) => f.write_str(m),
         }
     }
@@ -864,16 +1158,16 @@ impl<'w, 'a> Ser<'w, 'a> {
 
     /// A number as JavaScript's `String(n)` writes it, as the TypeScript SDK does: the
     /// shortest digits that read back, in decimal from 1e-6 up to 1e21 and with an exponent
-    /// outside (`1e+21`, `1e-7`); `0` for both zeros, `Infinity`, `NaN`.
+    /// outside (`1e+21`, `1e-7`); `0` for both zeros. NaN and the infinities are refused: JSON
+    /// has no number for them, and their text would reach the server as a string.
     fn float(self, v: f64) -> Result<bool, Error> {
+        if !v.is_finite() {
+            return Err(Error::NonFinite);
+        }
         let mut d = Digits::default();
         let a = v.abs();
         let _ = if v == 0.0 {
             d.write_str("0")
-        } else if v.is_nan() {
-            d.write_str("NaN")
-        } else if v.is_infinite() {
-            d.write_str(if v > 0.0 { "Infinity" } else { "-Infinity" })
         } else if (1e-6..1e21).contains(&a) {
             write!(d, "{v}")
         } else {
@@ -933,6 +1227,10 @@ impl Many<'_, '_> {
             Ok(_) => Ok(()),
             Err(Error::Compound) => {
                 let json = serde_json::to_string(v).map_err(|e| Error::Custom(e.to_string()))?;
+                // A non-finite number is `null` in the text: walked only when there is one.
+                if json.contains("null") && !super::finite::finite(v) {
+                    return Err(Error::NonFinite);
+                }
                 self.w.text(self.at, &json);
                 Ok(())
             }
@@ -1132,6 +1430,182 @@ impl ser::SerializeMap for Many<'_, '_> {
     }
 }
 }
+
+mod finite {
+//! A walk of a value that stops at NaN or an infinity: serde_json writes them as `null`, so a
+//! JSON body and a value's JSON text are walked first. It writes nothing and allocates nothing.
+//! Printed once inside the generated `sdk` module, never compiled here.
+
+use serde::Serialize;
+use serde::ser;
+use std::fmt::Display;
+
+/// Why the walk stopped: a number JSON has none for, or the value's own serde error (left to
+/// serde_json to report as it does).
+#[derive(Debug)]
+pub(super) enum Stop {
+    NonFinite,
+    Other,
+}
+
+impl Display for Stop {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::NonFinite => "NaN or an infinity",
+            Self::Other => "the value's own error",
+        })
+    }
+}
+
+impl std::error::Error for Stop {}
+
+impl ser::Error for Stop {
+    fn custom<T: Display>(_: T) -> Self {
+        Self::Other
+    }
+}
+
+/// Whether a value holds no NaN and no infinity.
+pub(super) fn finite<T: Serialize + ?Sized>(v: &T) -> bool {
+    !matches!(v.serialize(Walk), Err(Stop::NonFinite))
+}
+
+pub(super) struct Walk;
+
+macro_rules! scalars {
+    ($($f:ident: $t:ty),*) => {
+        $(fn $f(self, _: $t) -> Result<(), Stop> { Ok(()) })*
+    };
+}
+
+impl ser::Serializer for Walk {
+    type Ok = ();
+    type Error = Stop;
+    type SerializeSeq = Self;
+    type SerializeTuple = Self;
+    type SerializeTupleStruct = Self;
+    type SerializeTupleVariant = Self;
+    type SerializeMap = Self;
+    type SerializeStruct = Self;
+    type SerializeStructVariant = Self;
+
+    scalars!(serialize_bool: bool, serialize_i8: i8, serialize_i16: i16, serialize_i32: i32,
+        serialize_i64: i64, serialize_i128: i128, serialize_u8: u8, serialize_u16: u16,
+        serialize_u32: u32, serialize_u64: u64, serialize_u128: u128, serialize_char: char,
+        serialize_str: &str, serialize_bytes: &[u8], serialize_unit_struct: &'static str);
+
+    fn serialize_f32(self, v: f32) -> Result<(), Stop> {
+        self.serialize_f64(f64::from(v))
+    }
+    fn serialize_f64(self, v: f64) -> Result<(), Stop> {
+        if v.is_finite() { Ok(()) } else { Err(Stop::NonFinite) }
+    }
+    fn serialize_none(self) -> Result<(), Stop> {
+        Ok(())
+    }
+    fn serialize_some<T: Serialize + ?Sized>(self, v: &T) -> Result<(), Stop> {
+        v.serialize(self)
+    }
+    fn serialize_unit(self) -> Result<(), Stop> {
+        Ok(())
+    }
+    fn serialize_unit_variant(self, _: &'static str, _: u32, _: &'static str) -> Result<(), Stop> {
+        Ok(())
+    }
+    fn serialize_newtype_struct<T: Serialize + ?Sized>(
+        self,
+        _: &'static str,
+        v: &T,
+    ) -> Result<(), Stop> {
+        v.serialize(self)
+    }
+    fn serialize_newtype_variant<T: Serialize + ?Sized>(
+        self,
+        _: &'static str,
+        _: u32,
+        _: &'static str,
+        v: &T,
+    ) -> Result<(), Stop> {
+        v.serialize(self)
+    }
+    fn serialize_seq(self, _: Option<usize>) -> Result<Self, Stop> {
+        Ok(self)
+    }
+    fn serialize_tuple(self, _: usize) -> Result<Self, Stop> {
+        Ok(self)
+    }
+    fn serialize_tuple_struct(self, _: &'static str, _: usize) -> Result<Self, Stop> {
+        Ok(self)
+    }
+    fn serialize_tuple_variant(
+        self,
+        _: &'static str,
+        _: u32,
+        _: &'static str,
+        _: usize,
+    ) -> Result<Self, Stop> {
+        Ok(self)
+    }
+    fn serialize_map(self, _: Option<usize>) -> Result<Self, Stop> {
+        Ok(self)
+    }
+    fn serialize_struct(self, _: &'static str, _: usize) -> Result<Self, Stop> {
+        Ok(self)
+    }
+    fn serialize_struct_variant(
+        self,
+        _: &'static str,
+        _: u32,
+        _: &'static str,
+        _: usize,
+    ) -> Result<Self, Stop> {
+        Ok(self)
+    }
+}
+
+macro_rules! items {
+    ($($t:ident: $f:ident),*) => {$(
+        impl ser::$t for Walk {
+            type Ok = ();
+            type Error = Stop;
+            fn $f<T: Serialize + ?Sized>(&mut self, v: &T) -> Result<(), Stop> { v.serialize(Walk) }
+            fn end(self) -> Result<(), Stop> { Ok(()) }
+        }
+    )*};
+}
+
+items!(SerializeSeq: serialize_element, SerializeTuple: serialize_element,
+    SerializeTupleStruct: serialize_field, SerializeTupleVariant: serialize_field);
+
+macro_rules! fields {
+    ($($t:ident),*) => {$(
+        impl ser::$t for Walk {
+            type Ok = ();
+            type Error = Stop;
+            fn serialize_field<T: Serialize + ?Sized>(&mut self, _: &'static str, v: &T) -> Result<(), Stop> {
+                v.serialize(Walk)
+            }
+            fn end(self) -> Result<(), Stop> { Ok(()) }
+        }
+    )*};
+}
+
+fields!(SerializeStruct, SerializeStructVariant);
+
+impl ser::SerializeMap for Walk {
+    type Ok = ();
+    type Error = Stop;
+    fn serialize_key<T: Serialize + ?Sized>(&mut self, _: &T) -> Result<(), Stop> {
+        Ok(())
+    }
+    fn serialize_value<T: Serialize + ?Sized>(&mut self, v: &T) -> Result<(), Stop> {
+        v.serialize(Walk)
+    }
+    fn end(self) -> Result<(), Stop> {
+        Ok(())
+    }
+}
+}
 }
 
 /// The input of `get_item_request`.
@@ -1140,71 +1614,73 @@ pub struct GetItemInput {
     pub parameters: GetItemParameters,
 }
 
-/// `GET /items/{id}{m}{l}/raw`: the request `input` makes; it sends nothing.
-pub fn get_item_request(input: &GetItemInput) -> sdk::Request {
+/// `GET /items/{id}{m}{l}/raw`: the request `input` makes; it sends nothing, and refuses a value that would change what the request means (`sdk::RequestError`).
+pub fn get_item_request(input: &GetItemInput) -> Result<sdk::Request, sdk::RequestError> {
     let p = &input.parameters;
     let mut path = String::with_capacity(53);
     path.push_str("/items/");
+    let s = path.len();
     {
         let v = &p.path.id;
-        sdk::put(&mut path, "", "id", const { sdk::Style::new(sdk::Shape::Simple, false, sdk::Enc::Plain) }, v);
+        sdk::put(&mut path, "", "id", const { sdk::Style::new(sdk::Shape::Simple, false, sdk::Enc::Plain) }, v).map_err(sdk::at("path", "id"))?;
     }
     {
         let v = &p.path.m;
-        sdk::put(&mut path, "", "m", const { sdk::Style::new(sdk::Shape::Matrix, true, sdk::Enc::Plain) }, v);
+        sdk::put(&mut path, "", "m", const { sdk::Style::new(sdk::Shape::Matrix, true, sdk::Enc::Plain) }, v).map_err(sdk::at("path", "m"))?;
     }
     {
         let v = &p.path.l;
-        sdk::put(&mut path, "", "l", const { sdk::Style::new(sdk::Shape::Label, false, sdk::Enc::Plain) }, v);
+        sdk::put(&mut path, "", "l", const { sdk::Style::new(sdk::Shape::Label, false, sdk::Enc::Plain) }, v).map_err(sdk::at("path", "l"))?;
     }
+    sdk::segment(&path, s, false).map_err(sdk::at("path", "id"))?;
     path.push_str("/raw");
     let mut query = String::with_capacity(198);
     let mut headers: Vec<(String, String)> = Vec::with_capacity(3);
     let mut cookie = String::with_capacity(60);
     if let Some(v) = p.query.as_ref().and_then(|l| l.tags.as_ref()) {
-        sdk::put(&mut query, "&", "tags", const { sdk::Style::new(sdk::Shape::Form, false, sdk::Enc::Plain) }, v);
+        sdk::put(&mut query, "&", "tags", const { sdk::Style::new(sdk::Shape::Form, false, sdk::Enc::Plain) }, v).map_err(sdk::at("query", "tags"))?;
     }
     if let Some(v) = p.query.as_ref().and_then(|l| l.words.as_ref()) {
-        sdk::put(&mut query, "&", "words", const { sdk::Style::new(sdk::Shape::SpaceDelimited, false, sdk::Enc::Plain) }, v);
+        sdk::put(&mut query, "&", "words", const { sdk::Style::new(sdk::Shape::SpaceDelimited, false, sdk::Enc::Plain) }, v).map_err(sdk::at("query", "words"))?;
     }
     if let Some(v) = p.query.as_ref().and_then(|l| l.ids.as_ref()) {
-        sdk::put(&mut query, "&", "ids", const { sdk::Style::new(sdk::Shape::PipeDelimited, false, sdk::Enc::Plain) }, v);
+        sdk::put(&mut query, "&", "ids", const { sdk::Style::new(sdk::Shape::PipeDelimited, false, sdk::Enc::Plain) }, v).map_err(sdk::at("query", "ids"))?;
     }
     if let Some(v) = p.query.as_ref().and_then(|l| l.filter.as_ref()) {
-        sdk::put(&mut query, "&", "filter", const { sdk::Style::new(sdk::Shape::Deep, false, sdk::Enc::Plain) }, v);
+        sdk::put(&mut query, "&", "filter", const { sdk::Style::new(sdk::Shape::Deep, false, sdk::Enc::Plain) }, v).map_err(sdk::at("query", "filter"))?;
     }
     if let Some(v) = p.query.as_ref().and_then(|l| l.next.as_ref()) {
-        sdk::put(&mut query, "&", "next", const { sdk::Style::new(sdk::Shape::Form, true, sdk::Enc::Reserved) }, v);
+        sdk::put(&mut query, "&", "next", const { sdk::Style::new(sdk::Shape::Form, true, sdk::Enc::Reserved) }, v).map_err(sdk::at("query", "next"))?;
     }
     if let Some(v) = p.query.as_ref().and_then(|l| l.q.as_ref()) {
-        sdk::put(&mut query, "&", "q%5B%5D", const { sdk::Style::new(sdk::Shape::Form, true, sdk::Enc::Plain) }, v);
+        sdk::put(&mut query, "&", "q%5B%5D", const { sdk::Style::new(sdk::Shape::Form, true, sdk::Enc::Plain) }, v).map_err(sdk::at("query", "q[]"))?;
     }
     if let Some(v) = p.query.as_ref().and_then(|l| l.r#where.as_ref()) {
-        sdk::put(&mut query, "&", "where", const { sdk::Style::new(sdk::Shape::Form, true, sdk::Enc::Plain) }, sdk::content(v, true).as_str());
+        sdk::put(&mut query, "&", "where", const { sdk::Style::new(sdk::Shape::Form, true, sdk::Enc::Plain) }, sdk::content(v, true).map_err(sdk::at("query", "where"))?.as_str()).map_err(sdk::at("query", "where"))?;
     }
     {
         let v = &p.header.x_trace;
-        sdk::header(&mut headers, "X-Trace", const { sdk::Style::new(sdk::Shape::Simple, false, sdk::Enc::Raw) }, v);
+        sdk::header(&mut headers, "X-Trace", const { sdk::Style::new(sdk::Shape::Simple, false, sdk::Enc::Raw) }, v).map_err(sdk::at("header", "X-Trace"))?;
     }
     if let Some(v) = &p.header.bad {
-        sdk::header(&mut headers, "bad", const { sdk::Style::new(sdk::Shape::Simple, false, sdk::Enc::Raw) }, v);
+        sdk::header(&mut headers, "bad", const { sdk::Style::new(sdk::Shape::Simple, false, sdk::Enc::Raw) }, v).map_err(sdk::at("header", "bad"))?;
     }
     if let Some(v) = p.cookie.as_ref().and_then(|l| l.session.as_ref()) {
-        sdk::put(&mut cookie, "; ", "session", const { sdk::Style::new(sdk::Shape::Cookie, true, sdk::Enc::Raw) }, v);
+        sdk::put(&mut cookie, "; ", "session", const { sdk::Style::new(sdk::Shape::Cookie, true, sdk::Enc::Raw) }, v).map_err(sdk::at("cookie", "session"))?;
     }
     if let Some(v) = p.cookie.as_ref().and_then(|l| l.theme.as_ref()) {
-        sdk::put(&mut cookie, "; ", "theme", const { sdk::Style::new(sdk::Shape::Form, true, sdk::Enc::Plain) }, v);
+        sdk::put(&mut cookie, "; ", "theme", const { sdk::Style::new(sdk::Shape::Form, true, sdk::Enc::Plain) }, v).map_err(sdk::at("cookie", "theme"))?;
     }
     if !cookie.is_empty() {
         headers.push((String::from("cookie"), cookie));
     }
-    sdk::Request {
+    Ok(sdk::Request {
         method: "GET",
         path,
         query,
         headers,
         body: None,
-    }
+    })
 }
 
 /// The responses of `get_item_request`, by status and media type. It serializes as its body: a range or `default` as the status and the body.
@@ -1246,20 +1722,20 @@ pub struct SearchInput {
     pub parameters: SearchParameters,
 }
 
-/// `QUERY /search`: the request `input` makes; it sends nothing.
-pub fn search_request(input: &SearchInput) -> sdk::Request {
+/// `QUERY /search`: the request `input` makes; it sends nothing, and refuses a value that would change what the request means (`sdk::RequestError`).
+pub fn search_request(input: &SearchInput) -> Result<sdk::Request, sdk::RequestError> {
     let p = &input.parameters;
     let mut query = String::with_capacity(25);
     if let Some(v) = p.querystring.as_ref().and_then(|l| l.q.as_ref()) {
-        sdk::form(&mut query, "&", v);
+        sdk::form(&mut query, "&", v).map_err(sdk::at("querystring", "q"))?;
     }
-    sdk::Request {
+    Ok(sdk::Request {
         method: "QUERY",
         path: String::from("/search"),
         query,
         headers: Vec::new(),
         body: None,
-    }
+    })
 }
 
 /// The responses of `search_request`, by status and media type. It serializes as its body: a range or `default` as the status and the body.
@@ -1293,14 +1769,14 @@ pub fn search_response(status: u16, headers: &[(String, String)], body: &[u8]) -
 }
 
 /// `COPY /search`: the request; it sends nothing.
-pub fn copy_search_request() -> sdk::Request {
-    sdk::Request {
+pub fn copy_search_request() -> Result<sdk::Request, sdk::RequestError> {
+    Ok(sdk::Request {
         method: "COPY",
         path: String::from("/search"),
         query: String::new(),
         headers: Vec::new(),
         body: None,
-    }
+    })
 }
 
 /// The responses of `copy_search_request`, by status and media type. It serializes as its body: a range or `default` as the status and the body.

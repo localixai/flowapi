@@ -8,9 +8,11 @@ import { join } from 'node:path'
 import { gzipSync } from 'node:zlib'
 
 /** The budgets in bytes: the module as built on 2026-11-24 (297 KB raw, 120 KB gzipped), then
- * the SDK printer and its runtime added the same day (372 KB, 150 KB: the `sdk` option), and some
- * room for the core to grow. A change that passes one is a change to read. */
-const BUDGET = { raw: 390_000, gzip: 158_000 }
+ * the SDK printer and its runtime added the same day (372 KB, 150 KB: the `sdk` option), then the
+ * core's precision passes (propertyNames, enum bounds, contains, if/then/else, oneOf) and the SDK's
+ * refusals of header, path and number values (407 KB, 164 KB), and some room for the core to grow.
+ * A change that passes one is a change to read. */
+const BUDGET = { raw: 425_000, gzip: 172_000 }
 
 const wasm = readFileSync(join(import.meta.dir, '..', 'dist', 'flowapi.wasm'))
 const size = { raw: wasm.length, gzip: gzipSync(wasm, { level: 9 }).length }

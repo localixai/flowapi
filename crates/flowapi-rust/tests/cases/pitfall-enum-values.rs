@@ -105,32 +105,166 @@ impl<'de> Deserialize<'de> for Never {
     }
 }
 
-/// A JSON integer: any number with no fraction, `1.0` among them, kept as an `i64`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct Integer(pub i64);
+/// A JSON integer: any number with no fraction, `1.0` and `1e20` among them. Exact from
+/// `i64::MIN` to `u64::MAX`, the integers serde_json reads exactly; past those serde_json reads
+/// a number as an `f64` (without its `arbitrary_precision` feature), so digits past 2^53 are lost
+/// before the value gets here, and it is kept as that `f64`, a whole number still.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct Integer(IntegerRepr);
+
+/// Canonical: a value from `i64::MIN` to `u64::MAX` is always `Exact`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum IntegerRepr {
+    Exact(i128),
+    /// A whole `f64` below `i64::MIN` or above `u64::MAX`.
+    Wide(f64),
+}
+
+impl Default for IntegerRepr {
+    fn default() -> Self {
+        Self::Exact(0)
+    }
+}
+
+impl Integer {
+    /// The value, when an `i64` holds it.
+    pub fn as_i64(&self) -> Option<i64> {
+        match self.0 {
+            IntegerRepr::Exact(v) => i64::try_from(v).ok(),
+            IntegerRepr::Wide(_) => None,
+        }
+    }
+
+    /// The value, when a `u64` holds it.
+    pub fn as_u64(&self) -> Option<u64> {
+        match self.0 {
+            IntegerRepr::Exact(v) => u64::try_from(v).ok(),
+            IntegerRepr::Wide(_) => None,
+        }
+    }
+
+    /// The value, when an `i128` holds it (exact past `u64` only as far as the `f64` was).
+    pub fn as_i128(&self) -> Option<i128> {
+        match self.0 {
+            IntegerRepr::Exact(v) => Some(v),
+            // From -2^127 up to (not including) 2^127.
+            IntegerRepr::Wide(v)
+                if (-1.701_411_834_604_692_3e38..1.701_411_834_604_692_3e38).contains(&v) =>
+            {
+                Some(v as i128)
+            }
+            IntegerRepr::Wide(_) => None,
+        }
+    }
+
+    /// The nearest `f64`.
+    pub fn as_f64(&self) -> f64 {
+        match self.0 {
+            IntegerRepr::Exact(v) => v as f64,
+            IntegerRepr::Wide(v) => v,
+        }
+    }
+
+    /// A whole, finite `f64` as an integer; `None` for a fraction, NaN or an infinity.
+    pub fn from_f64(v: f64) -> Option<Self> {
+        if !v.is_finite() || v.fract() != 0.0 {
+            return None;
+        }
+        // From -2^63 up to (not including) 2^64: what `i64` and `u64` hold together.
+        Some(Self(
+            if (-9_223_372_036_854_775_808.0..18_446_744_073_709_551_616.0).contains(&v) {
+                IntegerRepr::Exact(v as i128)
+            } else {
+                IntegerRepr::Wide(v)
+            },
+        ))
+    }
+}
 
 impl From<i64> for Integer {
     fn from(value: i64) -> Self {
-        Self(value)
+        Self(IntegerRepr::Exact(i128::from(value)))
     }
 }
 
-impl From<Integer> for i64 {
-    fn from(value: Integer) -> Self {
-        value.0
+impl From<u64> for Integer {
+    fn from(value: u64) -> Self {
+        Self(IntegerRepr::Exact(i128::from(value)))
     }
 }
 
-impl std::ops::Deref for Integer {
-    type Target = i64;
-    fn deref(&self) -> &i64 {
-        &self.0
+impl From<i32> for Integer {
+    fn from(value: i32) -> Self {
+        Self(IntegerRepr::Exact(i128::from(value)))
+    }
+}
+
+impl From<u32> for Integer {
+    fn from(value: u32) -> Self {
+        Self(IntegerRepr::Exact(i128::from(value)))
+    }
+}
+
+impl Eq for Integer {}
+
+impl Ord for Integer {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        use std::cmp::Ordering;
+        match (self.0, other.0) {
+            (IntegerRepr::Exact(a), IntegerRepr::Exact(b)) => a.cmp(&b),
+            (IntegerRepr::Wide(a), IntegerRepr::Wide(b)) => a.total_cmp(&b),
+            // A wide value lies past every exact one, on its side of zero.
+            (IntegerRepr::Exact(_), IntegerRepr::Wide(b)) => {
+                if b > 0.0 {
+                    Ordering::Less
+                } else {
+                    Ordering::Greater
+                }
+            }
+            (IntegerRepr::Wide(a), IntegerRepr::Exact(_)) => {
+                if a > 0.0 {
+                    Ordering::Greater
+                } else {
+                    Ordering::Less
+                }
+            }
+        }
+    }
+}
+
+impl PartialOrd for Integer {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl std::hash::Hash for Integer {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self.0 {
+            IntegerRepr::Exact(v) => v.hash(state),
+            IntegerRepr::Wide(v) => v.to_bits().hash(state),
+        }
+    }
+}
+
+impl std::fmt::Display for Integer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.0 {
+            IntegerRepr::Exact(v) => write!(f, "{v}"),
+            IntegerRepr::Wide(v) => write!(f, "{v:.0}"),
+        }
     }
 }
 
 impl Serialize for Integer {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_i64(self.0)
+        match self.0 {
+            IntegerRepr::Exact(v) => match i64::try_from(v) {
+                Ok(i) => serializer.serialize_i64(i),
+                Err(_) => serializer.serialize_u64(u64::try_from(v).unwrap_or(u64::MAX)),
+            },
+            IntegerRepr::Wide(v) => serializer.serialize_f64(v),
+        }
     }
 }
 
@@ -143,14 +277,26 @@ impl<'de> Deserialize<'de> for Integer {
                 f.write_str("an integer")
             }
             fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<Integer, E> {
-                Ok(Integer(v))
+                Ok(Integer::from(v))
             }
             fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Integer, E> {
-                i64::try_from(v).map(Integer).map_err(|_| E::custom("an integer past i64"))
+                Ok(Integer::from(v))
+            }
+            fn visit_i128<E: serde::de::Error>(self, v: i128) -> Result<Integer, E> {
+                match (i64::try_from(v), u64::try_from(v)) {
+                    (Ok(i), _) => Ok(Integer::from(i)),
+                    (_, Ok(u)) => Ok(Integer::from(u)),
+                    _ => Ok(Integer(IntegerRepr::Wide(v as f64))),
+                }
+            }
+            fn visit_u128<E: serde::de::Error>(self, v: u128) -> Result<Integer, E> {
+                match u64::try_from(v) {
+                    Ok(u) => Ok(Integer::from(u)),
+                    Err(_) => Ok(Integer(IntegerRepr::Wide(v as f64))),
+                }
             }
             fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<Integer, E> {
-                let whole = v.fract() == 0.0 && v >= -9_223_372_036_854_775_808.0 && v < 9_223_372_036_854_775_808.0;
-                if whole { Ok(Integer(v as i64)) } else { Err(E::custom("a number with a fraction")) }
+                Integer::from_f64(v).ok_or_else(|| E::custom("a number with a fraction"))
             }
         }
         deserializer.deserialize_any(Reader)

@@ -4,6 +4,6 @@ Written by `cargo run --release -j 1` in `bench/sdk-rust`; do not edit. 100000 r
 
 | Shape | flowapi (ns) | progenitor's way (ns) | Ratio |
 | --- | ---: | ---: | ---: |
-| getRepo: path and a query flag | 136 | 363 | 2.66x |
-| search: an array, a deepObject, an integer | 361 | 783 | 2.17x |
-| putPet: path, query, header, JSON body | 229 | 276 | 1.20x |
+| getRepo: path and a query flag | 134 | 306 | 2.28x |
+| search: an array, a deepObject, an integer | 360 | 696 | 1.93x |
+| putPet: path, query, header, JSON body | 282 | 314 | 1.12x |

@@ -33,8 +33,9 @@ work here.
   printed once (`sdk/runtime.ts`); `tests/sdk/*.json` kept like the cases.
 - `crates/flowapi-rust`: the Rust target (serde types). `tests/cases/*.rs`, kept like the TypeScript ones.
   `src/sdk.rs` the opt-in SDK (`--target rust --sdk`): `sdk/request.rs`, `sdk/param.rs`,
-  `sdk/response.rs`, and the runtime printed once as `pub mod sdk` (`sdk/runtime.rs`,
-  `sdk/write.rs`, `sdk/expand.rs`, never compiled here: this crate has no serde);
+  `sdk/response.rs`, and the runtime printed once as `pub mod sdk` (`sdk/runtime.rs` and
+  `sdk/errors.rs`, its modules `sdk/write.rs`, `sdk/expand.rs` and `sdk/finite.rs`, never compiled
+  here: this crate has no serde); `src/print/integer.rs` the `Integer` type printed with the types;
   `tests/sdk/*.rs` kept for the TypeScript SDK's cases and `tests/sdk/names.json`.
 - `crates/flowapi-cli`: the `flowapi` command, all of flowapi's I/O.
 - `crates/flowapi-wasm`: the core and the TypeScript target as a WebAssembly module for the npm
@@ -46,7 +47,8 @@ work here.
 - `conformance/`: the oracles that hold flowapi to the specifications
   ([conformance/README.md](conformance/README.md)): the official suites' pinned copies
   (`suites/`), the suite oracle (`suite/`, O3; `suite-rust/` for the Rust target), the same
-  oracle run on the other generators (`compare/`), random schemas against flowschema (`props/`, O5),
+  oracle run on the other generators (`compare/`; `suite-rust/own/` our own cases in the suite's
+  format, run beside it), random schemas against flowschema (`props/`, O5),
   the OAI's example descriptions (`oai/`, O2), the SDK run under Node (`sdk/`, O8; `sdk-rust/` for
   the Rust SDK, its own cases in `sdk-rust/cases.json`), the
   requirements ledger (`ledger/`, O1), the

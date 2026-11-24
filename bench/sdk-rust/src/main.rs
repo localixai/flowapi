@@ -91,15 +91,15 @@ fn main() {
 
     let pairs = [
         (
-            ours(&api::get_repo_request(&repo)),
+            ours(&api::get_repo_request(&repo).expect("written")),
             theirs(&baseline::get_repo("flowapi org", "sdk/rust", Some(true))),
         ),
         (
-            ours(&api::search_request(&search)),
+            ours(&api::search_request(&search).expect("written")),
             theirs(&baseline::search(Some(&tags), &filter, Some(3))),
         ),
         (
-            ours(&api::put_pet_request(&pet)),
+            ours(&api::put_pet_request(&pet).expect("written")),
             theirs(&baseline::put_pet(42, Some(false), Some("abc-123"), &body)),
         ),
     ];
@@ -110,7 +110,7 @@ fn main() {
     let rows = [
         (
             "getRepo: path and a query flag",
-            time(|| api::get_repo_request(&repo).path.len()),
+            time(|| api::get_repo_request(&repo).map_or(0, |r| r.path.len())),
             time(|| {
                 baseline::get_repo("flowapi org", "sdk/rust", Some(true))
                     .path
@@ -119,12 +119,12 @@ fn main() {
         ),
         (
             "search: an array, a deepObject, an integer",
-            time(|| api::search_request(&search).query.len()),
+            time(|| api::search_request(&search).map_or(0, |r| r.query.len())),
             time(|| baseline::search(Some(&tags), &filter, Some(3)).query.len()),
         ),
         (
             "putPet: path, query, header, JSON body",
-            time(|| api::put_pet_request(&pet).body.map_or(0, |b| b.1.len())),
+            time(|| api::put_pet_request(&pet).map_or(0, |r| r.body.map_or(0, |b| b.1.len()))),
             time(|| {
                 baseline::put_pet(42, Some(false), Some("abc-123"), &body)
                     .body

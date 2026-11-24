@@ -2,11 +2,11 @@
 
 Written by `cd conformance/suite-rust && cargo run --release`; do not edit.
 
-A valid case is accepted when `serde_json::from_str::<Root>` reads it and the value written back equals it; an invalid case is rejected when it is not read.
+A valid case is accepted when `serde_json::from_str::<Root>` reads it and the value written back equals it; an invalid case is rejected when it is not read. Rows named `flowapi-*` are our own cases in the suite's format (`own/`), counted in the totals.
 
-- Soundness: 100.0% (779 of 779 valid cases accepted)
-- Precision: 60.7% (328 of 540 invalid cases rejected)
-- Groups: 613 in the suite, 409 run, 409 generated
+- Soundness: 100.0% (787 of 787 valid cases accepted)
+- Precision: 60.7% (330 of 543 invalid cases rejected)
+- Groups: 615 in the suite, 411 run, 411 generated
 - Generation errors: 0; invalid Rust: 0
 
 | File | Groups | Run | Gen. errors | Invalid Rust | Valid | Accepted | Sound % | Invalid | Rejected | Precision % |
@@ -64,7 +64,7 @@ A valid case is accepted when `serde_json::from_str::<Root>` reads it and the va
 | minLength | 2 | 2 | 0 | 0 | 4 | 4 | 100.0 | 3 | 0 | 0.0 |
 | minProperties | 2 | 2 | 0 | 0 | 8 | 8 | 100.0 | 2 | 0 | 0.0 |
 | minimum | 5 | 3 | 0 | 0 | 10 | 10 | 100.0 | 5 | 0 | 0.0 |
-| multipleOf | 12 | 6 | 0 | 0 | 8 | 8 | 100.0 | 5 | 1 | 20.0 |
+| multipleOf | 12 | 6 | 0 | 0 | 8 | 8 | 100.0 | 5 | 0 | 0.0 |
 | not | 9 | 9 | 0 | 0 | 16 | 16 | 100.0 | 24 | 20 | 83.3 |
 | oneOf | 11 | 11 | 0 | 0 | 12 | 12 | 100.0 | 15 | 9 | 60.0 |
 | pattern | 4 | 4 | 0 | 0 | 12 | 12 | 100.0 | 3 | 0 | 0.0 |
@@ -80,7 +80,8 @@ A valid case is accepted when `serde_json::from_str::<Root>` reads it and the va
 | unevaluatedProperties | 46 | 44 | 0 | 0 | 67 | 67 | 100.0 | 62 | 35 | 56.4 |
 | uniqueItems | 10 | 6 | 0 | 0 | 46 | 46 | 100.0 | 19 | 0 | 0.0 |
 | vocabulary | 4 | 2 | 0 | 0 | 3 | 3 | 100.0 | 2 | 1 | 50.0 |
-| **total** | 613 | 409 | 0 | 0 | 779 | 779 | 100.0 | 540 | 328 | 60.7 |
+| flowapi-integers | 2 | 2 | 0 | 0 | 8 | 8 | 100.0 | 3 | 3 | 100.0 |
+| **total** | 615 | 411 | 0 | 0 | 787 | 787 | 100.0 | 543 | 330 | 60.7 |
 
 ## Unsound cases
 

@@ -2,8 +2,9 @@
 //! operation, `<name>_request(&input)`, which writes the request the input makes (method, path,
 //! query, headers, body) and sends nothing, and `<name>_response(status, headers, body)`, which
 //! reads an answer back into an enum of the responses the description names. A runtime of a
-//! few functions is printed once, as `pub mod sdk` (`sdk/runtime.rs`, `sdk/write.rs`,
-//! `sdk/expand.rs`); it needs serde and serde_json, as the types do. What a call does not
+//! few functions is printed once, as `pub mod sdk` (`sdk/runtime.rs` and `sdk/errors.rs`, with
+//! `sdk/write.rs`, `sdk/expand.rs` and `sdk/finite.rs` as its modules); it needs serde and
+//! serde_json, as the types do. What a call does not
 //! depend on is decided here, once: path templates split, names percent-encoded, each
 //! parameter's style a constant, each status a `match` arm.
 
@@ -21,6 +22,8 @@ use flowapi::id::TypeId;
 const RUNTIME: &str = include_str!("sdk/runtime.rs");
 const WRITE: &str = include_str!("sdk/write.rs");
 const EXPAND: &str = include_str!("sdk/expand.rs");
+const ERRORS: &str = include_str!("sdk/errors.rs");
+const FINITE: &str = include_str!("sdk/finite.rs");
 
 /// A field of a struct the types printed: its identifier, key, type and whether it is there.
 pub(crate) struct Field<'p> {
@@ -49,10 +52,14 @@ pub(crate) fn write(e: &mut Emitter<'_, '_>, out: &mut String) {
     }
     out.push_str("\npub mod sdk {\n");
     out.push_str(RUNTIME);
+    out.push('\n');
+    out.push_str(crate::print::printed(ERRORS));
     out.push_str("\nmod write {\n");
     out.push_str(WRITE);
     out.push_str("}\n\nmod expand {\n");
     out.push_str(EXPAND);
+    out.push_str("}\n\nmod finite {\n");
+    out.push_str(FINITE);
     out.push_str("}\n}\n");
     let mut functions = Taken::of(["deserialize_some"]);
     for endpoint in endpoints {

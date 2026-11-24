@@ -204,66 +204,6 @@ pub trait Response {
     fn media_type(&self) -> Option<&'static str>;
 }
 
-/// An answer that is not a response the description names, or whose body is not what it says;
-/// the status, the content type and the body are kept, to read by hand.
-#[derive(Debug)]
-pub struct Error {
-    pub status: u16,
-    pub content_type: Option<String>,
-    pub body: Vec<u8>,
-    pub kind: ErrorKind,
-}
-
-/// Why an answer was not read.
-#[derive(Debug)]
-pub enum ErrorKind {
-    /// No response of the operation is for this status, and it has no `default`.
-    Status,
-    /// The response names no media type that the `Content-Type` is (or none was sent).
-    MediaType,
-    /// The body is not the JSON of the media type's type.
-    Json(serde_json::Error),
-    /// A `text/*` body that is not UTF-8.
-    Text,
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let ct = self.content_type.as_deref().unwrap_or("no content type");
-        match &self.kind {
-            ErrorKind::Status => write!(
-                f,
-                "status {} is not a response of the operation",
-                self.status
-            ),
-            ErrorKind::MediaType => write!(
-                f,
-                "status {}: {ct} is not a media type of the response",
-                self.status
-            ),
-            ErrorKind::Json(e) => write!(
-                f,
-                "status {} ({ct}): the body is not its type: {e}",
-                self.status
-            ),
-            ErrorKind::Text => write!(f, "status {} ({ct}): the body is not UTF-8", self.status),
-        }
-    }
-}
-
-impl std::error::Error for Error {}
-
-impl Error {
-    pub fn new(status: u16, content_type: Option<&str>, body: &[u8], kind: ErrorKind) -> Self {
-        Self {
-            status,
-            content_type: content_type.map(str::to_owned),
-            body: body.to_vec(),
-            kind,
-        }
-    }
-}
-
 /// How a style writes a value: RFC 6570's operator (`first`, `sep`, `named`, `ifemp`; 3.2,
 /// Appendix C), `explode`, what joins an unexploded list (`,`, `%20`, `%7C`) and the encoder.
 #[derive(Clone, Copy, Debug)]
@@ -386,21 +326,40 @@ pub fn encode(out: &mut String, t: &str, enc: Enc) {
 }
 
 /// One parameter's value written into `out` by its style, after `sep` when `out` holds
-/// something already; `false` when there was nothing to write (an empty list or object).
+/// something already; `false` when there was nothing to write (an empty list or object). A
+/// value written raw (a header, `style: cookie`) is refused if it holds a CR, LF or NUL, and
+/// NaN or an infinity anywhere in a value is refused.
 pub fn put<T: Serialize + ?Sized>(
     out: &mut String,
     sep: &str,
     name: &str,
     s: Style,
     v: &T,
-) -> bool {
+) -> Result<bool, Reason> {
+    let start = out.len();
     let lead = if out.is_empty() { "" } else { sep };
     let mut w = write::W::new(out, lead, name, s);
-    v.serialize(expand::Ser {
+    let wrote = match v.serialize(expand::Ser {
         w: &mut w,
         at: write::At::Top,
-    })
-    .unwrap_or(false)
+    }) {
+        Ok(wrote) => wrote,
+        Err(expand::Error::NonFinite) => return Err(Reason::NonFinite),
+        Err(expand::Error::Compound | expand::Error::Custom(_)) => false,
+    };
+    if s.enc == Enc::Raw {
+        control(out.get(start..).unwrap_or(""))?;
+    }
+    Ok(wrote)
+}
+
+/// A CR, LF or NUL, which would end a header and start another.
+fn control(text: &str) -> Result<(), Reason> {
+    if text.bytes().any(|b| matches!(b, b'\r' | b'\n' | 0)) {
+        Err(Reason::ControlCharacter)
+    } else {
+        Ok(())
+    }
 }
 
 /// A header, set when its value writes something.
@@ -409,43 +368,80 @@ pub fn header<T: Serialize + ?Sized>(
     name: &str,
     s: Style,
     v: &T,
-) {
+) -> Result<(), Reason> {
     let mut text = String::new();
-    if put(&mut text, "", name, s, v) {
+    if put(&mut text, "", name, s, v)? {
         headers.push((name.to_owned(), text));
+    }
+    Ok(())
+}
+
+/// The path segment written from `start` to the path's end, refused when it is empty or a dot
+/// segment: `.`, `..`, or either with a dot as `%2E` (WHATWG's URL parser reads those as dots
+/// too). `pieces`: a parameter of it keeps `/` (`allowReserved`), and each piece between them is
+/// held to the same.
+#[inline]
+pub fn segment(path: &str, start: usize, pieces: bool) -> Result<(), Reason> {
+    let len = path.len().saturating_sub(start);
+    // A dot segment is at most 6 bytes (`%2e%2e`): a longer one is none, read no further.
+    if len > 6 && !pieces {
+        return Ok(());
+    }
+    if len == 0 {
+        return Err(Reason::EmptySegment);
+    }
+    let s = path.get(start..).unwrap_or("");
+    let dot = |p: &str| after_dot(p).is_some_and(|r| r.is_empty() || after_dot(r) == Some(""));
+    if dot(s) || (pieces && s.split('/').any(dot)) {
+        return Err(Reason::DotSegment);
+    }
+    Ok(())
+}
+
+/// What follows a leading `.` or `%2E`.
+fn after_dot(p: &str) -> Option<&str> {
+    match p.get(..3) {
+        Some(h) if h.eq_ignore_ascii_case("%2e") => p.get(3..),
+        _ => p.strip_prefix('.'),
     }
 }
 
 /// A value as `application/x-www-form-urlencoded`, after `sep` when `out` holds something:
 /// each member a pair, a list's items pairs of the same key, an object member as JSON, `null`
-/// an empty value (the Encoding Object's defaults).
-pub fn form<T: Serialize + ?Sized>(out: &mut String, sep: &str, v: &T) {
+/// an empty value (the Encoding Object's defaults). NaN or an infinity is refused.
+pub fn form<T: Serialize + ?Sized>(out: &mut String, sep: &str, v: &T) -> Result<(), Reason> {
     let lead = if out.is_empty() { "" } else { sep };
     let s = Style::new(Shape::Form, true, Enc::Plain);
     let mut w = write::W::new(out, lead, "", s);
-    let _ = v.serialize(expand::Ser {
+    match v.serialize(expand::Ser {
         w: &mut w,
         at: write::At::Form,
-    });
+    }) {
+        Err(expand::Error::NonFinite) => Err(Reason::NonFinite),
+        Ok(_) | Err(expand::Error::Compound | expand::Error::Custom(_)) => Ok(()),
+    }
 }
 
 /// A form body's bytes.
-pub fn form_body<T: Serialize + ?Sized>(v: &T) -> Vec<u8> {
+pub fn form_body<T: Serialize + ?Sized>(v: &T) -> Result<Vec<u8>, Reason> {
     let mut out = String::new();
-    form(&mut out, "&", v);
-    out.into_bytes()
+    form(&mut out, "&", v)?;
+    Ok(out.into_bytes())
 }
 
-/// A JSON body's bytes. The generated types always serialize (their maps' keys are strings).
-pub fn json_body<T: Serialize + ?Sized>(v: &T) -> Vec<u8> {
-    serde_json::to_vec(v).unwrap_or_default()
+/// A JSON body's bytes; NaN or an infinity anywhere in it is refused (serde_json would write
+/// `null`). The generated types always serialize (their maps' keys are strings).
+#[inline]
+pub fn json_body<T: Serialize + ?Sized>(v: &T) -> Result<Vec<u8>, Reason> {
+    json_text(v).map(String::into_bytes)
 }
 
 /// A parameter with `content`: its JSON for a JSON media type, else its text (a string as it
-/// is, a number or boolean as written, anything else as JSON); then written as a string.
-pub fn content<T: Serialize + ?Sized>(v: &T, json: bool) -> String {
+/// is, a number or boolean as written, anything else as JSON); then written as a string. NaN or
+/// an infinity is refused.
+pub fn content<T: Serialize + ?Sized>(v: &T, json: bool) -> Result<String, Reason> {
     if json {
-        return serde_json::to_string(v).unwrap_or_default();
+        return json_text(v);
     }
     let mut out = String::new();
     let s = Style::new(Shape::Simple, false, Enc::Raw);
@@ -454,9 +450,21 @@ pub fn content<T: Serialize + ?Sized>(v: &T, json: bool) -> String {
         w: &mut w,
         at: write::At::Top,
     }) {
-        Err(expand::Error::Compound) => serde_json::to_string(v).unwrap_or_default(),
-        Ok(_) | Err(_) => out,
+        Err(expand::Error::NonFinite) => Err(Reason::NonFinite),
+        Err(expand::Error::Compound) => json_text(v),
+        Ok(_) | Err(expand::Error::Custom(_)) => Ok(out),
     }
+}
+
+/// A value's JSON text, NaN or an infinity in it refused. serde_json writes a non-finite number
+/// as `null`: with no `null` in the text there is none, and the value is walked only when there
+/// is one.
+fn json_text<T: Serialize + ?Sized>(v: &T) -> Result<String, Reason> {
+    let text = serde_json::to_string(v).unwrap_or_default();
+    if text.contains("null") && !finite::finite(v) {
+        return Err(Reason::NonFinite);
+    }
+    Ok(text)
 }
 
 /// `in: querystring` of a media type other than a form: the text percent-encoded, after `&`.
@@ -493,9 +501,11 @@ pub fn media(content_type: Option<&str>, table: &[&str]) -> Option<usize> {
         .or_else(|| table.iter().position(|t| *t == "*/*"))
 }
 
-/// A JSON body read as its type; an empty or broken body is an error, never a default.
+/// A JSON body read as its type; an empty or broken body is an error, never a default. A
+/// leading byte order mark is skipped (RFC 8259, 8.1 lets a parser ignore it).
 pub fn json<T: DeserializeOwned>(status: u16, ct: Option<&str>, body: &[u8]) -> Result<T, Error> {
-    serde_json::from_slice(body).map_err(|e| Error::new(status, ct, body, ErrorKind::Json(e)))
+    let text = body.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(body);
+    serde_json::from_slice(text).map_err(|e| Error::new(status, ct, body, ErrorKind::Json(e)))
 }
 
 /// A `text/*` body.
@@ -508,6 +518,141 @@ pub fn text(status: u16, ct: Option<&str>, body: &[u8]) -> Result<String, Error>
 /// A body of a media range (`image/*`, `*/*`): the content type sent and the bytes.
 pub fn ranged(ct: Option<&str>, body: &[u8]) -> (String, Vec<u8>) {
     (ct.unwrap_or("").to_owned(), body.to_vec())
+}
+
+/// A request `<name>_request` refuses to write: a value that would change what the request
+/// means, rather than what it says. Nothing of it is sent.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RequestError {
+    /// Where the value goes: `path`, `query`, `querystring`, `header`, `cookie` or `body`.
+    pub location: &'static str,
+    /// The parameter's name as the description writes it; `None` for the body.
+    pub parameter: Option<&'static str>,
+    pub reason: Reason,
+}
+
+/// Why a request was refused.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Reason {
+    /// A CR, LF or NUL in a header's or a cookie's value, which would end the header it is in
+    /// and start another (header injection).
+    ControlCharacter,
+    /// A path parameter that makes a whole segment empty: `/files/` names another resource.
+    EmptySegment,
+    /// A path parameter that makes a segment `.` or `..` (or `%2E` for a dot): a client or a
+    /// server removes it and the one before it (RFC 3986, 5.2.4), so the path names another
+    /// resource (path traversal).
+    DotSegment,
+    /// NaN or an infinity, which JSON has no number for: serde_json would write `null`, and a
+    /// parameter the text `NaN`.
+    NonFinite,
+}
+
+impl Reason {
+    /// The reason as a code, the same as the TypeScript SDK's `FlowapiRequestError.reason`.
+    pub fn code(self) -> &'static str {
+        match self {
+            Self::ControlCharacter => "control-character",
+            Self::EmptySegment => "empty-segment",
+            Self::DotSegment => "dot-segment",
+            Self::NonFinite => "non-finite",
+        }
+    }
+}
+
+impl std::fmt::Display for RequestError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let why = match self.reason {
+            Reason::ControlCharacter => "a CR, LF or NUL in its value",
+            Reason::EmptySegment => "an empty path segment",
+            Reason::DotSegment => "a path segment `.` or `..`",
+            Reason::NonFinite => "NaN or an infinity, which JSON has no number for",
+        };
+        match self.parameter {
+            Some(name) => write!(f, "the {} parameter `{name}`: {why}", self.location),
+            None => write!(f, "the body: {why}"),
+        }
+    }
+}
+
+impl std::error::Error for RequestError {}
+
+/// What turns a refusal into the error of a parameter.
+pub fn at(location: &'static str, parameter: &'static str) -> impl FnOnce(Reason) -> RequestError {
+    move |reason| RequestError {
+        location,
+        parameter: Some(parameter),
+        reason,
+    }
+}
+
+/// A refusal of the body.
+pub fn in_body(reason: Reason) -> RequestError {
+    RequestError {
+        location: "body",
+        parameter: None,
+        reason,
+    }
+}
+
+/// An answer that is not a response the description names, or whose body is not what it says;
+/// the status, the content type and the body are kept, to read by hand.
+#[derive(Debug)]
+pub struct Error {
+    pub status: u16,
+    pub content_type: Option<String>,
+    pub body: Vec<u8>,
+    pub kind: ErrorKind,
+}
+
+/// Why an answer was not read.
+#[derive(Debug)]
+pub enum ErrorKind {
+    /// No response of the operation is for this status, and it has no `default`.
+    Status,
+    /// The response names no media type that the `Content-Type` is (or none was sent).
+    MediaType,
+    /// The body is not the JSON of the media type's type.
+    Json(serde_json::Error),
+    /// A `text/*` body that is not UTF-8.
+    Text,
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let ct = self.content_type.as_deref().unwrap_or("no content type");
+        match &self.kind {
+            ErrorKind::Status => write!(
+                f,
+                "status {} is not a response of the operation",
+                self.status
+            ),
+            ErrorKind::MediaType => write!(
+                f,
+                "status {}: {ct} is not a media type of the response",
+                self.status
+            ),
+            ErrorKind::Json(e) => write!(
+                f,
+                "status {} ({ct}): the body is not its type: {e}",
+                self.status
+            ),
+            ErrorKind::Text => write!(f, "status {} ({ct}): the body is not UTF-8", self.status),
+        }
+    }
+}
+
+impl std::error::Error for Error {}
+
+impl Error {
+    pub fn new(status: u16, content_type: Option<&str>, body: &[u8], kind: ErrorKind) -> Self {
+        Self {
+            status,
+            content_type: content_type.map(str::to_owned),
+            body: body.to_vec(),
+            kind,
+        }
+    }
 }
 
 mod write {
@@ -752,10 +897,12 @@ pub(super) struct Ser<'w, 'a> {
 }
 
 /// Why a value was not written: it is a list or an associative array where only its JSON text
-/// goes (caught by the caller, who writes the JSON), or serde's own error.
+/// goes (caught by the caller, who writes the JSON), NaN or an infinity (refused), or serde's
+/// own error.
 #[derive(Debug)]
 pub enum Error {
     Compound,
+    NonFinite,
     Custom(String),
 }
 
@@ -763,6 +910,7 @@ impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Compound => f.write_str("a list or an object where a value goes"),
+            Self::NonFinite => f.write_str("NaN or an infinity, which JSON has no number for"),
             Self::Custom(m) => f.write_str(m),
         }
     }
@@ -785,16 +933,16 @@ impl<'w, 'a> Ser<'w, 'a> {
 
     /// A number as JavaScript's `String(n)` writes it, as the TypeScript SDK does: the
     /// shortest digits that read back, in decimal from 1e-6 up to 1e21 and with an exponent
-    /// outside (`1e+21`, `1e-7`); `0` for both zeros, `Infinity`, `NaN`.
+    /// outside (`1e+21`, `1e-7`); `0` for both zeros. NaN and the infinities are refused: JSON
+    /// has no number for them, and their text would reach the server as a string.
     fn float(self, v: f64) -> Result<bool, Error> {
+        if !v.is_finite() {
+            return Err(Error::NonFinite);
+        }
         let mut d = Digits::default();
         let a = v.abs();
         let _ = if v == 0.0 {
             d.write_str("0")
-        } else if v.is_nan() {
-            d.write_str("NaN")
-        } else if v.is_infinite() {
-            d.write_str(if v > 0.0 { "Infinity" } else { "-Infinity" })
         } else if (1e-6..1e21).contains(&a) {
             write!(d, "{v}")
         } else {
@@ -854,6 +1002,10 @@ impl Many<'_, '_> {
             Ok(_) => Ok(()),
             Err(Error::Compound) => {
                 let json = serde_json::to_string(v).map_err(|e| Error::Custom(e.to_string()))?;
+                // A non-finite number is `null` in the text: walked only when there is one.
+                if json.contains("null") && !super::finite::finite(v) {
+                    return Err(Error::NonFinite);
+                }
                 self.w.text(self.at, &json);
                 Ok(())
             }
@@ -1053,17 +1205,193 @@ impl ser::SerializeMap for Many<'_, '_> {
     }
 }
 }
+
+mod finite {
+//! A walk of a value that stops at NaN or an infinity: serde_json writes them as `null`, so a
+//! JSON body and a value's JSON text are walked first. It writes nothing and allocates nothing.
+//! Printed once inside the generated `sdk` module, never compiled here.
+
+use serde::Serialize;
+use serde::ser;
+use std::fmt::Display;
+
+/// Why the walk stopped: a number JSON has none for, or the value's own serde error (left to
+/// serde_json to report as it does).
+#[derive(Debug)]
+pub(super) enum Stop {
+    NonFinite,
+    Other,
+}
+
+impl Display for Stop {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::NonFinite => "NaN or an infinity",
+            Self::Other => "the value's own error",
+        })
+    }
+}
+
+impl std::error::Error for Stop {}
+
+impl ser::Error for Stop {
+    fn custom<T: Display>(_: T) -> Self {
+        Self::Other
+    }
+}
+
+/// Whether a value holds no NaN and no infinity.
+pub(super) fn finite<T: Serialize + ?Sized>(v: &T) -> bool {
+    !matches!(v.serialize(Walk), Err(Stop::NonFinite))
+}
+
+pub(super) struct Walk;
+
+macro_rules! scalars {
+    ($($f:ident: $t:ty),*) => {
+        $(fn $f(self, _: $t) -> Result<(), Stop> { Ok(()) })*
+    };
+}
+
+impl ser::Serializer for Walk {
+    type Ok = ();
+    type Error = Stop;
+    type SerializeSeq = Self;
+    type SerializeTuple = Self;
+    type SerializeTupleStruct = Self;
+    type SerializeTupleVariant = Self;
+    type SerializeMap = Self;
+    type SerializeStruct = Self;
+    type SerializeStructVariant = Self;
+
+    scalars!(serialize_bool: bool, serialize_i8: i8, serialize_i16: i16, serialize_i32: i32,
+        serialize_i64: i64, serialize_i128: i128, serialize_u8: u8, serialize_u16: u16,
+        serialize_u32: u32, serialize_u64: u64, serialize_u128: u128, serialize_char: char,
+        serialize_str: &str, serialize_bytes: &[u8], serialize_unit_struct: &'static str);
+
+    fn serialize_f32(self, v: f32) -> Result<(), Stop> {
+        self.serialize_f64(f64::from(v))
+    }
+    fn serialize_f64(self, v: f64) -> Result<(), Stop> {
+        if v.is_finite() { Ok(()) } else { Err(Stop::NonFinite) }
+    }
+    fn serialize_none(self) -> Result<(), Stop> {
+        Ok(())
+    }
+    fn serialize_some<T: Serialize + ?Sized>(self, v: &T) -> Result<(), Stop> {
+        v.serialize(self)
+    }
+    fn serialize_unit(self) -> Result<(), Stop> {
+        Ok(())
+    }
+    fn serialize_unit_variant(self, _: &'static str, _: u32, _: &'static str) -> Result<(), Stop> {
+        Ok(())
+    }
+    fn serialize_newtype_struct<T: Serialize + ?Sized>(
+        self,
+        _: &'static str,
+        v: &T,
+    ) -> Result<(), Stop> {
+        v.serialize(self)
+    }
+    fn serialize_newtype_variant<T: Serialize + ?Sized>(
+        self,
+        _: &'static str,
+        _: u32,
+        _: &'static str,
+        v: &T,
+    ) -> Result<(), Stop> {
+        v.serialize(self)
+    }
+    fn serialize_seq(self, _: Option<usize>) -> Result<Self, Stop> {
+        Ok(self)
+    }
+    fn serialize_tuple(self, _: usize) -> Result<Self, Stop> {
+        Ok(self)
+    }
+    fn serialize_tuple_struct(self, _: &'static str, _: usize) -> Result<Self, Stop> {
+        Ok(self)
+    }
+    fn serialize_tuple_variant(
+        self,
+        _: &'static str,
+        _: u32,
+        _: &'static str,
+        _: usize,
+    ) -> Result<Self, Stop> {
+        Ok(self)
+    }
+    fn serialize_map(self, _: Option<usize>) -> Result<Self, Stop> {
+        Ok(self)
+    }
+    fn serialize_struct(self, _: &'static str, _: usize) -> Result<Self, Stop> {
+        Ok(self)
+    }
+    fn serialize_struct_variant(
+        self,
+        _: &'static str,
+        _: u32,
+        _: &'static str,
+        _: usize,
+    ) -> Result<Self, Stop> {
+        Ok(self)
+    }
+}
+
+macro_rules! items {
+    ($($t:ident: $f:ident),*) => {$(
+        impl ser::$t for Walk {
+            type Ok = ();
+            type Error = Stop;
+            fn $f<T: Serialize + ?Sized>(&mut self, v: &T) -> Result<(), Stop> { v.serialize(Walk) }
+            fn end(self) -> Result<(), Stop> { Ok(()) }
+        }
+    )*};
+}
+
+items!(SerializeSeq: serialize_element, SerializeTuple: serialize_element,
+    SerializeTupleStruct: serialize_field, SerializeTupleVariant: serialize_field);
+
+macro_rules! fields {
+    ($($t:ident),*) => {$(
+        impl ser::$t for Walk {
+            type Ok = ();
+            type Error = Stop;
+            fn serialize_field<T: Serialize + ?Sized>(&mut self, _: &'static str, v: &T) -> Result<(), Stop> {
+                v.serialize(Walk)
+            }
+            fn end(self) -> Result<(), Stop> { Ok(()) }
+        }
+    )*};
+}
+
+fields!(SerializeStruct, SerializeStructVariant);
+
+impl ser::SerializeMap for Walk {
+    type Ok = ();
+    type Error = Stop;
+    fn serialize_key<T: Serialize + ?Sized>(&mut self, _: &T) -> Result<(), Stop> {
+        Ok(())
+    }
+    fn serialize_value<T: Serialize + ?Sized>(&mut self, v: &T) -> Result<(), Stop> {
+        v.serialize(Walk)
+    }
+    fn end(self) -> Result<(), Stop> {
+        Ok(())
+    }
+}
+}
 }
 
 /// `GET /pets`: the request; it sends nothing.
-pub fn get_pets_request() -> sdk::Request {
-    sdk::Request {
+pub fn get_pets_request() -> Result<sdk::Request, sdk::RequestError> {
+    Ok(sdk::Request {
         method: "GET",
         path: String::from("/pets"),
         query: String::new(),
         headers: Vec::new(),
         body: None,
-    }
+    })
 }
 
 /// The responses of `get_pets_request`, by status and media type. It serializes as its body: a range or `default` as the status and the body.
@@ -1142,21 +1470,21 @@ pub enum AddPetBody {
     Text(String, Vec<u8>),
 }
 
-/// `POST /pets`: the request `input` makes; it sends nothing.
-pub fn add_pet_request(input: &AddPetInput) -> sdk::Request {
+/// `POST /pets`: the request `input` makes; it sends nothing, and refuses a value that would change what the request means (`sdk::RequestError`).
+pub fn add_pet_request(input: &AddPetInput) -> Result<sdk::Request, sdk::RequestError> {
     let body = Some(match &input.body {
-        AddPetBody::ApplicationJson(v) => (String::from("application/json"), sdk::json_body(v)),
-        AddPetBody::ApplicationXWwwFormUrlencoded(v) => (String::from("application/x-www-form-urlencoded"), sdk::form_body(v)),
+        AddPetBody::ApplicationJson(v) => (String::from("application/json"), sdk::json_body(v).map_err(sdk::in_body)?),
+        AddPetBody::ApplicationXWwwFormUrlencoded(v) => (String::from("application/x-www-form-urlencoded"), sdk::form_body(v).map_err(sdk::in_body)?),
         AddPetBody::MultipartFormData(t, v) => (t.clone(), v.clone()),
         AddPetBody::Text(t, v) => (t.clone(), v.clone()),
     });
-    sdk::Request {
+    Ok(sdk::Request {
         method: "POST",
         path: String::from("/pets"),
         query: String::new(),
         headers: Vec::new(),
         body,
-    }
+    })
 }
 
 /// The responses of `add_pet_request`, by status and media type. It serializes as its body: a range or `default` as the status and the body.
@@ -1203,18 +1531,21 @@ pub enum PatchPetBody {
     ApplicationMergePatchJson(PatchPetRequestBodyApplicationMergePatchJson),
 }
 
-/// `PATCH /pets`: the request `input` makes; it sends nothing.
-pub fn patch_pet_request(input: &PatchPetInput) -> sdk::Request {
-    let body = input.body.as_ref().map(|b| match b {
-        PatchPetBody::ApplicationMergePatchJson(v) => (String::from("application/merge-patch+json"), sdk::json_body(v)),
-    });
-    sdk::Request {
+/// `PATCH /pets`: the request `input` makes; it sends nothing, and refuses a value that would change what the request means (`sdk::RequestError`).
+pub fn patch_pet_request(input: &PatchPetInput) -> Result<sdk::Request, sdk::RequestError> {
+    let body = match &input.body {
+        None => None,
+        Some(b) => Some(match b {
+        PatchPetBody::ApplicationMergePatchJson(v) => (String::from("application/merge-patch+json"), sdk::json_body(v).map_err(sdk::in_body)?),
+        }),
+    };
+    Ok(sdk::Request {
         method: "PATCH",
         path: String::from("/pets"),
         query: String::new(),
         headers: Vec::new(),
         body,
-    }
+    })
 }
 
 /// The responses of `patch_pet_request`, by status and media type. It serializes as its body: a range or `default` as the status and the body.

@@ -48,7 +48,9 @@ for (const row of table.rows) {
     const id = `s${row.line}${location[0]}`
     const param = { name: 'color', in: location, style: row.style, schema: {}, ...(location === 'path' ? { required: true } : {}) }
     if (row.explode !== null) param.explode = row.explode
-    add('3.2.1', id, location === 'path' ? `/${id}/{color}` : `/${id}`, 'get', { parameters: [param] })
+    // A path parameter after a literal `x`: the table is about the expansion, and a whole
+    // segment left empty or `.` (as it shows for undefined) is refused, by the cases.
+    add('3.2.1', id, location === 'path' ? `/${id}/x{color}` : `/${id}`, 'get', { parameters: [param] })
     for (const ex of row.examples) rows.push({ id, location, row, ex })
   }
 }
@@ -86,12 +88,20 @@ for (const version of Object.keys(docs)) {
 }
 
 const failures = []
+// `{ "$number": "NaN" }` (or "Infinity", "-Infinity") is the number JSON cannot write.
+const revive = (v) => {
+  if (Array.isArray(v)) return v.map(revive)
+  if (v === null || typeof v !== 'object') return v
+  const keys = Object.keys(v)
+  if (keys.length === 1 && keys[0] === '$number') return Number(v.$number)
+  return Object.fromEntries(keys.map((k) => [k, revive(v[k])]))
+}
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 let tableRun = 0
 for (const { id, location, row, ex } of rows) {
   const input = { [location]: { color: table.values[ex.value] } }
   const r = sdk['3.2.1'][`${id}Request`](input)
-  const got = location === 'path' ? r.path.slice(id.length + 2)
+  const got = location === 'path' ? r.path.slice(id.length + 3)
     : location === 'query' ? r.query
       : location === 'header' ? (r.headers.color ?? '')
         : (r.headers.cookie ?? '')
@@ -112,8 +122,20 @@ cases.forEach((c, i) => {
         }
         continue
       }
-      const got = m[`c${i}Request`](call.input ?? {})
       const want = call.expect
+      let got
+      try {
+        got = m[`c${i}Request`](revive(call.input ?? {}))
+      } catch (e) {
+        if (e?.name !== 'FlowapiRequestError') throw e
+        const refused = { location: e.location, parameter: e.parameter, reason: e.reason }
+        if (!same(refused, want.refused)) failures.push(`${what}: refused ${JSON.stringify(refused)}, want ${JSON.stringify(want.refused ?? 'a request')}`)
+        continue
+      }
+      if (want.refused) {
+        failures.push(`${what}: wrote ${JSON.stringify(got)}, want it refused ${JSON.stringify(want.refused)}`)
+        continue
+      }
       if ('path' in want && got.path !== `/c${i}${want.path}`) failures.push(`${what}: path ${JSON.stringify(got.path)}, want ${JSON.stringify(`/c${i}${want.path}`)}`)
       for (const k of ['method', 'query', 'body']) {
         if (k in want && !same(got[k], want[k])) failures.push(`${what}: ${k} ${JSON.stringify(got[k])}, want ${JSON.stringify(want[k])}`)

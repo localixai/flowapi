@@ -27,66 +27,6 @@ pub trait Response {
     fn media_type(&self) -> Option<&'static str>;
 }
 
-/// An answer that is not a response the description names, or whose body is not what it says;
-/// the status, the content type and the body are kept, to read by hand.
-#[derive(Debug)]
-pub struct Error {
-    pub status: u16,
-    pub content_type: Option<String>,
-    pub body: Vec<u8>,
-    pub kind: ErrorKind,
-}
-
-/// Why an answer was not read.
-#[derive(Debug)]
-pub enum ErrorKind {
-    /// No response of the operation is for this status, and it has no `default`.
-    Status,
-    /// The response names no media type that the `Content-Type` is (or none was sent).
-    MediaType,
-    /// The body is not the JSON of the media type's type.
-    Json(serde_json::Error),
-    /// A `text/*` body that is not UTF-8.
-    Text,
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let ct = self.content_type.as_deref().unwrap_or("no content type");
-        match &self.kind {
-            ErrorKind::Status => write!(
-                f,
-                "status {} is not a response of the operation",
-                self.status
-            ),
-            ErrorKind::MediaType => write!(
-                f,
-                "status {}: {ct} is not a media type of the response",
-                self.status
-            ),
-            ErrorKind::Json(e) => write!(
-                f,
-                "status {} ({ct}): the body is not its type: {e}",
-                self.status
-            ),
-            ErrorKind::Text => write!(f, "status {} ({ct}): the body is not UTF-8", self.status),
-        }
-    }
-}
-
-impl std::error::Error for Error {}
-
-impl Error {
-    pub fn new(status: u16, content_type: Option<&str>, body: &[u8], kind: ErrorKind) -> Self {
-        Self {
-            status,
-            content_type: content_type.map(str::to_owned),
-            body: body.to_vec(),
-            kind,
-        }
-    }
-}
-
 /// How a style writes a value: RFC 6570's operator (`first`, `sep`, `named`, `ifemp`; 3.2,
 /// Appendix C), `explode`, what joins an unexploded list (`,`, `%20`, `%7C`) and the encoder.
 #[derive(Clone, Copy, Debug)]
@@ -209,21 +149,40 @@ pub fn encode(out: &mut String, t: &str, enc: Enc) {
 }
 
 /// One parameter's value written into `out` by its style, after `sep` when `out` holds
-/// something already; `false` when there was nothing to write (an empty list or object).
+/// something already; `false` when there was nothing to write (an empty list or object). A
+/// value written raw (a header, `style: cookie`) is refused if it holds a CR, LF or NUL, and
+/// NaN or an infinity anywhere in a value is refused.
 pub fn put<T: Serialize + ?Sized>(
     out: &mut String,
     sep: &str,
     name: &str,
     s: Style,
     v: &T,
-) -> bool {
+) -> Result<bool, Reason> {
+    let start = out.len();
     let lead = if out.is_empty() { "" } else { sep };
     let mut w = write::W::new(out, lead, name, s);
-    v.serialize(expand::Ser {
+    let wrote = match v.serialize(expand::Ser {
         w: &mut w,
         at: write::At::Top,
-    })
-    .unwrap_or(false)
+    }) {
+        Ok(wrote) => wrote,
+        Err(expand::Error::NonFinite) => return Err(Reason::NonFinite),
+        Err(expand::Error::Compound | expand::Error::Custom(_)) => false,
+    };
+    if s.enc == Enc::Raw {
+        control(out.get(start..).unwrap_or(""))?;
+    }
+    Ok(wrote)
+}
+
+/// A CR, LF or NUL, which would end a header and start another.
+fn control(text: &str) -> Result<(), Reason> {
+    if text.bytes().any(|b| matches!(b, b'\r' | b'\n' | 0)) {
+        Err(Reason::ControlCharacter)
+    } else {
+        Ok(())
+    }
 }
 
 /// A header, set when its value writes something.
@@ -232,43 +191,80 @@ pub fn header<T: Serialize + ?Sized>(
     name: &str,
     s: Style,
     v: &T,
-) {
+) -> Result<(), Reason> {
     let mut text = String::new();
-    if put(&mut text, "", name, s, v) {
+    if put(&mut text, "", name, s, v)? {
         headers.push((name.to_owned(), text));
+    }
+    Ok(())
+}
+
+/// The path segment written from `start` to the path's end, refused when it is empty or a dot
+/// segment: `.`, `..`, or either with a dot as `%2E` (WHATWG's URL parser reads those as dots
+/// too). `pieces`: a parameter of it keeps `/` (`allowReserved`), and each piece between them is
+/// held to the same.
+#[inline]
+pub fn segment(path: &str, start: usize, pieces: bool) -> Result<(), Reason> {
+    let len = path.len().saturating_sub(start);
+    // A dot segment is at most 6 bytes (`%2e%2e`): a longer one is none, read no further.
+    if len > 6 && !pieces {
+        return Ok(());
+    }
+    if len == 0 {
+        return Err(Reason::EmptySegment);
+    }
+    let s = path.get(start..).unwrap_or("");
+    let dot = |p: &str| after_dot(p).is_some_and(|r| r.is_empty() || after_dot(r) == Some(""));
+    if dot(s) || (pieces && s.split('/').any(dot)) {
+        return Err(Reason::DotSegment);
+    }
+    Ok(())
+}
+
+/// What follows a leading `.` or `%2E`.
+fn after_dot(p: &str) -> Option<&str> {
+    match p.get(..3) {
+        Some(h) if h.eq_ignore_ascii_case("%2e") => p.get(3..),
+        _ => p.strip_prefix('.'),
     }
 }
 
 /// A value as `application/x-www-form-urlencoded`, after `sep` when `out` holds something:
 /// each member a pair, a list's items pairs of the same key, an object member as JSON, `null`
-/// an empty value (the Encoding Object's defaults).
-pub fn form<T: Serialize + ?Sized>(out: &mut String, sep: &str, v: &T) {
+/// an empty value (the Encoding Object's defaults). NaN or an infinity is refused.
+pub fn form<T: Serialize + ?Sized>(out: &mut String, sep: &str, v: &T) -> Result<(), Reason> {
     let lead = if out.is_empty() { "" } else { sep };
     let s = Style::new(Shape::Form, true, Enc::Plain);
     let mut w = write::W::new(out, lead, "", s);
-    let _ = v.serialize(expand::Ser {
+    match v.serialize(expand::Ser {
         w: &mut w,
         at: write::At::Form,
-    });
+    }) {
+        Err(expand::Error::NonFinite) => Err(Reason::NonFinite),
+        Ok(_) | Err(expand::Error::Compound | expand::Error::Custom(_)) => Ok(()),
+    }
 }
 
 /// A form body's bytes.
-pub fn form_body<T: Serialize + ?Sized>(v: &T) -> Vec<u8> {
+pub fn form_body<T: Serialize + ?Sized>(v: &T) -> Result<Vec<u8>, Reason> {
     let mut out = String::new();
-    form(&mut out, "&", v);
-    out.into_bytes()
+    form(&mut out, "&", v)?;
+    Ok(out.into_bytes())
 }
 
-/// A JSON body's bytes. The generated types always serialize (their maps' keys are strings).
-pub fn json_body<T: Serialize + ?Sized>(v: &T) -> Vec<u8> {
-    serde_json::to_vec(v).unwrap_or_default()
+/// A JSON body's bytes; NaN or an infinity anywhere in it is refused (serde_json would write
+/// `null`). The generated types always serialize (their maps' keys are strings).
+#[inline]
+pub fn json_body<T: Serialize + ?Sized>(v: &T) -> Result<Vec<u8>, Reason> {
+    json_text(v).map(String::into_bytes)
 }
 
 /// A parameter with `content`: its JSON for a JSON media type, else its text (a string as it
-/// is, a number or boolean as written, anything else as JSON); then written as a string.
-pub fn content<T: Serialize + ?Sized>(v: &T, json: bool) -> String {
+/// is, a number or boolean as written, anything else as JSON); then written as a string. NaN or
+/// an infinity is refused.
+pub fn content<T: Serialize + ?Sized>(v: &T, json: bool) -> Result<String, Reason> {
     if json {
-        return serde_json::to_string(v).unwrap_or_default();
+        return json_text(v);
     }
     let mut out = String::new();
     let s = Style::new(Shape::Simple, false, Enc::Raw);
@@ -277,9 +273,21 @@ pub fn content<T: Serialize + ?Sized>(v: &T, json: bool) -> String {
         w: &mut w,
         at: write::At::Top,
     }) {
-        Err(expand::Error::Compound) => serde_json::to_string(v).unwrap_or_default(),
-        Ok(_) | Err(_) => out,
+        Err(expand::Error::NonFinite) => Err(Reason::NonFinite),
+        Err(expand::Error::Compound) => json_text(v),
+        Ok(_) | Err(expand::Error::Custom(_)) => Ok(out),
     }
+}
+
+/// A value's JSON text, NaN or an infinity in it refused. serde_json writes a non-finite number
+/// as `null`: with no `null` in the text there is none, and the value is walked only when there
+/// is one.
+fn json_text<T: Serialize + ?Sized>(v: &T) -> Result<String, Reason> {
+    let text = serde_json::to_string(v).unwrap_or_default();
+    if text.contains("null") && !finite::finite(v) {
+        return Err(Reason::NonFinite);
+    }
+    Ok(text)
 }
 
 /// `in: querystring` of a media type other than a form: the text percent-encoded, after `&`.
@@ -316,9 +324,11 @@ pub fn media(content_type: Option<&str>, table: &[&str]) -> Option<usize> {
         .or_else(|| table.iter().position(|t| *t == "*/*"))
 }
 
-/// A JSON body read as its type; an empty or broken body is an error, never a default.
+/// A JSON body read as its type; an empty or broken body is an error, never a default. A
+/// leading byte order mark is skipped (RFC 8259, 8.1 lets a parser ignore it).
 pub fn json<T: DeserializeOwned>(status: u16, ct: Option<&str>, body: &[u8]) -> Result<T, Error> {
-    serde_json::from_slice(body).map_err(|e| Error::new(status, ct, body, ErrorKind::Json(e)))
+    let text = body.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(body);
+    serde_json::from_slice(text).map_err(|e| Error::new(status, ct, body, ErrorKind::Json(e)))
 }
 
 /// A `text/*` body.

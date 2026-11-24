@@ -17,7 +17,7 @@ pub(crate) fn check(call: &Call, got: &Value, failures: &mut Vec<String>) {
             let header = |name: &str| pair(got, name).unwrap_or_default();
             let cell = match location.as_str() {
                 "path" => str_of(got, "path")
-                    .get(id.len() + 2..)
+                    .get(id.len() + 3..)
                     .unwrap_or("")
                     .to_owned(),
                 "query" => str_of(got, "query").to_owned(),
@@ -65,6 +65,19 @@ fn request(
     if got.get("input").is_some() {
         fail(format!("the input does not deserialize: {}", got["input"]));
         return;
+    }
+    match (want.get("refused"), got.get("refused")) {
+        (Some(w), g) => {
+            if g != Some(w) {
+                fail(format!("refused {}, want {w}", got));
+            }
+            return;
+        }
+        (None, Some(g)) => {
+            fail(format!("refused: {g}"));
+            return;
+        }
+        (None, None) => {}
     }
     if let Some(p) = want["path"].as_str() {
         let w = format!("/{id}{p}");

@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+- Both SDKs refuse a request that would mean something other than it says, rather than write
+  it: a CR, LF or NUL in a header's value or a `style: cookie` cookie (header injection; a form
+  cookie is percent-encoded as before), a path parameter that leaves its whole segment empty or
+  makes it `.` or `..` (`%2E` read as a dot too, each piece between the `/` that
+  `allowReserved` keeps held to the same), and NaN or an infinity in a parameter or a JSON or
+  form body (written as `NaN` and as `null` before). TypeScript: `<op>Request` throws a
+  `FlowapiRequestError` (exported; `location`, `parameter`, `reason`). Rust: `<op>_request` returns
+  `Result<sdk::Request, sdk::RequestError>` (`location`, `parameter`, `reason: sdk::Reason`,
+  `Reason::code()` the same strings). A JSON response body's leading byte order mark is skipped.
+- A header's or a cookie's name that is not an RFC 9110 token is left out of the operation with
+  a warning (`parameter.token`); a response key that is not a status (`6XX`, `600`, a word) is
+  left out with a warning, and a range written `4xx` is read with one (`responses.status`).
+- The Rust `Integer` holds every JSON integer serde_json reads: exact from `i64::MIN` to
+  `u64::MAX` (it refused everything past `i64::MAX`), past that the whole `f64` serde_json gives
+  (digits past 2^53 are already lost there without its `arbitrary_precision`). It no longer
+  dereferences to `i64`: `as_i64()`, `as_u64()`, `as_i128()`, `as_f64()`, `from_f64()`, `From`
+  the integer types, `Display`, `Ord` and `Hash` as before. O3 for Rust runs our own cases beside
+  the suite (`conformance/suite-rust/own/`: 2^63, 2^64 - 1, 2^64, 1e20, -1e19, 1e300 read and
+  written back; 1.5 refused).
 - More of a schema is stated by the type (O3 precision 63.3% to 69.0%, soundness still 100%):
   `propertyNames` (`false`, an `enum` or `const` of names as a closed object, `maxLength: 0` as
   the empty key, a literal `pattern` as a template signature) and `maxProperties: 0`; `contains`

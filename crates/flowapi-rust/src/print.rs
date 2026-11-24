@@ -27,59 +27,18 @@ impl<'de> Deserialize<'de> for Never {
 }
 ";
 
-const INTEGER: &str = "\
-/// A JSON integer: any number with no fraction, `1.0` among them, kept as an `i64`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct Integer(pub i64);
+/// The JSON integer type, printed when a type uses it.
+const INTEGER: &str = include_str!("print/integer.rs");
 
-impl From<i64> for Integer {
-    fn from(value: i64) -> Self {
-        Self(value)
+/// A file printed into the output without the `//!` lines it opens with, which say what the
+/// file is here: in the output they would be inner doc comments where none may be.
+pub(crate) fn printed(text: &str) -> &str {
+    let mut rest = text;
+    while let Some(line) = rest.strip_prefix("//!") {
+        rest = line.split_once('\n').map_or("", |(_, after)| after);
     }
+    rest.trim_start_matches('\n')
 }
-
-impl From<Integer> for i64 {
-    fn from(value: Integer) -> Self {
-        value.0
-    }
-}
-
-impl std::ops::Deref for Integer {
-    type Target = i64;
-    fn deref(&self) -> &i64 {
-        &self.0
-    }
-}
-
-impl Serialize for Integer {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_i64(self.0)
-    }
-}
-
-impl<'de> Deserialize<'de> for Integer {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        struct Reader;
-        impl serde::de::Visitor<'_> for Reader {
-            type Value = Integer;
-            fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                f.write_str(\"an integer\")
-            }
-            fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<Integer, E> {
-                Ok(Integer(v))
-            }
-            fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Integer, E> {
-                i64::try_from(v).map(Integer).map_err(|_| E::custom(\"an integer past i64\"))
-            }
-            fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<Integer, E> {
-                let whole = v.fract() == 0.0 && v >= -9_223_372_036_854_775_808.0 && v < 9_223_372_036_854_775_808.0;
-                if whole { Ok(Integer(v as i64)) } else { Err(E::custom(\"a number with a fraction\")) }
-            }
-        }
-        deserializer.deserialize_any(Reader)
-    }
-}
-";
 
 const SOME: &str = "\
 /// A present field read as `Some`, `null` among its values: absent stays `None`.
@@ -145,7 +104,7 @@ pub(crate) fn program(p: &Program<'_>, sdk: bool) -> String {
     }
     if second.uses.helpers.integer {
         out.push('\n');
-        out.push_str(INTEGER);
+        out.push_str(printed(INTEGER));
     }
     if sdk {
         crate::sdk::write(&mut second, &mut out);

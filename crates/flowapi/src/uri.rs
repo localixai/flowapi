@@ -172,7 +172,3 @@ fn remove_dots(path: &str) -> String {
         joined
     }
 }
-
-#[cfg(test)]
-#[path = "uri_tests.rs"]
-mod tests;
