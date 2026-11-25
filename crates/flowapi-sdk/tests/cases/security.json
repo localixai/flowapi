@@ -1,0 +1,208 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "security",
+  "version": "1"
+ },
+ "components": {
+  "securitySchemes": {
+   "headerKey": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "X-API-Key",
+    "description": "your key"
+   },
+   "queryKey": {
+    "type": "apiKey",
+    "in": "query",
+    "name": "api_key"
+   },
+   "cookieKey": {
+    "type": "apiKey",
+    "in": "cookie",
+    "name": "session"
+   },
+   "bearer": {
+    "type": "http",
+    "scheme": "Bearer",
+    "bearerFormat": "JWT"
+   },
+   "basic": {
+    "type": "http",
+    "scheme": "basic"
+   },
+   "oauth": {
+    "type": "oauth2",
+    "flows": {
+     "authorizationCode": {
+      "authorizationUrl": "https://example.com/auth",
+      "tokenUrl": "https://example.com/token",
+      "scopes": {
+       "read": "read",
+       "write": "write"
+      }
+     },
+     "clientCredentials": {
+      "tokenUrl": "https://example.com/token",
+      "scopes": {}
+     }
+    }
+   },
+   "oidc": {
+    "type": "openIdConnect",
+    "openIdConnectUrl": "https://example.com/.well-known/openid-configuration"
+   },
+   "cert": {
+    "type": "mutualTLS"
+   },
+   "alias": {
+    "$ref": "#/components/securitySchemes/bearer"
+   },
+   "dangling": {
+    "$ref": "#/components/securitySchemes/nowhere"
+   },
+   "noName": {
+    "type": "apiKey",
+    "in": "header"
+   },
+   "badIn": {
+    "type": "apiKey",
+    "in": "body",
+    "name": "k"
+   },
+   "noScheme": {
+    "type": "http"
+   },
+   "noFlows": {
+    "type": "oauth2"
+   },
+   "magic": {
+    "type": "magic"
+   },
+   "untyped": {},
+   "noUrl": {
+    "type": "openIdConnect"
+   }
+  }
+ },
+ "security": [
+  {
+   "headerKey": []
+  },
+  {
+   "bearer": [],
+   "basic": []
+  }
+ ],
+ "paths": {
+  "/a": {
+   "get": {
+    "operationId": "inherits",
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "put": {
+    "operationId": "anonymous",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "post": {
+    "operationId": "scoped",
+    "security": [
+     {
+      "oauth": [
+       "read",
+       "write"
+      ]
+     },
+     {
+      "oidc": [
+       "openid"
+      ]
+     },
+     {}
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "patch": {
+    "operationId": "unknown",
+    "security": [
+     {
+      "nope": []
+     },
+     {
+      "cert": [],
+      "queryKey": [
+       "admin"
+      ]
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "delete": {
+    "operationId": "malformed",
+    "security": [
+     3,
+     {
+      "cookieKey": "read"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "options": {
+    "operationId": "notAList",
+    "security": {
+     "headerKey": []
+    },
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   }
+  }
+ },
+ "x-flowapi-covers": [
+  "req: oas-3.1.components-object.securitySchemes — every scheme read by name, one behind a $ref",
+  "req: oas-3.1.openapi-object.security — the description's alternatives, inherited by an operation with none; one not a list is a warning",
+  "req: oas-3.1.operation-object.security — an operation's security replaces the description's; `[]` is none; one not a list is a warning",
+  "req: oas-3.1.security-requirement-object.pattern-name — each name with its scopes; malformed scopes and items are warnings",
+  "req: oas-3.1.security-requirement-object.must-security-requirement-object-refer-multiple-security — a requirement of two schemes is one alternative needing both",
+  "req: oas-3.1.security-requirement-object.pattern-name.must-each-name-correspond-security-scheme-declared — a name no scheme is declared under is a warning, kept",
+  "req: oas-3.1.security-requirement-object.pattern-name.may-security-scheme-type-oauth2-openidconnect-value — OAuth 2.0 and OpenID Connect scopes printed",
+  "req: oas-3.1.security-scheme-object.type — apiKey, http, oauth2, openIdConnect, mutualTLS; an unknown type is a warning and left out",
+  "req: oas-3.1.security-scheme-object.type.required — a scheme with no type is left out, with a warning",
+  "req: oas-3.1.security-scheme-object.in — header, query and cookie keys",
+  "req: oas-3.1.security-scheme-object.in.required — an in no key can go in leaves the scheme out, with a warning",
+  "req: oas-3.1.security-scheme-object.name — the key's name",
+  "req: oas-3.1.security-scheme-object.name.required — a key with no name is left out, with a warning",
+  "req: oas-3.1.security-scheme-object.scheme — bearer and basic, read without case",
+  "req: oas-3.1.security-scheme-object.scheme.required — http with no scheme is left out, with a warning",
+  "req: oas-3.1.security-scheme-object.bearerFormat — the bearer format printed as a hint",
+  "req: oas-3.1.security-scheme-object.flows — the flows named",
+  "req: oas-3.1.security-scheme-object.flows.required — oauth2 with no flows is left out, with a warning",
+  "req: oas-3.1.security-scheme-object.openIdConnectUrl — the discovery URL printed",
+  "req: oas-3.1.security-scheme-object.description — a scheme's description printed",
+  "req: oas-3.1.security-scheme-object.openIdConnectUrl.required — OpenID Connect with no URL is left out, with a warning",
+  "req: oas-3.1.security-requirement-object.pattern-name.may-other-security-scheme-types-array-contain — scopes of an API key kept as written"
+ ]
+}

@@ -7,6 +7,10 @@ mod pattern;
 mod print;
 mod sdk;
 
+/// What the SDK decides that a layer above the target prints by (`flowapi-sdk`): its functions'
+/// names, each request's method, how a body is read, a TypeScript string literal.
+pub use sdk::{ReadAs, bases as sdk_bases, lit as string_literal, method as sdk_method};
+
 use flowapi::lower::Capabilities;
 use flowapi::{File, IdentifierRules, Output, Program, Target};
 

@@ -1,12 +1,13 @@
 # flowapi: types from API descriptions. The core (crates/flowapi) reads OpenAPI and JSON Schema
 # into a type graph with no I/O; each target language is a crate of its own (crates/flowapi-ts),
 # the CLI is the shell (crates/flowapi-cli). YAML is read into JSON for the core by a crate of its
-# own (crates/flowapi-yaml), which the CLI and the WebAssembly module share. The bench and the
-# conformance harness are crates of their own, outside this workspace: the tools compared with and
-# the suites never reach a build.
+# own (crates/flowapi-yaml), which the CLI and the WebAssembly module share. The SDK layer
+# (crates/flowapi-sdk) sits above the targets: what a client needs beside a target's SDK. The
+# bench and the conformance harness are crates of their own, outside this workspace: the tools
+# compared with and the suites never reach a build.
 [workspace]
 resolver = "3"
-members = ["crates/flowapi", "crates/flowapi-ts", "crates/flowapi-cli", "crates/flowapi-rust", "crates/flowapi-wasm", "crates/flowapi-yaml"]
+members = ["crates/flowapi", "crates/flowapi-ts", "crates/flowapi-cli", "crates/flowapi-rust", "crates/flowapi-wasm", "crates/flowapi-yaml", "crates/flowapi-sdk"]
 exclude = ["bench", "conformance"]
 
 [workspace.package]

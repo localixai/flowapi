@@ -190,7 +190,12 @@ or makes it `.` or `..` (`empty-segment`, `dot-segment`; `%2E` is a dot too), Na
 anywhere in a parameter or a JSON or form body (`non-finite`: JSON has no such number, and
 `JSON.stringify` would write `null`). A header's name that is not a token is left out of the
 operation, with a warning. The output imports nothing: the runtime is a few functions
-printed once. The base URL is yours (servers are not read). Every row of the specification's
+printed once. With `--sdk` the base URL and any authentication are still yours to add: the
+command does not print `servers`, `securitySchemes` or `security`. The SDK layer
+(`crates/flowapi-sdk`, not yet behind a command) reads them, Swagger 2.0's `host`, `basePath` and
+`schemes` included, and prints a table to put after this output: the servers with their
+variables, the security schemes, and each operation's method, path, own servers, security and
+how each response body is read. Every row of the specification's
 Style Examples table, the pitfalls other generators fixed, and the SDKs of GitHub's, Stripe's and
 Cloudflare's descriptions are run or type-checked
 ([conformance/results/sdk.md](conformance/results/sdk.md)); writing a request against

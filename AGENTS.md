@@ -38,6 +38,16 @@ work here.
   `sdk/errors.rs`, its modules `sdk/write.rs`, `sdk/expand.rs` and `sdk/finite.rs`, never compiled
   here: this crate has no serde); `src/print/integer.rs` the `Integer` type printed with the types;
   `tests/sdk/*.rs` kept for the TypeScript SDK's cases and `tests/sdk/names.json`.
+- `crates/flowapi-sdk`: the SDK layer, above the targets: what a client needs beside a target's
+  SDK, which no type depends on. It reads the documents through the core's public modules
+  (`doc.rs`: references followed, each endpoint's Operation Object found again), `servers.rs`
+  (3.x `servers` at three levels with variables; 2.0's `host`, `basePath`, `schemes` lifted) and
+  `security.rs` (`securitySchemes` or 2.0's `securityDefinitions`, `security`) into `model.rs`,
+  and `print.rs` prints the TypeScript table put after `--sdk`'s output (`flowapiServers`,
+  `flowapiSecuritySchemes`, `flowapiOperations`), naming the functions as `flowapi-ts` does. No
+  I/O (G5). `tests/cases/*.json` and the `.ts` kept beside each (`--test table`, each case's
+  `x-flowapi-covers` the ledger's markers); `tests/tsc.mjs` type-checks and imports them after the
+  `--sdk` output.
 - `crates/flowapi-cli`: the `flowapi` command, all of flowapi's I/O.
 - `crates/flowapi-yaml`: a description's text as the core reads it, shared by the command and the
   WebAssembly module: which document is YAML (`is_yaml`), YAML 1.2 read into JSON with each node's
@@ -81,6 +91,8 @@ cargo test -p flowapi-rust --test sdk                  # the Rust SDK kept for e
 (cd conformance/sdk-rust && cargo run --release -j 1 --bin corpus -- --build)   # its corpus
 (cd bench/sdk-rust && cargo run --release -j 1)        # writing requests against progenitor's way
 cargo test -p flowapi-ts --test fuzz                   # O7, no input panics
+cargo test -p flowapi-sdk --test table                 # the SDK layer's tables (FLOWAPI_BLESS=1)
+node crates/flowapi-sdk/tests/tsc.mjs                  # them type-checked after --sdk; after cargo build --release
 cargo run --release -p flowapi-cli -- <description.json> -o types.ts
 bench/run.sh                          # the benchmarks, then held to bench/budgets.json
 ```

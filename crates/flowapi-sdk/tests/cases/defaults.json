@@ -1,0 +1,109 @@
+{
+ "openapi": "3.0.3",
+ "info": {
+  "title": "defaults",
+  "version": "1"
+ },
+ "components": {
+  "securitySchemes": {
+   "session": {
+    "type": "apiKey",
+    "in": "cookie",
+    "name": "sid"
+   },
+   "cert": {
+    "type": "mutualTLS"
+   },
+   "untyped": {},
+   "noIn": {
+    "type": "apiKey",
+    "name": "k"
+   },
+   "noName": {
+    "type": "apiKey",
+    "in": "header"
+   },
+   "oauth": {
+    "type": "oauth2",
+    "flows": {
+     "implicit": {
+      "authorizationUrl": "https://example.com/a",
+      "scopes": {
+       "read": "read"
+      }
+     }
+    }
+   }
+  }
+ },
+ "paths": {
+  "/open": {
+   "get": {
+    "operationId": "open",
+    "responses": {
+     "200": {
+      "description": "ok",
+      "content": {
+       "text/plain": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/mine": {
+   "get": {
+    "operationId": "mine",
+    "security": [
+     {
+      "session": []
+     },
+     {
+      "oauth": [
+       "read"
+      ]
+     },
+     {
+      "ghost": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok",
+      "content": {
+       "application/json": {
+        "schema": {}
+       },
+       "image/*": {
+        "schema": {}
+       }
+      }
+     },
+     "default": {
+      "description": "else",
+      "content": {
+       "*/*": {}
+      }
+     }
+    }
+   }
+  }
+ },
+ "x-flowapi-covers": [
+  "req: oas-3.0.openapi-object.servers — no servers: the default `/`",
+  "req: oas-3.0.components-object.securitySchemes — the schemes read by name",
+  "req: oas-3.0.security-scheme-object.type — a type 3.0 does not define (mutualTLS) is a warning and left out",
+  "req: oas-3.0.security-scheme-object.in — an API key in a cookie",
+  "req: oas-3.0.security-scheme-object.name — an API key's name",
+  "req: oas-3.0.operation-object.security — an operation's own security; one with none and no description security needs none",
+  "req: oas-3.0.security-requirement-object.pattern-name — a requirement names a scheme, scopes empty",
+  "req: oas-3.0.security-scheme-object.type.required — a scheme with no type is left out, with a warning",
+  "req: oas-3.0.security-scheme-object.in.required — a key with no in is left out, with a warning",
+  "req: oas-3.0.security-scheme-object.name.required — a key with no name is left out, with a warning",
+  "req: oas-3.0.security-requirement-object.pattern-name.may-security-scheme-type-oauth2-openidconnect-value — OAuth 2.0 scopes printed",
+  "req: oas-3.0.security-requirement-object.pattern-name.must-each-name-correspond-security-scheme-declared — a name no scheme is declared under is a warning, kept"
+ ]
+}

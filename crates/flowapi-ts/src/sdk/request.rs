@@ -7,7 +7,7 @@
 
 use super::{bare, lit, percent};
 use flowapi::graph::Endpoint;
-use flowapi::spec::{Location, Param, Style};
+use flowapi::spec::{Location, Operation, Param, Style};
 use std::fmt::Write;
 
 /// The methods a Path Item names by a field, written in lower case; 3.2's
@@ -15,6 +15,17 @@ use std::fmt::Write;
 const FIELDS: [&str; 9] = [
     "get", "put", "post", "delete", "options", "head", "patch", "trace", "query",
 ];
+
+/// The method a request is sent with: a Path Item's field in upper case, 3.2's
+/// `additionalOperations` as written.
+#[must_use]
+pub fn method(op: &Operation) -> String {
+    if FIELDS.contains(&op.method.as_str()) {
+        op.method.to_ascii_uppercase()
+    } else {
+        op.method.clone()
+    }
+}
 
 pub(super) fn write(out: &mut String, e: &Endpoint, decl: &str, base: &str) {
     let op = &e.operation;
@@ -69,11 +80,7 @@ pub(super) fn write(out: &mut String, e: &Endpoint, decl: &str, base: &str) {
     if has(Location::Cookie) {
         out.push_str("  if (cookie !== \"\") headers[\"cookie\"] = cookie;\n");
     }
-    let method = if FIELDS.contains(&op.method.as_str()) {
-        op.method.to_ascii_uppercase()
-    } else {
-        op.method.clone()
-    };
+    let method = method(op);
     let _ = writeln!(
         out,
         "  const request: $Request = {{ method: {}, path: {}, query{}, headers }};",

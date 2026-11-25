@@ -7,7 +7,7 @@
 //! description does not name is `response: null` with the body as given: a type is never claimed
 //! for a body nothing said what it is.
 
-use super::{bare, is_json, lit};
+use super::{ReadAs, bare, lit};
 use flowapi::graph::Endpoint;
 use std::fmt::Write;
 
@@ -77,20 +77,19 @@ pub(super) fn write(out: &mut String, e: &Endpoint, decl: &str, base: &str) {
 /// so it is each of those its range allows: `text/*` JSON (a `+json` type) or text, `*/*` any,
 /// another range JSON or bytes.
 fn body_type(t: &str, ty: String) -> String {
-    let b = bare(t);
-    if b.contains('*') {
-        if b == "*/*" {
-            format!("{ty} | string | Uint8Array")
-        } else if b.starts_with("text/") {
-            format!("{ty} | string")
-        } else {
-            format!("{ty} | Uint8Array")
+    match ReadAs::of(t) {
+        ReadAs::Json => ty,
+        ReadAs::Text => String::from("string"),
+        ReadAs::Bytes => String::from("Uint8Array"),
+        ReadAs::Sent => {
+            let b = bare(t);
+            if b == "*/*" {
+                format!("{ty} | string | Uint8Array")
+            } else if b.starts_with("text/") {
+                format!("{ty} | string")
+            } else {
+                format!("{ty} | Uint8Array")
+            }
         }
-    } else if is_json(&b) {
-        ty
-    } else if b.starts_with("text/") {
-        String::from("string")
-    } else {
-        String::from("Uint8Array")
     }
 }
