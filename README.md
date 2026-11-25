@@ -164,7 +164,8 @@ cargo run --release -p flowapi-cli -- openapi.json --sdk -o api.ts
 const r = getPetRequest({ path: { id: 7 }, query: { tags: ["a b", "c"] } })
 // { method: "GET", path: "/pets/7", query: "tags=a%20b&tags=c", headers: {} }
 const res = await fetch(base + r.path + (r.query && "?" + r.query), r)
-const out = getPetResponse(res.status, Object.fromEntries(res.headers), await res.text())
+const body = new Uint8Array(await res.arrayBuffer())
+const out = getPetResponse(res.status, Object.fromEntries(res.headers), body)
 if (out.response === "200") out.body // Pet, parsed from JSON
 ```
 
@@ -174,9 +175,14 @@ Parameters are written as their `style`, `explode` and `allowReserved` say (`sim
 `style: cookie`, which pass as given; a parameter with `content` as its media type's text; cookies
 into one `cookie` header. The body is `{ contentType, value }` of one of the operation's media
 types: JSON, a form, or text as given (a multipart body is yours to write). A response is picked
-by its status (the code, then `2XX`, then `default`) and its `Content-Type`; a JSON body is
-parsed, any other is the text, and what the description does not name comes back as
-`response: null` with the text (a leading byte order mark is skipped before JSON is parsed).
+by its status (the code, then `2XX`, then `default`) and its `Content-Type`, and its body, given as
+text or as bytes, read by the type sent as the Rust SDK reads it: JSON parsed (a leading byte
+order mark skipped), `text/*` a `string`, any other a `Uint8Array`, a media range any of those
+its range allows. Bytes given for JSON or text are read as UTF-8; a string given for a binary type
+is encoded as UTF-8, so give bytes (a string decoded from them has lost what was not UTF-8).
+What the description does not name, and a JSON or text body that is not UTF-8 or not JSON, comes
+back as `response: null` with the body as given. `flowapiReadsBytes(contentType)` (exported)
+says which bodies are read as bytes, for a client that reads the others with `text()`.
 `<op>Request` throws a `FlowapiRequestError` (exported, with `location`, `parameter` and
 `reason`) rather than write a request that would mean something else: a CR, LF or NUL in a header
 or a `style: cookie` value (`control-character`), a path parameter that leaves its segment empty

@@ -8,5 +8,6 @@
   "NonNullable":{"type":"string"},
   "ReturnType":{"type":"array","items":{"$ref":"#/components/schemas/Record"}},
   "RegExpExecArray":{"type":"integer"},
+  "Uint8Array":{"type":"string","format":"binary"},
   "Request":{"type":"string"},
   "JSON":{"type":"string"}}}}

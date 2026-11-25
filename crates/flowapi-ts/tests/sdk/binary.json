@@ -1,0 +1,7 @@
+{"openapi":"3.1.0","info":{"title":"binary","version":"1"},
+ "paths":{"/files/{id}":{
+   "get":{"operationId":"getFile","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string"}}],
+    "responses":{
+     "200":{"description":"the file","content":{"application/octet-stream":{"schema":{"type":"string","format":"binary"}},"image/png":{"schema":{"type":"string","contentMediaType":"image/png"}},"application/xml":{"schema":{"type":"string"}},"text/plain; charset=utf-8":{"schema":{"type":"string"}}}},
+     "206":{"description":"a part","content":{"image/*":{"schema":{"type":"string","format":"binary"}},"text/*":{"schema":{"type":"string"}}}},
+     "default":{"description":"anything","content":{"*/*":{"schema":{}}}}}}}}}

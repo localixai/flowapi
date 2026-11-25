@@ -13,6 +13,8 @@ export type ReturnType2 = Record2[];
 
 export type RegExpExecArray2 = number;
 
+export type Uint8Array2 = string;
+
 export type Request = string;
 
 export type JSON = string;
@@ -74,12 +76,6 @@ export class FlowapiRequestError extends Error {
     this.reason = reason;
   }
 }
-
-/** A response read: which response of the description it is (`null` for none), and its body. */
-type $Read = { response: string | null; status: number; mediaType: string | null; body: unknown };
-
-/** Per response, as written: its status, its media types as written and their bare forms. */
-type $Table = readonly (readonly [string, readonly string[], readonly string[]])[];
 
 const $unreserved = /^[A-Za-z0-9\-._~]*$/;
 const $marks = /[!'()*]/g;
@@ -335,6 +331,49 @@ function $set(headers: Record<string, string>, name: string, s: string | undefin
   headers[name] = s;
 }
 
+/** A response read: which response of the description it is (`null` for none), and its body. */
+type $Read = { response: string | null; status: number; mediaType: string | null; body: unknown };
+
+/** Per response, as written: its status, its media types as written and their bare forms. */
+type $Table = readonly (readonly [string, readonly string[], readonly string[]])[];
+
+/** The platform's UTF-8 coders (every browser, Node, Deno and Bun has them), looked up on
+ * `globalThis` so the output type-checks without the DOM's or Node's declarations. */
+type $Coders = {
+  TextDecoder: new (label: string, options: { fatal: boolean; ignoreBOM: boolean }) => {
+    decode(bytes: Uint8Array): string;
+  };
+  TextEncoder: new () => { encode(text: string): Uint8Array };
+};
+
+let $decoder: { decode(bytes: Uint8Array): string } | undefined;
+
+/** Bytes as UTF-8 text, a byte order mark kept as the character; `null` when they are not
+ * UTF-8 (the Rust SDK refuses them too, where `Response.text()` would replace them). */
+function $utf8(bytes: Uint8Array): string | null {
+  $decoder ??= new (globalThis as unknown as $Coders).TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+  try {
+    return $decoder.decode(bytes);
+  } catch {
+    return null;
+  }
+}
+
+/** A `text/*` type (a JSON one is read as JSON first). */
+function $text(bare: string): boolean {
+  return bare.startsWith("text/");
+}
+
+/**
+ * Whether `<op>Response` keeps a body of this `Content-Type` as bytes: any type but JSON and
+ * `text/*`, and a body with none. Read such a body with `arrayBuffer()`, the others with
+ * `text()`; bytes are always safe to give, as they are decoded where the type is text.
+ */
+export function flowapiReadsBytes(contentType: string | null | undefined): boolean {
+  if (contentType === null || contentType === undefined) return true;
+  return !$json(contentType) && !$text($bare(contentType));
+}
+
 /** A header, its name compared without case. */
 function $header(headers: Record<string, string>, name: string): string | null {
   const direct = headers[name];
@@ -347,11 +386,13 @@ function $header(headers: Record<string, string>, name: string): string | null {
 
 /**
  * The response a status picks (its code, then its range `NXX`, then `default`), the media type
- * the `Content-Type` picks (exact, then `type/*`, then `*\/*`), and the body read: JSON for a
- * JSON type, the text otherwise. A status or a media type the description does not name reads
- * as `response: null` with the text.
+ * the `Content-Type` picks (exact, then `type/*`, then `*\/*`), and the body read by the type
+ * sent: JSON parsed, `text/*` the text, any other the bytes (a string given for it encoded as
+ * UTF-8: its bytes were lost before). Bytes given for JSON or text are decoded as UTF-8. A
+ * status or a media type the description does not name, and a JSON or text body that is not
+ * UTF-8 or not JSON, read as `response: null` with the body as given.
  */
-function $read(table: $Table, status: number, headers: Record<string, string>, body: string): $Read {
+function $read(table: $Table, status: number, headers: Record<string, string>, body: string | Uint8Array): $Read {
   const code = String(status);
   const range = code.charAt(0) + "XX";
   let hit: (typeof table)[number] | undefined;
@@ -370,12 +411,18 @@ function $read(table: $Table, status: number, headers: Record<string, string>, b
   if (at < 0) at = hit[2].indexOf("*/*");
   const written = hit[1][at];
   if (written === undefined) return { response: null, status, mediaType: type, body };
-  if (!$json(type)) return { response: hit[0], status, mediaType: written, body };
-  // An empty or broken JSON body is not the response described: the text, unnamed. A leading
-  // byte order mark is skipped (RFC 8259, 8.1), as `JSON.parse` would refuse it.
+  const json = $json(type);
+  if (!json && !$text(bare)) {
+    const bytes = typeof body === "string" ? new (globalThis as unknown as $Coders).TextEncoder().encode(body) : body;
+    return { response: hit[0], status, mediaType: written, body: bytes };
+  }
+  const text = typeof body === "string" ? body : $utf8(body);
+  if (text === null) return { response: null, status, mediaType: type, body };
+  if (!json) return { response: hit[0], status, mediaType: written, body: text };
+  // An empty or broken JSON body is not the response described: the body as given, unnamed. A
+  // leading byte order mark is skipped (RFC 8259, 8.1), as `JSON.parse` would refuse it.
   try {
-    const text = body.charCodeAt(0) === 0xfeff ? body.slice(1) : body;
-    return { response: hit[0], status, mediaType: written, body: JSON.parse(text) };
+    return { response: hit[0], status, mediaType: written, body: JSON.parse(text.charCodeAt(0) === 0xfeff ? text.slice(1) : text) };
   } catch {
     return { response: null, status, mediaType: type, body };
   }
@@ -393,11 +440,11 @@ const $listThingsResponse: $Table = [["200", ["application/json"], ["application
 export function listThingsResponse(
   status: number,
   headers: Record<string, string>,
-  body: string,
+  body: string | Uint8Array,
 ):
   | { response: "200"; status: 200; mediaType: "application/json"; body: ListThings["responses"]["200"]["content"]["application/json"] }
-  | { response: "204"; status: 204; mediaType: null; body: string }
-  | { response: null; status: number; mediaType: string | null; body: string } {
+  | { response: "204"; status: 204; mediaType: null; body: string | Uint8Array }
+  | { response: null; status: number; mediaType: string | null; body: string | Uint8Array } {
   return $read($listThingsResponse, status, headers, body) as ReturnType<typeof listThingsResponse>;
 }
 // warning[names.collision]: `Record` names another type too, once made an identifier: declared as `Record2`
@@ -405,3 +452,4 @@ export function listThingsResponse(
 // warning[names.collision]: `NonNullable` names another type too, once made an identifier: declared as `NonNullable2`
 // warning[names.collision]: `ReturnType` names another type too, once made an identifier: declared as `ReturnType2`
 // warning[names.collision]: `RegExpExecArray` names another type too, once made an identifier: declared as `RegExpExecArray2`
+// warning[names.collision]: `Uint8Array` names another type too, once made an identifier: declared as `Uint8Array2`

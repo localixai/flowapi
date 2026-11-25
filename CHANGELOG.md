@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- The TypeScript SDK reads binary responses as bytes, as the Rust SDK does: `<op>Response(status,
+  headers, body)` takes `body: string | Uint8Array` (it took a `string`) and reads it by the type
+  sent: JSON parsed, `text/*` a `string`, any other a `Uint8Array` (an `application/xml` or
+  `application/octet-stream` body was text before, and bytes that were not UTF-8 were lost on the
+  way). The response union says `Uint8Array` for such a type, and a media range each of those its
+  range allows. Bytes given for JSON or text are read as UTF-8; bytes that are not UTF-8 there
+  read as `response: null` with the body as given, as the Rust SDK refuses them. A string given
+  for a binary type is encoded as UTF-8. `flowapiReadsBytes(contentType)` (exported) says which
+  bodies are read as bytes. A schema named `Uint8Array` is declared under another name with the
+  SDK, with a warning.
 - The npm package reads YAML descriptions as the command does, by the same code: the YAML reader
   moved out of the command into a crate of its own, `flowapi-yaml`, which the command and the
   WebAssembly module share (the core stays JSON-only with no dependency). Its output and its

@@ -10,10 +10,12 @@
 //! and `additionalOperations` sent with the method as written. bodies.json: each request media
 //! type (JSON, a form, multipart as text, a range), an optional `+json` body, responses by code,
 //! range, `default` and a range of media types, and an operation with no responses.
+//! binary.json: responses neither JSON nor text (`octet-stream`, `image/png`, `application/xml`)
+//! read as a `Uint8Array`, `text/*` with a parameter as a `string`, and ranges as what each allows.
 //! swagger20.json: `collectionFormat` as 3.x styles, `tsv` warned about. reserved.json: schemas
 //! named as the global types the output names (`Record`, `Object`, and the SDK's `NonNullable`,
-//! `ReturnType`, `RegExpExecArray`) are declared under other names, with a warning; `Request` and
-//! `JSON` keep theirs (the SDK names no such type; `JSON` is a value there).
+//! `ReturnType`, `RegExpExecArray`, `Uint8Array`) are declared under other names, with a
+//! warning; `Request` and `JSON` keep theirs (the SDK names no such type; `JSON` is a value there).
 #![expect(
     clippy::expect_used,
     reason = "a description that is not JSON fails the test by panicking"

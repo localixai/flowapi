@@ -55,7 +55,11 @@ for (const row of table.rows) {
   }
 }
 const versions = ['3.0.4', '3.1.2', '3.2.1']
+// A case names its `targets` when only some SDKs can be given its calls (bytes that are not UTF-8
+// as a body); with none it is every target's.
+const ours = (c) => !c.targets || c.targets.includes('typescript')
 cases.forEach((c, i) => {
+  if (!ours(c)) return
   for (const version of c.versions ?? versions) {
     const op = {}
     if (c.parameters) op.parameters = c.parameters
@@ -97,6 +101,17 @@ const revive = (v) => {
   return Object.fromEntries(keys.map((k) => [k, revive(v[k])]))
 }
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+// Bytes as hex: a call's `bytes` is the body given as bytes, an expected `bytes` the body read
+// back as exactly those bytes. An expected `body` string for a body read as bytes is held to its
+// UTF-8, as the Rust runner reads bytes as their text.
+const fromHex = (h) => Uint8Array.from(h.match(/../g) ?? [], (b) => parseInt(b, 16))
+const hex = (b) => Buffer.from(b).toString('hex')
+const show = (v) => v instanceof Uint8Array ? `bytes ${hex(v)}` : JSON.stringify(v)
+const holds = (got, k, v) => {
+  if (k === 'bytes') return got.body instanceof Uint8Array && hex(got.body) === v
+  if (k === 'body' && got.body instanceof Uint8Array) return typeof v === 'string' && hex(got.body) === hex(Buffer.from(v, 'utf8'))
+  return same(got[k], v)
+}
 let tableRun = 0
 for (const { id, location, row, ex } of rows) {
   const input = { [location]: { color: table.values[ex.value] } }
@@ -110,15 +125,23 @@ for (const { id, location, row, ex } of rows) {
 }
 let callsRun = 0
 cases.forEach((c, i) => {
+  if (!ours(c)) return
   for (const version of c.versions ?? versions) {
     const m = sdk[version]
     for (const call of c.calls) {
       callsRun++
       const what = `${c.name} (${version})`
+      if ('readsBytes' in call) {
+        const got = m.flowapiReadsBytes(call.readsBytes)
+        if (got !== call.expect) failures.push(`${what}: flowapiReadsBytes(${JSON.stringify(call.readsBytes)}) is ${got}, want ${call.expect}`)
+        continue
+      }
       if ('status' in call) {
-        const got = m[`c${i}Response`](call.status, call.headers ?? {}, call.body ?? '')
+        const body = 'bytes' in call ? fromHex(call.bytes) : call.body ?? ''
+        const got = m[`c${i}Response`](call.status, call.headers ?? {}, body)
         for (const [k, v] of Object.entries(call.expect)) {
-          if (!same(got[k], v)) failures.push(`${what}: response ${call.status} ${k}: got ${JSON.stringify(got[k])}, want ${JSON.stringify(v)}`)
+          const at = k === 'bytes' ? 'body' : k
+          if (!holds(got, k, v)) failures.push(`${what}: response ${call.status} ${k}: got ${show(got[at])}, want ${JSON.stringify(v)}`)
         }
         continue
       }

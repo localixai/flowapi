@@ -44,8 +44,10 @@ impl TypeScript {
 macro_rules! reserved {
     ($($word:literal,)*) => {
         const RESERVED: &[&str] = &[$($word,)* "Record", "Object"];
-        const RESERVED_SDK: &[&str] =
-            &[$($word,)* "Record", "Object", "NonNullable", "ReturnType", "RegExpExecArray"];
+        const RESERVED_SDK: &[&str] = &[
+            $($word,)* "Record", "Object", "NonNullable", "ReturnType", "RegExpExecArray",
+            "Uint8Array",
+        ];
     };
 }
 

@@ -35,12 +35,6 @@ export class FlowapiRequestError extends Error {
   }
 }
 
-/** A response read: which response of the description it is (`null` for none), and its body. */
-type $Read = { response: string | null; status: number; mediaType: string | null; body: unknown };
-
-/** Per response, as written: its status, its media types as written and their bare forms. */
-type $Table = readonly (readonly [string, readonly string[], readonly string[]])[];
-
 const $unreserved = /^[A-Za-z0-9\-._~]*$/;
 const $marks = /[!'()*]/g;
 const $marked = /[!'()*]/;
@@ -293,50 +287,4 @@ function $set(headers: Record<string, string>, name: string, s: string | undefin
     throw new FlowapiRequestError("header", name, "control-character");
   }
   headers[name] = s;
-}
-
-/** A header, its name compared without case. */
-function $header(headers: Record<string, string>, name: string): string | null {
-  const direct = headers[name];
-  if (direct !== undefined) return direct;
-  for (const key of Object.keys(headers)) {
-    if (key.toLowerCase() === name) return headers[key] ?? null;
-  }
-  return null;
-}
-
-/**
- * The response a status picks (its code, then its range `NXX`, then `default`), the media type
- * the `Content-Type` picks (exact, then `type/*`, then `*\/*`), and the body read: JSON for a
- * JSON type, the text otherwise. A status or a media type the description does not name reads
- * as `response: null` with the text.
- */
-function $read(table: $Table, status: number, headers: Record<string, string>, body: string): $Read {
-  const code = String(status);
-  const range = code.charAt(0) + "XX";
-  let hit: (typeof table)[number] | undefined;
-  for (const r of table) if (r[0] === code) hit = hit ?? r;
-  if (hit === undefined) for (const r of table) if (r[0].toUpperCase() === range) hit = hit ?? r;
-  if (hit === undefined) for (const r of table) if (r[0] === "default") hit = hit ?? r;
-  const type = $header(headers, "content-type");
-  if (hit === undefined) return { response: null, status, mediaType: type, body };
-  if (hit[1].length === 0) return { response: hit[0], status, mediaType: null, body };
-  if (type === null) return { response: null, status, mediaType: null, body };
-  const bare = $bare(type);
-  const slash = bare.indexOf("/");
-  const major = bare.slice(0, slash + 1) + "*";
-  let at = hit[2].indexOf(bare);
-  if (at < 0) at = hit[2].indexOf(major);
-  if (at < 0) at = hit[2].indexOf("*/*");
-  const written = hit[1][at];
-  if (written === undefined) return { response: null, status, mediaType: type, body };
-  if (!$json(type)) return { response: hit[0], status, mediaType: written, body };
-  // An empty or broken JSON body is not the response described: the text, unnamed. A leading
-  // byte order mark is skipped (RFC 8259, 8.1), as `JSON.parse` would refuse it.
-  try {
-    const text = body.charCodeAt(0) === 0xfeff ? body.slice(1) : body;
-    return { response: hit[0], status, mediaType: written, body: JSON.parse(text) };
-  } catch {
-    return { response: null, status, mediaType: type, body };
-  }
 }
