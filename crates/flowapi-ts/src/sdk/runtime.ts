@@ -4,30 +4,39 @@
 
 /**
  * A request to send. `path` goes after the server's base URL; `query` is the query string
- * without its `?`, empty for none.
+ * without its `?`, empty for none; `body` text, or bytes (a multipart body, bytes given).
  */
 export type $Request = {
   method: string;
   path: string;
   query: string;
   headers: Record<string, string>;
-  body?: string;
+  body?: string | Uint8Array;
 };
 
 /**
  * A request `<op>Request` refuses to write: a value that would change what the request means
  * rather than what it says. `location` is where it goes (`path`, `query`, `querystring`,
  * `header`, `cookie` or `body`), `parameter` the parameter's name as the description writes it
- * (`null` for the body), `reason` why: a CR, LF or NUL in a header or a cookie (it would start
- * another header), a path segment left empty or made `.` or `..` (a client or a server would
- * remove it and the one before it), NaN or an infinity (JSON has no number for them).
+ * (`null` for the body; a multipart part's name), `reason` why: a CR, LF or NUL in a header, a
+ * cookie or a part's head (it would start another header), a path segment left empty or made `.`
+ * or `..` (a client or a server would remove it and the one before it), NaN or an infinity (JSON
+ * has no number for them). In a multipart body also: `null` where a part goes (`null`), a member
+ * of an array of parts that is not an object (`unnamed-part`), a Blob not read yet
+ * (`unread-blob`: `flowapiBlob` reads it), a `"` or `\` in a name or a file name (`quote`), a
+ * file name that is empty, `.` or `..` (`file-name`), a part header's name that is not a token or
+ * is `Content-Disposition` (`header-name`), a list or a range for a part's type (`media-range`),
+ * a boundary RFC 2046 does not allow or that a part holds (`boundary`).
  */
 export class FlowapiRequestError extends Error {
   readonly location: string;
   readonly parameter: string | null;
-  readonly reason: "control-character" | "empty-segment" | "dot-segment" | "non-finite";
+  readonly reason:
+    | "control-character" | "empty-segment" | "dot-segment" | "non-finite" | "null" | "unnamed-part"
+    | "unread-blob" | "quote" | "file-name" | "header-name" | "media-range" | "boundary";
   constructor(location: string, parameter: string | null, reason: FlowapiRequestError["reason"]) {
-    super(`${parameter === null ? "the body" : `the ${location} parameter \`${parameter}\``}: ${reason}`);
+    const what = location === "body" ? "the body" + (parameter === null ? "" : `'s part \`${parameter}\``) : `the ${location} parameter \`${parameter}\``;
+    super(`${what}: ${reason}`);
     this.name = "FlowapiRequestError";
     this.location = location;
     this.parameter = parameter;
@@ -248,9 +257,11 @@ function $form(v: unknown): string {
   return out;
 }
 
-/** A body in its media type: JSON, a form, or text as given (anything else as JSON). NaN or an
- * infinity in a JSON or form body is refused: `JSON.stringify` would write `null`. */
-function $body(type: string, v: unknown): string {
+/** A body in its media type: bytes as given, JSON, a form, or text as given (anything else as
+ * JSON). NaN or an infinity in a JSON or form body is refused: `JSON.stringify` would write
+ * `null`. */
+function $body(type: string, v: unknown): string | Uint8Array {
+  if (v instanceof Uint8Array) return v;
   if (!$json(type)) {
     if ($bare(type) === "application/x-www-form-urlencoded") {
       if ($bad(v)) throw new FlowapiRequestError("body", null, "non-finite");

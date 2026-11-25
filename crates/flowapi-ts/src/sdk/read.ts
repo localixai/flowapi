@@ -81,7 +81,7 @@ function $read(table: $Table, status: number, headers: Record<string, string>, b
   if (written === undefined) return { response: null, status, mediaType: type, body };
   const json = $json(type);
   if (!json && !$text(bare)) {
-    const bytes = typeof body === "string" ? new (globalThis as unknown as $Coders).TextEncoder().encode(body) : body;
+    const bytes = typeof body === "string" ? $bytes(body) : body;
     return { response: hit[0], status, mediaType: written, body: bytes };
   }
   const text = typeof body === "string" ? body : $utf8(body);

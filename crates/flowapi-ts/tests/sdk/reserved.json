@@ -9,5 +9,10 @@
   "ReturnType":{"type":"array","items":{"$ref":"#/components/schemas/Record"}},
   "RegExpExecArray":{"type":"integer"},
   "Uint8Array":{"type":"string","format":"binary"},
+  "Promise":{"type":"string"},
+  "ArrayBuffer":{"type":"string"},
+  "FlowapiFile":{"type":"string"},
+  "FlowapiEncoding":{"type":"string"},
+  "FlowapiRequestError":{"type":"string"},
   "Request":{"type":"string"},
   "JSON":{"type":"string"}}}}

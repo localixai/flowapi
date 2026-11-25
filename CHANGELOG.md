@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+- The TypeScript SDK writes `multipart/form-data` request bodies: `<op>Request` takes the value
+  as its schema says (a string member also as a file: a `Uint8Array`, `flowapiFile(bytes or text,
+  name, type)`, or `await flowapiBlob(blobOrFile)`, the one step that waits) and returns the parts
+  as bytes, with `content-type: multipart/form-data; boundary=...`; the value was a string you had
+  encoded. The parts follow the Encoding Object's defaults: a file a file part (`filename` its
+  name's last path segment, `blob` when it has none; `application/octet-stream` when it has no
+  type), a string, number or boolean text, an object JSON, an array's items one part each under
+  its name in order; `undefined` is left out. The body's `encoding` (`contentType`, `headers`) sets
+  a part's type and headers; the description's `encoding` is not read yet, so it is given there.
+  The boundary is the content type's, else 128 random bits from `globalThis.crypto`, drawn again
+  while a part holds them. 3.2's array of objects is its parts in order. New `FlowapiRequestError`
+  reasons refuse what would change the parts: a CR, LF or NUL in a part's name, file name, type or
+  header (`control-character`), `null`, a `"` or `\` in a name (`quote`), a file name empty, `.` or
+  `..` (`file-name`), a header name not a token or `Content-Disposition` (`header-name`), a list or
+  a range as a part's type (`media-range`), a Blob not read (`unread-blob`), an item of the array
+  that is not an object (`unnamed-part`), a boundary RFC 2046 does not allow or a part holds
+  (`boundary`).
+- A request body neither JSON, text nor a form (`application/octet-stream`, `image/png`, a range)
+  may be given to the TypeScript SDK as a `Uint8Array`, sent as it is; `$Request.body` is
+  `string | Uint8Array`. Another multipart type is still yours to write, now as a string or bytes.
+- With the TypeScript SDK a schema named `Promise`, `ArrayBuffer`, `FlowapiRequestError`,
+  `FlowapiFile` or `FlowapiEncoding` is declared under another name, with a warning: the SDK names
+  them.
 - The TypeScript SDK reads binary responses as bytes, as the Rust SDK does: `<op>Response(status,
   headers, body)` takes `body: string | Uint8Array` (it took a `string`) and reads it by the type
   sent: JSON parsed, `text/*` a `string`, any other a `Uint8Array` (an `application/xml` or

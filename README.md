@@ -167,6 +167,13 @@ const res = await fetch(base + r.path + (r.query && "?" + r.query), r)
 const body = new Uint8Array(await res.arrayBuffer())
 const out = getPetResponse(res.status, Object.fromEntries(res.headers), body)
 if (out.response === "200") out.body // Pet, parsed from JSON
+
+const up = uploadPhotoRequest({
+  path: { id: 7 },
+  body: { contentType: "multipart/form-data", value: { photo: await flowapiBlob(file), tags: ["a", "b"] } },
+})
+// up.headers["content-type"]: "multipart/form-data; boundary=flowapi-<32 hex digits>"
+// up.body: a Uint8Array, a part `photo` with the file's name and type, then `tags` twice
 ```
 
 Parameters are written as their `style`, `explode` and `allowReserved` say (`simple`, `label`,
@@ -174,7 +181,20 @@ Parameters are written as their `style`, `explode` and `allowReserved` say (`sim
 2.0's `collectionFormat` read as those), percent-encoded per RFC 3986 everywhere but headers and
 `style: cookie`, which pass as given; a parameter with `content` as its media type's text; cookies
 into one `cookie` header. The body is `{ contentType, value }` of one of the operation's media
-types: JSON, a form, or text as given (a multipart body is yours to write). A response is picked
+types: JSON, a form, text as given, or bytes (a `Uint8Array`, for a type neither JSON, text nor a
+form, sent as they are). A `multipart/form-data` body is written from its members as the
+Encoding Object's defaults say: a `Uint8Array` or a file a file part (`filename` its last path
+segment, `blob` when it has none; `application/octet-stream` when it has no type), a string,
+number or boolean a text part, an object JSON, an array's items one part each under its name, in
+order (RFC 7578, 4.3); `undefined` is left out, `null` refused. A file is
+`flowapiFile(bytes or text, name, type)`, or `await flowapiBlob(blobOrFile)`, the one step that
+waits: `<op>Request` takes bytes and stays synchronous. The description's `encoding` is not read
+yet: give it as the body's `encoding` (`{ photo: { contentType, headers } }`); its `contentType`
+replaces the default (a file's own type replaces it, and a list or a range needs one) and its
+`headers` go into the part. The boundary is the content type's (`; boundary=`), else 128 random
+bits from `globalThis.crypto`, drawn again while a part holds them and added to the request's
+`content-type`; `body` is then bytes. 3.2's array of objects is written as its parts in order;
+another multipart type is yours to write, as a string or bytes. A response is picked
 by its status (the code, then `2XX`, then `default`) and its `Content-Type`, and its body, given as
 text or as bytes, read by the type sent as the Rust SDK reads it: JSON parsed (a leading byte
 order mark skipped), `text/*` a `string`, any other a `Uint8Array`, a media range any of those
@@ -188,7 +208,13 @@ says which bodies are read as bytes, for a client that reads the others with `te
 or a `style: cookie` value (`control-character`), a path parameter that leaves its segment empty
 or makes it `.` or `..` (`empty-segment`, `dot-segment`; `%2E` is a dot too), NaN or an infinity
 anywhere in a parameter or a JSON or form body (`non-finite`: JSON has no such number, and
-`JSON.stringify` would write `null`). A header's name that is not a token is left out of the
+`JSON.stringify` would write `null`). In a multipart body (`parameter` the part's name) it also
+refuses a CR, LF or NUL in a part's name, file name, type or header, `null` (`null`), a `"` or `\`
+in a name or a file name (`quote`: RFC 7578 and WHATWG escape them differently), a file name that
+is empty, `.` or `..` (`file-name`), a part header's name that is not a token or is
+`Content-Disposition` (`header-name`), a list or a range as a part's type (`media-range`), a
+Blob not read yet (`unread-blob`), an item of 3.2's array that is not an object (`unnamed-part`),
+and a boundary RFC 2046 does not allow or a part holds (`boundary`). A header's name that is not a token is left out of the
 operation, with a warning. The output imports nothing: the runtime is a few functions
 printed once. With `--sdk` the base URL and any authentication are still yours to add: the
 command does not print `servers`, `securitySchemes` or `security`. The SDK layer

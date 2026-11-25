@@ -2,8 +2,8 @@
 //! operation, `<name>Request(input)`, which writes the request the input makes (path, query,
 //! headers, body) and sends nothing, and `<name>Response(status, headers, body)`, which reads an
 //! answer back into the response the description names. A runtime of a few functions is printed
-//! once before them (`sdk/runtime.ts` writes requests, `sdk/read.ts` reads responses); the output
-//! imports nothing. What a call does not depend
+//! once before them (`sdk/runtime.ts` writes requests, `sdk/multipart.ts` their
+//! `multipart/form-data` bodies, `sdk/read.ts` reads responses); the output imports nothing. What a call does not depend
 //! on is decided here, once: path templates are split, names percent-encoded and each
 //! parameter's style chosen as the arguments of one call.
 
@@ -15,9 +15,10 @@ pub use request::method;
 use flowapi::Program;
 use std::collections::BTreeSet;
 
-/// The runtime every operation's functions call, printed once: writing a request, then reading
-/// a response.
+/// The runtime every operation's functions call, printed once: writing a request, its multipart
+/// body, then reading a response.
 const RUNTIME: &str = include_str!("sdk/runtime.ts");
+const MULTIPART: &str = include_str!("sdk/multipart.ts");
 const READ: &str = include_str!("sdk/read.ts");
 
 pub(crate) fn sdk(out: &mut String, p: &Program<'_>) {
@@ -26,6 +27,7 @@ pub(crate) fn sdk(out: &mut String, p: &Program<'_>) {
         return;
     }
     out.push_str(RUNTIME);
+    out.push_str(MULTIPART);
     out.push_str(READ);
     let decls: Vec<Option<&str>> = endpoints.iter().map(|e| p.name_of(e.ty)).collect();
     let bases = function_bases(&decls);

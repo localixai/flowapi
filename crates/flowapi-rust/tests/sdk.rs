@@ -1,5 +1,5 @@
 //! The Rust SDK printed for each description in `flowapi-ts/tests/sdk/` (the TypeScript SDK's
-//! cases: styles, bodies, Swagger 2.0) and in `tests/sdk/` here (`names.json`: schemas named as
+//! cases: styles, bodies, binary, multipart, Swagger 2.0) and in `tests/sdk/` here (`names.json`: schemas named as
 //! the SDK's own items, `sdk`, `GetPetInput`, `GetPetResponse` and `Request`, and two operations
 //! whose functions would meet), against the `.rs` kept under `tests/sdk/`, diagnostics after it
 //! as comments. `FLOWAPI_BLESS=1 cargo test -p flowapi-rust --test sdk` writes them anew; a

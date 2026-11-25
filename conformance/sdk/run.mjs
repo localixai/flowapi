@@ -100,6 +100,32 @@ const revive = (v) => {
   if (keys.length === 1 && keys[0] === '$number') return Number(v.$number)
   return Object.fromEntries(keys.map((k) => [k, revive(v[k])]))
 }
+// A multipart input's files: `{ "$bytes": hex }` bytes, `{ "$file": { bytes or text, name, type } }`
+// flowapiFile's, `{ "$blob": { bytes or text, name, type, as } }` a Blob (a File named `as`) read by
+// flowapiBlob, `{ "$unread": { bytes or text } }` a Blob given as it is.
+const data = (f) => 'bytes' in f ? fromHex(f.bytes) : f.text
+async function given(m, v) {
+  if (Array.isArray(v)) return Promise.all(v.map((x) => given(m, x)))
+  if (v === null || typeof v !== 'object') return v
+  const keys = Object.keys(v)
+  if (keys.length === 1 && keys[0] === '$bytes') return fromHex(v.$bytes)
+  if (keys.length === 1 && keys[0] === '$file') return m.flowapiFile(data(v.$file), v.$file.name, v.$file.type)
+  if (keys.length === 1 && keys[0] === '$blob') {
+    const b = v.$blob
+    const blob = b.as === undefined ? new Blob([data(b)], { type: b.blobType ?? '' }) : new File([data(b)], b.as, { type: b.blobType ?? '' })
+    return m.flowapiBlob(blob, b.name, b.type)
+  }
+  if (keys.length === 1 && keys[0] === '$unread') return new Blob([data(v.$unread)])
+  if (keys.length === 1 && keys[0] === '$undefined') return undefined
+  return Object.fromEntries(await Promise.all(keys.map(async (k) => [k, await given(m, v[k])])))
+}
+// A call's `randoms` (hex, 16 bytes each) are what `crypto.getRandomValues` gives, in turn.
+function draws(randoms) {
+  const real = Object.getOwnPropertyDescriptor(globalThis, 'crypto')
+  const queue = randoms.map(fromHex)
+  Object.defineProperty(globalThis, 'crypto', { configurable: true, value: { getRandomValues: (b) => { b.set(queue.shift()); return b } } })
+  return () => Object.defineProperty(globalThis, 'crypto', real)
+}
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 // Bytes as hex: a call's `bytes` is the body given as bytes, an expected `bytes` the body read
 // back as exactly those bytes. An expected `body` string for a body read as bytes is held to its
@@ -124,8 +150,8 @@ for (const { id, location, row, ex } of rows) {
   if (got !== ex.serialized) failures.push(`Style Examples line ${row.line} (${row.style}, explode ${row.explode}, ${location}, ${ex.value}): got ${JSON.stringify(got)}, the spec shows ${JSON.stringify(ex.serialized)}`)
 }
 let callsRun = 0
-cases.forEach((c, i) => {
-  if (!ours(c)) return
+for (const [i, c] of cases.entries()) {
+  if (!ours(c)) continue
   for (const version of c.versions ?? versions) {
     const m = sdk[version]
     for (const call of c.calls) {
@@ -145,23 +171,39 @@ cases.forEach((c, i) => {
         }
         continue
       }
-      const want = call.expect
+      const want = structuredClone(call.expect)
+      const input = await given(m, revive(call.input ?? {}))
+      const restore = call.randoms ? draws(call.randoms) : () => {}
       let got
       try {
-        got = m[`c${i}Request`](revive(call.input ?? {}))
+        got = m[`c${i}Request`](input)
       } catch (e) {
         if (e?.name !== 'FlowapiRequestError') throw e
         const refused = { location: e.location, parameter: e.parameter, reason: e.reason }
         if (!same(refused, want.refused)) failures.push(`${what}: refused ${JSON.stringify(refused)}, want ${JSON.stringify(want.refused ?? 'a request')}`)
         continue
+      } finally {
+        restore()
+      }
+      // A boundary drawn at random: 128 bits as hex after `flowapi-`, put for `{boundary}` in what
+      // is wanted.
+      if (want.boundary === 'drawn') {
+        const b = /; boundary=(flowapi-[0-9a-f]{32})$/.exec(got.headers['content-type'] ?? '')?.[1]
+        if (b === undefined) failures.push(`${what}: no boundary drawn in ${JSON.stringify(got.headers)}`)
+        const put = (x) => x.replaceAll('{boundary}', b ?? '')
+        if (typeof want.body === 'string') want.body = put(want.body)
+        if (want.headers) want.headers = Object.fromEntries(Object.entries(want.headers).map(([k, v]) => [k, put(v)]))
       }
       if (want.refused) {
-        failures.push(`${what}: wrote ${JSON.stringify(got)}, want it refused ${JSON.stringify(want.refused)}`)
+        failures.push(`${what}: wrote ${JSON.stringify({ ...got, body: got.body instanceof Uint8Array ? show(got.body) : got.body })}, want it refused ${JSON.stringify(want.refused)}`)
         continue
       }
       if ('path' in want && got.path !== `/c${i}${want.path}`) failures.push(`${what}: path ${JSON.stringify(got.path)}, want ${JSON.stringify(`/c${i}${want.path}`)}`)
-      for (const k of ['method', 'query', 'body']) {
+      for (const k of ['method', 'query']) {
         if (k in want && !same(got[k], want[k])) failures.push(`${what}: ${k} ${JSON.stringify(got[k])}, want ${JSON.stringify(want[k])}`)
+      }
+      for (const k of ['body', 'bytes']) {
+        if (k in want && !holds(got, k, want[k])) failures.push(`${what}: body ${show(got.body)}, want ${k} ${JSON.stringify(want[k])}`)
       }
       if ('headers' in want && !same(got.headers, want.headers)) failures.push(`${what}: headers ${JSON.stringify(got.headers)}, want ${JSON.stringify(want.headers)}`)
       // Decoded as the receiver would: WHATWG's form-urlencoded parser for the query and a form
@@ -172,7 +214,7 @@ cases.forEach((c, i) => {
     }
     if (c.warns && !warnings[version].includes(c.warns)) failures.push(`${c.name} (${version}): no \`${c.warns}\` diagnostic`)
   }
-})
+}
 
 // The corpus: the SDK of each large description, type-checked one at a time.
 const corpusRows = []

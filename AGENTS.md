@@ -30,7 +30,8 @@ work here.
     that names every type.
 - `crates/flowapi-ts`: the TypeScript target. `tests/cases/*.json` and the `.ts` kept beside each.
   `src/sdk.rs` the opt-in SDK (`--sdk`): `sdk/request.rs`, `sdk/response.rs` and the runtime
-  printed once (`sdk/runtime.ts` writes requests, `sdk/read.ts` reads responses);
+  printed once (`sdk/runtime.ts` writes requests, `sdk/multipart.ts` their `multipart/form-data`
+  bodies, `sdk/read.ts` reads responses);
   `tests/sdk/*.json` kept like the cases.
 - `crates/flowapi-rust`: the Rust target (serde types). `tests/cases/*.rs`, kept like the TypeScript ones.
   `src/sdk.rs` the opt-in SDK (`--target rust --sdk`): `sdk/request.rs`, `sdk/param.rs`,
