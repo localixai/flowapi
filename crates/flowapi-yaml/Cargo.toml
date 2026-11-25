@@ -1,0 +1,27 @@
+[package]
+name = "flowapi-yaml"
+description = "YAML descriptions read into the JSON flowapi's core reads, with the YAML line and column of every node: shared by the flowapi command and the WebAssembly module"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish = false
+
+[dependencies]
+# YAML 1.2 read as events, each with its line and column (G11): this crate writes JSON for the
+# core (which reads JSON only and has no dependency, G5) and maps a diagnostic back to the YAML
+# line, and expands aliases itself, within a bound. Maintained (0.4.0, 2026-11), built to pass the
+# YAML test suite (our own run of it: tests/yaml_suite.rs), its own state stack rather than
+# recursion, two small dependencies, no I/O: it builds for wasm32 as the core does. serde_yaml is
+# no longer maintained; yaml-rust2 is the YAML 1.2 line this parser continues.
+saphyr-parser = "=0.4.0"
+
+[dev-dependencies]
+# The yaml-test-suite's JSON read by a reader that is not ours (tests/yaml_suite.rs): an oracle
+# independent of the core's reader, and a stream of several JSON values.
+serde_json = "=1.0.154"
+
+[lints]
+workspace = true

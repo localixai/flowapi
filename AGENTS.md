@@ -38,12 +38,16 @@ work here.
   here: this crate has no serde); `src/print/integer.rs` the `Integer` type printed with the types;
   `tests/sdk/*.rs` kept for the TypeScript SDK's cases and `tests/sdk/names.json`.
 - `crates/flowapi-cli`: the `flowapi` command, all of flowapi's I/O.
-- `crates/flowapi-wasm`: the core and the TypeScript target as a WebAssembly module for the npm
-  package, behind four exports of its own (`src/abi.rs`: JSON in and out through linear memory,
-  no wasm-bindgen); the one crate with `unsafe` (`deny`, not `forbid`; `tests/lints.rs`).
+- `crates/flowapi-yaml`: a description's text as the core reads it, shared by the command and the
+  WebAssembly module: which document is YAML (`is_yaml`), YAML 1.2 read into JSON with each node's
+  YAML place (`reader.rs`, `saphyr-parser`), and the line and column of an offset. No I/O (G5).
+- `crates/flowapi-wasm`: the core, the TypeScript target and the YAML reader as a WebAssembly
+  module for the npm package, behind four exports of its own (`src/abi.rs`: JSON in and out
+  through linear memory, no wasm-bindgen); the one crate with `unsafe` (`deny`, not `forbid`;
+  `tests/lints.rs`).
 - `npm/`: `@localix-ai/flowapi`, the module with a typed API (`src/index.ts`), the files a
   description reaches read from disk (`src/node.ts`) and the `flowapi` command (`src/cli.ts`);
-  JSON only. `bun run check` in `npm/` builds it and holds it to the Rust command byte for byte.
+  JSON and YAML. `bun run check` in `npm/` builds it and holds it to the Rust command byte for byte.
 - `conformance/`: the oracles that hold flowapi to the specifications
   ([conformance/README.md](conformance/README.md)): the official suites' pinned copies
   (`suites/`), the suite oracle (`suite/`, O3; `suite-rust/` for the Rust target), the same

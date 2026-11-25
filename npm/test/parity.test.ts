@@ -1,6 +1,7 @@
 // The package's command against the Rust one, built from the same sources: the same standard
 // output, the same diagnostics on standard error and the same exit code, byte for byte, on
-// petstore, every kept case of crates/flowapi-ts and a description split over three files.
+// petstore in JSON and YAML, every kept case of crates/flowapi-ts, a description split over three
+// files, and YAML: files reached from a YAML description, its diagnostics and its errors.
 // Run after the build (`bun run build`); the Rust command is built here if it is stale.
 
 import { beforeAll, describe, expect, test } from 'bun:test'
@@ -43,7 +44,10 @@ const cases = readdirSync(join(root, 'crates', 'flowapi-ts', 'tests', 'cases'))
   .map((name) => join('crates', 'flowapi-ts', 'tests', 'cases', name))
 
 describe('the command prints what the Rust command prints', () => {
-  test.each([join('crates', 'flowapi-cli', 'tests', 'yaml', 'petstore.json'), ...cases])(
+  const petstore = ['petstore.json', 'petstore.yaml'].map((name) =>
+    join('crates', 'flowapi-cli', 'tests', 'yaml', name),
+  )
+  test.each([...petstore, ...cases])(
     '%s',
     (path) => {
       const { rust: expected, js: actual } = both([path])
@@ -93,6 +97,44 @@ describe('the command prints what the Rust command prints', () => {
     expect(expected.status).toBe(1)
     expect(expected.stderr).toContain('bad.json:3:')
     expect(actual).toEqual(expected)
+  })
+
+  test('a YAML description whose references reach a YAML and a JSON file', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'flowapi-parity-'))
+    mkdirSync(join(dir, 'defs'))
+    const openapi = [
+      'openapi: 3.1.0',
+      'info: {title: Split, version: "1"}',
+      'paths: {}',
+      'components:',
+      '  schemas:',
+      '    Pet: {$ref: "./defs/pet.yml#/Pet"}',
+      // Two names that make one identifier: a warning at the second one's YAML line.
+      '    pet.kind: {type: string}',
+      '    pet_kind: {type: string}',
+    ]
+    const pet = ['Pet:', '  type: object', '  properties:', '    owner: {$ref: ../owner.json}']
+    const owner = { type: 'object', required: ['name'], properties: { name: { type: 'string' } } }
+    writeFileSync(join(dir, 'openapi.yaml'), `${openapi.join('\n')}\n`)
+    writeFileSync(join(dir, 'defs', 'pet.yml'), `${pet.join('\n')}\n`)
+    writeFileSync(join(dir, 'owner.json'), JSON.stringify(owner, null, 2))
+    const { rust: expected, js: actual } = both(['openapi.yaml'], dir)
+    expect(expected.stdout).toContain('name')
+    expect(expected.stderr).toContain('\n  at openapi.yaml:8:15\n')
+    expect(actual).toEqual(expected)
+  })
+
+  test('a YAML text that JSON cannot hold: the same error, line and column', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'flowapi-parity-'))
+    writeFileSync(join(dir, 'bad.yaml'), 'openapi: 3.1.0\ninfo:\n  title: t\n version: "1"\n')
+    writeFileSync(join(dir, 'twice.yml'), 'openapi: 3.1.0\nopenapi: 3.0.0\n')
+    for (const name of ['bad.yaml', 'twice.yml']) {
+      const { rust: expected, js: actual } = both([name], dir)
+      expect(expected.status).toBe(1)
+      expect(expected.stderr).toStartWith('error[yaml.syntax]: ')
+      expect(expected.stderr).toContain(`at ${name}:`)
+      expect(actual).toEqual(expected)
+    }
   })
 
   test('the exit codes of a bad command line and a missing file', () => {

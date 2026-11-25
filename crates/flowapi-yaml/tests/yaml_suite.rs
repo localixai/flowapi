@@ -7,7 +7,7 @@
     reason = "the helpers fail the test by panicking, as a test does"
 )]
 
-use flowapi_cli::yaml;
+use flowapi_yaml as yaml;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 

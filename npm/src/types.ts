@@ -1,14 +1,19 @@
-/** One document: the URI its references resolve against, and its JSON text. */
+/** One document: the URI its references resolve against, and its text, JSON or YAML. */
 export interface Document {
-  /** A path, a URL or any name: a relative `$ref` in another document resolves against it. */
+  /**
+   * A path, a URL or any name: a relative `$ref` in another document resolves against it. It says
+   * whether the text is YAML, as the command decides: `.yaml` and `.yml` are, `.json` is not, and
+   * under any other name a text is YAML when it does not open with `{` or `[`.
+   */
   readonly uri: string
-  /** The document's JSON. */
+  /** The document's JSON or YAML (YAML 1.2, one document). */
   readonly text: string
 }
 
 /**
  * What to generate from: a description's JSON text, one document, or the description followed
- * by every document its references reach.
+ * by every document its references reach. A YAML description is given as a document whose `uri`
+ * names it so: bare text is read as JSON.
  */
 export type Input = string | Document | readonly Document[]
 
@@ -32,14 +37,20 @@ export type Severity = 'error' | 'warning'
 /** One finding, where it is and the rule it is about. */
 export interface Diagnostic {
   readonly severity: Severity
-  /** A requirement id of the specifications, or a code of flowapi's own (`json.syntax`). */
+  /**
+   * A requirement id of the specifications, or a code of flowapi's own (`json.syntax`, and
+   * `yaml.syntax` for a YAML text that JSON cannot hold).
+   */
   readonly code: string
   readonly message: string
   /** The document's URI; empty when the request itself could not be read. */
   readonly uri: string
-  /** The byte offset into the document's UTF-8 text. */
+  /**
+   * The byte offset into the UTF-8 JSON the generator read: the document's text, or for a YAML
+   * document the JSON it was read into (for `yaml.syntax`, into the YAML text).
+   */
   readonly offset: number
-  /** The line, from 1. */
+  /** The line, from 1: in a YAML document, the YAML's. */
   readonly line: number
   /** The column, in characters (Unicode scalar values), from 1. */
   readonly column: number

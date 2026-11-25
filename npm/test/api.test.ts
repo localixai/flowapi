@@ -97,11 +97,23 @@ describe('load', () => {
 })
 
 describe('readDescription', () => {
-  test('a YAML file is refused with a message that says so', async () => {
+  test('a YAML file generates what its JSON twin does', async () => {
     const yaml = join(root, 'crates', 'flowapi-cli', 'tests', 'yaml', 'petstore.yaml')
-    const read = readDescription(yaml)
-    expect(read).rejects.toBeInstanceOf(ReadError)
-    expect(read).rejects.toThrow(/YAML is not read by the npm package/u)
+    const documents = await readDescription(yaml)
+    expect(documents.map((d) => d.uri)).toEqual([yaml])
+    expect((await generateFile(yaml)).files).toEqual((await generateFile(petstore)).files)
+  })
+
+  test('a YAML text is told by its URI, and bare text is JSON', async () => {
+    const flowapi = await load()
+    const yaml = 'a:\n  $ref: other.yaml#/x\n'
+    expect(flowapi.references(yaml, 'spec.yaml')).toEqual(['other.yaml#/x'])
+    expect(flowapi.references(yaml, 'spec')).toEqual(['other.yaml#/x'])
+    expect(flowapi.references(yaml)).toEqual([])
+    const bad = flowapi.generate({ uri: 'bad.yaml', text: 'a: 1\nb:\n  c: 2\n d: 3\n' })
+    expect(bad.files).toEqual([])
+    expect(bad.diagnostics).toHaveLength(1)
+    expect(bad.diagnostics[0]).toMatchObject({ code: 'yaml.syntax', uri: 'bad.yaml', line: 4 })
   })
 
   test('a missing file is a ReadError', async () => {

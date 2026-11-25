@@ -78,14 +78,14 @@ held to are in [bench/budgets.json](bench/budgets.json).
 
 ## Use
 
-From npm, the same generator compiled to WebAssembly (JSON descriptions only; [npm/README.md](npm/README.md)
-has its API):
+From npm, the same generator compiled to WebAssembly, reading JSON and YAML alike
+([npm/README.md](npm/README.md) has its API):
 
 ```sh
 npx @localix-ai/flowapi openapi.json -o types.ts
 ```
 
-The Rust command, which reads YAML too, built from a release tag:
+The Rust command, built from a release tag:
 
 ```sh
 cargo install --locked --git https://github.com/localixai/flowapi --tag v0.1.0 flowapi-cli
@@ -146,8 +146,9 @@ Files that a `$ref` names by relative path are read too, and so are YAML descrip
 YAML 1.2's core schema: a key that is not a string becomes its JSON text (`200:` is `"200"`) and
 anchors are expanded. What JSON cannot hold is an error with the YAML line and column: `.inf`
 and `.nan`, a mapping as a key, a repeated key, `<<` merge keys, a second document, or aliases
-that would copy more than a million nodes. The YAML reader passes the YAML test suite
-(`crates/flowapi-cli/tests/yaml_suite.rs`).
+that would copy more than a million nodes (code `yaml.syntax`). The YAML reader is one crate
+(`crates/flowapi-yaml`) the command and the npm package share, and it passes the YAML test suite
+(`crates/flowapi-yaml/tests/yaml_suite.rs`).
 
 ### An SDK, with no HTTP library
 

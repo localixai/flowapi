@@ -44,6 +44,7 @@ fn all_sources() -> Vec<PathBuf> {
         "flowapi-cli",
         "flowapi-rust",
         "flowapi-wasm",
+        "flowapi-yaml",
     ]
     .iter()
     .flat_map(|c| crate_sources(c))
@@ -115,6 +116,7 @@ fn english_only() {
     );
 }
 
+// The YAML reader is held to it too: the WebAssembly module runs it, and the host reads the files.
 // req: jsonschema-2020-12.core.references.should-not-schema-need-not-downloadable-address-network — the core does no I/O; an http $ref is only a name
 // req: jsonschema-2020-12.validation.security.must-not-some-implementations-allow-embedding-arbitrary-code — the core runs nothing a document holds: no process, file or socket
 #[test]
@@ -134,6 +136,7 @@ fn g5_the_core_and_targets_do_no_io() {
     for p in crate_sources("flowapi")
         .into_iter()
         .chain(crate_sources("flowapi-ts"))
+        .chain(crate_sources("flowapi-yaml"))
     {
         let text = std::fs::read_to_string(&p).unwrap();
         for w in words {
@@ -147,7 +150,7 @@ fn g5_the_core_and_targets_do_no_io() {
     }
     assert!(
         found.is_empty(),
-        "G5, the core and the targets do no I/O: {found:#?}"
+        "G5, the core, the targets and the YAML reader do no I/O: {found:#?}"
     );
 }
 

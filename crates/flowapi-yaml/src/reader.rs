@@ -47,6 +47,8 @@ impl Marks {
 /// Why a text is not a YAML document JSON can hold, and where.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Error {
+    /// The byte offset into the YAML text.
+    pub offset: usize,
     /// The line, from 1.
     pub line: usize,
     /// The column in characters, from 1.
@@ -56,8 +58,14 @@ pub struct Error {
 }
 
 impl Error {
-    fn at(mark: Marker, message: &str) -> Self {
+    /// The error at `mark` of `text`: the parser counts in characters, a diagnostic in bytes.
+    fn at(text: &str, mark: Marker, message: &str) -> Self {
+        let offset = text
+            .char_indices()
+            .nth(mark.index())
+            .map_or(text.len(), |(i, _)| i);
         Self {
+            offset,
             line: mark.line(),
             column: mark.col() + 1,
             message: message.to_owned(),
@@ -80,13 +88,13 @@ pub fn to_json(text: &str) -> Result<Json, Error> {
     let mut w = Writer::default();
     let mut last = Marker::default();
     for next in Parser::new_from_str(text) {
-        let (event, span) = next.map_err(|e| Error::at(*e.marker(), e.info()))?;
+        let (event, span) = next.map_err(|e| Error::at(text, *e.marker(), e.info()))?;
         last = span.start;
         w.event(event, span)
-            .map_err(|m| Error::at(span.start, &m))?;
+            .map_err(|m| Error::at(text, span.start, &m))?;
     }
     if w.documents == 0 || w.out.is_empty() {
-        return Err(Error::at(last, "no document"));
+        return Err(Error::at(text, last, "no document"));
     }
     Ok(Json {
         text: w.out,

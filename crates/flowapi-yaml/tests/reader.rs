@@ -5,7 +5,7 @@
     reason = "a helper fails its test by panicking, as a test does"
 )]
 
-use flowapi_cli::yaml::{self, MAX_ALIAS_NODES};
+use flowapi_yaml::{self as yaml, MAX_ALIAS_NODES};
 use std::fmt::Write as _;
 
 fn json(text: &str) -> String {

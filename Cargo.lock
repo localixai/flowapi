@@ -19,8 +19,7 @@ dependencies = [
  "flowapi",
  "flowapi-rust",
  "flowapi-ts",
- "saphyr-parser",
- "serde_json",
+ "flowapi-yaml",
 ]
 
 [[package]]
@@ -43,6 +42,15 @@ version = "0.1.0"
 dependencies = [
  "flowapi",
  "flowapi-ts",
+ "flowapi-yaml",
+]
+
+[[package]]
+name = "flowapi-yaml"
+version = "0.1.0"
+dependencies = [
+ "saphyr-parser",
+ "serde_json",
 ]
 
 [[package]]

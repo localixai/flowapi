@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- The npm package reads YAML descriptions as the command does, by the same code: the YAML reader
+  moved out of the command into a crate of its own, `flowapi-yaml`, which the command and the
+  WebAssembly module share (the core stays JSON-only with no dependency). Its output and its
+  diagnostics are the command's byte for byte; the module is about 43 KB larger gzipped.
+- A YAML text that JSON cannot hold is printed as a diagnostic, `error[yaml.syntax]: <what>` then
+  `  at <file>:<line>:<column>`, as a JSON syntax error is; it was `flowapi: <file>:<line>:<column>:
+  <what>`.
+
 ## 0.1.0 — 2026-11-24
 
 - Both SDKs refuse a request that would mean something other than it says, rather than write

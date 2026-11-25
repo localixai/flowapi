@@ -1,6 +1,6 @@
 [package]
 name = "flowapi-wasm"
-description = "flowapi compiled to WebAssembly for the npm package: the core and the TypeScript target behind a small ABI, JSON in and out through linear memory"
+description = "flowapi compiled to WebAssembly for the npm package: the core, the TypeScript target and the YAML reader behind a small ABI, JSON in and out through linear memory"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -19,6 +19,9 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 flowapi = { path = "../flowapi" }
 flowapi-ts = { path = "../flowapi-ts" }
+# YAML read into JSON as the command reads it (G11): the npm package reads the descriptions the
+# command reads, and names the same YAML line in a diagnostic.
+flowapi-yaml = { path = "../flowapi-yaml" }
 
 # The workspace's lints, copied because one differs: an exported function is `#[no_mangle]` and
 # a buffer handed back from JavaScript is rebuilt from its pointer, which `unsafe_code = "forbid"`

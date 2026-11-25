@@ -27,10 +27,13 @@ export interface Flowapi {
   /** Generates TypeScript from a description and the documents its references reach. */
   generate(input: Input, options?: Options): Result
   /**
-   * Every `$ref` and `$schema` of a JSON document that names another document, in the order
-   * the command reads them: what to read and pass to `generate` after the description.
+   * Every `$ref` and `$schema` of a document, JSON or YAML, that names another document, in the
+   * order the command reads them: what to read and pass to `generate` after the description.
+   * `uri` says whether the text is YAML, as a document's does (`.yaml`, `.yml`; any name but
+   * `.json` whose text does not open with `{` or `[`); without one the text is JSON. A text that
+   * cannot be read has none: `generate` says why.
    */
-  references(text: string): string[]
+  references(text: string, uri?: string): string[]
 }
 
 /** The URI a description given as bare text is read under. */
@@ -76,7 +79,8 @@ function loaded(module: WebAssembly.Module): Flowapi {
     call(new WebAssembly.Instance(module, {}), name, text)
   return {
     generate: (input, options) => answer(run('flowapi_generate', request(input, options))),
-    references: (text) => JSON.parse(run('flowapi_references', text)) as string[],
+    references: (text, uri = BARE_URI) =>
+      JSON.parse(run('flowapi_references', JSON.stringify({ uri, text }))) as string[],
   }
 }
 

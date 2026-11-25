@@ -10,9 +10,9 @@ Only the files flowapi reads are copied: per case, `===` (its name), `in.yaml` (
 and `error` (present when the input is not YAML). A case with subcases has them in `00/`,
 `01/`, ... The events, the emitter's output and the `name/` and `tags/` indexes are left out.
 
-`crates/flowapi-cli/tests/yaml_suite.rs` holds the CLI's YAML reader to them: every `error`
-case is refused, every case with one JSON value converts to equal JSON, a case of no or several
-documents is refused (a description is one document).
+`crates/flowapi-yaml/tests/yaml_suite.rs` holds the YAML reader that the command and the npm
+package share to them: every `error` case is refused, every case with one JSON value converts to
+equal JSON, a case of no or several documents is refused (a description is one document).
 
 To update: clone the newest data release, copy the same four files of every case over these,
 and put the new tag and commit here.

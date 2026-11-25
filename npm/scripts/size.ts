@@ -10,9 +10,11 @@ import { gzipSync } from 'node:zlib'
 /** The budgets in bytes: the module as built on 2026-11-24 (297 KB raw, 120 KB gzipped), then
  * the SDK printer and its runtime added the same day (372 KB, 150 KB: the `sdk` option), then the
  * core's precision passes (propertyNames, enum bounds, contains, if/then/else, oneOf) and the SDK's
- * refusals of header, path and number values (407 KB, 164 KB), and some room for the core to grow.
+ * refusals of header, path and number values (407 KB, 164 KB), then the YAML reader on
+ * 2026-11-26 (537 KB, 207 KB: saphyr-parser is most of it; three of four real descriptions in the
+ * corpus are YAML, and the package refused them), and some room for the core to grow.
  * A change that passes one is a change to read. */
-const BUDGET = { raw: 425_000, gzip: 172_000 }
+const BUDGET = { raw: 550_000, gzip: 214_000 }
 
 const wasm = readFileSync(join(import.meta.dir, '..', 'dist', 'flowapi.wasm'))
 const size = { raw: wasm.length, gzip: gzipSync(wasm, { level: 9 }).length }

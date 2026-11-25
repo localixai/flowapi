@@ -51,7 +51,8 @@ pub unsafe extern "C" fn flowapi_generate(ptr: *mut u8, len: usize) -> *mut u8 {
     give(&crate::generate(&request))
 }
 
-/// The references of the document in a buffer (`crate::references`), as an answer's buffer.
+/// The references of the document in a buffer (`crate::references`: its URI and text as JSON),
+/// as an answer's buffer.
 ///
 /// # Safety
 ///

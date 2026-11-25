@@ -1,6 +1,7 @@
 //! The description and every file its references reach by a relative path, read before the
 //! core runs: the core is given JSON text, never a path. A YAML file, the description or one a
-//! `$ref` names, is read into JSON first (`source.rs`).
+//! `$ref` names, is read into JSON first (`source.rs`). The npm package reads them in the same
+//! order under the same URIs (`npm/src/node.ts`).
 
 use crate::source::Source;
 use flowapi::json::{self, Tree, Value};
@@ -16,7 +17,7 @@ pub(crate) fn all(input: &str) -> Result<Vec<Source>, String> {
             continue;
         }
         let source = Source::read(&path)?;
-        if let Ok(tree) = json::parse(&source.json) {
+        if let Ok(tree) = json::parse(source.json()) {
             for reference in external_refs(&tree) {
                 let (resource, _) = flowapi::uri::split_fragment(&reference);
                 if resource.is_empty() || resource.contains("://") || resource.starts_with("urn:") {

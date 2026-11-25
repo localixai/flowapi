@@ -33,13 +33,13 @@ fn main() -> ExitCode {
     let texts = match load::all(&args.input) {
         Ok(t) => t,
         Err(message) => {
-            eprintln!("flowapi: {message}");
+            eprintln!("{message}");
             return ExitCode::FAILURE;
         }
     };
     let mut docs = Documents::new();
     for source in &texts {
-        if let Err(d) = docs.add(source.uri.clone(), &source.json) {
+        if let Err(d) = docs.add(source.uri.clone(), source.json()) {
             eprintln!("{d}\n  at {}", source.describe(d.at.offset));
             return ExitCode::FAILURE;
         }

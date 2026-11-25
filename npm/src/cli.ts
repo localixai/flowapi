@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // The `flowapi` command of the npm package: the Rust command's flags, output and exit codes
-// (crates/flowapi-cli/src/main.rs), over the WebAssembly module. JSON only in this release.
+// (crates/flowapi-cli/src/main.rs), over the WebAssembly module; JSON and YAML, read alike.
 
 import { readFileSync, writeFileSync } from 'node:fs'
 import { formatDiagnostic, load } from './index.ts'
@@ -18,8 +18,8 @@ Usage: flowapi <description> [-o <types.ts>] [--sdk] [--quiet]
   -V, --version         the version
 
 The description is Swagger 2.0, OpenAPI 3.0, 3.1 or 3.2, or a JSON Schema (2020-12 when it names no
-$schema), in JSON. Files its $refs name by a relative path are read too. YAML is read by the
-flowapi command built from Rust; this package reads JSON only.`
+$schema), in JSON or YAML (.yaml, .yml, or any text not opening with { or [). Files its
+$refs name by a relative path are read too.`
 
 interface Generate {
   readonly input: string
