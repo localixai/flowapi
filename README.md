@@ -264,6 +264,28 @@ GitHub's, Stripe's and Cloudflare's descriptions:
 [conformance/results/sdk-rust-corpus.md](conformance/results/sdk-rust-corpus.md); writing a
 request against progenitor's way: [bench/results/sdk-rust.md](bench/results/sdk-rust.md).
 
+### A config for a whole SDK
+
+For an agent that writes an SDK's config, `sdk-anything.yml` (its resources, a name for each
+operation, pagination, environments, authentication), four commands read the description so the
+agent does not have to:
+
+```sh
+flowapi summary openapi.json --tag pets          # the operations in compact JSON, with the pagination each looks like it has
+flowapi config draft openapi.json -o sdk-anything.yml   # a first config: every operation in a resource
+flowapi config check sdk-anything.yml --json     # every issue at once: code, JSON Pointer, YAML line, hint
+flowapi config schema > sdk-anything.schema.json # the format as JSON Schema
+```
+
+`summary` stays under `--max-bytes` (60 KB): over it, it gives the tags with their counts, to be
+read one at a time with `--tag` or `--path`. `config check` holds the config to its format (a
+member it does not name is an error) and to the description: every operation is in a resource
+or in `skip` with a reason, every reference names an operation (a typo names the closest), names
+are compared as words (`list_all` and `listAll` are one name), a method's pagination fits its
+operation's parameters and response schema, `auth` names the description's security schemes.
+A draft passes the check, and the same description written in another order gives the same
+draft. A description named `summary` or `config` is read by its path: `flowapi ./summary`.
+
 ## How it works
 
 The core (`crates/flowapi`) reads the documents into a graph of types that belongs to no

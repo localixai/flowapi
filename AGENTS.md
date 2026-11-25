@@ -48,8 +48,17 @@ work here.
   `flowapiSecuritySchemes`, `flowapiOperations`), naming the functions as `flowapi-ts` does. No
   I/O (G5). `tests/cases/*.json` and the `.ts` kept beside each (`--test table`, each case's
   `x-flowapi-covers` the ledger's markers); `tests/tsc.mjs` type-checks and imports them after the
-  `--sdk` output.
-- `crates/flowapi-cli`: the `flowapi` command, all of flowapi's I/O.
+  `--sdk` output. The `sdk-anything.yml` config, also no I/O: `config/shape.rs` (and
+  `shape/schemes.rs`) its format once, as tables that `config/read.rs` validates by,
+  `config/build.rs` reads into `config/model.rs` and `config/schema.rs` prints as JSON Schema;
+  `config/check.rs` and `config/names.rs` hold it to the description, `config/issue.rs` the
+  issues; `ops.rs` the operations by id and route, `words.rs` names as words, `paging/` the
+  pagination a schema fits (`fit.rs`) or suggests (`suggest.rs`), `draft.rs` (`draft/naming.rs`)
+  a first config, `summary.rs` the compact summary. `tests/config/*.yml` with the issues kept
+  beside each (`--test config`), `tests/schema.json` (`--test schema`, the reader and the schema
+  agree both ways), `tests/draft/` (`--test draft`), `tests/summary/` (`--test summary`).
+- `crates/flowapi-cli`: the `flowapi` command, all of flowapi's I/O. `src/sdk.rs` the subcommands
+  put before the path (`summary`, `config draft|schema|check`; `tests/sdk_cli.rs`).
 - `crates/flowapi-yaml`: a description's text as the core reads it, shared by the command and the
   WebAssembly module: which document is YAML (`is_yaml`), YAML 1.2 read into JSON with each node's
   YAML place (`reader.rs`, `saphyr-parser`), and the line and column of an offset. No I/O (G5).
@@ -93,6 +102,8 @@ cargo test -p flowapi-rust --test sdk                  # the Rust SDK kept for e
 (cd bench/sdk-rust && cargo run --release -j 1)        # writing requests against progenitor's way
 cargo test -p flowapi-ts --test fuzz                   # O7, no input panics
 cargo test -p flowapi-sdk --test table                 # the SDK layer's tables (FLOWAPI_BLESS=1)
+cargo test -p flowapi-sdk --test config                # also --test schema, draft, summary (FLOWAPI_BLESS=1)
+cargo test -p flowapi-cli --test sdk_cli               # summary and config as the command runs them
 node crates/flowapi-sdk/tests/tsc.mjs                  # them type-checked after --sdk; after cargo build --release
 cargo run --release -p flowapi-cli -- <description.json> -o types.ts
 bench/run.sh                          # the benchmarks, then held to bench/budgets.json

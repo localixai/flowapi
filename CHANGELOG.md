@@ -25,6 +25,24 @@
 - With the TypeScript SDK a schema named `Promise`, `ArrayBuffer`, `FlowapiRequestError`,
   `FlowapiFile` or `FlowapiEncoding` is declared under another name, with a warning: the SDK names
   them.
+- Commands for an agent that writes an SDK's config, `sdk-anything.yml` (version 1), before the
+  description's path: `flowapi summary <description> [--tag T] [--path P] [--max-bytes N]`, the
+  description in compact JSON (servers, security schemes, counts, tags, each operation with its
+  parameters, the media types of its body and responses, and the pagination it looks like it has,
+  with a reason and how sure; over the budget, 60 KB by default, the tags alone);
+  `flowapi config draft <description> [-o file]`, a first config in YAML (resources by tag, else
+  by the path's first segment, the verbs `list`, `create`, `retrieve`, `update`, `delete`, the
+  suggested pagination, environments from the servers, `auth` from the security schemes,
+  `skip: []`), which passes `config check` and does not depend on the order the description is
+  written in; `flowapi config schema`, the format as JSON Schema 2020-12, printed from the
+  definitions the checker reads by; and `flowapi config check <config> [--spec D] [--json]`,
+  every issue at once with a code, the JSON Pointer, the YAML line and column and a hint: members
+  the format does not name, types, coverage (every operation in a resource or in `skip` with a
+  reason), references that name no operation (the closest named), an operation in two places,
+  names equal as words among siblings, names a generated class has itself or a schema has,
+  pagination fields missing from the parameters or the response schema or of the wrong type,
+  `auth`, environments and the README's methods. It exits 1 on an error. The old form,
+  `flowapi <description>`, is unchanged; a description named `summary` is read as `./summary`.
 - The TypeScript SDK reads binary responses as bytes, as the Rust SDK does: `<op>Response(status,
   headers, body)` takes `body: string | Uint8Array` (it took a `string`) and reads it by the type
   sent: JSON parsed, `text/*` a `string`, any other a `Uint8Array` (an `application/xml` or

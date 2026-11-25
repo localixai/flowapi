@@ -1,0 +1,80 @@
+# A first sdk-anything.yml, drafted by `flowapi config draft` from the description: rename
+# resources and methods, page what pages, then `flowapi config check` it.
+version: 1
+generator:
+  flowapi: "0.1.0"
+spec: spec.json
+package:
+  name: pet-shop
+  client: PetShop
+environments:
+  production: "https://api.petshop.example/v1"
+  sandbox: "https://sandbox.petshop.example/v1"
+  default: production
+  env_var: PET_SHOP_BASE_URL
+auth:
+  ApiKeyAuth:
+    env_var: PET_SHOP_API_KEY_AUTH
+  bearer:
+    env_var: PET_SHOP_BEARER
+defaults:
+  retries: 2
+  timeout: 60
+  max_retry_delay: 60
+pagination:
+  link:
+    type: link
+    request:
+      limit: per_page
+    response:
+      header: Link
+  cursor:
+    type: cursor
+    request:
+      cursor: page_token
+      limit: limit
+    response:
+      items: data
+      next: next_page_token
+      has_more: has_more
+  offset:
+    type: offset
+    request:
+      offset: offset
+      limit: limit
+    response:
+      items: items
+      total: total
+resources:
+  collisions:
+    methods:
+      list: getCollision  # GET /collision
+  events:
+    methods:
+      list:  # GET /events
+        op: streamEvents
+        stream: true
+  internal:
+    methods:
+      get_health: "GET /internal/health"
+  owners:
+    methods:
+      list:  # GET /owners
+        op: listOwners
+        pagination: link
+  pets:
+    methods:
+      list:  # GET /pets
+        op: listPets
+        pagination: cursor
+      create: createPet  # POST /pets
+      delete: deletePet  # DELETE /pets/{pet_id}
+      retrieve: getPet  # GET /pets/{pet_id}
+      update: updatePet  # PATCH /pets/{pet_id}
+      list_photos:  # GET /pets/{pet_id}/photos
+        op: listPhotos
+        pagination: offset
+  users:
+    methods:
+      list: listUsers  # GET /users
+skip: []

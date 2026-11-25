@@ -1,0 +1,33 @@
+error[config.coverage]: `listPets` is in no resource and not in `skip`
+  at refs.yml:8:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `getPet` is in no resource and not in `skip`
+  at refs.yml:8:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `listPhotos` is in no resource and not in `skip`
+  at refs.yml:8:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `listOwners` is in no resource and not in `skip`
+  at refs.yml:8:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `streamEvents` is in no resource and not in `skip`
+  at refs.yml:8:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `listUsers` is in no resource and not in `skip`
+  at refs.yml:8:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `GET /internal/health` is in no resource and not in `skip`
+  at refs.yml:8:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.op.unknown]: `listPet` names no operation of the description
+  at refs.yml:10:13 (/resources/pets/methods/list)
+  hint: did you mean `listPets`?
+error[config.op.unknown]: `GET /pets/{petId}` names no operation of the description
+  at refs.yml:11:17 (/resources/pets/methods/retrieve)
+  hint: did you mean `GET /pets/{pet_id}`?
+error[config.op.twice]: `createPet` is in two places: pets.create and pets.make
+  at refs.yml:14:19 (/resources/pets/methods/make/op)
+error[config.op.twice]: `deletePet` is in two places: pets.delete and skip
+  at refs.yml:17:11 (/skip/0/op)
+error[config.schema.empty]: `/skip/1/reason`: an empty string
+  at refs.yml:18:25 (/skip/1/reason)

@@ -1,0 +1,27 @@
+# The format: members it does not name (typos, with the closest name as a hint; `overrides`,
+# which version 1 has not, so no override can rename a schema's neighbours, study pitfall 5),
+# values of the wrong type or out of range, required members missing, strings of the wrong kind.
+version: 2
+spec: spec.json
+package: { name: PetShop, client: petShop }
+environments:
+  production: api.petshop.example
+  2nd: https://api.petshop.example
+  env_var: pet_shop_url
+defaults: { retries: "2", timeout: 0, max_retry_delay: -1 }
+pagination:
+  cursor:
+    type: cursr
+  paged:
+    type: page
+    request: { pages: page }
+resoures: {}
+overrides: { Pet: Animal }
+resources:
+  pets:
+    methds: {}
+    methods:
+      list: { op: listPets, pagniation: cursor, retries: 11, stream: "yes" }
+      create: 42
+skip:
+  - { op: createPet }

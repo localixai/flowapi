@@ -1,0 +1,146 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Pet Shop", "version": "1.2.0" },
+  "servers": [
+    { "url": "https://api.petshop.example/v1", "description": "production" },
+    { "url": "https://sandbox.petshop.example/v1", "description": "sandbox" }
+  ],
+  "security": [{ "ApiKeyAuth": [] }],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": { "type": "apiKey", "in": "header", "name": "X-Api-Key" },
+      "bearer": { "type": "http", "scheme": "bearer" }
+    },
+    "schemas": {
+      "Pet": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": { "id": { "type": "string" }, "name": { "type": "string" } }
+      },
+      "PetPage": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/Pet" } },
+          "next_page_token": { "type": ["string", "null"] },
+          "has_more": { "type": "boolean" }
+        }
+      },
+      "Photo": { "type": "object", "properties": { "id": { "type": "integer" }, "url": { "type": "string" } } },
+      "Collision": { "type": "object", "properties": { "level": { "type": "integer" } } },
+      "User": {
+        "type": "object",
+        "properties": { "user_id": { "type": "string" }, "userId": { "type": "integer" } }
+      }
+    }
+  },
+  "paths": {
+    "/pets": {
+      "get": {
+        "operationId": "listPets",
+        "tags": ["pets"],
+        "summary": "List the pets, a page at a time",
+        "parameters": [
+          { "name": "page_token", "in": "query", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PetPage" } } }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPet",
+        "tags": ["pets"],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Pet" } } }
+        },
+        "responses": { "201": { "description": "Made", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Pet" } } } } }
+      }
+    },
+    "/pets/{pet_id}": {
+      "parameters": [{ "name": "pet_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "operationId": "getPet",
+        "tags": ["pets"],
+        "responses": { "200": { "description": "A pet", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Pet" } } } } }
+      },
+      "patch": { "operationId": "updatePet", "tags": ["pets"], "responses": { "200": { "description": "Changed" } } },
+      "delete": { "operationId": "deletePet", "tags": ["pets"], "responses": { "204": { "description": "Gone" } } }
+    },
+    "/pets/{pet_id}/photos": {
+      "parameters": [{ "name": "pet_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "operationId": "listPhotos",
+        "tags": ["pets"],
+        "parameters": [
+          { "name": "offset", "in": "query", "schema": { "type": "integer" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Photos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": { "type": "array", "items": { "$ref": "#/components/schemas/Photo" } },
+                    "total": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/owners": {
+      "get": {
+        "operationId": "listOwners",
+        "tags": ["owners"],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer" } },
+          { "name": "per_page", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Owners",
+            "headers": { "Link": { "schema": { "type": "string" } } },
+            "content": { "application/json": { "schema": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "integer" } } } } } }
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "operationId": "streamEvents",
+        "tags": ["events"],
+        "responses": { "200": { "description": "Events", "content": { "text/event-stream": { "schema": { "type": "string" } } } } }
+      }
+    },
+    "/collision": {
+      "get": {
+        "operationId": "getCollision",
+        "tags": ["collision"],
+        "responses": { "200": { "description": "One", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Collision" } } } } }
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "listUsers",
+        "tags": ["users"],
+        "parameters": [
+          { "name": "user_id", "in": "query", "schema": { "type": "string" } },
+          { "name": "userId", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Users", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/User" } } } } } }
+      }
+    },
+    "/internal/health": {
+      "get": { "responses": { "200": { "description": "Up" } } }
+    }
+  }
+}

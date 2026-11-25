@@ -40,7 +40,12 @@ impl Source {
 
     /// A byte offset of the JSON text as `uri:line:column`, the YAML's line for a YAML file.
     pub(crate) fn describe(&self, offset: u32) -> String {
-        let (line, column) = self.text.place(offset);
+        let (line, column) = self.place(offset);
         format!("{}:{line}:{column}", self.uri)
+    }
+
+    /// The line and column of a byte offset of the JSON text, the YAML's for a YAML file.
+    pub(crate) fn place(&self, offset: u32) -> (usize, usize) {
+        self.text.place(offset)
     }
 }

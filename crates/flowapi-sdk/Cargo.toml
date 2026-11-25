@@ -16,5 +16,12 @@ flowapi = { path = "../flowapi" }
 # with them, so it asks the target rather than deciding again.
 flowapi-ts = { path = "../flowapi-ts" }
 
+[dev-dependencies]
+# The config cases are YAML, read as the command reads them.
+flowapi-yaml = { path = "../flowapi-yaml" }
+# The printed JSON Schema and summaries read by a reader that is not ours (tests/schema.rs,
+# tests/summary.rs), and descriptions written back in other orders (tests/draft.rs).
+serde_json = "=1.0.154"
+
 [lints]
 workspace = true

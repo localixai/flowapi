@@ -1,0 +1,21 @@
+error[config.name.duplicate]: the environment `Production` and the environment `production` are one name (`production`) in `environments`
+  at names.yml:11:3 (/environments/Production)
+  hint: rename one; `production` is at /environments/production
+error[config.name.duplicate]: the method `listAll` and the method `list_all` are one name (`list all`) in `pets`
+  at names.yml:16:7 (/resources/pets/methods/listAll)
+  hint: rename one; `list_all` is at /resources/pets/methods/list_all
+error[config.name.duplicate]: the method `photos` and the resource `photos` are one name (`photos`) in `pets`
+  at names.yml:17:7 (/resources/pets/methods/photos)
+  hint: rename one; `photos` is at /resources/pets/resources/photos
+error[config.name.reserved]: the method `constructor` is a member `pets` has itself
+  at names.yml:18:7 (/resources/pets/methods/constructor)
+error[config.name.duplicate]: the resource `abuse_reports` and the resource `abuse-reports` are one name (`abuse reports`) in the client
+  at names.yml:26:3 (/resources/abuse_reports)
+  hint: rename one; `abuse-reports` is at /resources/abuse-reports
+error[config.name.reserved]: the resource `request` is a member the client has itself
+  at names.yml:29:3 (/resources/request)
+error[config.name.model]: the resource `collision` is the class `Collision`, and the description has a schema of that name
+  at names.yml:32:3 (/resources/collision)
+  hint: name the resource otherwise (a plural, as `pets` beside the schema `Pet`)
+error[config.name.client]: the resource `pet_shop` is the class `PetShop`, the client's name
+  at names.yml:35:3 (/resources/pet_shop)

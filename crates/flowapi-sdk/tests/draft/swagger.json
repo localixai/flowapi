@@ -1,0 +1,55 @@
+{
+  "swagger": "2.0",
+  "info": { "title": "2nd Hand Market", "version": "2.1" },
+  "host": "market.example",
+  "basePath": "/v2",
+  "schemes": ["https"],
+  "securityDefinitions": {
+    "oauth": { "type": "oauth2", "flow": "accessCode", "authorizationUrl": "https://market.example/auth", "tokenUrl": "https://market.example/token", "scopes": {} },
+    "key": { "type": "apiKey", "in": "query", "name": "api_key" }
+  },
+  "definitions": {
+    "Listing": { "type": "object", "properties": { "id": { "type": "integer" }, "title": { "type": "string" } } },
+    "ListingPage": {
+      "type": "object",
+      "properties": {
+        "results": { "type": "array", "items": { "$ref": "#/definitions/Listing" } },
+        "total_count": { "type": "integer" }
+      }
+    }
+  },
+  "paths": {
+    "/listings": {
+      "get": {
+        "operationId": "Listings_List",
+        "parameters": [
+          { "name": "skip", "in": "query", "type": "integer" },
+          { "name": "pageSize", "in": "query", "type": "integer" }
+        ],
+        "responses": { "200": { "description": "A page", "schema": { "$ref": "#/definitions/ListingPage" } } }
+      },
+      "post": {
+        "operationId": "Listings_Create",
+        "parameters": [{ "name": "body", "in": "body", "schema": { "$ref": "#/definitions/Listing" } }],
+        "responses": { "201": { "description": "Made", "schema": { "$ref": "#/definitions/Listing" } } }
+      }
+    },
+    "/listings/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer" }],
+      "get": { "operationId": "Listings_Get", "responses": { "200": { "description": "One", "schema": { "$ref": "#/definitions/Listing" } } } },
+      "put": { "operationId": "Listings_Replace", "responses": { "200": { "description": "Replaced" } } },
+      "delete": { "responses": { "204": { "description": "Gone" } } }
+    },
+    "/listings/{id}/publish": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer" }],
+      "post": { "operationId": "Listings_Publish", "responses": { "204": { "description": "Published" } } }
+    },
+    "/listings/{id}/bids": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer" }],
+      "get": {
+        "parameters": [{ "name": "page", "in": "query", "type": "integer" }],
+        "responses": { "200": { "description": "Bids", "schema": { "type": "object", "properties": { "items": { "type": "array", "items": { "type": "object" } }, "total_pages": { "type": "integer" } } } } }
+      }
+    }
+  }
+}
