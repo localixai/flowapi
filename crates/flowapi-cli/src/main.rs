@@ -4,6 +4,7 @@
 
 mod args;
 mod load;
+mod sdk;
 mod source;
 
 use flowapi::{Documents, Severity};
@@ -25,6 +26,7 @@ fn main() -> ExitCode {
             return ExitCode::SUCCESS;
         }
         Ok(args::Command::Generate(a)) => a,
+        Ok(args::Command::Sdk(command)) => return sdk::run(command),
         Err(message) => {
             eprintln!("flowapi: {message}\n\n{}", args::HELP);
             return ExitCode::from(2);

@@ -1,0 +1,68 @@
+# Every member of the format, each naming what the description has: no issue.
+version: 1
+generator: { flowapi: "0.1.x" }
+spec: spec.json
+package:
+  name: "@petshop/sdk"
+  client: PetShop
+  license: MIT
+  repository: https://github.com/petshop/sdk
+environments:
+  production: https://api.petshop.example/v1
+  sandbox: https://sandbox.petshop.example/v1
+  default: production
+  env_var: PET_SHOP_BASE_URL
+auth:
+  ApiKeyAuth: { env_var: PET_SHOP_API_KEY }
+defaults: { retries: 2, timeout: 60, max_retry_delay: 30, pagination: cursor }
+pagination:
+  cursor:
+    type: cursor
+    request: { cursor: page_token, limit: limit }
+    response: { items: data, next: next_page_token, has_more: has_more }
+  by_id:
+    type: last_item_id
+    request: { cursor: page_token }
+    response: { items: data, id: id, has_more: has_more }
+  photos:
+    type: offset
+    request: { offset: offset, limit: limit }
+    response: { items: items, total: total }
+  owners:
+    type: link
+    request: { limit: per_page }
+    response: { header: Link }
+  numbered:
+    type: page
+    request: { page: page, per_page: per_page }
+    response: {}
+    start: 1
+  one:
+    type: single
+resources:
+  pets:
+    methods:
+      list: listPets
+      create: createPet
+      get: { op: getPet, retries: 0 }
+      update: "PATCH /pets/{pet_id}"
+      delete: delete /pets/{pet_id}
+    resources:
+      photos:
+        methods:
+          list: { op: listPhotos, pagination: photos }
+  owners:
+    methods:
+      list: { op: listOwners, pagination: owners }
+  events:
+    methods:
+      stream: { op: streamEvents, stream: true }
+  collisions:
+    methods:
+      get: getCollision
+  users:
+    methods:
+      list: { op: listUsers, pagination: one }
+skip:
+  - { op: "GET /internal/health", reason: not public }
+readme: { headline_method: pets.list, pagination_method: pets.photos.list, intro: "The Pet Shop API." }

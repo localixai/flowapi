@@ -1,0 +1,39 @@
+# Names as words (study 03, pitfalls 2, 3 and 6): `list_all` beside `listAll` in one resource,
+# `abuse-reports` beside `abuse_reports` at the top, a method and a resource of one name, a
+# method named `constructor`, a top resource named as a client member (`request`), a resource
+# named as a schema (`collision`, the schema `Collision`), one named as the client, and two
+# environments of one name.
+version: 1
+spec: spec.json
+package: { name: petshop, client: PetShop }
+environments:
+  production: https://api.petshop.example/v1
+  Production: https://sandbox.petshop.example/v1
+resources:
+  pets:
+    methods:
+      list_all: listPets
+      listAll: createPet
+      photos: listPhotos
+      constructor: getPet
+    resources:
+      photos:
+        methods:
+          delete: deletePet
+  abuse-reports:
+    methods:
+      list: listOwners
+  abuse_reports:
+    methods:
+      list: listUsers
+  request:
+    methods:
+      stream: streamEvents
+  collision:
+    methods:
+      get: getCollision
+  pet_shop:
+    methods:
+      update: updatePet
+skip:
+  - { op: "GET /internal/health", reason: not public }

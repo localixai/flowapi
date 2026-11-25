@@ -18,6 +18,7 @@ version = "0.1.0"
 dependencies = [
  "flowapi",
  "flowapi-rust",
+ "flowapi-sdk",
  "flowapi-ts",
  "flowapi-yaml",
 ]
@@ -35,6 +36,8 @@ version = "0.1.0"
 dependencies = [
  "flowapi",
  "flowapi-ts",
+ "flowapi-yaml",
+ "serde_json",
 ]
 
 [[package]]

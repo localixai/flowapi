@@ -20,6 +20,8 @@ flowapi-rust = { path = "../flowapi-rust" }
 # YAML read into the JSON the core reads, with each node's YAML place: the crate the
 # WebAssembly module shares, so both read YAML alike.
 flowapi-yaml = { path = "../flowapi-yaml" }
+# The SDK layer, for the commands about an SDK's config: `summary`, `config draft|schema|check`.
+flowapi-sdk = { path = "../flowapi-sdk" }
 
 [lints]
 workspace = true

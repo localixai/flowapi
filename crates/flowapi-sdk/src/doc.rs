@@ -7,6 +7,7 @@ use flowapi::id::{DocId, NodeId};
 use flowapi::json::Tree;
 use flowapi::spec::Operation;
 use flowapi::{Diagnostics, DocKind, Documents, Version};
+use std::collections::BTreeMap;
 
 /// A requirement id in the description's version (`oas-3.x.<section>`), or our own code for
 /// Swagger 2.0, which the requirements ledger does not hold.
@@ -38,6 +39,10 @@ pub(crate) struct Doc<'d, 't> {
     pub(crate) docs: &'d Documents<'t>,
     pub(crate) base: String,
     pub(crate) version: Version,
+    /// The first document's named schemas by the fragment a local reference names them with
+    /// (`#/components/schemas/Pet`, 2.0's `#/definitions/Pet`): a reference into thousands of
+    /// schemas found without walking them each time.
+    named: BTreeMap<String, NodeId>,
 }
 
 impl<'d, 't> Doc<'d, 't> {
@@ -48,11 +53,48 @@ impl<'d, 't> Doc<'d, 't> {
             return None;
         };
         let base = flowapi::spec::self_uri(docs, DocId::FIRST).unwrap_or_else(|| d.uri.clone());
+        let mut named = BTreeMap::new();
+        let tree = &d.tree;
+        let holders = [
+            (
+                "#/components/schemas/",
+                ["components", "schemas"].as_slice(),
+            ),
+            ("#/definitions/", ["definitions"].as_slice()),
+        ];
+        for (prefix, keys) in holders {
+            let holder = keys.iter().try_fold(tree.root(), |n, k| tree.get(n, k));
+            for m in holder.map(|h| tree.members(h)).unwrap_or_default() {
+                if let Some(key) = tree.string(m.key) {
+                    let escaped = key.replace('~', "~0").replace('/', "~1");
+                    named.entry(format!("{prefix}{escaped}")).or_insert(m.value);
+                }
+            }
+        }
         Some(Self {
             docs,
             base,
             version,
+            named,
         })
+    }
+
+    /// A schema with its `$ref`s followed: a local one to a named schema of the first document
+    /// by the index, any other as the core follows it. `None` for one that names nothing.
+    pub(crate) fn resolve(&self, at: At) -> Option<At> {
+        let mut here = at;
+        for _ in 0..32 {
+            let Some(r) = self.str(here, "$ref") else {
+                return Some(here);
+            };
+            match self.named.get(&r) {
+                Some(&node) if here.0 == DocId::FIRST => here = (DocId::FIRST, node),
+                Some(_) | None => {
+                    return flowapi::spec::follow(self.docs, &self.base, here.0, here.1);
+                }
+            }
+        }
+        None
     }
 
     pub(crate) fn tree(&self, doc: DocId) -> Option<&'d Tree<'t>> {

@@ -7,14 +7,29 @@
 //! (`flowapi-ts`, `--sdk`): the servers, the security schemes and one table of operations, text
 //! appended after that SDK's output, which a client reads to choose a base URL, attach
 //! authentication and read a body as text or bytes.
+//!
+//! For an agent that writes an SDK's config (`sdk-anything.yml`): [`check`] holds a config to
+//! its format and to the description, every issue at once; [`config_schema`] is the format as
+//! JSON Schema. Each takes the documents and JSON text and returns text, so the WebAssembly
+//! module can call them with JSON in and out as the command does.
 
+mod config;
 mod doc;
+mod draft;
 mod model;
+mod ops;
+mod out;
+mod paging;
 mod print;
 mod security;
 mod servers;
+mod summary;
+mod words;
 
+pub use config::{Issue, check, issues_json, issues_text, schema as config_schema, spec_of};
+pub use draft::draft;
 pub use model::{Access, Auth, KeyLocation, Requirement, Scheme, Server, Service, Variable};
+pub use summary::{Filter, summary};
 
 use doc::Doc;
 use flowapi::{Diagnostics, Documents, Program};
