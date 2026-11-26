@@ -77,7 +77,7 @@ fn readme(ctx: &Ctx<'_>) -> String {
             .ops
             .list
             .get(call.op)
-            .and_then(|op| args(ctx, &op.operation));
+            .and_then(|op| args(ctx, &op.operation, true));
         let input = input.map(|v| v.js()).unwrap_or_default();
         let _ = writeln!(
             out,
@@ -90,7 +90,10 @@ fn readme(ctx: &Ctx<'_>) -> String {
             out.push_str("console.log(result)\n");
         }
     }
-    out.push_str("```\n\nThe package is ES modules and CommonJS both, with types for each, and has no dependency: it calls the platform's `fetch`.\n");
+    let _ = writeln!(
+        out,
+        "```\n\nThe package is ES modules and CommonJS both, with types for each, and has no dependency: it calls the platform's `fetch`. From CommonJS the client is taken by its name, `const {{ {client} }} = require('{package}')`; `import {client} from '{package}'` gives it too."
+    );
     auth(ctx, &mut out);
     environments(ctx, &mut out);
     let s = &ctx.config.settings;

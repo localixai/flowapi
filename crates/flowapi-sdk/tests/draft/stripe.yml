@@ -5,15 +5,16 @@ generator:
   flowapi: "0.1.0"
 spec: stripe.json
 package:
-  name: payments
-  client: Payments
+  name: payhub-v1-rest-api
+  version: 0.1.0
+  client: PayHubV1RestApi
 environments:
   production: "https://api.payments.example/"
   default: production
-  env_var: PAYMENTS_BASE_URL
+  env_var: PAYHUB_V1_REST_API_BASE_URL
 auth:
   basicAuth:
-    env_var: PAYMENTS_BASIC_AUTH
+    env_var: PAYHUB_V1_REST_API_BASIC_AUTH
 defaults:
   retries: 2
   timeout: 60

@@ -7,6 +7,7 @@
 //! mock's reason, and the route the mock matched is the operation's.
 
 use super::example::{self, Value};
+use super::sample;
 use super::{Call, Ctx, HEADER, Kind, RepoFile, generated_file};
 use crate::client::{camel, resources};
 use crate::model::Auth;
@@ -59,7 +60,9 @@ fn file(ctx: &Ctx<'_>, resource: &str, up: &str, calls: &[&Call]) -> String {
             continue;
         };
         let route = format!("{} {}", op.method(), op.operation.path);
-        let args = args(ctx, &op.operation).map(|v| v.js()).unwrap_or_default();
+        let args = args(ctx, &op.operation, false)
+            .map(|v| v.js())
+            .unwrap_or_default();
         let _ = writeln!(
             out,
             "\ntest({}, async () => {{",
@@ -123,11 +126,16 @@ pub(crate) fn options(ctx: &Ctx<'_>, base_url: Option<&str>) -> String {
 
 /// A method's argument: the parameters its operation requires, by where they go, and its body
 /// when one is required (JSON first, else the first media type); `None` when it needs nothing.
-pub(crate) fn args(ctx: &Ctx<'_>, op: &Operation) -> Option<Value> {
+/// For the README (`readme`) a parameter's value is one for a person to read (`sample.rs`).
+pub(crate) fn args(ctx: &Ctx<'_>, op: &Operation, readme: bool) -> Option<Value> {
     let doc = &ctx.ops.doc;
     let mut groups: Vec<(String, Value)> = Vec::new();
     for p in op.params.iter().filter(|p| p.required) {
-        let value = example::of(doc, p.schema.as_ref().map(|r| (r.doc, r.node)), false);
+        let value = if readme {
+            sample::param(doc, op, p)
+        } else {
+            example::of(doc, p.schema.as_ref().map(|r| (r.doc, r.node)), false)
+        };
         if p.location == Location::QueryString {
             groups.push((String::from("querystring"), value));
             continue;

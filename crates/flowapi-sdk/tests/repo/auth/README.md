@@ -23,7 +23,7 @@ const result = await client.checks.queryKey()
 console.log(result)
 ```
 
-The package is ES modules and CommonJS both, with types for each, and has no dependency: it calls the platform's `fetch`.
+The package is ES modules and CommonJS both, with types for each, and has no dependency: it calls the platform's `fetch`. From CommonJS the client is taken by its name, `const { AuthClient } = require('auth-sdk')`; `import AuthClient from 'auth-sdk'` gives it too.
 
 ## Authentication
 

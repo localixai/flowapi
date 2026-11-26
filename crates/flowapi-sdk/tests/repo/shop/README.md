@@ -19,11 +19,11 @@ import { Shop } from '@shop/sdk'
 
 const client = new Shop()
 
-const result = await client.pets.retrieve({ path: { pet_id: "string" } })
+const result = await client.pets.retrieve({ path: { pet_id: "pet_id" } })
 console.log(result)
 ```
 
-The package is ES modules and CommonJS both, with types for each, and has no dependency: it calls the platform's `fetch`.
+The package is ES modules and CommonJS both, with types for each, and has no dependency: it calls the platform's `fetch`. From CommonJS the client is taken by its name, `const { Shop } = require('@shop/sdk')`; `import Shop from '@shop/sdk'` gives it too.
 
 ## Authentication
 

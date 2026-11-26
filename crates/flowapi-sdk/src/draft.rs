@@ -32,16 +32,8 @@ struct Method {
 pub fn draft(docs: &Documents<'_>, spec: &str) -> Option<String> {
     let (ops, _) = Ops::read(docs);
     let ops = ops?;
-    let title = words(&ops.info("title").unwrap_or_default());
-    let title = if title
-        .first()
-        .and_then(|w| w.chars().next())
-        .is_some_and(|c| c.is_ascii_alphabetic())
-    {
-        title
-    } else {
-        [vec![String::from("api")], title].concat()
-    };
+    // `title` the client's words, which a resource may not be; `prose` the package's.
+    let (prose, title) = naming::title(&ops.info("title").unwrap_or_default());
     let models: BTreeSet<String> = ops
         .schema_names
         .iter()
@@ -98,9 +90,9 @@ pub fn draft(docs: &Documents<'_>, spec: &str) -> Option<String> {
     let names = scheme_names(&schemes);
     let mut out = String::from(HEADER);
     let client = pascal(&title);
-    head(&mut out, spec, &title, &client);
-    environments(&mut out, &ops.doc, &title);
-    auth(&mut out, &ops.doc, &title);
+    head(&mut out, spec, &prose, &client);
+    environments(&mut out, &ops.doc, &prose);
+    auth(&mut out, &ops.doc, &prose);
     out.push_str("defaults:\n  retries: 2\n  timeout: 60\n  max_retry_delay: 60\n");
     if !schemes.is_empty() {
         out.push_str("pagination:\n");
@@ -211,7 +203,7 @@ fn head(out: &mut String, spec: &str, title: &[String], client: &str) {
     let package: String = join(title, "-").chars().take(214).collect();
     let _ = writeln!(
         out,
-        "package:\n  name: {}\n  client: {client}",
+        "package:\n  name: {}\n  version: 0.1.0\n  client: {client}",
         yaml_str(&package)
     );
 }

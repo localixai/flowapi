@@ -14,6 +14,7 @@ mod mock;
 mod package;
 mod plan;
 mod readme;
+mod sample;
 mod suite;
 mod texts;
 

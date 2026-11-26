@@ -22,7 +22,25 @@ function pattern(path) {
   return new RegExp(`^${parts.join('')}$`)
 }
 
-const table = routes.map((r) => ({ ...r, regex: pattern(r.path) }))
+/** Each segment of a path by how specific it is: 2 literal, 1 a template beside text, 0 a template. */
+const ranks = (path) => path.split('/').map((s) => (!s.includes('{') ? 2 : /^\{[^}/]+\}$/.test(s) ? 0 : 1))
+
+/**
+ * The more specific route first (OpenAPI's Paths Object matches a concrete path before a templated
+ * one): at the first segment where the two differ in kind, the more literal one; then the shorter
+ * path, which never matches the same URL. Routes as specific as each other are ambiguous by the
+ * specification and keep the order of routes.mjs (the client's resources and methods).
+ */
+function specific(a, b) {
+  const x = ranks(a.path)
+  const y = ranks(b.path)
+  const i = x.findIndex((r, n) => r !== y[n])
+  if (i === -1 || i >= y.length) return x.length - y.length
+  return y[i] - x[i]
+}
+
+// Sorted once, stably: a request takes the first route that matches its path and method.
+const table = routes.map((r) => ({ ...r, regex: pattern(r.path) })).sort(specific)
 
 /** A media type without its parameters, in lower case. */
 const bare = (type) => (type ?? '').split(';')[0].trim().toLowerCase()
