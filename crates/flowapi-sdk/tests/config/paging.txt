@@ -1,4 +1,4 @@
-warning[config.generator.version]: the config pins flowapi 9.9.9, and this is flowapi 0.1.0
+warning[config.generator.version]: the config pins flowapi 9.9.9, and this is flowapi 0.2.0
   at paging.yml:9:23 (/generator/flowapi)
 error[config.env.default]: no environment is named `prod`
   at paging.yml:14:12 (/environments/default)

@@ -2,7 +2,7 @@
 # resources and methods, page what pages, then `flowapi config check` it.
 version: 1
 generator:
-  flowapi: "0.1.0"
+  flowapi: "0.2.0"
 spec: stripe.json
 package:
   name: payhub-v1-rest-api

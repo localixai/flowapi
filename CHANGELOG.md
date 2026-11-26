@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 — 2026-11-26
+
 - `flowapi generate <flowapi-sdk.yml> --out <dir> [--check]` writes a TypeScript SDK's whole
   repository: the client's `src/`, `package.json` (ES modules and CommonJS, each with its types,
   `sideEffects: false`, `engines.node >=20`, `typescript` 7.0.2 the one development dependency),
