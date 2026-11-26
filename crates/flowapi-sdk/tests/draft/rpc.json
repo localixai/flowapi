@@ -1,0 +1,64 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "Chat", "version": "1" },
+  "servers": [
+    { "url": "https://{region}.chat.example/api", "variables": { "region": { "default": "eu" } } },
+    { "url": "/relative" }
+  ],
+  "components": { "securitySchemes": { "token": { "type": "http", "scheme": "bearer" }, "cert": { "type": "mutualTLS" } } },
+  "paths": {
+    "/chat.postMessage": { "post": { "operationId": "chat_postMessage", "tags": ["chat"], "responses": { "200": { "description": "ok" } } } },
+    "/chat.delete": { "post": { "operationId": "chat_delete", "tags": ["chat"], "responses": { "200": { "description": "ok" } } } },
+    "/conversations.list": {
+      "get": {
+        "operationId": "conversations_list",
+        "tags": ["conversations"],
+        "parameters": [
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "channels": { "type": "array", "items": { "type": "object" } },
+                    "response_metadata": { "type": "object", "properties": { "next_cursor": { "type": "string" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations.history": {
+      "get": {
+        "operationId": "conversations_history",
+        "tags": ["conversations"],
+        "parameters": [{ "name": "cursor", "in": "query", "schema": { "type": "string" } }],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "messages": { "type": "array", "items": { "type": "object" } },
+                    "response_metadata": { "type": "object", "properties": { "next_cursor": { "type": "string" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/2fa.verify": { "post": { "operationId": "2faVerify", "tags": ["2fa"], "responses": { "200": { "description": "ok" } } } },
+    "/constructor": { "get": { "tags": ["system"], "responses": { "200": { "description": "ok" } } } }
+  }
+}

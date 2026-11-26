@@ -53,42 +53,45 @@ export type Paths = {
 
 /**
  * A request to send. `path` goes after the server's base URL; `query` is the query string
- * without its `?`, empty for none.
+ * without its `?`, empty for none; `body` text, or bytes (a multipart body, bytes given).
  */
 export type $Request = {
   method: string;
   path: string;
   query: string;
   headers: Record<string, string>;
-  body?: string;
+  body?: string | Uint8Array;
 };
 
 /**
  * A request `<op>Request` refuses to write: a value that would change what the request means
  * rather than what it says. `location` is where it goes (`path`, `query`, `querystring`,
  * `header`, `cookie` or `body`), `parameter` the parameter's name as the description writes it
- * (`null` for the body), `reason` why: a CR, LF or NUL in a header or a cookie (it would start
- * another header), a path segment left empty or made `.` or `..` (a client or a server would
- * remove it and the one before it), NaN or an infinity (JSON has no number for them).
+ * (`null` for the body; a multipart part's name), `reason` why: a CR, LF or NUL in a header, a
+ * cookie or a part's head (it would start another header), a path segment left empty or made `.`
+ * or `..` (a client or a server would remove it and the one before it), NaN or an infinity (JSON
+ * has no number for them). In a multipart body also: `null` where a part goes (`null`), a member
+ * of an array of parts that is not an object (`unnamed-part`), a Blob not read yet
+ * (`unread-blob`: `flowapiBlob` reads it), a `"` or `\` in a name or a file name (`quote`), a
+ * file name that is empty, `.` or `..` (`file-name`), a part header's name that is not a token or
+ * is `Content-Disposition` (`header-name`), a list or a range for a part's type (`media-range`),
+ * a boundary RFC 2046 does not allow or that a part holds (`boundary`).
  */
 export class FlowapiRequestError extends Error {
   readonly location: string;
   readonly parameter: string | null;
-  readonly reason: "control-character" | "empty-segment" | "dot-segment" | "non-finite";
+  readonly reason:
+    | "control-character" | "empty-segment" | "dot-segment" | "non-finite" | "null" | "unnamed-part"
+    | "unread-blob" | "quote" | "file-name" | "header-name" | "media-range" | "boundary";
   constructor(location: string, parameter: string | null, reason: FlowapiRequestError["reason"]) {
-    super(`${parameter === null ? "the body" : `the ${location} parameter \`${parameter}\``}: ${reason}`);
+    const what = location === "body" ? "the body" + (parameter === null ? "" : `'s part \`${parameter}\``) : `the ${location} parameter \`${parameter}\``;
+    super(`${what}: ${reason}`);
     this.name = "FlowapiRequestError";
     this.location = location;
     this.parameter = parameter;
     this.reason = reason;
   }
 }
-
-/** A response read: which response of the description it is (`null` for none), and its body. */
-type $Read = { response: string | null; status: number; mediaType: string | null; body: unknown };
-
-/** Per response, as written: its status, its media types as written and their bare forms. */
-type $Table = readonly (readonly [string, readonly string[], readonly string[]])[];
 
 const $unreserved = /^[A-Za-z0-9\-._~]*$/;
 const $marks = /[!'()*]/g;
@@ -303,9 +306,11 @@ function $form(v: unknown): string {
   return out;
 }
 
-/** A body in its media type: JSON, a form, or text as given (anything else as JSON). NaN or an
- * infinity in a JSON or form body is refused: `JSON.stringify` would write `null`. */
-function $body(type: string, v: unknown): string {
+/** A body in its media type: bytes as given, JSON, a form, or text as given (anything else as
+ * JSON). NaN or an infinity in a JSON or form body is refused: `JSON.stringify` would write
+ * `null`. */
+function $body(type: string, v: unknown): string | Uint8Array {
+  if (v instanceof Uint8Array) return v;
   if (!$json(type)) {
     if ($bare(type) === "application/x-www-form-urlencoded") {
       if ($bad(v)) throw new FlowapiRequestError("body", null, "non-finite");
@@ -344,6 +349,270 @@ function $set(headers: Record<string, string>, name: string, s: string | undefin
   headers[name] = s;
 }
 
+/** A file to send as a part of a `multipart/form-data` body: its bytes, the name its part's
+ * `filename` is written from and the `Content-Type` it is sent as. Made by `flowapiFile` or
+ * `flowapiBlob`. */
+export class FlowapiFile {
+  readonly data: Uint8Array;
+  readonly name: string | undefined;
+  readonly type: string | undefined;
+  constructor(data: Uint8Array, name: string | undefined, type: string | undefined) {
+    this.data = data;
+    this.name = name;
+    this.type = type;
+  }
+}
+
+/** A file from bytes, or from text as its UTF-8, with the name and the type to send it as. */
+export function flowapiFile(data: Uint8Array | string, name?: string, type?: string): FlowapiFile {
+  return new FlowapiFile(typeof data === "string" ? $bytes(data) : data, name, type);
+}
+
+/** What `flowapiBlob` reads of a `Blob` or a `File`, typed here so the output type-checks
+ * without the DOM's declarations. */
+export type $Blob = { readonly type: string; readonly name?: string; arrayBuffer(): Promise<ArrayBuffer> };
+
+/** A `Blob` or a `File` read into a `FlowapiFile`: its bytes, `name` or else a File's own, `type`
+ * or else the Blob's. The one step that waits: `<op>Request` takes bytes and stays synchronous. */
+export async function flowapiBlob(blob: $Blob, name?: string, type?: string): Promise<FlowapiFile> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  return new FlowapiFile(bytes, name ?? blob.name, type ?? (blob.type === "" ? undefined : blob.type));
+}
+
+/** Per part's name, what the description's Encoding Object says of it: the `Content-Type` its
+ * value is sent as, and the headers its part carries (`Content-Type` among them is ignored, as
+ * the spec says). An array's items each take their property's. */
+export type FlowapiEncoding = {
+  readonly [name: string]: { readonly contentType?: string; readonly headers?: { readonly [name: string]: string } } | undefined;
+};
+
+/** A `multipart/form-data` value as `<op>Request` takes it: a string member may also be a file
+ * (the types cannot tell `format: binary` from text), an array member's items one part each. */
+type $Upload<T> = T extends string ? T | Uint8Array | FlowapiFile : T;
+type $Member<T> = T extends readonly (infer U)[] ? readonly $Upload<U>[] : $Upload<T>;
+type $Fields<T> = T extends object ? { [K in keyof T]: $Member<T[K]> } : T;
+export type $Form<T> = T extends readonly (infer U)[] ? readonly $Fields<U>[] : $Fields<T>;
+
+/** A request body as the input gives it. */
+type $Given = { readonly contentType: string; readonly value: unknown; readonly encoding?: FlowapiEncoding };
+
+/** The body set on a request with its `Content-Type`: a `multipart/form-data` object (or 3.2's
+ * array of objects, its parts in order) written as parts, any other value by `$body`. */
+function $put(request: $Request, body: $Given): void {
+  const v = body.value;
+  if ($bare(body.contentType) === "multipart/form-data" && typeof v === "object" && v !== null && !ArrayBuffer.isView(v)) {
+    const parts: $Part[] = [];
+    for (const one of Array.isArray(v) ? v : [v]) {
+      if (one === undefined) continue;
+      if (one === null) throw new FlowapiRequestError("body", null, "null");
+      if (typeof one !== "object" || Array.isArray(one) || ArrayBuffer.isView(one) || one instanceof FlowapiFile || $unread(one)) {
+        throw new FlowapiRequestError("body", null, "unnamed-part");
+      }
+      for (const name of Object.keys(one)) $member(parts, name, (one as Record<string, unknown>)[name], body.encoding?.[name]);
+    }
+    const [type, bytes] = $multipart(body.contentType, parts);
+    request.headers["content-type"] = type;
+    request.body = bytes;
+    return;
+  }
+  request.headers["content-type"] = body.contentType;
+  request.body = $body(body.contentType, v);
+}
+
+/** One part: its head (`Content-Disposition` and the other headers, each line ended) and data. */
+type $Part = { head: string; data: Uint8Array };
+
+type $One = { readonly contentType?: string; readonly headers?: { readonly [name: string]: string } } | undefined;
+
+let $encoder: { encode(text: string): Uint8Array } | undefined;
+
+/** Text as UTF-8 bytes. */
+function $bytes(text: string): Uint8Array {
+  $encoder ??= new (globalThis as unknown as $Coders).TextEncoder();
+  return $encoder.encode(text);
+}
+
+const $breaks = /[\r\n\0]/;
+const $quotes = /["\\]/;
+const $token = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+
+/** `s` refused when it holds a CR, LF or NUL (it would end its header line), and where it goes
+ * between quotes, a `"` or `\`: RFC 7578 and WHATWG's FormData escape them differently, so a
+ * receiver could read another name. */
+function $safe(s: string, part: string, quoted: boolean): string {
+  if ($breaks.test(s)) throw new FlowapiRequestError("body", part, "control-character");
+  if (quoted && $quotes.test(s)) throw new FlowapiRequestError("body", part, "quote");
+  return s;
+}
+
+/** A file's name as its part's `filename`: its last path segment (a sender's directories are not
+ * the receiver's), refused when that is empty, `.` or `..`, and when the name holds a CR, LF or
+ * NUL anywhere (cut off with a directory, it would still be meant). */
+function $filename(name: string, part: string): string {
+  $safe(name, part, false);
+  const base = name.slice(Math.max(name.lastIndexOf("/"), name.lastIndexOf("\\")) + 1);
+  if (base === "" || base === "." || base === "..") throw new FlowapiRequestError("body", part, "file-name");
+  return $safe(base, part, true);
+}
+
+/** A member's parts: an array's items one part each in order, `undefined` none. */
+function $member(parts: $Part[], name: string, v: unknown, e: $One): void {
+  if (v === undefined) return;
+  $safe(name, name, true);
+  if (!Array.isArray(v)) return $part(parts, name, v, e);
+  for (let i = 0; i < v.length; i++) if (v[i] !== undefined) $part(parts, name, v[i], e);
+}
+
+/** One part, by the Encoding Object's defaults for the value: bytes and files as files (WHATWG's
+ * `blob` for a name not given, `application/octet-stream` for a type not given), strings,
+ * numbers and booleans as text (`text/plain`, the part's default, so not written), objects and
+ * arrays as JSON. `encoding.contentType` replaces the default; a file's own type replaces it. */
+function $part(parts: $Part[], name: string, v: unknown, e: $One): void {
+  if (v === null) throw new FlowapiRequestError("body", name, "null");
+  // Bytes in any other view are the same bytes.
+  if (v instanceof ArrayBuffer) v = new Uint8Array(v);
+  else if (ArrayBuffer.isView(v) && !(v instanceof Uint8Array)) v = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
+  let head = `Content-Disposition: form-data; name="${name}"`;
+  let type = e?.contentType;
+  let data: Uint8Array;
+  if (v instanceof FlowapiFile || v instanceof Uint8Array) {
+    const file = v instanceof FlowapiFile ? v : undefined;
+    head += `; filename="${$filename(file?.name ?? "blob", name)}"`;
+    type = file?.type ?? type ?? "application/octet-stream";
+    data = file?.data ?? (v as Uint8Array);
+  } else if ($unread(v)) {
+    throw new FlowapiRequestError("body", name, "unread-blob");
+  } else {
+    if ($bad(v)) throw new FlowapiRequestError("body", name, "non-finite");
+    type ??= typeof v === "object" ? "application/json" : undefined;
+    // An object in its type (JSON, or a form), a scalar as its text unless the type is JSON.
+    const s = typeof v === "object" || (type !== undefined && $json(type)) ? $body(type ?? "application/json", v) : $str(v);
+    data = typeof s === "string" ? $bytes(s) : s;
+  }
+  if (type !== undefined) {
+    if (type.indexOf(",") >= 0 || $bare(type).indexOf("*") >= 0) throw new FlowapiRequestError("body", name, "media-range");
+    head += `\r\nContent-Type: ${$safe(type, name, false)}`;
+  }
+  const headers = e?.headers ?? {};
+  for (const key of Object.keys(headers)) {
+    const value = headers[key];
+    const lower = key.toLowerCase();
+    if (value === undefined || lower === "content-type") continue;
+    if (!$token.test(key) || lower === "content-disposition") throw new FlowapiRequestError("body", name, "header-name");
+    head += `\r\n${key}: ${$safe(value, name, false)}`;
+  }
+  parts.push({ head: head + "\r\n", data });
+}
+
+/** A `Blob`, a `File` or a `Response` given unread: its bytes come only by waiting
+ * (`flowapiBlob`), and as JSON it would be `{}`. */
+function $unread(v: unknown): boolean {
+  return typeof v === "object" && v !== null && typeof (v as { arrayBuffer?: unknown }).arrayBuffer === "function";
+}
+
+const $bchars = /^[0-9A-Za-z'()+_,\-./:=? ]{0,69}[0-9A-Za-z'()+_,\-./:=?]$/;
+
+/** Whether `needle` occurs in `data`. */
+function $holds(data: Uint8Array, needle: Uint8Array): boolean {
+  const first = needle[0] ?? 0;
+  for (let i = data.indexOf(first); i >= 0 && i + needle.length <= data.length; i = data.indexOf(first, i + 1)) {
+    let j = 1;
+    while (j < needle.length && data[i + j] === needle[j]) j++;
+    if (j === needle.length) return true;
+  }
+  return false;
+}
+
+/** Whether a boundary occurs in any part: a delimiter in a part would end it there. */
+function $collides(parts: $Part[], boundary: string): boolean {
+  const b = $bytes(boundary);
+  return parts.some((p) => p.head.indexOf(boundary) >= 0 || $holds(p.data, b));
+}
+
+/** A boundary of 128 random bits from `globalThis.crypto`, so no content can be made to hold it. */
+function $random(): string {
+  const c = (globalThis as unknown as { crypto?: { getRandomValues(b: Uint8Array): Uint8Array } }).crypto;
+  if (c === undefined) throw new Error("flowapi: no globalThis.crypto to draw a multipart boundary from; give one: `multipart/form-data; boundary=...`");
+  let s = "flowapi-";
+  for (const x of c.getRandomValues(new Uint8Array(16))) s += (x < 16 ? "0" : "") + x.toString(16);
+  return s;
+}
+
+/** The parts written with a boundary (RFC 2046, 5.1.1; RFC 7578): the one the content type
+ * gives (`boundary=`), refused when RFC 2046 does not allow it or a part holds it, or one drawn
+ * at random and added to the content type, drawn again while a part holds it. */
+function $multipart(contentType: string, parts: $Part[]): [string, Uint8Array] {
+  const given = /;\s*boundary\s*=\s*(?:"([^"]*)"|([^;\s]*))/i.exec(contentType);
+  let boundary: string;
+  let type = contentType;
+  if (given !== null) {
+    boundary = given[1] ?? given[2] ?? "";
+    if (!$bchars.test(boundary) || $collides(parts, boundary)) throw new FlowapiRequestError("body", null, "boundary");
+  } else {
+    boundary = $random();
+    for (let tries = 1; $collides(parts, boundary); tries++) {
+      if (tries === 8) throw new FlowapiRequestError("body", null, "boundary");
+      boundary = $random();
+    }
+    type += "; boundary=" + boundary;
+  }
+  const chunks: Uint8Array[] = [];
+  for (const p of parts) chunks.push($bytes(`--${boundary}\r\n${p.head}\r\n`), p.data, $bytes("\r\n"));
+  chunks.push($bytes(`--${boundary}--\r\n`));
+  let size = 0;
+  for (const c of chunks) size += c.length;
+  const out = new Uint8Array(size);
+  let at = 0;
+  for (const c of chunks) {
+    out.set(c, at);
+    at += c.length;
+  }
+  return [type, out];
+}
+
+/** A response read: which response of the description it is (`null` for none), and its body. */
+type $Read = { response: string | null; status: number; mediaType: string | null; body: unknown };
+
+/** Per response, as written: its status, its media types as written and their bare forms. */
+type $Table = readonly (readonly [string, readonly string[], readonly string[]])[];
+
+/** The platform's UTF-8 coders (every browser, Node, Deno and Bun has them), looked up on
+ * `globalThis` so the output type-checks without the DOM's or Node's declarations. */
+type $Coders = {
+  TextDecoder: new (label: string, options: { fatal: boolean; ignoreBOM: boolean }) => {
+    decode(bytes: Uint8Array): string;
+  };
+  TextEncoder: new () => { encode(text: string): Uint8Array };
+};
+
+let $decoder: { decode(bytes: Uint8Array): string } | undefined;
+
+/** Bytes as UTF-8 text, a byte order mark kept as the character; `null` when they are not
+ * UTF-8 (the Rust SDK refuses them too, where `Response.text()` would replace them). */
+function $utf8(bytes: Uint8Array): string | null {
+  $decoder ??= new (globalThis as unknown as $Coders).TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+  try {
+    return $decoder.decode(bytes);
+  } catch {
+    return null;
+  }
+}
+
+/** A `text/*` type (a JSON one is read as JSON first). */
+function $text(bare: string): boolean {
+  return bare.startsWith("text/");
+}
+
+/**
+ * Whether `<op>Response` keeps a body of this `Content-Type` as bytes: any type but JSON and
+ * `text/*`, and a body with none. Read such a body with `arrayBuffer()`, the others with
+ * `text()`; bytes are always safe to give, as they are decoded where the type is text.
+ */
+export function flowapiReadsBytes(contentType: string | null | undefined): boolean {
+  if (contentType === null || contentType === undefined) return true;
+  return !$json(contentType) && !$text($bare(contentType));
+}
+
 /** A header, its name compared without case. */
 function $header(headers: Record<string, string>, name: string): string | null {
   const direct = headers[name];
@@ -356,11 +625,13 @@ function $header(headers: Record<string, string>, name: string): string | null {
 
 /**
  * The response a status picks (its code, then its range `NXX`, then `default`), the media type
- * the `Content-Type` picks (exact, then `type/*`, then `*\/*`), and the body read: JSON for a
- * JSON type, the text otherwise. A status or a media type the description does not name reads
- * as `response: null` with the text.
+ * the `Content-Type` picks (exact, then `type/*`, then `*\/*`), and the body read by the type
+ * sent: JSON parsed, `text/*` the text, any other the bytes (a string given for it encoded as
+ * UTF-8: its bytes were lost before). Bytes given for JSON or text are decoded as UTF-8. A
+ * status or a media type the description does not name, and a JSON or text body that is not
+ * UTF-8 or not JSON, read as `response: null` with the body as given.
  */
-function $read(table: $Table, status: number, headers: Record<string, string>, body: string): $Read {
+function $read(table: $Table, status: number, headers: Record<string, string>, body: string | Uint8Array): $Read {
   const code = String(status);
   const range = code.charAt(0) + "XX";
   let hit: (typeof table)[number] | undefined;
@@ -379,12 +650,18 @@ function $read(table: $Table, status: number, headers: Record<string, string>, b
   if (at < 0) at = hit[2].indexOf("*/*");
   const written = hit[1][at];
   if (written === undefined) return { response: null, status, mediaType: type, body };
-  if (!$json(type)) return { response: hit[0], status, mediaType: written, body };
-  // An empty or broken JSON body is not the response described: the text, unnamed. A leading
-  // byte order mark is skipped (RFC 8259, 8.1), as `JSON.parse` would refuse it.
+  const json = $json(type);
+  if (!json && !$text(bare)) {
+    const bytes = typeof body === "string" ? $bytes(body) : body;
+    return { response: hit[0], status, mediaType: written, body: bytes };
+  }
+  const text = typeof body === "string" ? body : $utf8(body);
+  if (text === null) return { response: null, status, mediaType: type, body };
+  if (!json) return { response: hit[0], status, mediaType: written, body: text };
+  // An empty or broken JSON body is not the response described: the body as given, unnamed. A
+  // leading byte order mark is skipped (RFC 8259, 8.1), as `JSON.parse` would refuse it.
   try {
-    const text = body.charCodeAt(0) === 0xfeff ? body.slice(1) : body;
-    return { response: hit[0], status, mediaType: written, body: JSON.parse(text) };
+    return { response: hit[0], status, mediaType: written, body: JSON.parse(text.charCodeAt(0) === 0xfeff ? text.slice(1) : text) };
   } catch {
     return { response: null, status, mediaType: type, body };
   }
@@ -407,20 +684,17 @@ const $listPetsResponse: $Table = [["200", ["application/json"], ["application/j
 export function listPetsResponse(
   status: number,
   headers: Record<string, string>,
-  body: string,
+  body: string | Uint8Array,
 ):
   | { response: "200"; status: 200; mediaType: "application/json"; body: ListPets["responses"]["200"]["content"]["application/json"] }
-  | { response: null; status: number; mediaType: string | null; body: string } {
+  | { response: null; status: number; mediaType: string | null; body: string | Uint8Array } {
   return $read($listPetsResponse, status, headers, body) as ReturnType<typeof listPetsResponse>;
 }
 
 export function addPetRequest(input: NonNullable<AddPet["parameters"]> & { body: { contentType: "application/x-www-form-urlencoded" | `application/x-www-form-urlencoded;${string}`; value: NonNullable<AddPet["requestBody"]>["application/x-www-form-urlencoded"] } }): $Request {
   const headers: Record<string, string> = {};
   const request: $Request = { method: "POST", path: "/pets/" + $seg(($x(input.path?.["ids"], "ids", "", ",", false, "", false, ",", $enc, "path", "ids") ?? ""), "ids", false), query: "", headers };
-  if (input.body !== undefined) {
-    headers["content-type"] = input.body.contentType;
-    request.body = $body(input.body.contentType, input.body.value);
-  }
+  if (input.body !== undefined) $put(request, input.body);
   return request;
 }
 
@@ -428,10 +702,10 @@ const $addPetResponse: $Table = [["201", [], []]];
 export function addPetResponse(
   status: number,
   headers: Record<string, string>,
-  body: string,
+  body: string | Uint8Array,
 ):
-  | { response: "201"; status: 201; mediaType: null; body: string }
-  | { response: null; status: number; mediaType: string | null; body: string } {
+  | { response: "201"; status: 201; mediaType: null; body: string | Uint8Array }
+  | { response: null; status: number; mediaType: string | null; body: string | Uint8Array } {
   return $read($addPetResponse, status, headers, body) as ReturnType<typeof addPetResponse>;
 }
 // warning[swagger.collectionFormat]: `collectionFormat` tsv has no 3.x style in `query`: written as `csv`

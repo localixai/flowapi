@@ -119,7 +119,11 @@ fn yaml_syntax_errors_name_the_line() {
     let out = flowapi(&path);
     assert!(!out.status.success());
     let stderr = String::from_utf8_lossy(&out.stderr);
-    assert!(stderr.contains(&format!("{}:", path.display())), "{stderr}");
+    // A diagnostic as the core's print (G8): its code, then the YAML line and column. The npm
+    // package prints the same bytes (npm/test/parity.test.ts).
+    assert!(stderr.starts_with("error[yaml.syntax]: "), "{stderr}");
+    let at = format!("\n  at {}:3:6\n", path.display());
+    assert!(stderr.ends_with(&at), "wanted {at:?} in:\n{stderr}");
 }
 
 #[test]

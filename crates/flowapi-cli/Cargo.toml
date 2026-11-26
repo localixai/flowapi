@@ -17,17 +17,11 @@ path = "src/main.rs"
 flowapi = { path = "../flowapi" }
 flowapi-ts = { path = "../flowapi-ts" }
 flowapi-rust = { path = "../flowapi-rust" }
-# YAML 1.2 read as events, each with its line and column: the CLI writes JSON for the core (which
-# reads JSON only, G5) and maps a diagnostic back to the YAML line, and expands aliases itself,
-# within a bound. Maintained (0.4.0, 2026-11), built to pass the YAML test suite (our own run of
-# it: tests/yaml_suite.rs), its own state stack rather than recursion, two small dependencies.
-# serde_yaml is no longer maintained; yaml-rust2 is the YAML 1.2 line this parser continues.
-saphyr-parser = "=0.4.0"
-
-[dev-dependencies]
-# The yaml-test-suite's JSON read by a reader that is not ours (tests/yaml_suite.rs): an oracle
-# independent of the core's reader, and a stream of several JSON values.
-serde_json = "=1.0.154"
+# YAML read into the JSON the core reads, with each node's YAML place: the crate the
+# WebAssembly module shares, so both read YAML alike.
+flowapi-yaml = { path = "../flowapi-yaml" }
+# The SDK layer, for the commands about an SDK's config: `summary`, `config draft|schema|check`.
+flowapi-sdk = { path = "../flowapi-sdk" }
 
 [lints]
 workspace = true

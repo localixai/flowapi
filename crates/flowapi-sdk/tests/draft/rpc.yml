@@ -1,0 +1,57 @@
+# A first flowapi-sdk.yml, drafted by `flowapi config draft` from the description: rename
+# resources and methods, page what pages, then `flowapi config check` it.
+version: 1
+generator:
+  flowapi: "0.2.0"
+spec: rpc.json
+package:
+  name: chat
+  version: 0.1.0
+  client: Chat
+environments:
+  production: "https://eu.chat.example/api"
+  default: production
+  env_var: CHAT_BASE_URL
+auth:
+  token:
+    env_var: CHAT_TOKEN
+defaults:
+  retries: 2
+  timeout: 60
+  max_retry_delay: 60
+pagination:
+  cursor_messages:
+    type: cursor
+    request:
+      cursor: cursor
+    response:
+      items: messages
+      next: response_metadata.next_cursor
+  cursor_channels:
+    type: cursor
+    request:
+      cursor: cursor
+      limit: limit
+    response:
+      items: channels
+      next: response_metadata.next_cursor
+resources:
+  api_2fa_verify:
+    methods:
+      post_2fa_verify: "2faVerify"  # POST /2fa.verify
+  chats:
+    methods:
+      delete: chat_delete  # POST /chat.delete
+      post_message: chat_postMessage  # POST /chat.postMessage
+  conversations:
+    methods:
+      history:  # GET /conversations.history
+        op: conversations_history
+        pagination: cursor_messages
+      list:  # GET /conversations.list
+        op: conversations_list
+        pagination: cursor_channels
+  system:
+    methods:
+      get: "GET /constructor"
+skip: []

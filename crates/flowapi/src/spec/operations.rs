@@ -15,6 +15,7 @@ use crate::id::DocId;
 use crate::schema::Resource;
 use crate::source::{Dialect, Documents, Version};
 use reader::Reader;
+pub use reader::follow;
 use std::sync::Arc;
 
 /// Where a parameter goes.

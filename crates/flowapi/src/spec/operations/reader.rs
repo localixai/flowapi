@@ -20,6 +20,36 @@ fn token(s: &str) -> bool {
     !s.is_empty() && s.bytes().all(|b| tchar(&b))
 }
 
+/// A Reference Object followed to what it names, at most 32 times; any other node as it is.
+/// `base` is the first document's URI (its `$self`, [`crate::spec::self_uri`]); `None` when a
+/// reference names nothing.
+#[must_use]
+pub fn follow(
+    docs: &Documents<'_>,
+    base: &str,
+    doc: DocId,
+    node: NodeId,
+) -> Option<(DocId, NodeId)> {
+    let (mut doc, mut node) = (doc, node);
+    for _ in 0..32 {
+        let d = docs.get(doc)?;
+        let Some(r) = d.tree.get(node, "$ref").and_then(|n| d.tree.as_str(n)) else {
+            return Some((doc, node));
+        };
+        let absolute = uri::resolve(if doc == DocId::FIRST { base } else { &d.uri }, &r);
+        let (resource, fragment) = uri::split_fragment(&absolute);
+        let target = if resource == base || resource.is_empty() {
+            DocId::FIRST
+        } else {
+            docs.find(resource)?
+        };
+        let t = &docs.get(target)?.tree;
+        node = resolve_pointer(t, t.root(), fragment)?;
+        doc = target;
+    }
+    None
+}
+
 pub(super) struct Reader<'d, 't> {
     pub(super) docs: &'d Documents<'t>,
     pub(super) base: &'d str,
@@ -33,33 +63,9 @@ impl<'t> Reader<'_, 't> {
         self.docs.get(doc).map(|d| &d.tree)
     }
 
-    /// A Reference Object followed to what it names, at most 32 times; any other node as it is.
+    /// [`follow`] in this description.
     pub(super) fn follow(&self, doc: DocId, node: NodeId) -> Option<(DocId, NodeId)> {
-        let (mut doc, mut node) = (doc, node);
-        for _ in 0..32 {
-            let d = self.docs.get(doc)?;
-            let Some(r) = d.tree.get(node, "$ref").and_then(|n| d.tree.as_str(n)) else {
-                return Some((doc, node));
-            };
-            let absolute = uri::resolve(
-                if doc == DocId::FIRST {
-                    self.base
-                } else {
-                    &d.uri
-                },
-                &r,
-            );
-            let (resource, fragment) = uri::split_fragment(&absolute);
-            let target = if resource == self.base || resource.is_empty() {
-                DocId::FIRST
-            } else {
-                self.docs.find(resource)?
-            };
-            let t = self.tree(target)?;
-            node = resolve_pointer(t, t.root(), fragment)?;
-            doc = target;
-        }
-        None
+        follow(self.docs, self.base, doc, node)
     }
 
     /// [`Self::follow`], reporting a reference that names nothing.

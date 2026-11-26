@@ -33,6 +33,23 @@ pub use source::{Dialect, DocKind, Document, Documents, Version};
 /// when none is an error.
 #[must_use]
 pub fn generate(docs: &Documents<'_>, target: &dyn Target) -> (Option<Output>, Diagnostics) {
+    let (program, mut diags) = program(docs, target);
+    let Some(program) = program else {
+        return (None, diags);
+    };
+    let output = target.emit(&program);
+    diags.extend(output.diagnostics.clone());
+    (Some(output), diags)
+}
+
+/// The program a target is given, as [`generate`] makes it: for a layer above the targets that
+/// prints beside a target's output under the names that target chose. `None` when a diagnostic
+/// is an error.
+#[must_use]
+pub fn program<'t>(
+    docs: &Documents<'t>,
+    target: &dyn Target,
+) -> (Option<Program<'t>>, Diagnostics) {
     let (description, mut diags) = spec::read(docs);
     let index = spec::index(docs, &description.all);
     for (uri, doc, node) in index.duplicates() {
@@ -52,7 +69,5 @@ pub fn generate(docs: &Documents<'_>, target: &dyn Target) -> (Option<Output>, D
     if diags.has_errors() {
         return (None, diags);
     }
-    let output = target.emit(&program);
-    diags.extend(output.diagnostics.clone());
-    (Some(output), diags)
+    (Some(program), diags)
 }

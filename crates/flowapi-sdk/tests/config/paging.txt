@@ -1,0 +1,59 @@
+warning[config.generator.version]: the config pins flowapi 9.9.9, and this is flowapi 0.2.0
+  at paging.yml:9:23 (/generator/flowapi)
+error[config.env.default]: no environment is named `prod`
+  at paging.yml:14:12 (/environments/default)
+error[config.auth.unknown]: `ApiKey` names no security scheme of the description
+  at paging.yml:16:3 (/auth/ApiKey)
+error[config.coverage]: `deletePet` is in no resource and not in `skip`
+  at paging.yml:34:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `updatePet` is in no resource and not in `skip`
+  at paging.yml:34:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `listPhotos` is in no resource and not in `skip`
+  at paging.yml:34:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `listOwners` is in no resource and not in `skip`
+  at paging.yml:34:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `getCollision` is in no resource and not in `skip`
+  at paging.yml:34:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `GET /internal/health` is in no resource and not in `skip`
+  at paging.yml:34:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.pagination.missing]: `pets.list` (GET /pets) pages by `wrong`: `request.cursor`: `/pets` has no parameter `pageToken` (it has `page_token`, `limit`)
+  at paging.yml:36:7 (/resources/pets/methods/list)
+  hint: did you mean `page_token`?
+error[config.pagination.mismatch]: `pets.list` (GET /pets) pages by `wrong`: `response.items`: `has_more` is of type boolean; `items` needs array
+  at paging.yml:36:7 (/resources/pets/methods/list)
+error[config.pagination.missing]: `pets.list` (GET /pets) pages by `wrong`: `response.next`: the response has no `next_token` (it has `data`, `next_page_token`, `has_more`)
+  at paging.yml:36:7 (/resources/pets/methods/list)
+error[config.stream.media]: `GET /pets` answers no 2xx response as a stream (`text/event-stream`, JSON lines)
+  at paging.yml:36:56 (/resources/pets/methods/list/stream)
+error[config.pagination.link]: `pets.list_linked` (GET /pets) pages by `both`: `response.next`: a link scheme names one of `next` (a path in the body) or `header`
+  at paging.yml:37:7 (/resources/pets/methods/list_linked)
+warning[config.pagination.header]: `pets.list_linked` (GET /pets) pages by `both`: `response.header`: no 2xx response of `/pets` declares the header `Link`
+  at paging.yml:37:7 (/resources/pets/methods/list_linked)
+error[config.pagination.mismatch]: `pets.list_linked` (GET /pets) pages by `both`: `response.items`: the body is of type object; `items` needs array
+  at paging.yml:37:7 (/resources/pets/methods/list_linked)
+error[config.pagination.mismatch]: `pets.list_linked` (GET /pets) pages by `both`: `response.next`: `data` is of type array; `next` needs string
+  at paging.yml:37:7 (/resources/pets/methods/list_linked)
+error[config.op.twice]: `listPets` is in two places: pets.list and pets.list_linked
+  at paging.yml:37:26 (/resources/pets/methods/list_linked/op)
+warning[config.pagination.header]: `pets.list_headed` (GET /pets) pages by `header`: `response.header`: no 2xx response of `/pets` declares the header `Link`
+  at paging.yml:38:7 (/resources/pets/methods/list_headed)
+error[config.op.twice]: `GET /pets` is in two places: pets.list and pets.list_headed
+  at paging.yml:38:26 (/resources/pets/methods/list_headed/op)
+error[config.pagination.unknown]: no pagination scheme is named `curser`
+  at paging.yml:39:44 (/resources/pets/methods/create/pagination)
+  hint: did you mean `cursor`?
+error[config.pagination.missing]: `events.list` (GET /events) pages by `cursor`: `request.cursor`: `/events` has no parameter `page_token` (it has none)
+  at paging.yml:42:7 (/resources/events/methods/list)
+error[config.pagination.response]: `events.list` (GET /events) pages by `cursor`: `response.items`: the operation has no 2xx JSON response to read the page from
+  at paging.yml:42:7 (/resources/events/methods/list)
+error[config.pagination.missing]: `users.list` (GET /users) pages by `cursor`: `request.cursor`: `/users` has no parameter `page_token` (it has `user_id`, `userId`)
+  at paging.yml:45:7 (/resources/users/methods/list)
+error[config.readme.method]: `pets.lists` is no method of the config
+  at paging.yml:46:28 (/readme/headline_method)
+  hint: did you mean `pets.list`?

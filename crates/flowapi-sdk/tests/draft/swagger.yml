@@ -1,0 +1,54 @@
+# A first flowapi-sdk.yml, drafted by `flowapi config draft` from the description: rename
+# resources and methods, page what pages, then `flowapi config check` it.
+version: 1
+generator:
+  flowapi: "0.2.0"
+spec: swagger.json
+package:
+  name: api-2nd-hand-market
+  version: 0.1.0
+  client: Api2ndHandMarket
+environments:
+  production: "https://market.example/v2"
+  default: production
+  env_var: API_2ND_HAND_MARKET_BASE_URL
+auth:
+  key:
+    env_var: API_2ND_HAND_MARKET_KEY
+  oauth:
+    env_var: API_2ND_HAND_MARKET_OAUTH
+defaults:
+  retries: 2
+  timeout: 60
+  max_retry_delay: 60
+pagination:
+  offset:
+    type: offset
+    request:
+      offset: skip
+      limit: pageSize
+    response:
+      items: results
+      total: total_count
+  page:
+    type: page
+    request:
+      page: page
+    response:
+      items: items
+      total_pages: total_pages
+resources:
+  listings:
+    methods:
+      list:  # GET /listings
+        op: Listings_List
+        pagination: offset
+      create: Listings_Create  # POST /listings
+      delete: "DELETE /listings/{id}"
+      retrieve: Listings_Get  # GET /listings/{id}
+      update: Listings_Replace  # PUT /listings/{id}
+      get_bids:
+        op: "GET /listings/{id}/bids"
+        pagination: page
+      publish: Listings_Publish  # POST /listings/{id}/publish
+skip: []

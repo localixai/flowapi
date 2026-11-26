@@ -150,9 +150,9 @@ const landing: LandingContent = {
     title: 'Generate your types',
     aside: 'Free · MIT license',
     steps: [
-      { title: 'Run it', text: '`npx @localix-ai/flowapi openapi.json -o types.ts` for JSON, or the Rust command, which reads YAML too: `cargo install --locked --git https://github.com/localixai/flowapi --tag v0.1.0 flowapi-cli`.' },
+      { title: 'Run it', text: '`npx @localix-ai/flowapi openapi.json -o types.ts`, JSON or YAML. The Rust command is the same: `cargo install --locked --git https://github.com/localixai/flowapi --tag v0.2.0 flowapi-cli`.' },
       { title: 'Import the types', text: 'Each component schema is a type of its own name, each operation one with its parameters and responses, and `Paths` maps every path to them.' },
-      { title: 'Add the SDK if you want it', text: '`--sdk` prints the request and response functions after the types. `--target rust` prints serde types instead.' },
+      { title: 'Add the SDK if you want it', text: '`--sdk` prints the request and response functions after the types. `flowapi generate flowapi-sdk.yml --out sdk` writes a whole client package: resources, retries, errors, pagination, tests. `--target rust` prints serde types instead.' },
     ],
     links: [
       { label: 'Getting started', href: `${DOCS}/getting-started` },

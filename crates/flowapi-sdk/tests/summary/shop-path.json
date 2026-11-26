@@ -1,0 +1,12 @@
+{"info":{"title":"Pet Shop","version":"1.2.0"},
+"servers":["https://api.petshop.example/v1","https://sandbox.petshop.example/v1"],
+"securitySchemes":{"ApiKeyAuth":{"type":"apiKey","in":"header","name":"X-Api-Key"},"bearer":{"type":"http","scheme":"bearer"}},
+"counts":{"operations":11,"shown":4,"tags":6,"schemas":5},
+"filter":{"tag":null,"path":"/pets/"},
+"tags":[{"name":"pets","operations":6},{"name":"owners","operations":1},{"name":"events","operations":1},{"name":"collision","operations":1},{"name":"users","operations":1},{"name":"","operations":1}],
+"operations":[
+{"id":"getPet","method":"GET","path":"/pets/{pet_id}","tags":["pets"],"params":[{"name":"pet_id","in":"path","required":true}],"responses":{"200":["application/json"]}},
+{"id":"deletePet","method":"DELETE","path":"/pets/{pet_id}","tags":["pets"],"params":[{"name":"pet_id","in":"path","required":true}],"responses":{"204":[]}},
+{"id":"updatePet","method":"PATCH","path":"/pets/{pet_id}","tags":["pets"],"params":[{"name":"pet_id","in":"path","required":true}],"responses":{"200":[]}},
+{"id":"listPhotos","method":"GET","path":"/pets/{pet_id}/photos","tags":["pets"],"params":[{"name":"pet_id","in":"path","required":true},{"name":"offset","in":"query","required":false},{"name":"limit","in":"query","required":false}],"responses":{"200":["application/json"]},"pagination":[{"scheme":"offset","fields":{"type":"offset","request":{"offset":"offset","limit":"limit"},"response":{"items":"items","total":"total"}},"confidence":"high","reason":"the parameter `offset`; items in `items`"}]}
+]}

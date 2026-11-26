@@ -1,0 +1,18 @@
+# What the config names: an operationId with a typo, a route whose path differs (hints say the
+# closest), a route by a lower-case method (it names the operation), an operation in two
+# methods, one both a method and skipped, and the operations in neither (coverage).
+version: 1
+spec: spec.json
+package: { name: petshop, client: PetShop }
+resources:
+  pets:
+    methods:
+      list: listPet
+      retrieve: GET /pets/{petId}
+      update: patch /pets/{pet_id}
+      create: createPet
+      make: { op: createPet }
+      delete: deletePet
+skip:
+  - { op: deletePet, reason: it is dangerous }
+  - { op: getCollision, reason: "  " }

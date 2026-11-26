@@ -1,6 +1,6 @@
 [package]
 name = "flowapi-wasm"
-description = "flowapi compiled to WebAssembly for the npm package: the core and the TypeScript target behind a small ABI, JSON in and out through linear memory"
+description = "flowapi compiled to WebAssembly for the npm package: the core, the TypeScript target, the YAML reader (and, with `sdk`, the SDK config commands) behind a small ABI, JSON in and out through linear memory"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,11 +14,24 @@ publish = false
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-# No wasm-bindgen (G11): four exported functions and JSON in linear memory need no glue
+# No wasm-bindgen (G11): four exported functions (five with `sdk`) and JSON in linear memory need no glue
 # generator, and the module stays free of its runtime and its generated JavaScript.
 [dependencies]
 flowapi = { path = "../flowapi" }
 flowapi-ts = { path = "../flowapi-ts" }
+# YAML read into JSON as the command reads it (G11): the npm package reads the descriptions the
+# command reads, and names the same YAML line in a diagnostic.
+flowapi-yaml = { path = "../flowapi-yaml" }
+# The commands about an SDK's config (`summary`, `config draft|schema|check`), as the command runs
+# them (G11): an agent that has only `npx` reads a description and checks its config with them.
+# Only with `sdk`, which `flowapi-wasm-sdk` turns on: the module `generate` alone loads stays
+# without it, and its size budget with it.
+flowapi-sdk = { path = "../flowapi-sdk", optional = true }
+
+[features]
+# The `flowapi_sdk` export and `sdk::sdk` (`src/sdk.rs`): the second module's, built by
+# `crates/flowapi-wasm-sdk`.
+sdk = ["dep:flowapi-sdk"]
 
 # The workspace's lints, copied because one differs: an exported function is `#[no_mangle]` and
 # a buffer handed back from JavaScript is rebuilt from its pointer, which `unsafe_code = "forbid"`

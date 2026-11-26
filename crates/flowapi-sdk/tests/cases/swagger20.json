@@ -1,0 +1,17 @@
+{"swagger":"2.0","info":{"title":"swagger","version":"1"},
+ "host":"api.example.com:8443","basePath":"/v2","schemes":["https","http","gopher",7],
+ "securityDefinitions":{
+  "basic":{"type":"basic"},
+  "key":{"type":"apiKey","in":"query","name":"key"},
+  "headerKey":{"type":"apiKey","in":"header","name":"X-Key"},
+  "code":{"type":"oauth2","flow":"accessCode","authorizationUrl":"https://example.com/a","tokenUrl":"https://example.com/t","scopes":{"pets":"pets"}},
+  "app":{"type":"oauth2","flow":"application","tokenUrl":"https://example.com/t"},
+  "noFlow":{"type":"oauth2"},
+  "cookie":{"type":"apiKey","in":"cookie","name":"c"},
+  "bearer":{"type":"http","scheme":"bearer"}},
+ "security":[{"basic":[]}],
+ "paths":{"/pets":{
+  "get":{"operationId":"listPets","security":[{"code":["pets"]},{"key":[],"headerKey":[]}],"produces":["application/json","application/octet-stream"],
+   "responses":{"200":{"description":"ok","schema":{"type":"array","items":{}}}}},
+  "post":{"operationId":"watchPets","schemes":["wss"],"security":[],"responses":{"101":{"description":"switching"}}},
+  "put":{"operationId":"putPets","responses":{"204":{"description":"done"}}}}}}

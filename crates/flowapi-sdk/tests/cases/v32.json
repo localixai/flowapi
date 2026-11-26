@@ -1,0 +1,123 @@
+{
+ "openapi": "3.2.0",
+ "info": {
+  "title": "3.2",
+  "version": "1"
+ },
+ "servers": [
+  {
+   "url": "https://example.com",
+   "name": "prod",
+   "description": "production"
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "old": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "X-Old",
+    "deprecated": true
+   },
+   "token": {
+    "type": "http",
+    "scheme": "bearer"
+   },
+   "untyped": {
+    "description": "no type"
+   },
+   "noScheme": {
+    "type": "http"
+   }
+  },
+  "pathItems": {
+   "shared": {
+    "servers": [
+     {
+      "url": "https://shared.example.com"
+     }
+    ],
+    "get": {
+     "operationId": "sharedGet",
+     "security": [
+      {
+       "old": []
+      }
+     ],
+     "responses": {
+      "200": {
+       "description": "ok"
+      }
+     }
+    },
+    "additionalOperations": {
+     "COPY": {
+      "operationId": "copyIt",
+      "security": [
+       {
+        "token": []
+       },
+       {
+        "https://example.com/other.json#/components/securitySchemes/x": []
+       }
+      ],
+      "responses": {
+       "200": {
+        "description": "ok"
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "security": [
+  {
+   "token": []
+  }
+ ],
+ "paths": {
+  "/shared": {
+   "$ref": "#/components/pathItems/shared"
+  },
+  "/files/{id}": {
+   "query": {
+    "operationId": "queryFiles",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok",
+      "content": {
+       "application/pdf": {},
+       "text/csv": {},
+       "application/problem+json": {}
+      }
+     }
+    }
+   }
+  }
+ },
+ "x-flowapi-covers": [
+  "req: oas-3.2.openapi-object.servers — the description's server",
+  "req: oas-3.2.path-item-object.servers — servers of a Path Item behind $ref",
+  "req: oas-3.2.server-object.name — a server's name printed",
+  "req: oas-3.2.server-object.description — a server's description printed",
+  "req: oas-3.2.openapi-object.security — the description's security inherited by the query method",
+  "req: oas-3.2.operation-object.security — an additionalOperations method's own security",
+  "req: oas-3.2.security-scheme-object.deprecated — a deprecated scheme says so",
+  "req: oas-3.2.security-scheme-object.type — apiKey and http",
+  "req: oas-3.2.security-scheme-object.scheme — bearer",
+  "req: oas-3.2.security-requirement-object.pattern-name.must-each-name-uri-correspond-security-scheme — a name by URI no scheme is declared under is a warning, kept",
+  "req: oas-3.2.security-scheme-object.type.required — a scheme with no type is left out, with a warning",
+  "req: oas-3.2.security-scheme-object.scheme.required — http with no scheme is left out, with a warning"
+ ]
+}

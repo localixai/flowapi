@@ -1,0 +1,25 @@
+[package]
+name = "flowapi-wasm-sdk"
+description = "The npm package's second WebAssembly module: flowapi-wasm with its SDK config commands, loaded only by them"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish = false
+
+# `cdylib` is `flowapi-sdk.wasm`; `rlib` lets the tests call the same functions natively.
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# The first module's crate with its `sdk` feature (G11): the same ABI, requests, answers and
+# exports, not a copy, plus `flowapi_sdk`. A crate of its own so that the module `generate` alone
+# loads is built without it, and so that the workspace's lints and tests reach `sdk.rs`.
+[dependencies]
+flowapi-wasm = { path = "../flowapi-wasm", features = ["sdk"] }
+
+# No `unsafe` here: the exports are flowapi-wasm's (`src/abi.rs`), so the workspace's lints,
+# `unsafe_code = "forbid"` among them, hold as they are.
+[lints]
+workspace = true

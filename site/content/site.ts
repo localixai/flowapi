@@ -20,7 +20,7 @@ const site: SiteConfig = {
   sourceDir: 'site',
   install: [
     ['npm', 'npx @localix-ai/flowapi openapi.json -o types.ts'],
-    ['Cargo', `cargo install --locked --git ${GITHUB} --tag v0.1.0 flowapi-cli`],
+    ['Cargo', `cargo install --locked --git ${GITHUB} --tag v0.2.0 flowapi-cli`],
   ],
   image: {
     path: '/og.png',

@@ -1,0 +1,48 @@
+# A first flowapi-sdk.yml, drafted by `flowapi config draft` from the description: rename
+# resources and methods, page what pages, then `flowapi config check` it.
+version: 1
+generator:
+  flowapi: "0.2.0"
+spec: stripe.json
+package:
+  name: payhub-v1-rest-api
+  version: 0.1.0
+  client: PayHubV1RestApi
+environments:
+  production: "https://api.payments.example/"
+  default: production
+  env_var: PAYHUB_V1_REST_API_BASE_URL
+auth:
+  basicAuth:
+    env_var: PAYHUB_V1_REST_API_BASIC_AUTH
+defaults:
+  retries: 2
+  timeout: 60
+  max_retry_delay: 60
+pagination:
+  last_item_id:
+    type: last_item_id
+    request:
+      cursor: starting_after
+      limit: limit
+    response:
+      items: data
+      has_more: has_more
+resources:
+  customers:
+    methods:
+      list:  # GET /v1/customers
+        op: GetCustomers
+        pagination: last_item_id
+      create: PostCustomers  # POST /v1/customers
+      delete: DeleteCustomersCustomer  # DELETE /v1/customers/{customer}
+      retrieve: GetCustomersCustomer  # GET /v1/customers/{customer}
+      post_customers_customer: PostCustomersCustomer  # POST /v1/customers/{customer}
+      get_customers_customer_sources: GetCustomersCustomerSources  # GET /v1/customers/{customer}/sources
+  request_api:
+    methods:
+      list: GetRequest  # GET /v1/request
+  requests:
+    methods:
+      list: GetRequests  # GET /v1/requests
+skip: []

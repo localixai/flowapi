@@ -5,9 +5,9 @@
 //! Operators"), the encoder (none for headers and `style: cookie`, reserved expansion for
 //! `allowReserved`), and its name percent-encoded where it goes into a URI.
 
-use super::{bare, lit, percent};
+use super::{ReadAs, bare, lit, percent};
 use flowapi::graph::Endpoint;
-use flowapi::spec::{Location, Param, Style};
+use flowapi::spec::{Location, Operation, Param, Style};
 use std::fmt::Write;
 
 /// The methods a Path Item names by a field, written in lower case; 3.2's
@@ -15,6 +15,17 @@ use std::fmt::Write;
 const FIELDS: [&str; 9] = [
     "get", "put", "post", "delete", "options", "head", "patch", "trace", "query",
 ];
+
+/// The method a request is sent with: a Path Item's field in upper case, 3.2's
+/// `additionalOperations` as written.
+#[must_use]
+pub fn method(op: &Operation) -> String {
+    if FIELDS.contains(&op.method.as_str()) {
+        op.method.to_ascii_uppercase()
+    } else {
+        op.method.clone()
+    }
+}
 
 pub(super) fn write(out: &mut String, e: &Endpoint, decl: &str, base: &str) {
     let op = &e.operation;
@@ -38,13 +49,25 @@ pub(super) fn write(out: &mut String, e: &Endpoint, decl: &str, base: &str) {
                         t.replace(['`', '$', '\\'], "")
                     )
                 };
-                // A multipart body is the caller's to write: its boundary goes in the type.
-                let value = if bare(t).starts_with("multipart/") {
-                    String::from("string")
+                let typed = format!("NonNullable<{decl}[\"requestBody\"]>[{}]", lit(t));
+                let kind = bare(t);
+                // `multipart/form-data` is written from its parts, by the Encoding Object's
+                // defaults and the `encoding` given; another multipart type is the caller's to
+                // write (its boundary goes in the content type); a type neither JSON, text nor a
+                // form, or a range, may be given as bytes.
+                let (value, more) = if kind == "multipart/form-data" {
+                    (format!("$Form<{typed}>"), "; encoding?: FlowapiEncoding")
+                } else if kind.starts_with("multipart/") {
+                    (String::from("string | Uint8Array"), "")
+                } else if ReadAs::of(t) == ReadAs::Json
+                    || ReadAs::of(t) == ReadAs::Text
+                    || kind == "application/x-www-form-urlencoded"
+                {
+                    (typed, "")
                 } else {
-                    format!("NonNullable<{decl}[\"requestBody\"]>[{}]", lit(t))
+                    (format!("{typed} | Uint8Array"), "")
                 };
-                format!("{{ contentType: {content_type}; value: {value} }}")
+                format!("{{ contentType: {content_type}; value: {value}{more} }}")
             })
             .collect();
         let optional = if b.required { "" } else { "?" };
@@ -69,11 +92,7 @@ pub(super) fn write(out: &mut String, e: &Endpoint, decl: &str, base: &str) {
     if has(Location::Cookie) {
         out.push_str("  if (cookie !== \"\") headers[\"cookie\"] = cookie;\n");
     }
-    let method = if FIELDS.contains(&op.method.as_str()) {
-        op.method.to_ascii_uppercase()
-    } else {
-        op.method.clone()
-    };
+    let method = method(op);
     let _ = writeln!(
         out,
         "  const request: $Request = {{ method: {}, path: {}, query{}, headers }};",
@@ -82,11 +101,7 @@ pub(super) fn write(out: &mut String, e: &Endpoint, decl: &str, base: &str) {
         if query { "" } else { ": \"\"" }
     );
     if body.is_some() {
-        out.push_str(
-            "  if (input.body !== undefined) {\n    headers[\"content-type\"] = \
-             input.body.contentType;\n    request.body = $body(input.body.contentType, \
-             input.body.value);\n  }\n",
-        );
+        out.push_str("  if (input.body !== undefined) $put(request, input.body);\n");
     }
     out.push_str("  return request;\n}\n");
 }

@@ -1,0 +1,18 @@
+{"info":{"title":"Pet Shop","version":"1.2.0"},
+"servers":["https://api.petshop.example/v1","https://sandbox.petshop.example/v1"],
+"securitySchemes":{"ApiKeyAuth":{"type":"apiKey","in":"header","name":"X-Api-Key"},"bearer":{"type":"http","scheme":"bearer"}},
+"counts":{"operations":11,"shown":11,"tags":6,"schemas":5},
+"tags":[{"name":"pets","operations":6},{"name":"owners","operations":1},{"name":"events","operations":1},{"name":"collision","operations":1},{"name":"users","operations":1},{"name":"","operations":1}],
+"operations":[
+{"id":"listPets","method":"GET","path":"/pets","tags":["pets"],"summary":"List the pets, a page at a time","params":[{"name":"page_token","in":"query","required":false},{"name":"limit","in":"query","required":false}],"responses":{"200":["application/json"]},"pagination":[{"scheme":"cursor","fields":{"type":"cursor","request":{"cursor":"page_token","limit":"limit"},"response":{"items":"data","next":"next_page_token","has_more":"has_more"}},"confidence":"high","reason":"the parameter `page_token` and `next_page_token` in the response; items in `data`"}]},
+{"id":"createPet","method":"POST","path":"/pets","tags":["pets"],"body":{"required":true,"content":["application/json"]},"responses":{"201":["application/json"]}},
+{"id":"getPet","method":"GET","path":"/pets/{pet_id}","tags":["pets"],"params":[{"name":"pet_id","in":"path","required":true}],"responses":{"200":["application/json"]}},
+{"id":"deletePet","method":"DELETE","path":"/pets/{pet_id}","tags":["pets"],"params":[{"name":"pet_id","in":"path","required":true}],"responses":{"204":[]}},
+{"id":"updatePet","method":"PATCH","path":"/pets/{pet_id}","tags":["pets"],"params":[{"name":"pet_id","in":"path","required":true}],"responses":{"200":[]}},
+{"id":"listPhotos","method":"GET","path":"/pets/{pet_id}/photos","tags":["pets"],"params":[{"name":"pet_id","in":"path","required":true},{"name":"offset","in":"query","required":false},{"name":"limit","in":"query","required":false}],"responses":{"200":["application/json"]},"pagination":[{"scheme":"offset","fields":{"type":"offset","request":{"offset":"offset","limit":"limit"},"response":{"items":"items","total":"total"}},"confidence":"high","reason":"the parameter `offset`; items in `items`"}]},
+{"id":"listOwners","method":"GET","path":"/owners","tags":["owners"],"params":[{"name":"page","in":"query","required":false},{"name":"per_page","in":"query","required":false}],"responses":{"200":["application/json"]},"pagination":[{"scheme":"link","fields":{"type":"link","request":{"limit":"per_page"},"response":{"header":"Link"}},"confidence":"high","reason":"a `Link` header in the response; the body is the array of items"},{"scheme":"page","fields":{"type":"page","request":{"page":"page","per_page":"per_page"},"response":{}},"confidence":"high","reason":"the parameter `page`; the body is the array of items"}]},
+{"id":"streamEvents","method":"GET","path":"/events","tags":["events"],"responses":{"200":["text/event-stream"]}},
+{"id":"getCollision","method":"GET","path":"/collision","tags":["collision"],"responses":{"200":["application/json"]}},
+{"id":"listUsers","method":"GET","path":"/users","tags":["users"],"params":[{"name":"user_id","in":"query","required":false},{"name":"userId","in":"query","required":false}],"responses":{"200":["application/json"]}},
+{"id":"GET /internal/health","method":"GET","path":"/internal/health","responses":{"200":[]}}
+]}

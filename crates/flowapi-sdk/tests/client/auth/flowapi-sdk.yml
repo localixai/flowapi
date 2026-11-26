@@ -1,0 +1,37 @@
+# Each kind of credential (an API key in a query and in a cookie, HTTP basic and bearer, an
+# OAuth 2.0 token), alternatives and schemes needed together, `security: []`, an operation's own
+# servers, a server variable, JSON lines, names that are TypeScript's reserved words, three levels
+# of resources, and no environments (the description's server is the base URL).
+version: 1
+spec: spec.json
+package: { name: auth-sdk, client: AuthClient, license: Apache-2.0 }
+auth:
+  QueryKey: { env_var: AUTH_QUERY_KEY }
+  CookieKey: {}
+  Basic: { env_var: AUTH_BASIC }
+  Token: { env_var: AUTH_TOKEN }
+  Oauth: {}
+defaults: { retries: 0 }
+resources:
+  checks:
+    methods:
+      query_key: byQuery
+      cookie: byCookie
+      basic: byBasic
+      either: byEither
+      both: byBoth
+      open: open
+      oauth: byOauth
+      elsewhere: elsewhere
+      lines: { op: lines, stream: true }
+  default:
+    methods:
+      delete: deleteThing
+      new: newThing
+  outer:
+    resources:
+      middle:
+        resources:
+          inner:
+            methods:
+              get: deep

@@ -78,17 +78,20 @@ held to are in [bench/budgets.json](bench/budgets.json).
 
 ## Use
 
-From npm, the same generator compiled to WebAssembly (JSON descriptions only; [npm/README.md](npm/README.md)
-has its API):
+From npm, the same generator compiled to WebAssembly, reading JSON and YAML alike
+([npm/README.md](npm/README.md) has its API):
 
 ```sh
 npx @localix-ai/flowapi openapi.json -o types.ts
 ```
 
-The Rust command, which reads YAML too, built from a release tag:
+It has the commands for an SDK's config too (`summary`, `config draft|schema|check`, below), with
+the Rust command's output byte for byte; `generate` is the Rust command's alone for now.
+
+The Rust command, built from a release tag:
 
 ```sh
-cargo install --locked --git https://github.com/localixai/flowapi --tag v0.1.0 flowapi-cli
+cargo install --locked --git https://github.com/localixai/flowapi --tag v0.2.0 flowapi-cli
 flowapi openapi.json -o types.ts
 ```
 
@@ -96,8 +99,8 @@ The crates are not on crates.io. A program takes them from the repository at a t
 
 ```toml
 [dependencies]
-flowapi = { git = "https://github.com/localixai/flowapi", tag = "v0.1.0" }
-flowapi-ts = { git = "https://github.com/localixai/flowapi", tag = "v0.1.0" }
+flowapi = { git = "https://github.com/localixai/flowapi", tag = "v0.2.0" }
+flowapi-ts = { git = "https://github.com/localixai/flowapi", tag = "v0.2.0" }
 ```
 
 In a checkout, `cargo run --release -p flowapi-cli -- openapi.json -o types.ts` does the same.
@@ -146,8 +149,9 @@ Files that a `$ref` names by relative path are read too, and so are YAML descrip
 YAML 1.2's core schema: a key that is not a string becomes its JSON text (`200:` is `"200"`) and
 anchors are expanded. What JSON cannot hold is an error with the YAML line and column: `.inf`
 and `.nan`, a mapping as a key, a repeated key, `<<` merge keys, a second document, or aliases
-that would copy more than a million nodes. The YAML reader passes the YAML test suite
-(`crates/flowapi-cli/tests/yaml_suite.rs`).
+that would copy more than a million nodes (code `yaml.syntax`). The YAML reader is one crate
+(`crates/flowapi-yaml`) the command and the npm package share, and it passes the YAML test suite
+(`crates/flowapi-yaml/tests/yaml_suite.rs`).
 
 ### An SDK, with no HTTP library
 
@@ -163,8 +167,16 @@ cargo run --release -p flowapi-cli -- openapi.json --sdk -o api.ts
 const r = getPetRequest({ path: { id: 7 }, query: { tags: ["a b", "c"] } })
 // { method: "GET", path: "/pets/7", query: "tags=a%20b&tags=c", headers: {} }
 const res = await fetch(base + r.path + (r.query && "?" + r.query), r)
-const out = getPetResponse(res.status, Object.fromEntries(res.headers), await res.text())
+const body = new Uint8Array(await res.arrayBuffer())
+const out = getPetResponse(res.status, Object.fromEntries(res.headers), body)
 if (out.response === "200") out.body // Pet, parsed from JSON
+
+const up = uploadPhotoRequest({
+  path: { id: 7 },
+  body: { contentType: "multipart/form-data", value: { photo: await flowapiBlob(file), tags: ["a", "b"] } },
+})
+// up.headers["content-type"]: "multipart/form-data; boundary=flowapi-<32 hex digits>"
+// up.body: a Uint8Array, a part `photo` with the file's name and type, then `tags` twice
 ```
 
 Parameters are written as their `style`, `explode` and `allowReserved` say (`simple`, `label`,
@@ -172,18 +184,47 @@ Parameters are written as their `style`, `explode` and `allowReserved` say (`sim
 2.0's `collectionFormat` read as those), percent-encoded per RFC 3986 everywhere but headers and
 `style: cookie`, which pass as given; a parameter with `content` as its media type's text; cookies
 into one `cookie` header. The body is `{ contentType, value }` of one of the operation's media
-types: JSON, a form, or text as given (a multipart body is yours to write). A response is picked
-by its status (the code, then `2XX`, then `default`) and its `Content-Type`; a JSON body is
-parsed, any other is the text, and what the description does not name comes back as
-`response: null` with the text (a leading byte order mark is skipped before JSON is parsed).
+types: JSON, a form, text as given, or bytes (a `Uint8Array`, for a type neither JSON, text nor a
+form, sent as they are). A `multipart/form-data` body is written from its members as the
+Encoding Object's defaults say: a `Uint8Array` or a file a file part (`filename` its last path
+segment, `blob` when it has none; `application/octet-stream` when it has no type), a string,
+number or boolean a text part, an object JSON, an array's items one part each under its name, in
+order (RFC 7578, 4.3); `undefined` is left out, `null` refused. A file is
+`flowapiFile(bytes or text, name, type)`, or `await flowapiBlob(blobOrFile)`, the one step that
+waits: `<op>Request` takes bytes and stays synchronous. The description's `encoding` is not read
+yet: give it as the body's `encoding` (`{ photo: { contentType, headers } }`); its `contentType`
+replaces the default (a file's own type replaces it, and a list or a range needs one) and its
+`headers` go into the part. The boundary is the content type's (`; boundary=`), else 128 random
+bits from `globalThis.crypto`, drawn again while a part holds them and added to the request's
+`content-type`; `body` is then bytes. 3.2's array of objects is written as its parts in order;
+another multipart type is yours to write, as a string or bytes. A response is picked
+by its status (the code, then `2XX`, then `default`) and its `Content-Type`, and its body, given as
+text or as bytes, read by the type sent as the Rust SDK reads it: JSON parsed (a leading byte
+order mark skipped), `text/*` a `string`, any other a `Uint8Array`, a media range any of those
+its range allows. Bytes given for JSON or text are read as UTF-8; a string given for a binary type
+is encoded as UTF-8, so give bytes (a string decoded from them has lost what was not UTF-8).
+What the description does not name, and a JSON or text body that is not UTF-8 or not JSON, comes
+back as `response: null` with the body as given. `flowapiReadsBytes(contentType)` (exported)
+says which bodies are read as bytes, for a client that reads the others with `text()`.
 `<op>Request` throws a `FlowapiRequestError` (exported, with `location`, `parameter` and
 `reason`) rather than write a request that would mean something else: a CR, LF or NUL in a header
 or a `style: cookie` value (`control-character`), a path parameter that leaves its segment empty
 or makes it `.` or `..` (`empty-segment`, `dot-segment`; `%2E` is a dot too), NaN or an infinity
 anywhere in a parameter or a JSON or form body (`non-finite`: JSON has no such number, and
-`JSON.stringify` would write `null`). A header's name that is not a token is left out of the
+`JSON.stringify` would write `null`). In a multipart body (`parameter` the part's name) it also
+refuses a CR, LF or NUL in a part's name, file name, type or header, `null` (`null`), a `"` or `\`
+in a name or a file name (`quote`: RFC 7578 and WHATWG escape them differently), a file name that
+is empty, `.` or `..` (`file-name`), a part header's name that is not a token or is
+`Content-Disposition` (`header-name`), a list or a range as a part's type (`media-range`), a
+Blob not read yet (`unread-blob`), an item of 3.2's array that is not an object (`unnamed-part`),
+and a boundary RFC 2046 does not allow or a part holds (`boundary`). A header's name that is not a token is left out of the
 operation, with a warning. The output imports nothing: the runtime is a few functions
-printed once. The base URL is yours (servers are not read). Every row of the specification's
+printed once. With `--sdk` the base URL and any authentication are still yours to add: the
+command does not print `servers`, `securitySchemes` or `security`. The SDK layer
+(`crates/flowapi-sdk`, not yet behind a command) reads them, Swagger 2.0's `host`, `basePath` and
+`schemes` included, and prints a table to put after this output: the servers with their
+variables, the security schemes, and each operation's method, path, own servers, security and
+how each response body is read. Every row of the specification's
 Style Examples table, the pitfalls other generators fixed, and the SDKs of GitHub's, Stripe's and
 Cloudflare's descriptions are run or type-checked
 ([conformance/results/sdk.md](conformance/results/sdk.md)); writing a request against
@@ -225,6 +266,61 @@ past 2^53 exact, enums as their strings) are compiled into one crate and run
 GitHub's, Stripe's and Cloudflare's descriptions:
 [conformance/results/sdk-rust-corpus.md](conformance/results/sdk-rust-corpus.md); writing a
 request against progenitor's way: [bench/results/sdk-rust.md](bench/results/sdk-rust.md).
+
+### A config for a whole SDK
+
+For an agent that writes an SDK's config, `flowapi-sdk.yml` (its resources, a name for each
+operation, pagination, environments, authentication), four commands read the description so the
+agent does not have to:
+
+```sh
+flowapi summary openapi.json --tag pets          # the operations in compact JSON, with the pagination each looks like it has
+flowapi config draft openapi.json -o flowapi-sdk.yml   # a first config: every operation in a resource
+flowapi config check flowapi-sdk.yml --json     # every issue at once: code, JSON Pointer, YAML line, hint
+flowapi config schema > flowapi-sdk.schema.json # the format as JSON Schema
+```
+
+`summary` stays under `--max-bytes` (60 KB): over it, it gives the tags with their counts, to be
+read one at a time with `--tag` or `--path`. `config check` holds the config to its format (a
+member it does not name is an error) and to the description: every operation is in a resource
+or in `skip` with a reason, every reference names an operation (a typo names the closest), names
+are compared as words (`list_all` and `listAll` are one name), a method's pagination fits its
+operation's parameters and response schema, `auth` names the description's security schemes.
+A draft passes the check, and the same description written in another order gives the same
+draft. A description named `summary` or `config` is read by its path: `flowapi ./summary`.
+
+From a config that passes the check, the SDK layer prints the client itself in TypeScript
+(`flowapi_sdk::client_files`): `src/api.ts` (the `--sdk` output and the
+operations table), a class for each resource (`client.pets.photos.list(params, options)`), the
+client class with its options, and the runtime in `src/core/`, which needs no dependency and
+type-checks with `lib: ["es2022"]` alone. The runtime retries by status and `x-should-retry`,
+waits what `retry-after-ms` or `Retry-After` ask (and refuses a wait past `maxRetryDelay`), times
+each attempt out with its body read, removes its listener from the caller's `AbortSignal`, sends
+the credentials of the first security alternative it can meet, masks them in its logs, refuses a
+redirect to another origin unless allowed, reads lists by each pagination scheme with a guard
+against a server that loops, and reads server-sent events and JSON lines whatever the chunks. A
+call is awaited for its data; `asResponse()` and `withResponse()` give the raw response.
+
+`flowapi generate` writes the SDK's whole repository around that client:
+
+```sh
+flowapi generate flowapi-sdk.yml --out .         # the repository, and .flowapi/lock.json
+flowapi generate flowapi-sdk.yml --out . --check # in CI: exits 1 when the output would differ
+```
+
+It is one package with no dependency at run time and `typescript` as its one development
+dependency: built by `tsc` twice, ES modules and CommonJS, each with its types (`exports` sends
+`import` and `require` each to its own); POSIX `scripts/` (`build`, `lint`, `test`, `check`,
+`mock`); a mock server on `node:http` printed from the description, strict where a client goes
+wrong (a path, a method, a required parameter, a body's media type) and answering each operation
+with an example of its schema; a `node --test` file per resource calling every method against
+it; `README.md` (its counts and examples written from the config, never typed), `api.md`, the
+repository's `AGENTS.md`, the license (MIT or Apache-2.0), CI on Node 20, 22 and 24, and
+release-please's config. `.flowapi/lock.json` holds the hash of every file written, of the
+description and of the config. A generated file changed by hand since is a conflict: nothing is
+written and it exits 1; `src/lib/` and `examples/` are the user's, `CHANGELOG.md` is written once,
+and a file the lock does not list is never touched. A file no longer generated is deleted unless
+changed. Every write is staged first, so a refusal leaves the folder as it was.
 
 ## How it works
 

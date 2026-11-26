@@ -1,0 +1,48 @@
+# Pagination held to each method's operation (study 03, pitfall 9: a response that cannot be
+# paged so is an error, not an SDK that pages nothing): items that are no array, a token path
+# that is not there, a parameter that is not there, a link scheme naming both `next` and
+# `header`, a header no response declares (a warning), a scheme on an operation with no JSON
+# response, a scheme no one defined, the default applied to every `list`; a streamed method
+# whose response is no stream; `auth`, `default` and the README naming what is not there; a
+# config pinned to another flowapi (a warning).
+version: 1
+generator: { flowapi: "9.9.9" }
+spec: spec.json
+package: { name: petshop, client: PetShop }
+environments:
+  production: https://api.petshop.example/v1
+  default: prod
+auth:
+  ApiKey: { env_var: PET_SHOP_KEY }
+defaults: { pagination: cursor }
+pagination:
+  cursor:
+    type: cursor
+    request: { cursor: page_token }
+    response: { items: data, next: next_page_token }
+  wrong:
+    type: cursor
+    request: { cursor: pageToken, limit: limit }
+    response: { items: has_more, next: next_token }
+  both:
+    type: link
+    response: { next: data, header: Link }
+  header:
+    type: link
+    response: { items: data, header: Link }
+resources:
+  pets:
+    methods:
+      list: { op: listPets, pagination: wrong, stream: true }
+      list_linked: { op: listPets, pagination: both }
+      list_headed: { op: "GET /pets", pagination: header }
+      create: { op: createPet, pagination: curser }
+  events:
+    methods:
+      list: { op: streamEvents, pagination: cursor }
+  users:
+    methods:
+      list: listUsers
+readme: { headline_method: pets.lists, pagination_method: users.list }
+skip:
+  - { op: getPet, reason: later }

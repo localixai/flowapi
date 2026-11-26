@@ -1,0 +1,5 @@
+{"swagger":"2.0","info":{"title":"host, no schemes","version":"1"},
+ "host":"api.example.com",
+ "paths":{"/x":{
+  "get":{"operationId":"getX","responses":{"200":{"description":"ok"}}},
+  "put":{"operationId":"putX","schemes":["https"],"responses":{"200":{"description":"ok"}}}}}}

@@ -2,6 +2,107 @@
 
 ## Unreleased
 
+## 0.2.0 — 2026-11-26
+
+- `flowapi generate <flowapi-sdk.yml> --out <dir> [--check]` writes a TypeScript SDK's whole
+  repository: the client's `src/`, `package.json` (ES modules and CommonJS, each with its types,
+  `sideEffects: false`, `engines.node >=20`, `typescript` 7.0.2 the one development dependency),
+  the TypeScript configs (`tsconfig.json`, `.build`, `.cjs`, `.dist`), POSIX `scripts/` (`build`,
+  `lint`, `test`, `check`, `mock`), a mock server printed from the description (`mock/`, strict on
+  path, method, required parameters and the body's media type, a concrete path matched before a
+  templated one and, of two templated paths, the one literal at the first segment where they
+  differ; it answers with an example of each operation's schema: `example`, else `default`,
+  `const`, the first `enum` value, else one made from its type and `format`),
+  `tests/api-resources/*.test.mjs` calling every method against it under `node --test`,
+  `README.md` (its example's parameters from their own `example` or `examples`, 2.0's
+  `x-example`, the schema's value, else their name for a string, `true` for a boolean; CommonJS
+  takes the client by its name, `const { Client } = require(pkg)`), `api.md`, `AGENTS.md`,
+  `LICENSE` (MIT or Apache-2.0; another `package.license` is `error[repo.license]`),
+  `.github/workflows/ci.yml`, release-please's config,
+  `.gitignore`, `examples/.keep`, and on the first generation `CHANGELOG.md` and the release
+  manifest. `.flowapi/lock.json` records the flowapi version, the description's and the config's
+  SHA-256, the methods mapped and every file's SHA-256. A generated file changed since it was
+  written is a conflict (nothing is written, exit 1), except under `src/lib/` and `examples/`,
+  where it is kept; a file the lock does not list is never touched; one no longer generated is
+  deleted unless changed. A path out of `--out` or through a symbolic link is refused. `--check`
+  writes nothing and exits 1 when anything would change. In the SDK layer: `repo_files`, `Lock`,
+  `sha256_hex` (our own SHA-256, checked on FIPS 180-4's vectors).
+- `flowapi-sdk.yml` has `package.version` (`0.1.0` unless given; release-please raises it);
+  `config draft` writes `0.1.0`.
+- `npx -y @localix-ai/flowapi generate` writes what `flowapi generate` writes, byte for byte, with
+  the same lock, messages and exit codes. What a generation changes on disk is decided in the SDK
+  layer for both (`plan`: the output and the previous lock held to what the host found at each
+  path, a file's SHA-256 rather than its bytes), and printed there (`Plan::report`, `summary`);
+  the command and the package only read the disk and make the changes. The second WebAssembly
+  module answers `repo` and `plan` through `flowapi_sdk`, its one SDK export.
+
+- The TypeScript SDK writes `multipart/form-data` request bodies: `<op>Request` takes the value
+  as its schema says (a string member also as a file: a `Uint8Array`, `flowapiFile(bytes or text,
+  name, type)`, or `await flowapiBlob(blobOrFile)`, the one step that waits) and returns the parts
+  as bytes, with `content-type: multipart/form-data; boundary=...`; the value was a string you had
+  encoded. The parts follow the Encoding Object's defaults: a file a file part (`filename` its
+  name's last path segment, `blob` when it has none; `application/octet-stream` when it has no
+  type), a string, number or boolean text, an object JSON, an array's items one part each under
+  its name in order; `undefined` is left out. The body's `encoding` (`contentType`, `headers`) sets
+  a part's type and headers; the description's `encoding` is not read yet, so it is given there.
+  The boundary is the content type's, else 128 random bits from `globalThis.crypto`, drawn again
+  while a part holds them. 3.2's array of objects is its parts in order. New `FlowapiRequestError`
+  reasons refuse what would change the parts: a CR, LF or NUL in a part's name, file name, type or
+  header (`control-character`), `null`, a `"` or `\` in a name (`quote`), a file name empty, `.` or
+  `..` (`file-name`), a header name not a token or `Content-Disposition` (`header-name`), a list or
+  a range as a part's type (`media-range`), a Blob not read (`unread-blob`), an item of the array
+  that is not an object (`unnamed-part`), a boundary RFC 2046 does not allow or a part holds
+  (`boundary`).
+- A request body neither JSON, text nor a form (`application/octet-stream`, `image/png`, a range)
+  may be given to the TypeScript SDK as a `Uint8Array`, sent as it is; `$Request.body` is
+  `string | Uint8Array`. Another multipart type is still yours to write, now as a string or bytes.
+- With the TypeScript SDK a schema named `Promise`, `ArrayBuffer`, `FlowapiRequestError`,
+  `FlowapiFile` or `FlowapiEncoding` is declared under another name, with a warning: the SDK names
+  them.
+- Commands for an agent that writes an SDK's config, `flowapi-sdk.yml` (version 1), before the
+  description's path: `flowapi summary <description> [--tag T] [--path P] [--max-bytes N]`, the
+  description in compact JSON (servers, security schemes, counts, tags, each operation with its
+  parameters, the media types of its body and responses, and the pagination it looks like it has,
+  with a reason and how sure; over the budget, 60 KB by default, the tags alone);
+  `flowapi config draft <description> [-o file]`, a first config in YAML (the package named from
+  `info.title`, each word of the title one word of the name whatever its capitals: `GitHub v3 REST
+  API` is `github-v3-rest-api`, its client `GitHubV3RestApi`; resources by tag, else
+  by the path's first segment, the verbs `list`, `create`, `retrieve`, `update`, `delete`, the
+  suggested pagination, environments from the servers, `auth` from the security schemes,
+  `skip: []`), which passes `config check` and does not depend on the order the description is
+  written in; `flowapi config schema`, the format as JSON Schema 2020-12, printed from the
+  definitions the checker reads by; and `flowapi config check <config> [--spec D] [--json]`,
+  every issue at once with a code, the JSON Pointer, the YAML line and column and a hint: members
+  the format does not name, types, coverage (every operation in a resource or in `skip` with a
+  reason), references that name no operation (the closest named), an operation in two places,
+  names equal as words among siblings, names a generated class has itself or a schema has,
+  pagination fields missing from the parameters or the response schema or of the wrong type,
+  `auth`, environments and the README's methods. It exits 1 on an error. The old form,
+  `flowapi <description>`, is unchanged; a description named `summary` is read as `./summary`.
+- The npm package runs the same four commands, `npx -y @localix-ai/flowapi summary|config …`,
+  with the Rust command's arguments, output and exit codes, byte for byte, and gives them as
+  functions: `summary`, `configDraft`, `configSchema` and `configCheck` (issues as data, as text
+  and as `--json` prints them), and `loadSdk()` with them synchronous and `configSpec`. They are a
+  second module, `flowapi-sdk.wasm`, loaded only when one of them is first used; the generator's
+  module is as it was.
+- The TypeScript SDK reads binary responses as bytes, as the Rust SDK does: `<op>Response(status,
+  headers, body)` takes `body: string | Uint8Array` (it took a `string`) and reads it by the type
+  sent: JSON parsed, `text/*` a `string`, any other a `Uint8Array` (an `application/xml` or
+  `application/octet-stream` body was text before, and bytes that were not UTF-8 were lost on the
+  way). The response union says `Uint8Array` for such a type, and a media range each of those its
+  range allows. Bytes given for JSON or text are read as UTF-8; bytes that are not UTF-8 there
+  read as `response: null` with the body as given, as the Rust SDK refuses them. A string given
+  for a binary type is encoded as UTF-8. `flowapiReadsBytes(contentType)` (exported) says which
+  bodies are read as bytes. A schema named `Uint8Array` is declared under another name with the
+  SDK, with a warning.
+- The npm package reads YAML descriptions as the command does, by the same code: the YAML reader
+  moved out of the command into a crate of its own, `flowapi-yaml`, which the command and the
+  WebAssembly module share (the core stays JSON-only with no dependency). Its output and its
+  diagnostics are the command's byte for byte; the module is about 43 KB larger gzipped.
+- A YAML text that JSON cannot hold is printed as a diagnostic, `error[yaml.syntax]: <what>` then
+  `  at <file>:<line>:<column>`, as a JSON syntax error is; it was `flowapi: <file>:<line>:<column>:
+  <what>`.
+
 ## 0.1.0 — 2026-11-24
 
 - Both SDKs refuse a request that would mean something other than it says, rather than write

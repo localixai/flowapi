@@ -1,0 +1,4 @@
+{"swagger":"2.0","info":{"title":"no host","version":"1"},
+ "basePath":"v3","schemes":["https"],
+ "paths":{"/y":{
+  "get":{"operationId":"getY","schemes":["http"],"responses":{"200":{"description":"ok"}}}}}}

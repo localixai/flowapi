@@ -3,7 +3,9 @@
 //! All the I/O of flowapi is here (G5).
 
 mod args;
+mod generate;
 mod load;
+mod sdk;
 mod source;
 
 use flowapi::{Documents, Severity};
@@ -25,6 +27,7 @@ fn main() -> ExitCode {
             return ExitCode::SUCCESS;
         }
         Ok(args::Command::Generate(a)) => a,
+        Ok(args::Command::Sdk(command)) => return sdk::run(command),
         Err(message) => {
             eprintln!("flowapi: {message}\n\n{}", args::HELP);
             return ExitCode::from(2);
@@ -33,13 +36,13 @@ fn main() -> ExitCode {
     let texts = match load::all(&args.input) {
         Ok(t) => t,
         Err(message) => {
-            eprintln!("flowapi: {message}");
+            eprintln!("{message}");
             return ExitCode::FAILURE;
         }
     };
     let mut docs = Documents::new();
     for source in &texts {
-        if let Err(d) = docs.add(source.uri.clone(), &source.json) {
+        if let Err(d) = docs.add(source.uri.clone(), source.json()) {
             eprintln!("{d}\n  at {}", source.describe(d.at.offset));
             return ExitCode::FAILURE;
         }

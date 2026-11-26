@@ -1,4 +1,5 @@
-//! The answer written as JSON: the files, then the diagnostics with their places.
+//! The answer written as JSON: the files, or an SDK command's text, then the diagnostics with
+//! their places.
 
 use flowapi::{File, Severity};
 use std::fmt::Write;
@@ -14,9 +15,9 @@ pub(crate) struct Found<'d> {
     pub(crate) column: usize,
 }
 
-/// The answer to a request that could not be read: no file, one error, no place.
-pub(crate) fn refused(message: &str) -> String {
-    let found = Found {
+/// The error of a request that could not be read: no place.
+pub(crate) fn refusal(message: &str) -> Found<'_> {
+    Found {
         severity: Severity::Error,
         code: "flowapi.request",
         message,
@@ -24,8 +25,12 @@ pub(crate) fn refused(message: &str) -> String {
         offset: 0,
         line: 1,
         column: 1,
-    };
-    write(&[], &[found])
+    }
+}
+
+/// The answer to a request that could not be read: no file, one error.
+pub(crate) fn refused(message: &str) -> String {
+    write(&[], &[refusal(message)])
 }
 
 /// The answer: `{"files":[…],"diagnostics":[…]}`.
@@ -40,7 +45,31 @@ pub(crate) fn write(files: &[File], diags: &[Found<'_>]) -> String {
         string(&mut out, &f.text);
         out.push('}');
     }
-    out.push_str("],\"diagnostics\":[");
+    out.push(']');
+    diagnostics(&mut out, diags);
+    out
+}
+
+/// The answer of an SDK command: `{"text":…,"json":…,"diagnostics":[…]}`, `null` for an output
+/// it does not give.
+#[cfg(feature = "sdk")]
+pub(crate) fn sdk(text: Option<&str>, json: Option<&str>, diags: &[Found<'_>]) -> String {
+    let size = text.map_or(0, str::len) + json.map_or(0, str::len);
+    let mut out = String::with_capacity(size + size / 8 + 64);
+    for (key, value) in [("{\"text\":", text), (",\"json\":", json)] {
+        out.push_str(key);
+        match value {
+            Some(v) => string(&mut out, v),
+            None => out.push_str("null"),
+        }
+    }
+    diagnostics(&mut out, diags);
+    out
+}
+
+/// `,"diagnostics":[…]}`, the end of an answer.
+pub(crate) fn diagnostics(out: &mut String, diags: &[Found<'_>]) {
+    out.push_str(",\"diagnostics\":[");
     for (i, d) in diags.iter().enumerate() {
         let severity = match d.severity {
             Severity::Error => "error",
@@ -53,11 +82,11 @@ pub(crate) fn write(files: &[File], diags: &[Found<'_>]) -> String {
         });
         out.push_str(severity);
         out.push_str("\",\"code\":");
-        string(&mut out, d.code);
+        string(out, d.code);
         out.push_str(",\"message\":");
-        string(&mut out, d.message);
+        string(out, d.message);
         out.push_str(",\"uri\":");
-        string(&mut out, d.uri);
+        string(out, d.uri);
         let _ = write!(
             out,
             ",\"offset\":{},\"line\":{},\"column\":{}}}",
@@ -65,7 +94,6 @@ pub(crate) fn write(files: &[File], diags: &[Found<'_>]) -> String {
         );
     }
     out.push_str("]}");
-    out
 }
 
 /// A JSON array of strings.
@@ -82,7 +110,7 @@ pub(crate) fn strings(list: &[String]) -> String {
 }
 
 /// A JSON string: quotes, backslashes and control characters escaped, the rest as it is.
-fn string(out: &mut String, s: &str) {
+pub(crate) fn string(out: &mut String, s: &str) {
     out.push('"');
     let mut plain = 0;
     for (i, c) in s.char_indices() {

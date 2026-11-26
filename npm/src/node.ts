@@ -1,14 +1,15 @@
 // What the command reads, for Node, Bun and Deno: a description and every file its references
 // reach by a relative path, read as `crates/flowapi-cli/src/load.rs` reads them (the same URIs
-// in the same order), so the output is the command's byte for byte. JSON only in this release:
-// a YAML file is refused with a message that says so.
+// in the same order), so the output is the command's byte for byte. A YAML file is read by the
+// module as the command reads it (`crates/flowapi-yaml`): which file is YAML, the JSON it is read
+// into and the YAML line a diagnostic names are decided there, never here.
 
 import { readFile, stat } from 'node:fs/promises'
-import { dirname, extname, join, normalize } from 'node:path'
+import { dirname, join, normalize } from 'node:path'
 import { load, type Source } from './index.ts'
 import type { Document, Options, Result } from './types.ts'
 
-/** A file the package cannot read as JSON, or cannot read at all. */
+/** A file the package cannot read. */
 export class ReadError extends Error {
   override readonly name = 'ReadError'
 }
@@ -26,7 +27,7 @@ export async function readDescription(path: string, source?: Source): Promise<Do
     const uri = next
     if (out.some((d) => d.uri === uri)) continue
     const text = await read(uri)
-    for (const reference of flowapi.references(text)) {
+    for (const reference of flowapi.references(text, uri)) {
       const hash = reference.indexOf('#')
       const resource = hash === -1 ? reference : reference.slice(0, hash)
       if (resource === '' || resource.includes('://') || resource.startsWith('urn:')) continue
@@ -45,28 +46,12 @@ export async function generateFile(path: string, options?: Options): Promise<Res
 }
 
 async function read(path: string): Promise<string> {
-  let text: string
   try {
-    text = await readFile(path, 'utf8')
+    return await readFile(path, 'utf8')
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error)
     throw new ReadError(`cannot read ${path}: ${reason}`, { cause: error })
   }
-  if (isYaml(path, text)) {
-    throw new ReadError(
-      `${path}: YAML is not read by the npm package yet; convert it to JSON, or use the flowapi command built from Rust, which reads both`,
-    )
-  }
-  return text
-}
-
-/** As the command decides: `.yaml` and `.yml` are YAML, `.json` is JSON, any other name is
- * YAML when its text does not open with `{` or `[`. */
-function isYaml(path: string, text: string): boolean {
-  const extension = extname(path).slice(1).toLowerCase()
-  if (extension === 'yaml' || extension === 'yml') return true
-  if (extension === 'json') return false
-  return !/^[\s﻿]*[{[]/u.test(text)
 }
 
 async function isFile(path: string): Promise<boolean> {

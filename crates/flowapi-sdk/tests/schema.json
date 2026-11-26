@@ -1,0 +1,611 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flowapi.localix.ai/schemas/flowapi-sdk-1.json",
+  "title": "flowapi-sdk.yml",
+  "description": "The config flowapi generates a TypeScript SDK by: its resources and methods, each naming an operation of the description, its pagination, environments and authentication. Version 1.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "const": 1,
+      "description": "The format's version: 1"
+    },
+    "generator": {
+      "type": "object",
+      "properties": {
+        "flowapi": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.([0-9]+|x)(-[0-9A-Za-z.-]+)?$",
+          "description": "The flowapi version the SDK is generated with"
+        }
+      },
+      "required": [
+        "flowapi"
+      ],
+      "additionalProperties": false,
+      "description": "What generates the SDK"
+    },
+    "spec": {
+      "type": "string",
+      "pattern": "\\S",
+      "description": "The description: a path, relative to the config, or a URL"
+    },
+    "package": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^(@[a-z0-9-~][a-z0-9-._~]*/)?[a-z0-9-~][a-z0-9-._~]*$",
+          "description": "The npm package's name"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$",
+          "description": "The package's version (0.1.0 unless given); the release tool raises it"
+        },
+        "client": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "The client class's name, in PascalCase"
+        },
+        "license": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "The package's license, an SPDX expression"
+        },
+        "repository": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "The package's repository URL"
+        }
+      },
+      "required": [
+        "name",
+        "client"
+      ],
+      "additionalProperties": false,
+      "description": "The package"
+    },
+    "environments": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "description": "The environment used when the caller names none"
+        },
+        "env_var": {
+          "type": "string",
+          "pattern": "^[A-Z_][A-Z0-9_]*$",
+          "description": "The environment variable that overrides the base URL"
+        }
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^https?://[^\\s/?#]+[^\\s]*$",
+        "format": "uri"
+      },
+      "propertyNames": {
+        "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+      },
+      "description": "The base URLs by name, with `default` and `env_var`"
+    },
+    "auth": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/auth"
+      },
+      "description": "The security schemes the client sends, by their names in the description"
+    },
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "retries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "How many times a failed request is retried",
+          "default": 2
+        },
+        "timeout": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Seconds a request may take, its body read",
+          "default": 60
+        },
+        "max_retry_delay": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "The longest wait, in seconds, a server may ask for before a retry",
+          "default": 60
+        },
+        "pagination": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "description": "The pagination scheme of every method named `list` that names none"
+        }
+      },
+      "additionalProperties": false,
+      "description": "What every method has unless it says otherwise"
+    },
+    "pagination": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/pagination"
+      },
+      "propertyNames": {
+        "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+      },
+      "description": "Pagination schemes, by name"
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/resource"
+      },
+      "propertyNames": {
+        "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+      },
+      "description": "The resources, each a name for a group of methods"
+    },
+    "skip": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/skip"
+      },
+      "description": "Operations the SDK leaves out, each with its reason"
+    },
+    "readme": {
+      "type": "object",
+      "properties": {
+        "headline_method": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "The method the README shows first, as `resource.method`"
+        },
+        "pagination_method": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "The method the README shows pagination with"
+        },
+        "intro": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "The README's opening paragraph"
+        }
+      },
+      "additionalProperties": false,
+      "description": "What the README shows"
+    }
+  },
+  "required": [
+    "version",
+    "spec",
+    "package",
+    "resources"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "auth": {
+      "type": "object",
+      "properties": {
+        "env_var": {
+          "type": "string",
+          "pattern": "^[A-Z_][A-Z0-9_]*$",
+          "description": "The environment variable the credential is read from"
+        }
+      },
+      "additionalProperties": false
+    },
+    "method": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "type": "string",
+              "pattern": "\\S",
+              "description": "The operation: its `operationId`, or `\"METHOD /path\"`"
+            },
+            "pagination": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+                },
+                {
+                  "const": false
+                }
+              ],
+              "description": "The pagination scheme, by name; `false` for none"
+            },
+            "retries": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "description": "How many times a failed request is retried"
+            },
+            "stream": {
+              "type": "boolean",
+              "description": "Whether the response is read as a stream of events"
+            }
+          },
+          "required": [
+            "op"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "pagination": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "cursor",
+            "last_item_id",
+            "offset",
+            "page",
+            "link",
+            "single"
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "cursor"
+            },
+            "request": {
+              "type": "object",
+              "properties": {
+                "cursor": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The parameter the next page's token is sent in"
+                },
+                "limit": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The parameter of the page's size"
+                }
+              },
+              "required": [
+                "cursor"
+              ],
+              "additionalProperties": false,
+              "description": "Request parameters, by name"
+            },
+            "response": {
+              "type": "object",
+              "properties": {
+                "items": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The path of the items' array in the body (`data.items`); the body itself when not given"
+                },
+                "next": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The path of the next page's token"
+                },
+                "has_more": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The path of a boolean that says whether another page follows"
+                }
+              },
+              "required": [
+                "next"
+              ],
+              "additionalProperties": false,
+              "description": "Where the body says what the next page is"
+            }
+          },
+          "required": [
+            "type",
+            "request",
+            "response"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "last_item_id"
+            },
+            "request": {
+              "type": "object",
+              "properties": {
+                "cursor": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The parameter the next page's token is sent in"
+                },
+                "limit": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The parameter of the page's size"
+                }
+              },
+              "required": [
+                "cursor"
+              ],
+              "additionalProperties": false,
+              "description": "Request parameters, by name"
+            },
+            "response": {
+              "type": "object",
+              "properties": {
+                "items": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The path of the items' array in the body (`data.items`); the body itself when not given"
+                },
+                "id": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The member of an item whose value the next page starts after",
+                  "default": "id"
+                },
+                "has_more": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The path of a boolean that says whether another page follows"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Where the body says what the next page is"
+            }
+          },
+          "required": [
+            "type",
+            "request",
+            "response"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "offset"
+            },
+            "request": {
+              "type": "object",
+              "properties": {
+                "offset": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The parameter of the first item's offset"
+                },
+                "limit": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The parameter of the page's size"
+                }
+              },
+              "required": [
+                "offset"
+              ],
+              "additionalProperties": false,
+              "description": "Request parameters, by name"
+            },
+            "response": {
+              "type": "object",
+              "properties": {
+                "items": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The path of the items' array in the body (`data.items`); the body itself when not given"
+                },
+                "total": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The path of the number of items in every page"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Where the body says what the next page is"
+            }
+          },
+          "required": [
+            "type",
+            "request",
+            "response"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "page"
+            },
+            "request": {
+              "type": "object",
+              "properties": {
+                "page": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The parameter of the page's number"
+                },
+                "per_page": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The parameter of the page's size"
+                }
+              },
+              "required": [
+                "page"
+              ],
+              "additionalProperties": false,
+              "description": "Request parameters, by name"
+            },
+            "response": {
+              "type": "object",
+              "properties": {
+                "items": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The path of the items' array in the body (`data.items`); the body itself when not given"
+                },
+                "total_pages": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The path of the number of pages"
+                },
+                "has_more": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The path of a boolean that says whether another page follows"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Where the body says what the next page is"
+            },
+            "start": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The first page's number",
+              "default": 1
+            }
+          },
+          "required": [
+            "type",
+            "request",
+            "response"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "link"
+            },
+            "request": {
+              "type": "object",
+              "properties": {
+                "limit": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The parameter of the page's size"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Request parameters, by name"
+            },
+            "response": {
+              "type": "object",
+              "properties": {
+                "items": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The path of the items' array in the body (`data.items`); the body itself when not given"
+                },
+                "next": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The path of the next page's URL in the body"
+                },
+                "header": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The response header whose `rel=\"next\"` link is the next page (`Link`)"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Where the body says what the next page is"
+            }
+          },
+          "required": [
+            "type",
+            "response"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "single"
+            },
+            "response": {
+              "type": "object",
+              "properties": {
+                "items": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "The path of the items' array in the body (`data.items`); the body itself when not given"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Where the items are"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "resource": {
+      "type": "object",
+      "properties": {
+        "methods": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/method"
+          },
+          "propertyNames": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "description": "The resource's methods: a name for each operation"
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/resource"
+          },
+          "propertyNames": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "description": "The resources under it"
+        }
+      },
+      "additionalProperties": false
+    },
+    "skip": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "The operation: its `operationId`, or `\"METHOD /path\"`"
+        },
+        "reason": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Why the SDK leaves it out"
+        }
+      },
+      "required": [
+        "op",
+        "reason"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

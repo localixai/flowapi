@@ -1,0 +1,27 @@
+[package]
+name = "flowapi-sdk"
+description = "flowapi's SDK layer, above the targets: what a client needs beside a target's SDK (servers, security, the operations table), read from the description and printed for it"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish = false
+
+[dependencies]
+flowapi = { path = "../flowapi" }
+# The TypeScript target, for the names its SDK gives each operation's functions, the method each
+# request is sent with and how a body is read: the table points at those functions and must agree
+# with them, so it asks the target rather than deciding again.
+flowapi-ts = { path = "../flowapi-ts" }
+
+[dev-dependencies]
+# The config cases are YAML, read as the command reads them.
+flowapi-yaml = { path = "../flowapi-yaml" }
+# The printed JSON Schema and summaries read by a reader that is not ours (tests/schema.rs,
+# tests/summary.rs), and descriptions written back in other orders (tests/draft.rs).
+serde_json = "=1.0.154"
+
+[lints]
+workspace = true

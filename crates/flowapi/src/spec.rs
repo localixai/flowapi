@@ -4,7 +4,7 @@
 mod operations;
 
 pub use operations::{
-    Body, Field, Location, Media, Operation, Param, Payload, Response, Serialization, Style,
+    Body, Field, Location, Media, Operation, Param, Payload, Response, Serialization, Style, follow,
 };
 
 use crate::diag::Diagnostics;
@@ -146,7 +146,8 @@ pub fn index(docs: &Documents<'_>, all: &[Resource]) -> Index {
 }
 
 /// OpenAPI 3.2's `$self`, resolved against the document's own URI.
-fn self_uri(docs: &Documents<'_>, doc: DocId) -> Option<String> {
+#[must_use]
+pub fn self_uri(docs: &Documents<'_>, doc: DocId) -> Option<String> {
     let d = docs.get(doc)?;
     let own = d
         .tree

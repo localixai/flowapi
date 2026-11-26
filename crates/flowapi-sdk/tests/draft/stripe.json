@@ -1,0 +1,52 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "PayHub v1 REST API", "version": "2026-11-01" },
+  "servers": [{ "url": "https://api.payments.example/" }],
+  "components": {
+    "securitySchemes": { "basicAuth": { "type": "http", "scheme": "basic" } },
+    "schemas": {
+      "customer": { "type": "object", "properties": { "id": { "type": "string" }, "email": { "type": "string" } } },
+      "request": { "type": "object", "properties": { "id": { "type": "string" } } }
+    }
+  },
+  "paths": {
+    "/v1/customers": {
+      "get": {
+        "operationId": "GetCustomers",
+        "parameters": [
+          { "name": "starting_after", "in": "query", "schema": { "type": "string" } },
+          { "name": "ending_before", "in": "query", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/customer" } },
+                    "has_more": { "type": "boolean" },
+                    "url": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": { "operationId": "PostCustomers", "responses": { "200": { "description": "ok" } } }
+    },
+    "/v1/customers/{customer}": {
+      "get": { "operationId": "GetCustomersCustomer", "parameters": [{ "name": "customer", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "ok" } } },
+      "post": { "operationId": "PostCustomersCustomer", "parameters": [{ "name": "customer", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "ok" } } },
+      "delete": { "operationId": "DeleteCustomersCustomer", "parameters": [{ "name": "customer", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "ok" } } }
+    },
+    "/v1/customers/{customer}/sources": {
+      "get": { "operationId": "GetCustomersCustomerSources", "parameters": [{ "name": "customer", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "ok" } } }
+    },
+    "/v1/request": { "get": { "operationId": "GetRequest", "responses": { "200": { "description": "ok" } } } },
+    "/v1/requests": { "get": { "operationId": "GetRequests", "responses": { "200": { "description": "ok" } } } }
+  }
+}

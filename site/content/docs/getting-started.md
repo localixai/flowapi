@@ -30,7 +30,7 @@ const result = await generateFile('openapi.json')
 The crates are not on crates.io. Install the command from a release tag:
 
 ```sh
-cargo install --locked --git https://github.com/localixai/flowapi --tag v0.1.0 flowapi-cli
+cargo install --locked --git https://github.com/localixai/flowapi --tag v0.2.0 flowapi-cli
 flowapi openapi.json -o types.ts
 ```
 
@@ -44,8 +44,8 @@ A Rust program takes the crates from the repository at a tag:
 
 ```toml
 [dependencies]
-flowapi = { git = "https://github.com/localixai/flowapi", tag = "v0.1.0" }
-flowapi-ts = { git = "https://github.com/localixai/flowapi", tag = "v0.1.0" }
+flowapi = { git = "https://github.com/localixai/flowapi", tag = "v0.2.0" }
+flowapi-ts = { git = "https://github.com/localixai/flowapi", tag = "v0.2.0" }
 ```
 
 `flowapi` is the core: it reads the documents into a graph of types and does no I/O. `flowapi-ts` and `flowapi-rust` print that graph.

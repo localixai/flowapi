@@ -155,6 +155,14 @@ pub(crate) fn cases(
 ) -> usize {
     let mut merged = 0;
     for (i, c) in cases.iter().enumerate() {
+        // A case for other targets alone (a body given as bytes that are not UTF-8, which a
+        // call here cannot carry: it gives the body as text).
+        if c["targets"]
+            .as_array()
+            .is_some_and(|t| !t.iter().any(|x| x.as_str() == Some("rust")))
+        {
+            continue;
+        }
         let versions: Vec<String> = c["versions"].as_array().map_or_else(
             || VERSIONS.iter().map(|v| (*v).to_owned()).collect(),
             |vs| {

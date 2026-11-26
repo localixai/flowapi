@@ -2,18 +2,24 @@
 //! operation, `<name>Request(input)`, which writes the request the input makes (path, query,
 //! headers, body) and sends nothing, and `<name>Response(status, headers, body)`, which reads an
 //! answer back into the response the description names. A runtime of a few functions is printed
-//! once before them (`sdk/runtime.ts`); the output imports nothing. What a call does not depend
+//! once before them (`sdk/runtime.ts` writes requests, `sdk/multipart.ts` their
+//! `multipart/form-data` bodies, `sdk/read.ts` reads responses); the output imports nothing. What a call does not depend
 //! on is decided here, once: path templates are split, names percent-encoded and each
 //! parameter's style chosen as the arguments of one call.
 
 mod request;
 mod response;
 
+pub use request::method;
+
 use flowapi::Program;
 use std::collections::BTreeSet;
 
-/// The runtime every operation's functions call, printed once.
+/// The runtime every operation's functions call, printed once: writing a request, its multipart
+/// body, then reading a response.
 const RUNTIME: &str = include_str!("sdk/runtime.ts");
+const MULTIPART: &str = include_str!("sdk/multipart.ts");
+const READ: &str = include_str!("sdk/read.ts");
 
 pub(crate) fn sdk(out: &mut String, p: &Program<'_>) {
     let endpoints = p.endpoints();
@@ -21,6 +27,8 @@ pub(crate) fn sdk(out: &mut String, p: &Program<'_>) {
         return;
     }
     out.push_str(RUNTIME);
+    out.push_str(MULTIPART);
+    out.push_str(READ);
     let decls: Vec<Option<&str>> = endpoints.iter().map(|e| p.name_of(e.ty)).collect();
     let bases = function_bases(&decls);
     for ((e, decl), base) in endpoints.iter().zip(&decls).zip(&bases) {
@@ -29,6 +37,58 @@ pub(crate) fn sdk(out: &mut String, p: &Program<'_>) {
         request::write(out, e, decl, base);
         out.push('\n');
         response::write(out, e, decl, base);
+    }
+}
+
+/// Each endpoint's function name before its `Request` or `Response`, as [`sdk`] prints them;
+/// `None` for an endpoint it prints no function for (one with no declaration). A layer above the
+/// target (`flowapi-sdk`) names the functions by it.
+#[must_use]
+pub fn bases(p: &Program<'_>) -> Vec<Option<String>> {
+    let decls: Vec<Option<&str>> = p.endpoints().iter().map(|e| p.name_of(e.ty)).collect();
+    let bases = function_bases(&decls);
+    decls.iter().zip(bases).map(|(d, b)| d.map(|_| b)).collect()
+}
+
+/// How a response body of a media type is read: JSON parsed, `text/*` as text, any other type
+/// as bytes; a media range by the type the answer sends (`flowapiReadsBytes`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ReadAs {
+    /// Parsed as JSON.
+    Json,
+    /// A `string`.
+    Text,
+    /// A `Uint8Array`.
+    Bytes,
+    /// A range: by the `Content-Type` sent.
+    Sent,
+}
+
+impl ReadAs {
+    /// How a body of this media type, as written, is read.
+    #[must_use]
+    pub fn of(media_type: &str) -> Self {
+        let b = bare(media_type);
+        if b.contains('*') {
+            Self::Sent
+        } else if is_json(&b) {
+            Self::Json
+        } else if b.starts_with("text/") {
+            Self::Text
+        } else {
+            Self::Bytes
+        }
+    }
+
+    /// Its name: `json`, `text`, `bytes` or `sent`.
+    #[must_use]
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Json => "json",
+            Self::Text => "text",
+            Self::Bytes => "bytes",
+            Self::Sent => "sent",
+        }
     }
 }
 
@@ -67,7 +127,8 @@ fn function_bases(decls: &[Option<&str>]) -> Vec<String> {
 }
 
 /// A string as a TypeScript string literal (a JSON string is one).
-pub(crate) fn lit(s: &str) -> String {
+#[must_use]
+pub fn lit(s: &str) -> String {
     let mut out = String::with_capacity(s.len() + 2);
     out.push('"');
     for c in s.chars() {

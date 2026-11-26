@@ -6,7 +6,9 @@ flowapi reads an API description into a graph of types and prints it as TypeScri
 (serde types). Every value a schema accepts, its type accepts: each schema of the official JSON
 Schema Test Suite is turned into a type and each test value is checked against it by the
 TypeScript compiler, and every valid value passes. With `--sdk` it also prints, per operation, a
-function that writes the request and one that reads the response, sending nothing itself. It is a
-Rust command (`cargo install --git https://github.com/localixai/flowapi --tag v0.1.0
+function that writes the request and one that reads the response, sending nothing itself; and
+`flowapi generate` writes a whole TypeScript client package from the description and a small config
+(`flowapi-sdk.yml`): resources, retries, errors, pagination, tests. It is a
+Rust command (`cargo install --git https://github.com/localixai/flowapi --tag v0.2.0
 flowapi-cli`) and an npm package compiled to WebAssembly (`npx @localix-ai/flowapi`), MIT-licensed,
 from https://github.com/localixai/flowapi, made by Localix Lab (https://localix.ai).

@@ -3,17 +3,17 @@
 Written by `cargo run --release --bin report` in `conformance/ledger/` from `requirements.json`,
 `scope.json` and the `req:` and `lossy:` markers under `crates/` and `conformance/`. Do not edit by hand.
 
-**Answered: 494 of 494 requirements in scope (100.0%): 428 covered by a test, 66 lossy with a reason; 0 missing.** Out of scope: 1261. Total: 1755.
+**Answered: 555 of 555 requirements in scope (100.0%): 489 covered by a test, 66 lossy with a reason; 0 missing.** Out of scope: 1200. Total: 1755.
 Scope: decided 2026-11-24 by the maintainers, owner delegated.
 
 | Text | Total | In scope | Out of scope | Covered | Lossy | Missing | Answered share |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| openapi 3.0.4 (`openapi/3.0.4.md`) | 429 | 119 | 310 | 102 | 17 | 0 | 100.0% |
-| openapi 3.1.2 (`openapi/3.1.2.md`) | 436 | 109 | 327 | 107 | 2 | 0 | 100.0% |
-| openapi 3.2.1 (`openapi/3.2.1.md`) | 522 | 129 | 393 | 123 | 6 | 0 | 100.0% |
+| openapi 3.0.4 (`openapi/3.0.4.md`) | 429 | 131 | 298 | 114 | 17 | 0 | 100.0% |
+| openapi 3.1.2 (`openapi/3.1.2.md`) | 436 | 146 | 290 | 144 | 2 | 0 | 100.0% |
+| openapi 3.2.1 (`openapi/3.2.1.md`) | 522 | 141 | 381 | 135 | 6 | 0 | 100.0% |
 | json-schema 2020-12 (`json-schema-2020-12/jsonschema-core.xml`) | 241 | 90 | 151 | 66 | 24 | 0 | 100.0% |
 | json-schema 2020-12 (`json-schema-2020-12/jsonschema-validation.xml`) | 127 | 47 | 80 | 30 | 17 | 0 | 100.0% |
-| **All** | 1755 | 494 | 1261 | 428 | 66 | 0 | 100.0% |
+| **All** | 1755 | 555 | 1200 | 489 | 66 | 0 | 100.0% |
 
 ## By level
 
@@ -33,7 +33,7 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `appendix-d-serializing-headers-and-cookies` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `appendix-f-resolving-security-requirements-in-a-referenced-document` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `callback-object` | 2 | 0 | 2 | 0 | 0 | 0 | — |
-| `components-object` | 11 | 6 | 5 | 6 | 0 | 0 | 100.0% |
+| `components-object` | 11 | 7 | 4 | 7 | 0 | 0 | 100.0% |
 | `conditions-for-using-the-discriminator-object` | 3 | 0 | 3 | 0 | 0 | 0 | — |
 | `contact-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
 | `data-type-format` | 2 | 1 | 1 | 1 | 0 | 0 | 100.0% |
@@ -55,8 +55,8 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `oauth-flow-object` | 12 | 0 | 12 | 0 | 0 | 0 | — |
 | `oauth-flows-object` | 5 | 0 | 5 | 0 | 0 | 0 | — |
 | `openapi-description-structure` | 2 | 1 | 1 | 1 | 0 | 0 | 100.0% |
-| `openapi-object` | 17 | 5 | 12 | 5 | 0 | 0 | 100.0% |
-| `operation-object` | 20 | 8 | 12 | 8 | 0 | 0 | 100.0% |
+| `openapi-object` | 17 | 6 | 11 | 6 | 0 | 0 | 100.0% |
+| `operation-object` | 20 | 9 | 11 | 9 | 0 | 0 | 100.0% |
 | `parameter-object` | 33 | 15 | 18 | 15 | 0 | 0 | 100.0% |
 | `path-item-object` | 18 | 12 | 6 | 12 | 0 | 0 | 100.0% |
 | `path-templating` | 1 | 0 | 1 | 0 | 0 | 0 | — |
@@ -71,8 +71,8 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `rich-text-formatting` | 4 | 0 | 4 | 0 | 0 | 0 | — |
 | `schema-object` | 57 | 35 | 22 | 18 | 17 | 0 | 100.0% |
 | `security-filtering` | 4 | 0 | 4 | 0 | 0 | 0 | — |
-| `security-requirement-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
-| `security-scheme-object` | 17 | 0 | 17 | 0 | 0 | 0 | — |
+| `security-requirement-object` | 6 | 3 | 3 | 3 | 0 | 0 | 100.0% |
+| `security-scheme-object` | 17 | 6 | 11 | 6 | 0 | 0 | 100.0% |
 | `server-object` | 7 | 0 | 7 | 0 | 0 | 0 | — |
 | `server-variable-object` | 9 | 0 | 9 | 0 | 0 | 0 | — |
 | `specification` | 2 | 0 | 2 | 0 | 0 | 0 | — |
@@ -92,7 +92,7 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `appendix-e-percent-encoding-and-form-media-types` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `appendix-f-resolving-security-requirements-in-a-referenced-document` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `callback-object` | 2 | 0 | 2 | 0 | 0 | 0 | — |
-| `components-object` | 12 | 7 | 5 | 7 | 0 | 0 | 100.0% |
+| `components-object` | 12 | 8 | 4 | 8 | 0 | 0 | 100.0% |
 | `conditions-for-using-the-discriminator-object` | 2 | 0 | 2 | 0 | 0 | 0 | — |
 | `contact-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
 | `data-type-format` | 2 | 1 | 1 | 1 | 0 | 0 | 100.0% |
@@ -115,11 +115,11 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `oauth-flows-object` | 5 | 0 | 5 | 0 | 0 | 0 | — |
 | `openapi-description` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `openapi-description-structure` | 2 | 1 | 1 | 1 | 0 | 0 | 100.0% |
-| `openapi-object` | 20 | 6 | 14 | 6 | 0 | 0 | 100.0% |
-| `operation-object` | 19 | 7 | 12 | 7 | 0 | 0 | 100.0% |
+| `openapi-object` | 20 | 8 | 12 | 8 | 0 | 0 | 100.0% |
+| `operation-object` | 19 | 9 | 10 | 9 | 0 | 0 | 100.0% |
 | `parameter-object` | 41 | 23 | 18 | 23 | 0 | 0 | 100.0% |
 | `parsing-documents` | 2 | 1 | 1 | 1 | 0 | 0 | 100.0% |
-| `path-item-object` | 18 | 12 | 6 | 12 | 0 | 0 | 100.0% |
+| `path-item-object` | 18 | 13 | 5 | 13 | 0 | 0 | 100.0% |
 | `path-templating` | 2 | 1 | 1 | 1 | 0 | 0 | 100.0% |
 | `paths-object` | 5 | 3 | 2 | 3 | 0 | 0 | 100.0% |
 | `percent-encoding-and-cookies` | 1 | 0 | 1 | 0 | 0 | 0 | — |
@@ -135,10 +135,10 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `rich-text-formatting` | 4 | 0 | 4 | 0 | 0 | 0 | — |
 | `schema-object` | 23 | 10 | 13 | 8 | 2 | 0 | 100.0% |
 | `security-filtering` | 4 | 0 | 4 | 0 | 0 | 0 | — |
-| `security-requirement-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
-| `security-scheme-object` | 17 | 0 | 17 | 0 | 0 | 0 | — |
-| `server-object` | 8 | 0 | 8 | 0 | 0 | 0 | — |
-| `server-variable-object` | 9 | 0 | 9 | 0 | 0 | 0 | — |
+| `security-requirement-object` | 6 | 5 | 1 | 5 | 0 | 0 | 100.0% |
+| `security-scheme-object` | 17 | 14 | 3 | 14 | 0 | 0 | 100.0% |
+| `server-object` | 8 | 6 | 2 | 6 | 0 | 0 | 100.0% |
+| `server-variable-object` | 9 | 6 | 3 | 6 | 0 | 0 | 100.0% |
 | `specification` | 2 | 0 | 2 | 0 | 0 | 0 | — |
 | `specification-extensions` | 4 | 2 | 2 | 2 | 0 | 0 | 100.0% |
 | `structural-interoperability` | 2 | 0 | 2 | 0 | 0 | 0 | — |
@@ -177,10 +177,10 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `oauth-flow-object` | 15 | 0 | 15 | 0 | 0 | 0 | — |
 | `oauth-flows-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
 | `objects-and-fields` | 2 | 0 | 2 | 0 | 0 | 0 | — |
-| `openapi-object` | 41 | 16 | 25 | 16 | 0 | 0 | 100.0% |
-| `operation-object` | 19 | 7 | 12 | 7 | 0 | 0 | 100.0% |
+| `openapi-object` | 41 | 18 | 23 | 18 | 0 | 0 | 100.0% |
+| `operation-object` | 19 | 8 | 11 | 8 | 0 | 0 | 100.0% |
 | `parameter-object` | 44 | 26 | 18 | 26 | 0 | 0 | 100.0% |
-| `path-item-object` | 21 | 14 | 7 | 14 | 0 | 0 | 100.0% |
+| `path-item-object` | 21 | 15 | 6 | 15 | 0 | 0 | 100.0% |
 | `paths-object` | 8 | 4 | 4 | 4 | 0 | 0 | 100.0% |
 | `percent-encoding-and-cookies` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `percent-encoding-and-form-data` | 1 | 0 | 1 | 0 | 0 | 0 | — |
@@ -192,10 +192,10 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `rich-text-formatting` | 4 | 0 | 4 | 0 | 0 | 0 | — |
 | `schema-object` | 31 | 14 | 17 | 12 | 2 | 0 | 100.0% |
 | `security-filtering` | 4 | 0 | 4 | 0 | 0 | 0 | — |
-| `security-requirement-object` | 8 | 0 | 8 | 0 | 0 | 0 | — |
-| `security-scheme-object` | 20 | 0 | 20 | 0 | 0 | 0 | — |
+| `security-requirement-object` | 8 | 1 | 7 | 1 | 0 | 0 | 100.0% |
+| `security-scheme-object` | 20 | 5 | 15 | 5 | 0 | 0 | 100.0% |
 | `security-schemes` | 1 | 0 | 1 | 0 | 0 | 0 | — |
-| `server-object` | 11 | 0 | 11 | 0 | 0 | 0 | — |
+| `server-object` | 11 | 2 | 9 | 2 | 0 | 0 | 100.0% |
 | `server-variable-object` | 10 | 0 | 10 | 0 | 0 | 0 | — |
 | `specification-extensions` | 4 | 2 | 2 | 2 | 0 | 0 | 100.0% |
 | `tag-object` | 10 | 0 | 10 | 0 | 0 | 0 | — |
@@ -322,10 +322,15 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `conformance/sdk/cases.json` | 46 |
 | `crates/flowapi-cli/tests/documents_cli.rs` | 8 |
 | `crates/flowapi-cli/tests/openapi_cli.rs` | 30 |
+| `crates/flowapi-sdk/tests/cases/defaults.json` | 12 |
+| `crates/flowapi-sdk/tests/cases/encoding.json` | 1 |
+| `crates/flowapi-sdk/tests/cases/security.json` | 22 |
+| `crates/flowapi-sdk/tests/cases/servers.json` | 15 |
+| `crates/flowapi-sdk/tests/cases/v32.json` | 12 |
 | `crates/flowapi-ts/tests/print.rs` | 267 |
 | `crates/flowapi/tests/documents.rs` | 14 |
 | `crates/flowapi/tests/repo.rs` | 2 |
 
 ## Markers on out-of-scope requirements
 
-None.
+- `oas-3.1.encoding-object.contentType` in `crates/flowapi-sdk/tests/cases/encoding.json:61`

@@ -1,0 +1,22 @@
+{"openapi":"3.2.0","info":{"title":"multipart","version":"1"},
+ "paths":{"/pets/{id}/photos":{"post":{"operationId":"uploadPhotos",
+   "parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string"}}],
+   "requestBody":{"required":true,"content":{
+     "multipart/form-data":{"schema":{"$ref":"#/components/schemas/Upload"},
+      "encoding":{"photo":{"contentType":"image/png, image/jpeg","headers":{"X-Rate-Limit-Limit":{"schema":{"type":"integer"}}}}}},
+     "multipart/mixed":{"schema":{"type":"array","items":{}}},
+     "application/octet-stream":{"schema":{"type":"string","format":"binary"}},
+     "image/*":{"schema":{}}}},
+   "responses":{"201":{"description":"made"}}}},
+  "/forms":{"post":{"operationId":"ordered",
+   "requestBody":{"content":{"multipart/form-data":{"schema":{"type":"array","items":{"type":"object","additionalProperties":{"type":"string"}}}}}},
+   "responses":{"204":{"description":"none"}}}}},
+ "components":{"schemas":{
+  "Upload":{"type":"object","required":["photo"],"properties":{
+   "photo":{"type":"string","format":"binary"},
+   "caption":{"type":"string"},
+   "rank":{"type":"integer"},
+   "meta":{"type":"object","properties":{"taken":{"type":"string"}}},
+   "tags":{"type":"array","items":{"type":"string"}},
+   "extra":{"type":"array","items":{"type":"string","contentMediaType":"image/png"}},
+   "any":{}}}}}}

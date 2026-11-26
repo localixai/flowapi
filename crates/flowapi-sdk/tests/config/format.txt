@@ -1,0 +1,74 @@
+error[config.version]: `/version` is 2; it is 1
+  at format.yml:4:1 (/version)
+error[config.package.name]: `/package/name`: `PetShop` is not an npm package name: lower case, `@scope/name` or `name`
+  at format.yml:6:12 (/package/name)
+error[config.package.client]: `/package/client`: `petShop` is not a class name in PascalCase: a capital, then letters and digits
+  at format.yml:6:27 (/package/client)
+error[config.env.url]: `/environments/production`: `api.petshop.example` is not an absolute http or https URL with a host
+  at format.yml:8:3 (/environments/production)
+error[config.name.invalid]: `2nd` is not a name: ASCII letters, digits, `_` and `-`, opening with a letter
+  at format.yml:9:3 (/environments/2nd)
+error[config.env_var]: `/environments/env_var`: `pet_shop_url` is not an environment variable's name: A-Z, 0-9 and `_`, not opening with a digit
+  at format.yml:10:3 (/environments/env_var)
+error[config.schema.type]: `/defaults/retries` is a string; it is an integer from 0 to 10
+  at format.yml:11:13 (/defaults/retries)
+error[config.schema.range]: `/defaults/timeout` is 0; it is a number of seconds above 0
+  at format.yml:11:27 (/defaults/timeout)
+error[config.schema.range]: `/defaults/max_retry_delay` is -1; it is a number of seconds above 0
+  at format.yml:11:39 (/defaults/max_retry_delay)
+error[config.pagination.type]: `cursr` is not a pagination scheme's type: one of cursor, last_item_id, offset, page, link, single
+  at format.yml:14:11 (/pagination/cursor/type)
+  hint: did you mean `cursor`?
+error[config.schema.required]: `/pagination/paged` needs `response`: Where the body says what the next page is
+  at format.yml:15:3 (/pagination/paged)
+error[config.schema.required]: `/pagination/paged/request` needs `page`: The parameter of the page's number
+  at format.yml:17:5 (/pagination/paged/request)
+error[config.schema.unknown]: `pages` is not a member of `/pagination/paged/request` (it has page, per_page)
+  at format.yml:17:16 (/pagination/paged/request/pages)
+  hint: did you mean `page`?
+error[config.schema.unknown]: `resoures` is not a member of `/` (it has version, generator, spec, package, environments, auth, defaults, pagination, resources, skip, readme)
+  at format.yml:18:1 (/resoures)
+  hint: did you mean `resources`?
+error[config.schema.unknown]: `overrides` is not a member of `/` (it has version, generator, spec, package, environments, auth, defaults, pagination, resources, skip, readme)
+  at format.yml:19:1 (/overrides)
+error[config.coverage]: `getPet` is in no resource and not in `skip`
+  at format.yml:21:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `deletePet` is in no resource and not in `skip`
+  at format.yml:21:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `updatePet` is in no resource and not in `skip`
+  at format.yml:21:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `listPhotos` is in no resource and not in `skip`
+  at format.yml:21:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `listOwners` is in no resource and not in `skip`
+  at format.yml:21:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `streamEvents` is in no resource and not in `skip`
+  at format.yml:21:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `getCollision` is in no resource and not in `skip`
+  at format.yml:21:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `listUsers` is in no resource and not in `skip`
+  at format.yml:21:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.coverage]: `GET /internal/health` is in no resource and not in `skip`
+  at format.yml:21:3 (/resources)
+  hint: name it under a resource's `methods`, or add it to `skip` with a reason
+error[config.schema.unknown]: `methds` is not a member of `/resources/pets` (it has methods, resources)
+  at format.yml:22:5 (/resources/pets/methds)
+  hint: did you mean `methods`?
+error[config.schema.unknown]: `pagniation` is not a member of `/resources/pets/methods/list` (it has op, pagination, retries, stream)
+  at format.yml:24:29 (/resources/pets/methods/list/pagniation)
+  hint: did you mean `pagination`?
+error[config.schema.range]: `/resources/pets/methods/list/retries` is 11; it is an integer from 0 to 10
+  at format.yml:24:49 (/resources/pets/methods/list/retries)
+error[config.schema.type]: `/resources/pets/methods/list/stream` is a string; it is `true` or `false`
+  at format.yml:24:62 (/resources/pets/methods/list/stream)
+error[config.schema.type]: `/resources/pets/methods/create` is a number; it is a string or an object
+  at format.yml:25:7 (/resources/pets/methods/create)
+error[config.schema.required]: `/skip/0` needs `reason`: Why the SDK leaves it out
+  at format.yml:27:5 (/skip/0)
