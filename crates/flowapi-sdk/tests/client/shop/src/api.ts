@@ -99,6 +99,9 @@ export type GetPet = {
   };
 };
 
+/**
+ * @deprecated
+ */
 export type DeletePet = {
   parameters: {
     path: {
@@ -290,6 +293,7 @@ export type Paths = {
   };
   "/pets/{pet_id}": {
     get: GetPet;
+    /** @deprecated */
     delete: DeletePet;
     patch: UpdatePet;
   };

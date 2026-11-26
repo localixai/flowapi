@@ -15,6 +15,8 @@ not listed here is an error.
 | `package.client` | The client class, in PascalCase (`Acme`) |
 | `package.license` | An SPDX expression; MIT and Apache-2.0 get their text written |
 | `package.repository` | The repository URL, for `package.json` |
+| `package.description` | `package.json`'s description, plain text, and the README's first paragraph unless `readme.intro` is given. Default: `TypeScript SDK for the <title> API.` and the first short sentence of `info.summary` or `info.description` |
+| `package.keywords` | `package.json`'s keywords, a list (`[pets, shop]`); none unless given |
 | `environments.<name>` | A base URL by name |
 | `environments.default` | The environment used when the caller names none |
 | `environments.env_var` | The variable that overrides the base URL (`ACME_BASE_URL`) |
@@ -27,9 +29,10 @@ not listed here is an error.
 | `resources.<name>.methods.<name>` | A method: an `operationId`, `"METHOD /path"`, or an object below |
 | `resources.<name>.resources` | Resources nested under it |
 | `skip` | `[{ op, reason }]`: operations the SDK leaves out |
+| `readme.title` | The README's heading. Default: `info.title` without a last `API`, then `TypeScript SDK` (`Twilio Studio API` is `Twilio Studio TypeScript SDK`); the package's name without a title |
+| `readme.intro` | The README's first paragraph, Markdown; `package.description` unless given |
 | `readme.headline_method` | The method the README shows first, as `resource.method` |
 | `readme.pagination_method` | The method the README shows paging with |
-| `readme.intro` | The README's opening paragraph |
 
 A method as an object: `op` (the operation), `pagination` (a scheme's name, or `false`),
 `retries`, `stream: true` (the response is read as server-sent events or JSON lines).
@@ -54,7 +57,12 @@ body itself when `items` is not given).
 version: 1
 generator: { flowapi: "0.2.0" }
 spec: openapi.json
-package: { name: "@acme/sdk", client: Acme, license: MIT }
+package:
+  name: "@acme/sdk"
+  client: Acme
+  license: MIT
+  description: Unofficial TypeScript SDK for the Acme API.
+  keywords: [acme, projects]
 environments:
   production: https://api.acme.com
   sandbox: https://sandbox.acme.com
@@ -81,5 +89,7 @@ resources:
           remove: { op: removeMember, retries: 0 }
 skip:
   - { op: "GET /internal/health", reason: not public }
-readme: { headline_method: projects.list }
+readme:
+  title: Acme TypeScript SDK (unofficial)
+  headline_method: projects.list
 ```

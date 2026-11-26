@@ -1,7 +1,8 @@
 {
   "name": "@shop/sdk",
   "version": "1.2.0",
-  "description": "A TypeScript client of the Shop API",
+  "description": "TypeScript SDK for the Shop API. Sells pets and their photos.",
+  "keywords": ["pets", "shop"],
   "license": "MIT",
   "repository": { "type": "git", "url": "https://github.com/shop/sdk" },
   "type": "module",

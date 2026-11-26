@@ -33,6 +33,7 @@ mod ops;
 mod out;
 mod paging;
 mod print;
+mod prose;
 mod repo;
 mod security;
 mod servers;

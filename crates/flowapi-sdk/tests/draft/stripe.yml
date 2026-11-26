@@ -37,8 +37,8 @@ resources:
       create: PostCustomers  # POST /v1/customers
       delete: DeleteCustomersCustomer  # DELETE /v1/customers/{customer}
       retrieve: GetCustomersCustomer  # GET /v1/customers/{customer}
-      post_customers_customer: PostCustomersCustomer  # POST /v1/customers/{customer}
-      get_customers_customer_sources: GetCustomersCustomerSources  # GET /v1/customers/{customer}/sources
+      update: PostCustomersCustomer  # POST /v1/customers/{customer}
+      get_sources: GetCustomersCustomerSources  # GET /v1/customers/{customer}/sources
   request_api:
     methods:
       list: GetRequest  # GET /v1/request

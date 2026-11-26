@@ -34,7 +34,8 @@ export type AuthClientOptions = $core.ClientOptions<never> & {
   oauth?: $core.Credential | null | undefined;
 };
 
-/** The API's client: a member for each resource of the config. */
+/** The API's client: a member for each resource (`client.checks`), and `request` for a call no
+ * operation describes. */
 export class AuthClient {
   readonly #core: $core.Core;
   readonly #options: AuthClientOptions;

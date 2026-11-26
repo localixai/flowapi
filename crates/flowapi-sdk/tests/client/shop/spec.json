@@ -1,6 +1,6 @@
 {
  "openapi": "3.1.0",
- "info": { "title": "Shop", "version": "1" },
+ "info": { "title": "Shop API", "version": "1", "description": "Sells **pets** and their photos. The [guide](https://shop.example/docs) says more.\n\n## Limits\n\nA hundred calls a minute." },
  "servers": [{ "url": "https://api.shop.example/v1" }],
  "security": [{ "ApiKeyAuth": [] }, { "BearerAuth": [] }],
  "paths": {
@@ -20,6 +20,9 @@
    },
    "post": {
     "operationId": "createPet",
+    "summary": "Add a pet",
+    "description": "Adds a pet to the shop.\n\nIts `name` must be <em>unique</em>: a taken one is answered `409`.\n\n```json\n{ \"name\": \"Rex\" }\n```\n\n@internal is no tag here.",
+    "externalDocs": { "url": "https://shop.example/docs/pets", "description": "Pets, in the [guide](https://shop.example/docs)" },
     "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Pet" } } } },
     "responses": {
      "201": { "description": "made", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Pet" } } } },
@@ -45,6 +48,7 @@
    },
    "delete": {
     "operationId": "deletePet",
+    "deprecated": true,
     "responses": { "204": { "description": "gone" } }
    }
   },

@@ -34,7 +34,8 @@ export type ShopOptions = $core.ClientOptions<"production" | "sandbox"> & {
   bearerAuth?: $core.Credential | null | undefined;
 };
 
-/** The API's client: a member for each resource of the config. */
+/** The API's client: a member for each resource (`client.pets`), and `request` for a call no
+ * operation describes. */
 export class Shop {
   readonly #core: $core.Core;
   readonly #options: ShopOptions;

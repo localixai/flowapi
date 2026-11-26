@@ -4,7 +4,7 @@ import * as $api from "../api.js";
 import * as $core from "../core/index.js";
 import { Photos as $Photos } from "./pets/photos.js";
 
-/** The resource `pets`. */
+/** The methods of `client.pets`. */
 export class Pets {
   readonly #core: $core.Core;
   readonly photos: $Photos;
@@ -14,17 +14,36 @@ export class Pets {
     this.photos = new $Photos(core);
   }
 
-  /** `GET /pets`: List the pets *\/ one page at a time */
+  /**
+   * List the pets *\/ one page at a time
+   *
+   * `GET /pets`
+   */
   list(params: $core.Input<typeof $api.listPetsRequest> = {}, options?: $core.RequestOptions): $core.PagePromise<$core.ItemOf<$core.Data<typeof $api.listPetsResponse>, ["data"]>> {
     return $core.page(this.#core, $api.flowapiOperations.listPets, params, { type: "cursor", cursor: ["query", "page_token"], limit: ["query", "limit"], items: ["data"], next: ["next_page_token"], hasMore: ["has_more"] }, options);
   }
 
-  /** `POST /pets` */
+  /**
+   * Add a pet
+   *
+   * Adds a pet to the shop.
+   *
+   * Its name must be unique: a taken one is answered 409.
+   *
+   * \@internal is no tag here.
+   *
+   * `POST /pets`
+   * @see https://shop.example/docs/pets Pets, in the guide
+   */
   create(params: $core.Input<typeof $api.createPetRequest>, options?: $core.RequestOptions): $core.ApiCall<$core.Data<typeof $api.createPetResponse>> {
     return $core.call(this.#core, $api.flowapiOperations.createPet, params, options);
   }
 
-  /** `GET /pets/{pet_id}`: One pet */
+  /**
+   * One pet
+   *
+   * `GET /pets/{pet_id}`
+   */
   retrieve(params: $core.Input<typeof $api.getPetRequest>, options?: $core.RequestOptions): $core.ApiCall<$core.Data<typeof $api.getPetResponse>> {
     return $core.call(this.#core, $api.flowapiOperations.getPet, params, options, 0);
   }
@@ -34,7 +53,10 @@ export class Pets {
     return $core.call(this.#core, $api.flowapiOperations.updatePet, params, options);
   }
 
-  /** `DELETE /pets/{pet_id}` */
+  /**
+   * `DELETE /pets/{pet_id}`
+   * @deprecated The API's description marks this operation deprecated.
+   */
   delete(params: $core.Input<typeof $api.deletePetRequest>, options?: $core.RequestOptions): $core.ApiCall<$core.Data<typeof $api.deletePetResponse>> {
     return $core.call(this.#core, $api.flowapiOperations.deletePet, params, options);
   }

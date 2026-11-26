@@ -1,7 +1,7 @@
 {
   "name": "auth-sdk",
   "version": "0.1.0",
-  "description": "A TypeScript client of the Auth API",
+  "description": "TypeScript SDK for the Auth API.",
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,

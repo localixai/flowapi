@@ -6,7 +6,8 @@
 //! `src/resources/**.ts` a class per resource of the config's tree, each method calling its
 //! operation through the runtime (`client/resources.rs`). No I/O (G5): the files are returned.
 
-mod entry;
+mod comment;
+pub(crate) mod entry;
 pub(crate) mod resources;
 
 use crate::config::{Checked, Issue, checked, issue::Issues};

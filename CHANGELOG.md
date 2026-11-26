@@ -16,6 +16,29 @@
   build, the built types, the package, the tests). `/flowapi:refine`, `update` and `release`
   take it further, and a guard hook refuses hand edits of the files `.flowapi/lock.json` lists.
   Its version is flowapi's.
+- `flowapi-sdk.yml` has `readme.title` (the README's heading), `package.description`
+  (`package.json`'s description, and the README's first paragraph unless `readme.intro` is given)
+  and `package.keywords`. Unless given, the heading is the description's `info.title` without a
+  last `API`, then `TypeScript SDK`, and the description is `TypeScript SDK for the <title> API.`
+  with the first short sentence of `info.summary` or `info.description`, as plain text.
+- `config draft` names a method without the words its resource already says
+  (`actions.get_cache_retention_limit_for_enterprise`, `repos.list_for_org`), keeps a run of them
+  that a word qualifies, maps a `POST` to an item that has no `PUT` or `PATCH` to `update`, and
+  where two names meet gives both their next longer name.
+- The generated texts, rewritten: the README has a resources table linked to `api.md`, what a
+  method takes and gives, `withResponse()`, a table of error classes, the retry rule as the
+  runtime keeps it, pagination with the input its method needs, logging, `client.request`, and no
+  example with a placeholder for its arguments; `api.md` writes every signature in types the
+  package exports (`Data`, `Input`, `ItemOf`, now exported, and `Stream<ServerSentEvent>`); each
+  method's doc comment is its operation's summary and description as plain text, with
+  `@see` for `externalDocs` and `@deprecated`; `AGENTS.md` says where things are and which key of
+  the config changes what; `CHANGELOG.md` is seeded with a line on how it is written. The
+  runtime's errors say what to do: a timeout names `timeout`, an unknown environment names the
+  config's, too many pages name `maxPages`, a cross-origin redirect names
+  `allowCrossOriginRedirects`.
+- `crates/flowapi-sdk/tests/texts.mjs` compiles every README example and every `api.md`
+  signature of the kept repositories against their clients, and fails on a placeholder (`TODO`,
+  `"string"`, `/* … */`) or an empty section.
 
 ## 0.2.0 — 2026-11-26
 

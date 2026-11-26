@@ -50,15 +50,18 @@ work here.
   `x-flowapi-covers` the ledger's markers); `tests/tsc.mjs` type-checks and imports them after the
   `--sdk` output. The `flowapi-sdk.yml` config, also no I/O: `config/shape.rs` (and
   `shape/schemes.rs`) its format once, as tables that `config/read.rs` validates by,
-  `config/build.rs` reads into `config/model.rs` and `config/schema.rs` prints as JSON Schema;
+  `config/build.rs` (`build/members.rs`) reads into `config/model.rs` and `config/schema.rs`
+  prints as JSON Schema (`shape/package.rs` the `package` and `readme` tables);
   `config/check.rs` and `config/names.rs` hold it to the description, `config/issue.rs` the
   issues; `ops.rs` the operations by id and route, `words.rs` names as words, `paging/` the
-  pagination a schema fits (`fit.rs`) or suggests (`suggest.rs`), `draft.rs` (`draft/naming.rs`)
-  a first config, `summary.rs` the compact summary. `tests/config/*.yml` with the issues kept
+  pagination a schema fits (`fit.rs`) or suggests (`suggest.rs`), `draft.rs` (`draft/naming.rs`,
+  a method's name without its resource's words in `draft/naming/trim.rs`) a first config,
+  `prose.rs` a description's CommonMark as plain text, `summary.rs` the compact summary. `tests/config/*.yml` with the issues kept
   beside each (`--test config`), `tests/schema.json` (`--test schema`, the reader and the schema
   agree both ways), `tests/draft/` (`--test draft`), `tests/summary/` (`--test summary`).
   `encoding.rs` a `multipart/form-data` body's encoding, put in the table. `client.rs` the whole
-  TypeScript client from a config (`client_files`): `client/resources.rs` a class per resource,
+  TypeScript client from a config (`client_files`): `client/resources.rs` a class per resource
+  (`client/comment.rs` each method's doc comment),
   `client/entry.rs` the client class and `index.ts`, `client/core/*.ts` the runtime, kept as
   TypeScript and printed as it is (each file held to 300 working lines by `tests/client.mjs`).
   `tests/client/<case>/` a config and a description with the client kept beside them
@@ -67,12 +70,14 @@ work here.
   client (`repo_files`): `repo/package.rs` `package.json`, the TypeScript configs and the
   license, `repo/texts.rs` the scripts, CI, release-please and the repository's `AGENTS.md`,
   `repo/mock.rs` the mock server's routes, `repo/suite.rs` a test per resource, `repo/readme.rs`
-  `README.md` and `api.md`, `repo/example.rs` a schema's example value, `repo/lock.rs`
+  `README.md` (its sections in `readme/sections.rs`) and `api.md` (`readme/api.rs`), `repo/example.rs` a schema's example value, `repo/lock.rs`
   `.flowapi/lock.json` (the shape the agent plugin reads), `repo/plan.rs` what writing the
   repository changes on disk (`plan`: by the lock and what the host found at each path; every host
   runs it, none decides alone); `repo/files/` the texts printed
   as they are (scripts, `server.mjs`, the licenses); `sha256.rs` our own SHA-256.
-  `tests/repo/<case>/` the repository of each client case but its `src/`, kept (`--test repo`).
+  `tests/repo/<case>/` the repository of each client case but its `src/`, kept (`--test repo`);
+  `tests/texts.mjs` compiles their README examples and `api.md` signatures against the client
+  and refuses a placeholder in their texts.
 - `crates/flowapi-cli`: the `flowapi` command, all of flowapi's I/O. `src/sdk.rs` the subcommands
   put before the path (`summary`, `config draft|schema|check`; `tests/sdk_cli.rs`);
   `src/generate.rs` `generate`, `generate/disk.rs` what is on disk for the SDK layer's `plan`,
@@ -144,6 +149,7 @@ cargo test -p flowapi-cli --test sdk_cli               # summary and config as t
 cargo test -p flowapi-sdk --test repo                  # the repositories kept in tests/repo/ (FLOWAPI_BLESS=1)
 cargo test -p flowapi-cli --test generate_cli          # generate's writing rules as the command runs them
 node crates/flowapi-sdk/tests/tsc.mjs                  # them type-checked after --sdk; after cargo build --release
+node crates/flowapi-sdk/tests/texts.mjs                # the kept READMEs and api.md compiled against their clients
 cargo run --release -p flowapi-cli -- <description.json> -o types.ts
 (cd plugins/flowapi && npm test)      # the agent plugin; its e2e on target/release/flowapi
 (cd plugins/flowapi && npm run docs)  # the flowapi skill's references, after a docs change
