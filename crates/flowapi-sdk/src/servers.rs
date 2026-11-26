@@ -189,17 +189,23 @@ impl Doc<'_, '_> {
 
     /// Swagger 2.0's servers at `at` (the description, or an operation with its own `schemes`):
     /// one per scheme, `<scheme>://<host><basePath>`. With no `host` the URL is the base path,
-    /// relative to where the description is served; with a host and no `schemes`, `//<host>...`,
-    /// the scheme the description is served with (2.0, `schemes`). `None` for an operation with
-    /// no `schemes` of its own.
+    /// relative to where the description is served; with a host and no `schemes` that can be used,
+    /// `//<host>...`, the scheme the description is served with (2.0, `schemes`). `None` for an
+    /// operation with none of its own, which the description's then serve.
     fn lifted(&self, at: At, diags: &mut Diagnostics) -> Option<Vec<Server>> {
         let root = ROOT;
-        let own = self
+        let code = if at == root {
+            "oas-2.0.swagger-object.schemes.must-values-list-http-https-ws-wss"
+        } else {
+            "oas-2.0.operation-object.schemes.must-values-list-http-https-ws-wss"
+        };
+        let schemes = self
             .get(at, "schemes")
-            .filter(|&l| !self.items(l).is_empty());
+            .map(|list| self.transfer_schemes(list, code, diags))
+            .unwrap_or_default();
         let host = self.str(root, "host");
         // An operation's `schemes` change nothing where there is no host: its URL is relative.
-        if at != root && (own.is_none() || host.is_none()) {
+        if at != root && (schemes.is_empty() || host.is_none()) {
             return None;
         }
         let mut base = self
@@ -213,21 +219,8 @@ impl Doc<'_, '_> {
         let Some(host) = host else {
             return Some(vec![plain(base)]);
         };
-        let Some(own) = own else {
+        if schemes.is_empty() {
             return Some(vec![plain(format!("//{host}{base}"))]);
-        };
-        let mut schemes: Vec<String> = Vec::new();
-        for item in self.items(own) {
-            let s = self.tree(item.0).and_then(|t| t.as_str(item.1));
-            match s.filter(|s| SCHEMES.contains(&s.as_ref())) {
-                Some(s) if !schemes.iter().any(|t| *t == s) => schemes.push(s.into_owned()),
-                Some(_) => {}
-                None => {
-                    let message =
-                        String::from("a scheme is none of http, https, ws, wss: left out");
-                    self.warn(diags, "swagger.server", item, message);
-                }
-            }
         }
         Some(
             schemes
@@ -235,6 +228,36 @@ impl Doc<'_, '_> {
                 .map(|s| plain(format!("{s}://{host}{base}")))
                 .collect(),
         )
+    }
+
+    /// A 2.0 `schemes` list's values in order, each once; one that is not a string of `SCHEMES`
+    /// breaks the MUST under `code`, a warning, and is not used.
+    fn transfer_schemes(
+        &self,
+        list: At,
+        code: &'static str,
+        diags: &mut Diagnostics,
+    ) -> Vec<String> {
+        let mut schemes: Vec<String> = Vec::new();
+        for item in self.items(list) {
+            let s = self.tree(item.0).and_then(|t| t.as_str(item.1));
+            match s {
+                Some(s) if SCHEMES.contains(&s.as_ref()) => {
+                    if !schemes.iter().any(|t| *t == s) {
+                        schemes.push(s.into_owned());
+                    }
+                }
+                Some(s) => {
+                    let message = format!("scheme {s:?} is none of http, https, ws, wss: not used");
+                    self.warn(diags, code, item, message);
+                }
+                None => {
+                    let message = String::from("a scheme that is not a string: not used");
+                    self.warn(diags, code, item, message);
+                }
+            }
+        }
+        schemes
     }
 }
 

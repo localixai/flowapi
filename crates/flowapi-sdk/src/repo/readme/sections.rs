@@ -145,15 +145,21 @@ fn secs(v: Option<f64>, default: f64) -> String {
 
 pub(super) fn retries(ctx: &Ctx<'_>, headline: Option<&Call>, out: &mut String) {
     let s = &ctx.config.settings;
-    let tries = match s.retries.unwrap_or(1) {
-        0 => String::from("is not retried by default"),
-        1 => String::from("is retried once by default"),
-        n => format!("is retried {n} times by default"),
+    // With no retry by default, the rules of when a request is retried are said for a caller who
+    // sets `maxRetries`, so that no sentence claims a retry the client does not make.
+    let n = s.retries.unwrap_or(1);
+    let (lead, tries) = match n {
+        0 => (
+            "No request is retried by default (`maxRetries: 0`): each is sent once. With `maxRetries` set, a",
+            String::from("is retried"),
+        ),
+        1 => ("A", String::from("is retried once by default")),
+        n => ("A", format!("is retried {n} times by default")),
     };
-    let again = if s.retries.unwrap_or(1) > 1 {
-        "This SDK's config retries more than once, so a retry that failed is tried again."
-    } else {
-        "A retry that failed is not tried again: more retries are the caller's choice."
+    let again = match n {
+        0 => "A retry that failed is tried again while `maxRetries` allows.",
+        1 => "A retry that failed is not tried again: more retries are the caller's choice.",
+        _ => "This SDK's config retries more than once, so a retry that failed is tried again.",
     };
     let others = match &s.idempotency_key {
         Some(h) => format!(
@@ -165,7 +171,7 @@ pub(super) fn retries(ctx: &Ctx<'_>, headline: Option<&Call>, out: &mut String) 
     };
     let _ = writeln!(
         out,
-        "\n## Retries and timeouts\n\nA request that cannot connect, or is answered 408, 409, 429 or 5xx, {tries} when sending it twice does what sending it once does: its method is GET, HEAD, OPTIONS, TRACE, PUT or DELETE. {others} The server's `x-should-retry` header decides first, where it sends one; a 403 is never retried. {again} Before each retry the client waits as long as the server asks in `retry-after-ms` or `Retry-After`, else 0.5 s doubled for each retry made, at most 8 s; when the server asks for more than {} s, the error is thrown at once. Each attempt may take {} s, its body read.\n\n`maxRetries`, `timeout` and `maxRetryDelay` change these for the client, the last two in milliseconds; `maxRetries` and `timeout` change them for one call, in its options:\n\n```ts\nconst patient = new {}({{ maxRetries: 5, timeout: 120_000 }})",
+        "\n## Retries and timeouts\n\n{lead} request that cannot connect, or is answered 408, 409, 429 or 5xx, {tries} when sending it twice does what sending it once does: its method is GET, HEAD, OPTIONS, TRACE, PUT or DELETE. {others} The server's `x-should-retry` header decides first, where it sends one; a 403 is never retried. {again} Before each retry the client waits as long as the server asks in `retry-after-ms` or `Retry-After`, else 0.5 s doubled for each retry made, at most 8 s; when the server asks for more than {} s, the error is thrown at once. Each attempt may take {} s, its body read.\n\n`maxRetries`, `timeout` and `maxRetryDelay` change these for the client, the last two in milliseconds; `maxRetries` and `timeout` change them for one call, in its options:\n\n```ts\nconst patient = new {}({{ maxRetries: 5, timeout: 120_000 }})",
         secs(s.max_retry_delay, 60.0),
         secs(s.timeout, 60.0),
         ctx.client()

@@ -163,6 +163,9 @@ pub struct Part {
     pub explode: Option<bool>,
     /// `allowReserved`, where written.
     pub allow_reserved: Option<bool>,
+    /// Swagger 2.0: the styles that join the arrays inside an array value, outermost first, each
+    /// Items Object's `collectionFormat` (`csv` as `form`); empty for any other.
+    pub nested: Vec<String>,
     /// Nested Encoding Objects (3.2), for a part that is itself `multipart`.
     pub parts: Parts,
 }

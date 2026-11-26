@@ -213,7 +213,8 @@ gives no type, the table takes it from the schema, through `$ref` and `allOf`: a
 `contentEncoding` (3.0: `format: binary` or `byte`) is `application/octet-stream`, and a part of
 another multipart type also says `Content-Transfer-Encoding` (3.2). Swagger 2.0's `formData`
 arrays are written by their `collectionFormat` (`csv`, `ssv`, `pipes`, `multi`, and `tsv` joined
-by a tab), a `file` field making the body `multipart/form-data`. The boundary is the content
+by a tab), the arrays inside one by their Items Objects' (the Encoding Object's `nested`), a
+`file` field making the body `multipart/form-data`. The boundary is the content
 type's (`; boundary=`), else 128 random bits from `globalThis.crypto`, drawn again while a part
 holds them and added to the request's `content-type`; `body` is then bytes. A response is picked
 by its status (the code, then `2XX`, then `default`) and its `Content-Type`, and its body, given as
@@ -240,7 +241,8 @@ operation, with a warning. The output imports nothing: the runtime is a few func
 printed once. With `--sdk` the base URL and any authentication are still yours to add: the
 command does not print `servers`, `securitySchemes` or `security`. The SDK layer
 (`crates/flowapi-sdk`, the one `generate` writes a client with) reads them, Swagger 2.0's `host`, `basePath` and
-`schemes` included, and prints a table to put after this output: the servers with their
+`schemes` included (an operation's own its own servers; a scheme not `http`, `https`, `ws` or
+`wss` warned of and not used), and prints a table to put after this output: the servers with their
 variables, the security schemes, and each operation's method, path, own servers, security and
 how each response body is read. Every row of the specification's
 Style Examples table, the pitfalls other generators fixed, and the SDKs of GitHub's, Stripe's and
@@ -366,7 +368,7 @@ option of the client, else read from the environment variables `auth` names:
 A call none of whose alternatives can be met throws `CredentialError` before sending, naming the
 options and variables that would meet each. Credentials go only over `https:` or to `localhost`,
 `127.0.0.1` and `[::1]`; elsewhere `InsecureCredentialError`, unless `allowInsecureCredentials:
-true`. A deprecated scheme still works, its option marked `@deprecated`.
+true`, thrown on the call's base URL before any credential is read or token requested. A deprecated scheme still works, its option marked `@deprecated`.
 
 The config declares what the description lacks, as the Security Scheme Object names it, and a
 `security` over the operations' (the top level for those with none of their own, a method's over

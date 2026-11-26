@@ -142,5 +142,11 @@ export function tests(built) {
       await client(built, fetch, { client: { ...credentials, tokenURL: 'http://login.example/token' }, allowInsecureCredentials: true }).things.list()
       assert.deepEqual(fetch.asked().map((t) => t.url), ['http://localhost:8080/token', 'http://login.example/token'])
     }],
+    ['a call the TLS rule refuses requests no token: the rule holds the base URL before a token is asked for', async () => {
+      const fetch = server()
+      const over = { client: { ...credentials, tokenURL: 'https://login.tokens.example/token' }, baseURL: 'http://api.tokens.example/v1' }
+      await assert.rejects(client(built, fetch, over).things.list(), (e) => e instanceof InsecureCredentialError && e.message.includes('http://api.tokens.example/v1'))
+      assert.equal(fetch.calls.length, 0, 'no token request for a call that is not sent')
+    }],
   ]
 }

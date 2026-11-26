@@ -36,7 +36,7 @@ export const flowapiOperations = {
     path: "/tags",
     security: [],
     responses: { "204": { content: {} } },
-    encoding: { "application/x-www-form-urlencoded": { encoding: { "shared": { style: "pipeDelimited", explode: false }, "csv": { style: "form", explode: false }, "multi": { style: "form", explode: true }, "ssv": { style: "spaceDelimited", explode: false }, "tsv": { style: "tabDelimited", explode: false }, "odd": { style: "form", explode: false } } } },
+    encoding: { "application/x-www-form-urlencoded": { encoding: { "shared": { style: "pipeDelimited", explode: false }, "csv": { style: "form", explode: false }, "multi": { style: "form", explode: true }, "ssv": { style: "spaceDelimited", explode: false }, "tsv": { style: "tabDelimited", explode: false }, "odd": { style: "form", explode: false }, "grid": { style: "form", explode: true, nested: ["pipeDelimited", "form"] }, "bad": { style: "form", explode: false, nested: ["form"] } } } },
     request: postTagsRequest,
     response: postTagsResponse,
   },
@@ -45,7 +45,7 @@ export const flowapiOperations = {
     path: "/upload",
     security: [],
     responses: { "204": { content: {} } },
-    encoding: { "multipart/form-data": { encoding: { "sizes": { style: "form", explode: false } } } },
+    encoding: { "multipart/form-data": { encoding: { "sizes": { style: "form", explode: false }, "rows": { style: "form", explode: false, nested: ["tabDelimited"] } } } },
     request: uploadRequest,
     response: uploadResponse,
   },
@@ -59,3 +59,4 @@ export const flowapiOperations = {
   },
 } as const;
 // warning[swagger.collectionFormat]: `collectionFormat` commas is none of csv, ssv, tsv, pipes, multi: written as `csv`
+// warning[swagger.collectionFormat]: `collectionFormat` multi is not one an Items Object takes: written as `csv`

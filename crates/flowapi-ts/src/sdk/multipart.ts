@@ -32,14 +32,17 @@ export async function flowapiBlob(blob: $Blob, name?: string, type?: string): Pr
 /** One Encoding Object as it applies to a value: the `Content-Type` it is sent as (a list or a
  * range needs a file's own type to pick one), the headers of its part (`Content-Type` among them
  * ignored, as the spec says; values written as they are), the style it is serialized by in a form
- * (`style`, `explode`, `allowReserved`: any written, and `contentType` is not used), and for a
- * part that is itself `multipart`, the Encoding Objects of its own parts (3.2's nesting). */
+ * (`style`, `explode`, `allowReserved`: any written, and `contentType` is not used), `nested`
+ * the styles that join the arrays inside an array value, outermost first (Swagger 2.0's Items
+ * Objects), and for a part that is itself `multipart`, the Encoding Objects of its own parts
+ * (3.2's nesting). */
 export type FlowapiPart = {
   readonly contentType?: string;
   readonly headers?: { readonly [name: string]: string };
   readonly style?: "form" | "spaceDelimited" | "pipeDelimited" | "deepObject" | "tabDelimited";
   readonly explode?: boolean;
   readonly allowReserved?: boolean;
+  readonly nested?: readonly ("form" | "spaceDelimited" | "pipeDelimited" | "tabDelimited")[];
   readonly encoding?: FlowapiEncoding;
   readonly prefixEncoding?: readonly (FlowapiPart | undefined)[];
   readonly itemEncoding?: FlowapiPart;

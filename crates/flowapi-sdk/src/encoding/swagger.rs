@@ -2,9 +2,11 @@
 //! array goes in the form, read here as an Encoding Object's style would say it. `csv`, the
 //! default, is `form` unexploded (`a,b`); `multi` is `form` exploded (a pair or a part per
 //! item); `ssv` and `pipes` are `spaceDelimited` and `pipeDelimited`; `tsv`, which no 3.x style
-//! is, is `tabDelimited` (items joined by a tab).
+//! is, is `tabDelimited` (items joined by a tab). An array inside the array is joined by its
+//! Items Object's own `collectionFormat`, level by level, as the core reads one in a path, a
+//! query or a header (2.0, "Items Object").
 
-use crate::doc::Doc;
+use crate::doc::{At, Doc};
 use crate::model::{Encoding, Part, Parts};
 use flowapi::Diagnostics;
 use flowapi::spec::{Operation, Payload};
@@ -51,9 +53,19 @@ impl Doc<'_, '_> {
                     ("form", false)
                 }
             };
+            let mut nested = Vec::new();
+            let mut level = at;
+            while let Some(items) = self
+                .get(level, "items")
+                .filter(|&i| self.str(i, "type").as_deref() == Some("array"))
+            {
+                nested.push(String::from(self.items_style(items, diags)));
+                level = items;
+            }
             let part = Part {
                 style: Some(String::from(style)),
                 explode: Some(explode),
+                nested,
                 ..Part::default()
             };
             parts.by_name.push((field.name.clone(), part));
@@ -69,5 +81,24 @@ impl Doc<'_, '_> {
                 parts: parts.clone(),
             })
             .collect()
+    }
+
+    /// The style an Items Object's `collectionFormat` joins its array by (`csv` by default);
+    /// `multi`, which only a parameter takes, or an unknown value is reported and read as `csv`.
+    fn items_style(&self, items: At, diags: &mut Diagnostics) -> &'static str {
+        match self.str(items, "collectionFormat").as_deref() {
+            None | Some("csv") => "form",
+            Some("ssv") => "spaceDelimited",
+            Some("pipes") => "pipeDelimited",
+            Some("tsv") => "tabDelimited",
+            Some(other) => {
+                let message = format!(
+                    "`collectionFormat` {other} is not one an Items Object takes: written as `csv`"
+                );
+                let place = self.get(items, "collectionFormat").unwrap_or(items);
+                self.warn(diags, "swagger.collectionFormat", place, message);
+                "form"
+            }
+        }
     }
 }

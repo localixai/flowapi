@@ -6,8 +6,10 @@
   `pipes` in a path and a header too (the delimiter percent-encoded in a URI, as written in a
   header), and `tsv` in a query (`a%09b`), which was written as `csv` with a warning. An Items
   Object's own `collectionFormat` joins the arrays inside an array, level by level
-  (`spec::Serialization::nested`, `spec::Style::TabDelimited`), in both SDKs. `multi` outside a
-  query, or a format 2.0 does not have, is still `csv` with a warning.
+  (`spec::Serialization::nested`, `spec::Style::TabDelimited`), in both SDKs, and in a `formData`
+  body of the TypeScript SDK (a form, or a `multipart/form-data` part): the table's Encoding
+  Object has `nested`, the styles of the inner arrays. `multi` outside a query, or a format 2.0
+  does not have, is still `csv` with a warning.
 - The SDK's client retries and redirects as RFC 9110 says. A request whose method is
   not idempotent (POST, PATCH, QUERY; 9.2.2) is not retried on its own unless the server answers
   `x-should-retry: true` or it carries an idempotency key; `defaults.idempotency_key` in
@@ -26,7 +28,9 @@
   served, and a relative server URL is resolved against it (OpenAPI 3.1 and 3.2, "Relative
   References in API URLs"); a Server Object of another document is printed relative to the
   first; a base URL, a `descriptionURL` or a redirect's `Location` with a user name or password
-  in it is refused (RFC 9110 4.2.4). The table's cases now hold OpenAPI 3.0 and 3.2's servers
+  in it is refused (RFC 9110 4.2.4). Swagger 2.0's `schemes`, the description's and an
+  operation's, warn of a value that is not `http`, `https`, `ws` or `wss` under the requirement's
+  id and do not use it; an operation whose own list has none left is served by the description's. The table's cases now hold OpenAPI 3.0 and 3.2's servers
   too, and two client cases (`hosts`, 3.2; `edge`, 3.1) hold the runtime to them: 56 ledger ids
   that had no test have one, every in-scope RFC 9110 id among them.
 - The SDK writes bodies by the description's Encoding Objects. The SDK layer reads them into the
@@ -59,7 +63,8 @@
   the schemes of one together, `{}` and `[]`, an operation's own over the description's, and a
   name in a referenced document read from the entry document (Appendix F). Credentials go only
   over TLS or to a loopback host unless `allowInsecureCredentials: true`
-  (`InsecureCredentialError`); a call that cannot be met throws `CredentialError` before
+  (`InsecureCredentialError`, held to the call's base URL before a credential is read or a token
+  requested, so a refused call costs no token request); a call that cannot be met throws `CredentialError` before
   sending, naming the options and variables.
 - `flowapi-sdk.yml`: `auth.<name>` declares a scheme the description lacks (`type`, `scheme`,
   `in`, `name`, `token_url`, `description`) and takes `username_env_var`/`password_env_var`,
@@ -99,7 +104,8 @@
   where two names meet gives both their next longer name.
 - The generated texts, rewritten: the README has a resources table linked to `api.md`, what a
   method takes and gives, `withResponse()`, a table of error classes, the retry rule as the
-  runtime keeps it, pagination with the input its method needs, logging, `client.request`, and no
+  runtime keeps it (with `retries: 0`, that nothing is retried by default, the rule said for a
+  caller who sets `maxRetries`), pagination with the input its method needs, logging, `client.request`, and no
   example with a placeholder for its arguments; `api.md` writes every signature in types the
   package exports (`Data`, `Input`, `ItemOf`, now exported, and `Stream<ServerSentEvent>`); each
   method's doc comment is its operation's summary and description as plain text, with

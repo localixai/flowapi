@@ -199,7 +199,8 @@ export class Core {
     const what = op === undefined ? `${wrote.method} ${wrote.path}` : `\`${wrote.method} ${op.path}\``;
     const { schemes, auth: settings } = this.settings;
     const base = url ?? this.#base(op, options);
-    const ctx: Context = { options: this.options, given, tokens: this.tokens, base };
+    const allow = this.options.allowInsecureCredentials === true;
+    const ctx: Context = { options: this.options, given, tokens: this.tokens, base, guard: () => guard(base, allow) };
     const auth: Applied = op === undefined ? await authorizeEvery(schemes, settings, ctx) : await authorize(what, op.security, schemes, settings, ctx);
     const headers = mergeHeaders(auth.headers, this.options.defaultHeaders, wrote.headers, options.headers);
     if (auth.cookies.length > 0) headers["cookie"] = [headers["cookie"], ...auth.cookies].filter((c) => c !== undefined && c !== "").join("; ");
@@ -218,7 +219,6 @@ export class Core {
     if (wrote.body !== undefined && method === "OPTIONS" && headers["content-type"] === undefined) throw new SdkError(`${what}: an OPTIONS request with content needs a Content-Type`);
     const header = this.settings.idempotencyHeader?.toLowerCase();
     if (header !== undefined && !idempotent(method) && headers[header] === undefined) headers[header] = key ?? randomKey();
-    guard(full, auth, this.options.allowInsecureCredentials === true);
     return { wire: { method, url: full, headers, body: wrote.body }, renew: auth.renew };
   }
 

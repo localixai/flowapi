@@ -62,10 +62,21 @@ export const flowapiOperations = {
     request: watchPetsRequest,
     response: watchPetsResponse,
   },
+  dropPets: {
+    method: "DELETE",
+    path: "/pets",
+    security: [{ "basic": [] }],
+    responses: { "204": { content: {} } },
+    request: dropPetsRequest,
+    response: dropPetsResponse,
+  },
 } as const;
-// warning[swagger.server]: a scheme is none of http, https, ws, wss: left out
-// warning[swagger.server]: a scheme is none of http, https, ws, wss: left out
+// warning[oas-2.0.swagger-object.schemes.must-values-list-http-https-ws-wss]: scheme "gopher" is none of http, https, ws, wss: not used
+// warning[oas-2.0.swagger-object.schemes.must-values-list-http-https-ws-wss]: a scheme that is not a string: not used
 // warning[swagger.security]: security scheme `app`: the client credentials flow has no `scopes` map: read as none
 // warning[swagger.security]: security scheme `noFlow` has no `flows` it can be used by: left out
 // warning[swagger.security]: security scheme `cookie` has no `in` it can be used by: left out
 // warning[swagger.security]: security scheme `bearer` has a `type` "http" this version does not define: left out
+// warning[oas-2.0.operation-object.schemes.must-values-list-http-https-ws-wss]: scheme "ftp" is none of http, https, ws, wss: not used
+// warning[oas-2.0.operation-object.schemes.must-values-list-http-https-ws-wss]: scheme "ftp" is none of http, https, ws, wss: not used
+// warning[oas-2.0.operation-object.schemes.must-values-list-http-https-ws-wss]: a scheme that is not a string: not used

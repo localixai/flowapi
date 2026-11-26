@@ -59,6 +59,10 @@ fn part(p: &Part) -> String {
     if let Some(r) = p.allow_reserved {
         fields.push(format!("allowReserved: {r}"));
     }
+    if !p.nested.is_empty() {
+        let styles: Vec<String> = p.nested.iter().map(|s| lit(s)).collect();
+        fields.push(format!("nested: [{}]", styles.join(", ")));
+    }
     fields.extend(members(&p.parts));
     object(&fields)
 }

@@ -14,7 +14,8 @@
 // each request (`digest`, ...) is never met by the client; OAuth 2.0 and OpenID Connect a bearer
 // token, given, or requested by the client credentials flow (`token.ts`); mutual TLS met by
 // `true`, its certificate the transport's. Credentials go only over TLS, or to a loopback host
-// (`guard`, RFC 6749 10.3, RFC 6750 5.3, RFC 7617 4).
+// (`guard`, RFC 6749 10.3, RFC 6750 5.3, RFC 7617 4), held to the call's base URL before a
+// credential is read or a token requested, so a call that would be refused costs no token request.
 
 import { CredentialError, InsecureCredentialError } from "./errors.js";
 import { base64, platform, readEnv } from "./platform.js";
@@ -57,8 +58,15 @@ export type Applied = { headers: Record<string, string>; query: [string, string]
 export type Given = { readonly headers: ReadonlySet<string>; readonly query: ReadonlySet<string> };
 
 /** What meeting a scheme needs of the client: its options, what the caller sends, its tokens,
- * and the base URL a relative token URL is resolved against. */
-export type Context = { readonly options: Record<string, unknown>; readonly given: Given; readonly tokens: Tokens; readonly base: string | null };
+ * the base URL a relative token URL is resolved against, and `guard`, which throws when that URL
+ * may not carry a credential. */
+export type Context = {
+  readonly options: Record<string, unknown>;
+  readonly given: Given;
+  readonly tokens: Tokens;
+  readonly base: string | null;
+  readonly guard: () => void;
+};
 
 /** HTTP schemes (IANA's registry) the client cannot send up front: each answers a challenge or
  * signs each request. The generator's `CHALLENGED` holds the same names. */
@@ -137,6 +145,7 @@ function meet(name: string, sc: SchemeEntry | undefined, s: AuthSetting | undefi
     const v = option ?? (s.env === undefined ? undefined : readEnv(s.env)) ?? pair;
     if (v === undefined) return ways(s);
     return async (applied) => {
+      ctx.guard();
       applied.headers["authorization"] = basic(name, await value(v));
     };
   }
@@ -145,6 +154,7 @@ function meet(name: string, sc: SchemeEntry | undefined, s: AuthSetting | undefi
     const url = flow.tokenURL ?? sc.clientCredentials?.tokenUrl;
     if (url === undefined) return `\`${s.option}\` (a token: the scheme has no client credentials flow)`;
     return async (applied, scopes) => {
+      ctx.guard();
       const wanted = flow.scopes ?? s.scopes ?? scopes;
       const key = flowKey(name, url, flow.clientId, wanted);
       applied.headers["authorization"] = `Bearer ${await ctx.tokens.token(key, url, ctx.base, flow, wanted)}`;
@@ -155,6 +165,7 @@ function meet(name: string, sc: SchemeEntry | undefined, s: AuthSetting | undefi
   if (v === undefined) return ways(s);
   if (sc.type !== "apiKey" && !http) return `\`${name}\` (a scheme of type ${sc.type}, which the client does not send)`;
   return async (applied) => {
+    ctx.guard();
     const t = text(name, s, await value(v));
     if (sc.type === "apiKey") {
       if (sc.in === "query") applied.query.push([sc.name ?? "", t]);
@@ -229,8 +240,7 @@ export function secure(url: string): boolean {
   }
 }
 
-/** An `InsecureCredentialError` before a request that would carry credentials in the clear. */
-export function guard(url: string, applied: Applied, allow: boolean): void {
-  const carries = Object.keys(applied.headers).length > 0 || applied.query.length > 0 || applied.cookies.length > 0;
-  if (carries && !allow && !secure(url)) throw new InsecureCredentialError(url);
+/** An `InsecureCredentialError` before a credential would go to `url` in the clear. */
+export function guard(url: string, allow: boolean): void {
+  if (!allow && !secure(url)) throw new InsecureCredentialError(url);
 }

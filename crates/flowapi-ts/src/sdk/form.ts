@@ -25,14 +25,15 @@ function $joins(style: string): string {
 
 /** A member of a form serialized by style, as a `query` parameter of that style is: `style`
  * `form` unless written, `explode` true for `form` unless written, `allowReserved` keeping the
- * reserved characters; no leading `?`. */
+ * reserved characters, the arrays inside an array joined by `nested`; no leading `?`. */
 function $stylePairs(v: unknown, key: string, e: FlowapiPart): string | undefined {
   const style = e.style ?? "form";
   const enc = e.allowReserved === true ? $res : $enc;
   const name = $enc(key);
   if (style === "deepObject") return $deep(v, name, enc);
   const join = style === "form" ? "," : $enc($joins(style));
-  return $x(v, name, "", "&", true, "=", e.explode ?? style === "form", join, enc, "body", key);
+  const nest = e.nested?.map((s) => (s === "form" ? "," : $enc($joins(s))));
+  return $x(v, name, "", "&", true, "=", e.explode ?? style === "form", join, enc, "body", key, nest);
 }
 
 /** An object as `application/x-www-form-urlencoded`. A member whose Encoding Object (`enc`, by
@@ -62,13 +63,16 @@ function $form(v: unknown, enc?: FlowapiEncoding): string {
 /** A `multipart/form-data` member serialized by style (3.1, 3.2): as a form member is, but each
  * pair its own part and no percent-encoding (`allowReserved` has no effect). `form` exploded
  * makes a part per item, or per member of an object under the member's name; unexploded, one
- * part of the items joined; `deepObject` a part per member, named `name[key]`. */
+ * part of the items joined, an array among them by `nested`; `deepObject` a part per member,
+ * named `name[key]`. */
 function $styleParts(v: unknown, name: string, e: FlowapiPart): [string, string][] {
   const style = e.style ?? "form";
   const explode = e.explode ?? style === "form";
   const out: [string, string][] = [];
   if (Array.isArray(v)) {
-    const items = v.filter((x) => x !== null && x !== undefined).map($str);
+    const nest = e.nested?.map($joins);
+    const raw = (s: string): string => s;
+    const items = v.filter((x) => x !== null && x !== undefined).map((x) => (nest !== undefined && Array.isArray(x) ? $nest(x, nest, 0, raw) : $str(x)));
     if (explode && style === "form") for (const s of items) out.push([name, s]);
     else if (items.length > 0) out.push([name, items.join($joins(style))]);
   } else if (typeof v === "object" && v !== null) {

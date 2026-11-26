@@ -7,6 +7,9 @@
 //   R = client.<resource>.<method>` compiles, with the types api.md says to import;
 // - api.md lists as many methods as src/resources/ defines, and README.md names every resource
 //   api.md has;
+// - README.md's retries section says what the client's `maxRetries` and `idempotencyHeader` do:
+//   no retry claimed for a client that makes none by default, the idempotency key's header named
+//   where it has one, else that a POST or a PATCH waits for `x-should-retry: true`;
 // - no text holds a placeholder: `TODO` or `FIXME`, `"string"` as an example value, a comment
 //   standing for arguments (`/* … */`), or a section with nothing under its heading.
 // The compiler is the oracles' (conformance/ts), under strict and exactOptionalPropertyTypes.
@@ -37,6 +40,28 @@ const PLACEHOLDERS = [
 ]
 
 /** Headings with nothing under them before the next heading of the same level or above. */
+/** What README.md's retries section gets wrong about a client of these settings. */
+function retriesSays(readme, max, key) {
+  const section = /## Retries and timeouts\n\n([^\n]*)/.exec(readme)?.[1]
+  if (section === undefined) return ['no "Retries and timeouts" section']
+  const out = []
+  const marker = 'With `maxRetries` set, '
+  if (max === 0) {
+    const lead = 'No request is retried by default (`maxRetries: 0`): each is sent once.'
+    const head = section.split(marker)[0]
+    if (!head.startsWith(lead) || !section.includes(marker)) out.push('maxRetries is 0, and the retries section does not say no request is retried')
+    else if (/retried|tried again/.test(head.slice(lead.length))) out.push(`maxRetries is 0, and the retries section claims a retry: ${JSON.stringify(head)}`)
+  } else {
+    const by = max === 1 ? 'is retried once by default' : `is retried ${max} times by default`
+    if (!section.includes(by) || section.includes(marker)) out.push(`maxRetries is ${max}, and the retries section does not say "${by}"`)
+  }
+  if (key !== undefined && !section.includes(`random \`${key}\` header`)) out.push(`the idempotency key's header ${key} is not named`)
+  if (key === undefined && !section.includes('retried only when the server\'s `x-should-retry: true` asks')) {
+    out.push('no idempotency key, and the retries section does not say a POST waits for x-should-retry')
+  }
+  return out
+}
+
 function emptySections(text) {
   const lines = text.split('\n')
   const out = []
@@ -121,6 +146,10 @@ for (const name of readdirSync(repos).filter((n) => existsSync(join(clients, n, 
       for (const h of emptySections(text)) failures.push(`${name}/${file}: the section "${h}" is empty`)
     }
   }
+  const source = readFileSync(join(dir, 'src', 'client.ts'), 'utf8')
+  const max = Number(/^\s*maxRetries: (\d+),$/m.exec(source)?.[1])
+  const key = /^\s*idempotencyHeader: "([^"]+)",$/m.exec(source)?.[1]
+  for (const problem of retriesSays(readme, max, key)) failures.push(`${name}/README.md: ${problem}`)
   console.log(`${name}: ${blocks.length} README examples and ${lines.length} api.md signatures compiled`)
 }
 rmSync(root, { recursive: true, force: true })

@@ -392,14 +392,15 @@ function $joins(style: string): string {
 
 /** A member of a form serialized by style, as a `query` parameter of that style is: `style`
  * `form` unless written, `explode` true for `form` unless written, `allowReserved` keeping the
- * reserved characters; no leading `?`. */
+ * reserved characters, the arrays inside an array joined by `nested`; no leading `?`. */
 function $stylePairs(v: unknown, key: string, e: FlowapiPart): string | undefined {
   const style = e.style ?? "form";
   const enc = e.allowReserved === true ? $res : $enc;
   const name = $enc(key);
   if (style === "deepObject") return $deep(v, name, enc);
   const join = style === "form" ? "," : $enc($joins(style));
-  return $x(v, name, "", "&", true, "=", e.explode ?? style === "form", join, enc, "body", key);
+  const nest = e.nested?.map((s) => (s === "form" ? "," : $enc($joins(s))));
+  return $x(v, name, "", "&", true, "=", e.explode ?? style === "form", join, enc, "body", key, nest);
 }
 
 /** An object as `application/x-www-form-urlencoded`. A member whose Encoding Object (`enc`, by
@@ -429,13 +430,16 @@ function $form(v: unknown, enc?: FlowapiEncoding): string {
 /** A `multipart/form-data` member serialized by style (3.1, 3.2): as a form member is, but each
  * pair its own part and no percent-encoding (`allowReserved` has no effect). `form` exploded
  * makes a part per item, or per member of an object under the member's name; unexploded, one
- * part of the items joined; `deepObject` a part per member, named `name[key]`. */
+ * part of the items joined, an array among them by `nested`; `deepObject` a part per member,
+ * named `name[key]`. */
 function $styleParts(v: unknown, name: string, e: FlowapiPart): [string, string][] {
   const style = e.style ?? "form";
   const explode = e.explode ?? style === "form";
   const out: [string, string][] = [];
   if (Array.isArray(v)) {
-    const items = v.filter((x) => x !== null && x !== undefined).map($str);
+    const nest = e.nested?.map($joins);
+    const raw = (s: string): string => s;
+    const items = v.filter((x) => x !== null && x !== undefined).map((x) => (nest !== undefined && Array.isArray(x) ? $nest(x, nest, 0, raw) : $str(x)));
     if (explode && style === "form") for (const s of items) out.push([name, s]);
     else if (items.length > 0) out.push([name, items.join($joins(style))]);
   } else if (typeof v === "object" && v !== null) {
@@ -483,14 +487,17 @@ export async function flowapiBlob(blob: $Blob, name?: string, type?: string): Pr
 /** One Encoding Object as it applies to a value: the `Content-Type` it is sent as (a list or a
  * range needs a file's own type to pick one), the headers of its part (`Content-Type` among them
  * ignored, as the spec says; values written as they are), the style it is serialized by in a form
- * (`style`, `explode`, `allowReserved`: any written, and `contentType` is not used), and for a
- * part that is itself `multipart`, the Encoding Objects of its own parts (3.2's nesting). */
+ * (`style`, `explode`, `allowReserved`: any written, and `contentType` is not used), `nested`
+ * the styles that join the arrays inside an array value, outermost first (Swagger 2.0's Items
+ * Objects), and for a part that is itself `multipart`, the Encoding Objects of its own parts
+ * (3.2's nesting). */
 export type FlowapiPart = {
   readonly contentType?: string;
   readonly headers?: { readonly [name: string]: string };
   readonly style?: "form" | "spaceDelimited" | "pipeDelimited" | "deepObject" | "tabDelimited";
   readonly explode?: boolean;
   readonly allowReserved?: boolean;
+  readonly nested?: readonly ("form" | "spaceDelimited" | "pipeDelimited" | "tabDelimited")[];
   readonly encoding?: FlowapiEncoding;
   readonly prefixEncoding?: readonly (FlowapiPart | undefined)[];
   readonly itemEncoding?: FlowapiPart;
