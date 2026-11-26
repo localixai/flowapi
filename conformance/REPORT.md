@@ -3,12 +3,12 @@
 Written by `cargo run --release --bin report` in `conformance/ledger/` from `requirements.json`,
 `scope.json` and the `req:` and `lossy:` markers under `crates/` and `conformance/`. Do not edit by hand.
 
-**Answered: 831 of 930 requirements in scope (89.4%): 732 covered by a test, 99 lossy with a reason; 99 missing.** Out of scope: 1787. Total: 2717.
+**Answered: 833 of 930 requirements in scope (89.6%): 734 covered by a test, 99 lossy with a reason; 97 missing.** Out of scope: 1787. Total: 2717.
 Scope: decided 2026-11-24, the SDK stage 2026-11-26 (triage-3.md), by the maintainers, owner delegated.
 
 | Text | Total | In scope | Out of scope | Covered | Lossy | Missing | Answered share |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| openapi 2.0 (`openapi/2.0.md`) | 231 | 126 | 105 | 85 | 32 | 9 | 92.9% |
+| openapi 2.0 (`openapi/2.0.md`) | 231 | 126 | 105 | 87 | 32 | 7 | 94.4% |
 | openapi 3.0.4 (`openapi/3.0.4.md`) | 429 | 186 | 243 | 148 | 17 | 21 | 88.7% |
 | openapi 3.1.2 (`openapi/3.1.2.md`) | 436 | 184 | 252 | 171 | 2 | 11 | 94.0% |
 | openapi 3.2.1 (`openapi/3.2.1.md`) | 522 | 225 | 297 | 192 | 6 | 27 | 88.0% |
@@ -19,7 +19,7 @@ Scope: decided 2026-11-24, the SDK stage 2026-11-26 (triage-3.md), by the mainta
 | rfc 7578 (`rfc/rfc7578.txt`) | 19 | 13 | 6 | 12 | 1 | 0 | 100.0% |
 | rfc 7617 (`rfc/rfc7617.txt`) | 10 | 3 | 7 | 1 | 0 | 2 | 33.3% |
 | rfc 9110 (`rfc/rfc9110.xml`) | 412 | 25 | 387 | 25 | 0 | 0 | 100.0% |
-| **All** | 2717 | 930 | 1787 | 732 | 99 | 99 | 89.4% |
+| **All** | 2717 | 930 | 1787 | 734 | 99 | 97 | 89.6% |
 
 ## By level
 
@@ -48,10 +48,10 @@ Scope: decided 2026-11-24, the SDK stage 2026-11-26 (triage-3.md), by the mainta
 | `header-object` | 22 | 17 | 5 | 7 | 10 | 0 | 100.0% |
 | `headers-object` | 1 | 1 | 0 | 1 | 0 | 0 | 100.0% |
 | `info-object` | 8 | 0 | 8 | 0 | 0 | 0 | — |
-| `items-object` | 21 | 18 | 3 | 7 | 10 | 1 | 94.4% |
+| `items-object` | 21 | 18 | 3 | 8 | 10 | 0 | 100.0% |
 | `license-object` | 5 | 0 | 5 | 0 | 0 | 0 | — |
 | `operation-object` | 23 | 13 | 10 | 12 | 0 | 1 | 92.3% |
-| `parameter-object` | 31 | 23 | 8 | 11 | 11 | 1 | 95.7% |
+| `parameter-object` | 31 | 23 | 8 | 12 | 11 | 0 | 100.0% |
 | `parameters-definitions-object` | 1 | 1 | 0 | 1 | 0 | 0 | 100.0% |
 | `path-item-object` | 13 | 10 | 3 | 10 | 0 | 0 | 100.0% |
 | `paths-object` | 4 | 2 | 2 | 2 | 0 | 0 | 100.0% |
@@ -421,7 +421,7 @@ Scope: decided 2026-11-24, the SDK stage 2026-11-26 (triage-3.md), by the mainta
 | File | Requirements |
 | --- | ---: |
 | `conformance/coverage/suite.md` | 134 |
-| `conformance/sdk/cases.json` | 122 |
+| `conformance/sdk/cases.json` | 124 |
 | `crates/flowapi-cli/tests/documents_cli.rs` | 8 |
 | `crates/flowapi-cli/tests/openapi_cli.rs` | 30 |
 | `crates/flowapi-sdk/tests/cases/defaults.json` | 12 |
@@ -444,6 +444,7 @@ Scope: decided 2026-11-24, the SDK stage 2026-11-26 (triage-3.md), by the mainta
 | `crates/flowapi-sdk/tests/client/wire.mjs` | 2 |
 | `crates/flowapi-sdk/tests/table.rs` | 2 |
 | `crates/flowapi-ts/tests/print.rs` | 368 |
+| `crates/flowapi/tests/collection_format.rs` | 2 |
 | `crates/flowapi/tests/documents.rs` | 14 |
 | `crates/flowapi/tests/repo.rs` | 2 |
 

@@ -119,7 +119,10 @@ Explicit `oas-2.0.` rules, so that a 3.x rule decides no 2.0 id by accident; eac
   is read into the table as a style (`tsv` as the SDK's own `tabDelimited`). Left missing: a
   parameter's `collectionFormat` in query, path and header beyond csv, ssv, pipes and multi, and
   the Items Object's, which need a tab-delimited style and 2.0's delimited styles outside the
-  query in the core's `spec/operations/style.rs`, at its line budget (G10).
+  query in the core's `spec/operations/style.rs`, at its line budget (G10). Both closed the same
+  day: room made in the core by merging duplicated code, then `tabDelimited` and the delimited
+  styles in a path and a header, and `Serialization::nested` for the Items Object (O8 cases,
+  `crates/flowapi/tests/collection_format.rs`).
 - **TLS and the mock.** RFC 6749 10.3, RFC 6750 5.3 and RFC 7617 4 ask that credentials go only
   over TLS. The client sends them to whatever base URL it is given, including the mock at
   `http://localhost`. A refusal of `http:` except for a loopback host would answer them; until a

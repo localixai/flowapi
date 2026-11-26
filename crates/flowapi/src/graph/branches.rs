@@ -72,6 +72,28 @@ pub struct Lit<'t> {
     pub norm: Cow<'t, str>,
 }
 
+impl Lit<'_> {
+    /// Whether it is an integer: a number with a zero fractional part, `1.0` among them.
+    pub(crate) fn is_integer(&self) -> bool {
+        self.raw
+            .parse::<f64>()
+            .is_ok_and(|v| v.is_finite() && v.fract() == 0.0)
+    }
+
+    /// The values both lists allow, in `a`'s order; `None` allows every value.
+    pub(crate) fn common(a: Option<Vec<Self>>, b: Option<&[Self]>) -> Option<Vec<Self>> {
+        match (a, b) {
+            (Some(x), Some(y)) => Some(
+                x.into_iter()
+                    .filter(|l| y.iter().any(|e| e.norm == l.norm))
+                    .collect(),
+            ),
+            (x, None) => x,
+            (None, y) => y.map(<[Self]>::to_vec),
+        }
+    }
+}
+
 /// Which booleans a type allows.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Bools {

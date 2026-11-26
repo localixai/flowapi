@@ -205,7 +205,8 @@ pub trait Response {
 }
 
 /// How a style writes a value: RFC 6570's operator (`first`, `sep`, `named`, `ifemp`; 3.2,
-/// Appendix C), `explode`, what joins an unexploded list (`,`, `%20`, `%7C`) and the encoder.
+/// Appendix C), `explode`, what joins an unexploded list (`,`, `%20`, `%7C`, `%09`) and the
+/// encoder; `nest`, Swagger 2.0's, what joins the lists inside a list, outermost first.
 #[derive(Clone, Copy, Debug)]
 pub struct Style {
     pub first: &'static str,
@@ -216,6 +217,7 @@ pub struct Style {
     pub join: &'static str,
     pub enc: Enc,
     pub shape: Shape,
+    pub nest: &'static [&'static str],
 }
 
 /// The styles, by what they write.
@@ -227,6 +229,7 @@ pub enum Shape {
     Form,
     SpaceDelimited,
     PipeDelimited,
+    TabDelimited,
     Cookie,
     Deep,
 }
@@ -253,6 +256,7 @@ impl Style {
             Shape::Form | Shape::Deep => ("", "&", true, true, ","),
             Shape::SpaceDelimited => ("", "&", true, true, "%20"),
             Shape::PipeDelimited => ("", "&", true, true, "%7C"),
+            Shape::TabDelimited => ("", "&", true, true, "%09"),
             Shape::Cookie => ("", "; ", true, true, ","),
         };
         Self {
@@ -264,7 +268,21 @@ impl Style {
             join,
             enc,
             shape,
+            nest: &[],
         }
+    }
+
+    /// The style with an unexploded list joined by `join` (Swagger 2.0's delimited formats in
+    /// a path or a header).
+    pub const fn joined(mut self, join: &'static str) -> Self {
+        self.join = join;
+        self
+    }
+
+    /// The style with the lists inside a list joined by `nest`, outermost first.
+    pub const fn nested(mut self, nest: &'static [&'static str]) -> Self {
+        self.nest = nest;
+        self
     }
 }
 
@@ -698,6 +716,9 @@ pub(super) enum At {
     FormItem,
     /// What writes nothing: a `deepObject` that is not an associative array.
     Ignore,
+    /// An item of a list inside the parameter's list, that many levels down from the first
+    /// (Swagger 2.0's Items Object): joined by `Style::nest` at its level.
+    Nest(usize),
 }
 
 /// The state of one expansion.
@@ -712,6 +733,8 @@ pub(super) struct W<'a> {
     pub(super) n: usize,
     pub(super) key: String,
     pub(super) path: String,
+    /// Whether the list inside a list being written has no item yet.
+    pub(super) fresh: bool,
 }
 
 impl<'a> W<'a> {
@@ -724,6 +747,7 @@ impl<'a> W<'a> {
             n: 0,
             key: String::new(),
             path: String::new(),
+            fresh: false,
         }
     }
 
@@ -732,7 +756,7 @@ impl<'a> W<'a> {
     }
 
     /// Before the first piece: the lead, the operator's prefix, `name=` where it opens the list.
-    fn open(&mut self, list_named: bool) {
+    pub(super) fn open(&mut self, list_named: bool) {
         if self.n == 0 {
             self.out.push_str(self.lead);
             self.out.push_str(self.s.first);
@@ -748,6 +772,32 @@ impl<'a> W<'a> {
             });
         }
         self.n += 1;
+    }
+
+    /// A list inside a list opened: as an item of the parameter's list (`d` none, `name=` before
+    /// it where each item is a pair), or of the list at level `d`. Its items are a level down.
+    pub(super) fn nest(&mut self, d: Option<usize>) -> At {
+        match d {
+            None => {
+                self.open(true);
+                if self.s.explode && self.s.named {
+                    self.out.push_str(self.name);
+                    self.out.push('=');
+                }
+            }
+            Some(d) => self.join_nested(d),
+        }
+        self.fresh = true;
+        At::Nest(d.map_or(0, |d| d + 1))
+    }
+
+    /// Before an item of the list at level `d`: its join, unless it is the list's first.
+    fn join_nested(&mut self, d: usize) {
+        if !self.fresh {
+            let join = self.s.nest.get(d).copied().unwrap_or(",");
+            self.out.push_str(join);
+        }
+        self.fresh = false;
     }
 
     /// `name`, then `=` and the value, or for an empty value what the operator writes then.
@@ -829,6 +879,11 @@ impl<'a> W<'a> {
                 self.key.push_str(t);
                 true
             }
+            At::Nest(d) => {
+                self.join_nested(d);
+                self.enc(t);
+                true
+            }
             At::Ignore => false,
         }
     }
@@ -847,9 +902,14 @@ impl<'a> W<'a> {
                 true
             }
             At::FormMember | At::FormItem => self.text(at, ""),
-            At::Item | At::Member | At::Deep | At::DeepItem | At::Key | At::Form | At::Ignore => {
-                false
-            }
+            At::Item
+            | At::Member
+            | At::Deep
+            | At::DeepItem
+            | At::Key
+            | At::Form
+            | At::Ignore
+            | At::Nest(_) => false,
         }
     }
 }
@@ -895,7 +955,8 @@ mod expand {
 //! crate has no serde). A value is one of RFC 6570's four (§2.3): `null`, a string (a number or
 //! boolean as its text), a list (a sequence), or an associative array (a map or a struct, its
 //! members in the order they are serialized). An item or member that is itself a list or an
-//! associative array is its JSON text. The `form` modes write `application/x-www-form-urlencoded`.
+//! associative array is its JSON text, but for a list in a list that Swagger 2.0's Items Object
+//! joins (`Style::nest`). The `form` modes write `application/x-www-form-urlencoded`.
 
 use super::write::{At, Digits, W};
 use super::{Shape, encode};
@@ -981,6 +1042,8 @@ impl<'w, 'a> Ser<'w, 'a> {
             (At::Deep, true) => At::Deep,
             (At::Form, true) => At::FormMember,
             (At::FormMember, false) => At::FormItem,
+            (At::Item, false) if !self.w.s.nest.is_empty() => self.w.nest(None),
+            (At::Nest(d), false) if d + 1 < self.w.s.nest.len() => self.w.nest(Some(d)),
             (At::Ignore, _) => At::Ignore,
             (At::Key, _) => return Err(Error::Custom(String::from("a key that is not a string"))),
             _ => return Err(Error::Compound),
@@ -1049,6 +1112,10 @@ impl Many<'_, '_> {
     }
 
     fn end(self) -> bool {
+        // A list inside a list ended: the next item of the list around it is joined to it.
+        if matches!(self.at, At::Nest(_)) {
+            self.w.fresh = false;
+        }
         self.w.path.truncate(self.base);
         self.w.n > 0
     }

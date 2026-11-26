@@ -28,7 +28,8 @@ pub trait Response {
 }
 
 /// How a style writes a value: RFC 6570's operator (`first`, `sep`, `named`, `ifemp`; 3.2,
-/// Appendix C), `explode`, what joins an unexploded list (`,`, `%20`, `%7C`) and the encoder.
+/// Appendix C), `explode`, what joins an unexploded list (`,`, `%20`, `%7C`, `%09`) and the
+/// encoder; `nest`, Swagger 2.0's, what joins the lists inside a list, outermost first.
 #[derive(Clone, Copy, Debug)]
 pub struct Style {
     pub first: &'static str,
@@ -39,6 +40,7 @@ pub struct Style {
     pub join: &'static str,
     pub enc: Enc,
     pub shape: Shape,
+    pub nest: &'static [&'static str],
 }
 
 /// The styles, by what they write.
@@ -50,6 +52,7 @@ pub enum Shape {
     Form,
     SpaceDelimited,
     PipeDelimited,
+    TabDelimited,
     Cookie,
     Deep,
 }
@@ -76,6 +79,7 @@ impl Style {
             Shape::Form | Shape::Deep => ("", "&", true, true, ","),
             Shape::SpaceDelimited => ("", "&", true, true, "%20"),
             Shape::PipeDelimited => ("", "&", true, true, "%7C"),
+            Shape::TabDelimited => ("", "&", true, true, "%09"),
             Shape::Cookie => ("", "; ", true, true, ","),
         };
         Self {
@@ -87,7 +91,21 @@ impl Style {
             join,
             enc,
             shape,
+            nest: &[],
         }
+    }
+
+    /// The style with an unexploded list joined by `join` (Swagger 2.0's delimited formats in
+    /// a path or a header).
+    pub const fn joined(mut self, join: &'static str) -> Self {
+        self.join = join;
+        self
+    }
+
+    /// The style with the lists inside a list joined by `nest`, outermost first.
+    pub const fn nested(mut self, nest: &'static [&'static str]) -> Self {
+        self.nest = nest;
+        self
     }
 }
 

@@ -41,13 +41,11 @@ pub(super) fn restrict<'t>(b: &mut Branches<'t>, tree: &Tree<'t>, values: &[Node
 }
 
 fn narrow_numbers<'t>(n: &Numbers<'t>, values: Vec<Lit<'t>>) -> Option<Numbers<'t>> {
-    let mut lits: Vec<Lit<'t>> = values
+    let values = values
         .into_iter()
-        .filter(|l| !n.integer || is_integer(l.raw))
+        .filter(|l| !n.integer || l.is_integer())
         .collect();
-    if let Some(existing) = &n.lits {
-        lits.retain(|l| existing.iter().any(|e| e.norm == l.norm));
-    }
+    let mut lits = Lit::common(Some(values), n.lits.as_deref()).unwrap_or_default();
     dedupe(&mut lits);
     (!lits.is_empty()).then_some(Numbers {
         integer: n.integer,
@@ -56,10 +54,7 @@ fn narrow_numbers<'t>(n: &Numbers<'t>, values: Vec<Lit<'t>>) -> Option<Numbers<'
 }
 
 fn narrow_strings<'t>(s: Strings<'t>, values: Vec<Lit<'t>>) -> Option<Strings<'t>> {
-    let mut lits = values;
-    if let Some(existing) = &s.lits {
-        lits.retain(|l| existing.iter().any(|e| e.norm == l.norm));
-    }
+    let mut lits = Lit::common(Some(values), s.lits.as_deref()).unwrap_or_default();
     dedupe(&mut lits);
     (!lits.is_empty()).then_some(Strings {
         format: s.format,
@@ -76,11 +71,6 @@ fn dedupe(lits: &mut Vec<Lit<'_>>) {
         }
         fresh
     });
-}
-
-fn is_integer(raw: &str) -> bool {
-    raw.parse::<f64>()
-        .is_ok_and(|v| v.is_finite() && v.fract() == 0.0)
 }
 
 pub(super) fn number_lit(raw: &str) -> Lit<'_> {

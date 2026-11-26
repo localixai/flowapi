@@ -107,12 +107,7 @@ impl<'d, 't> Builder<'d, 't> {
 
     /// The type of a schema under `parent`, read with the same base and dialect.
     pub(super) fn sub(&mut self, parent: &Resource, node: NodeId) -> TypeId {
-        self.type_of(&Resource {
-            doc: parent.doc,
-            node,
-            base: std::sync::Arc::clone(&parent.base),
-            dialect: parent.dialect,
-        })
+        self.type_of(&parent.at(node))
     }
 
     /// A type the graph makes, with no schema of its own.
@@ -148,8 +143,7 @@ impl<'d, 't> Builder<'d, 't> {
                 return ty;
             }
         }
-        let at = self.scoped(at);
-        let mut at = at;
+        let mut at = self.scoped(at);
         match self.vocabularies(&at) {
             Meaning::All => {}
             Meaning::NoValidation => at.dialect = Dialect::Draft2020Annotations,

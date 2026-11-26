@@ -50,11 +50,7 @@ impl<'t> Builder<'_, 't> {
         if !matches!(tree.value(node), Value::Object(_) | Value::Bool(_)) {
             return None;
         }
-        let schema = Resource {
-            node,
-            base: std::sync::Arc::clone(&at.base),
-            ..*at
-        };
+        let schema = at.at(node);
         let (read, own) = self.read(&schema);
         let plain = read.reference.is_none()
             && read.parts.is_empty()
