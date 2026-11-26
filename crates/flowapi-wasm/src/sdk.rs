@@ -1,6 +1,7 @@
 //! The commands about an SDK's config, `flowapi_sdk`'s: `summary`, `draft`, `schema`, `spec` and
 //! `check`, the `flowapi-sdk` functions the command's `summary` and `config draft|schema|check`
-//! call (`crates/flowapi-cli/src/sdk.rs`), over the documents and the config the host read. The
+//! call (`crates/flowapi-cli/src/sdk.rs`), over the documents and the config the host read; and
+//! `repo` and `plan`, the command's `generate` (`repo.rs` says what they read and give). The
 //! host keeps what is I/O, as the command does: the files, a draft's `spec` path relative to where
 //! it is written, a config's `spec` relative to the config.
 //!
@@ -25,6 +26,7 @@
 //! ```
 
 use crate::answer;
+use crate::repo;
 use crate::request::{self, Doc};
 use crate::{Source, found, read_all, unread};
 use flowapi::id::NodeId;
@@ -41,6 +43,8 @@ enum Command<'t> {
     Schema,
     Spec(Doc<'t>),
     Check(Vec<Doc<'t>>, Doc<'t>),
+    Repo(repo::RepoRequest<'t>),
+    Plan(repo::PlanRequest<'t>),
 }
 
 /// Runs the command a request names (the module's documentation shows them) and returns the
@@ -79,6 +83,8 @@ fn run(command: Command<'_>) -> String {
             with_documents(documents, |docs| flowapi_sdk::draft(docs, &spec))
         }
         Command::Check(documents, config) => check(documents, &config),
+        Command::Repo(request) => repo::repo(request),
+        Command::Plan(request) => repo::plan(&request),
     }
 }
 
@@ -164,9 +170,11 @@ fn read<'t>(tree: &Tree<'t>) -> Result<Command<'t>, String> {
             };
             Command::Check(documents, config()?)
         }
+        "repo" => Command::Repo(repo::read_repo(tree, root, config()?, described()?)?),
+        "plan" => Command::Plan(repo::read_plan(tree, root)?),
         other => {
             return Err(format!(
-                "`{other}` is not a command: `summary`, `draft`, `schema`, `spec` or `check`"
+                "`{other}` is not a command: `summary`, `draft`, `schema`, `spec`, `check`, `repo` or `plan`"
             ));
         }
     })

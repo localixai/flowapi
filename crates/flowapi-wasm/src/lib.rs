@@ -24,6 +24,8 @@
 
 pub mod abi;
 mod answer;
+#[cfg(feature = "sdk")]
+mod repo;
 mod request;
 #[cfg(feature = "sdk")]
 mod sdk;

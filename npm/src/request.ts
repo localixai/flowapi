@@ -1,5 +1,5 @@
 // The requests the module reads and the answers it gives, as JSON text (crates/flowapi-wasm's
-// `request.rs`, `answer.rs` and `sdk.rs` say what each holds).
+// `request.rs`, `answer.rs`, `sdk.rs` and `repo.rs` say what each holds).
 
 import type {
   Check,
@@ -7,8 +7,12 @@ import type {
   Document,
   Input,
   Issue,
+  LockFile,
   Options,
   Output,
+  Plan,
+  PlanInput,
+  Repo,
   Result,
   SummaryFilter,
 } from './types.ts'
@@ -85,4 +89,43 @@ export function checkAnswer(answer: string): Check {
     issues: readonly Issue[]
   }
   return { ok, errors, warnings, issues, text, json, diagnostics }
+}
+
+export function repoRequest(config: Document, input: Input, lock: LockFile): string {
+  const { path, text, error } = lock
+  const request = { command: 'repo', config: document(config), documents: documents(input) }
+  return JSON.stringify({ ...request, lock: { path, text, error } })
+}
+
+export function planRequest(input: PlanInput): string {
+  const { out, check, lock, previous } = input
+  const files = input.files.map(({ path, owner, executable }) => ({ path, owner, executable }))
+  return JSON.stringify({ command: 'plan', out, check, files, lock, previous, disk: input.disk })
+}
+
+/** A `repo` or `plan` answer; a request the module could not read has its fields empty. */
+export function repoAnswer(json: string): Repo {
+  const answer = JSON.parse(json) as Partial<Repo> & Pick<Repo, 'diagnostics'>
+  const { text, error, files, lock, read, diagnostics } = answer
+  return {
+    text: text ?? '',
+    error: error ?? null,
+    files: files ?? [],
+    lock: lock ?? null,
+    read: read ?? [],
+    diagnostics,
+  }
+}
+
+export function planAnswer(json: string): Plan {
+  const answer = JSON.parse(json) as Partial<Plan> & Pick<Plan, 'diagnostics'>
+  const { text, next, changes, lock, summary, diagnostics } = answer
+  return {
+    text: text ?? '',
+    next: next ?? 'failed',
+    changes: changes ?? [],
+    lock: lock ?? '',
+    summary: summary ?? '',
+    diagnostics,
+  }
 }

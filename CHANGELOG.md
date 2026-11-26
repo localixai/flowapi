@@ -21,6 +21,12 @@
   writes nothing and exits 1 when anything would change. In the SDK layer: `repo_files`, `Lock`,
   `sha256_hex` (our own SHA-256, checked on FIPS 180-4's vectors).
 - `flowapi-sdk.yml` has `package.version` (`0.1.0` unless given; release-please raises it).
+- `npx -y @localix-ai/flowapi generate` writes what `flowapi generate` writes, byte for byte, with
+  the same lock, messages and exit codes. What a generation changes on disk is decided in the SDK
+  layer for both (`plan`: the output and the previous lock held to what the host found at each
+  path, a file's SHA-256 rather than its bytes), and printed there (`Plan::report`, `summary`);
+  the command and the package only read the disk and make the changes. The second WebAssembly
+  module answers `repo` and `plan` through `flowapi_sdk`, its one SDK export.
 
 - The TypeScript SDK writes `multipart/form-data` request bodies: `<op>Request` takes the value
   as its schema says (a string member also as a file: a `Uint8Array`, `flowapiFile(bytes or text,

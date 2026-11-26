@@ -1,11 +1,13 @@
-//! A plan made true, all or nothing as far as a file system allows: every new file is first
-//! written beside its target under a temporary name (`.<name>.flowapi-new`), and any failure
-//! there removes them and the folders made for them, leaving the repository as it was. Only then
-//! are they renamed over their targets, which does not fail on a folder just written to, and the
-//! orphans deleted (with the folders they leave empty); the lock is renamed last, so a run cut
-//! short leaves files the next run finds already holding their new bytes.
+//! A plan (`flowapi_sdk::plan`) made true, all or nothing as far as a file system allows: every
+//! new file is first written beside its target under a temporary name (`.<name>.flowapi-new`), and
+//! any failure there removes them and the folders made for them, leaving the repository as it was.
+//! Only then are they renamed over their targets, which does not fail on a folder just written to,
+//! and the orphans deleted (with the folders they leave empty); the lock is renamed last, so a run
+//! cut short leaves files the next run finds already holding their new bytes. The npm package
+//! applies a plan as this does (`npm/src/generate-disk.ts`).
 
-use super::plan::{Change, Plan, inside};
+use super::disk::inside;
+use flowapi_sdk::{Change, LOCK_PATH, Plan, RepoFile};
 use std::path::{Path, PathBuf};
 
 /// A file written under its temporary name.
@@ -14,10 +16,12 @@ struct Staged {
     target: PathBuf,
 }
 
-pub(crate) fn apply(dir: &Path, plan: &Plan) -> Result<(), String> {
+/// The plan's changes made in `dir`; `files` the output, whose texts the writes are (the lock's is
+/// the plan's own).
+pub(crate) fn apply(dir: &Path, plan: &Plan, files: &[RepoFile]) -> Result<(), String> {
     let mut made: Vec<PathBuf> = Vec::new();
     let mut staged: Vec<Staged> = Vec::new();
-    if let Err(message) = stage(dir, plan, &mut made, &mut staged) {
+    if let Err(message) = stage(dir, plan, files, &mut made, &mut staged) {
         for s in &staged {
             drop(std::fs::remove_file(&s.temp));
         }
@@ -49,17 +53,24 @@ pub(crate) fn apply(dir: &Path, plan: &Plan) -> Result<(), String> {
 fn stage(
     dir: &Path,
     plan: &Plan,
+    files: &[RepoFile],
     made: &mut Vec<PathBuf>,
     staged: &mut Vec<Staged>,
 ) -> Result<(), String> {
     for change in &plan.changes {
-        let Change::Write {
-            path,
-            bytes,
-            executable,
-        } = change
-        else {
+        let Change::Write { path, executable } = change else {
             continue;
+        };
+        let bytes = if path == LOCK_PATH {
+            plan.lock.as_str()
+        } else {
+            // The output is sorted by path (`repo_files`).
+            files
+                .binary_search_by(|f| f.path.as_str().cmp(path))
+                .ok()
+                .and_then(|i| files.get(i))
+                .map(|f| f.text.as_str())
+                .ok_or_else(|| format!("flowapi: {path} is planned but not in the output"))?
         };
         let target = inside(dir, path)?;
         let folder = target.parent().unwrap_or(dir).to_path_buf();

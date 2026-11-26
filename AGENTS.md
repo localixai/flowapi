@@ -68,12 +68,14 @@ work here.
   license, `repo/texts.rs` the scripts, CI, release-please and the repository's `AGENTS.md`,
   `repo/mock.rs` the mock server's routes, `repo/suite.rs` a test per resource, `repo/readme.rs`
   `README.md` and `api.md`, `repo/example.rs` a schema's example value, `repo/lock.rs`
-  `.flowapi/lock.json` (the shape the `sdk-anything` plugin reads); `repo/files/` the texts printed
+  `.flowapi/lock.json` (the shape the `sdk-anything` plugin reads), `repo/plan.rs` what writing the
+  repository changes on disk (`plan`: by the lock and what the host found at each path; every host
+  runs it, none decides alone); `repo/files/` the texts printed
   as they are (scripts, `server.mjs`, the licenses); `sha256.rs` our own SHA-256.
   `tests/repo/<case>/` the repository of each client case but its `src/`, kept (`--test repo`).
 - `crates/flowapi-cli`: the `flowapi` command, all of flowapi's I/O. `src/sdk.rs` the subcommands
   put before the path (`summary`, `config draft|schema|check`; `tests/sdk_cli.rs`);
-  `src/generate.rs` `generate`, `generate/plan.rs` what it changes against the lock and the disk,
+  `src/generate.rs` `generate`, `generate/disk.rs` what is on disk for the SDK layer's `plan`,
   `generate/apply.rs` the writes, staged first (`tests/generate_cli.rs`).
 - `crates/flowapi-yaml`: a description's text as the core reads it, shared by the command and the
   WebAssembly module: which document is YAML (`is_yaml`), YAML 1.2 read into JSON with each node's
@@ -82,13 +84,15 @@ work here.
   module for the npm package, behind four exports of its own (`src/abi.rs`: JSON in and out
   through linear memory, no wasm-bindgen); the one crate with `unsafe` (`deny`, not `forbid`;
   `tests/lints.rs`). Its `sdk` feature adds the SDK layer's config commands (`src/sdk.rs`, the
-  export `flowapi_sdk`).
+  export `flowapi_sdk`) and `generate`'s two halves, `repo` and `plan` (`src/repo.rs`).
 - `crates/flowapi-wasm-sdk`: the package's second module, `flowapi-wasm` with `sdk` linked into
   a module of its own (no code, no `unsafe`; `tests/sdk.rs`), so the generator's module stays
   without it. Built in a cargo run of its own: with `-p flowapi-wasm` it would turn `sdk` on.
 - `npm/`: `@localix-ai/flowapi`, the modules with a typed API (`src/index.ts`, its requests in
   `src/request.ts`), the files a description reaches read from disk (`src/node.ts`) and the
-  `flowapi` command (`src/cli.ts`; `summary` and `config` in `src/sdk-cli.ts`); JSON and YAML.
+  `flowapi` command (`src/cli.ts`; `summary` and `config` in `src/sdk-cli.ts`, `generate` in
+  `src/generate-cli.ts` with the disk it reads and writes in `src/generate-disk.ts`; paths joined
+  as Rust's in `src/paths.ts`); JSON and YAML.
   `bun run check` in `npm/` builds it and holds it to the Rust command byte for byte.
 - `conformance/`: the oracles that hold flowapi to the specifications
   ([conformance/README.md](conformance/README.md)): the official suites' pinned copies

@@ -114,3 +114,78 @@ export interface Check {
   readonly json: string | null
   readonly diagnostics: readonly Diagnostic[]
 }
+
+/** The lock of the last generation as the host found it at `path` (`.flowapi/lock.json` in the
+ * output's folder): its `text`, the `error` it could not be read with, or neither when absent. */
+export interface LockFile {
+  readonly path: string
+  readonly text?: string
+  readonly error?: string
+}
+
+/** A file of an SDK's repository, from its root. */
+export interface RepoFile {
+  readonly path: string
+  readonly text: string
+  /** Run as a program (`scripts/*`). */
+  readonly executable: boolean
+  /** `generated`: listed in the lock, rewritten by every generation; `seed`: written once, when
+   * absent (`CHANGELOG.md`). */
+  readonly owner: 'generated' | 'seed'
+}
+
+/**
+ * What `repoFiles` gives, as `flowapi generate` prints it before it looks at the disk: `text`
+ * what the command prints on standard error, `error` the line it stops with (no file then);
+ * `files` sorted by path, `lock` the new `.flowapi/lock.json`, and `read` the paths `repoPlan`
+ * asks about. `diagnostics` holds a request the module could not read.
+ */
+export interface Repo {
+  readonly text: string
+  readonly error: string | null
+  readonly files: readonly RepoFile[]
+  readonly lock: string | null
+  readonly read: readonly string[]
+  readonly diagnostics: readonly Diagnostic[]
+}
+
+/** What the host found at a path of the output's folder. */
+export type Disk =
+  | { readonly kind: 'absent' }
+  | { readonly kind: 'file'; readonly sha256: string; readonly executable: boolean }
+  | { readonly kind: 'other' }
+  | { readonly kind: 'error'; readonly message: string }
+
+/** What `repoPlan` holds a repository to: the folder as given, `--check`, the files of
+ * `repoFiles` (their text is not needed), its lock, the previous lock, and what is at each path
+ * of its `read`. */
+export interface PlanInput {
+  readonly out: string
+  readonly check: boolean
+  readonly files: readonly Omit<RepoFile, 'text'>[]
+  readonly lock: string
+  readonly previous: string | null
+  readonly disk: readonly (Disk & { readonly path: string })[]
+}
+
+/** A change to the output's folder: a file written (the file's text, or the plan's lock at
+ * `.flowapi/lock.json`), made executable, or deleted. */
+export interface Change {
+  readonly change: 'write' | 'mode' | 'delete'
+  readonly path: string
+  readonly executable: boolean
+}
+
+/**
+ * What `repoPlan` decides: `text` to print on standard error, then `next`: `apply` the changes
+ * in order and print `summary`, or exit (`done` with 0, `failed` with 1). `lock` is the text
+ * written to `.flowapi/lock.json`.
+ */
+export interface Plan {
+  readonly text: string
+  readonly next: 'apply' | 'done' | 'failed'
+  readonly changes: readonly Change[]
+  readonly lock: string
+  readonly summary: string
+  readonly diagnostics: readonly Diagnostic[]
+}

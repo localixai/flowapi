@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 // The `flowapi` command of the npm package: the Rust command's flags, output and exit codes
 // (crates/flowapi-cli/src/main.rs), over the WebAssembly module; JSON and YAML, read alike. The
-// commands about an SDK's config, `summary` and `config`, are in `sdk-cli.ts`.
+// commands about an SDK's config, `summary` and `config`, are in `sdk-cli.ts`, and `generate`, an
+// SDK's whole repository, in `generate-cli.ts`.
 
 import { readFileSync, writeFileSync } from 'node:fs'
 import { formatDiagnostic, load } from './index.ts'
 import { readDescription } from './node.ts'
+import { parseGenerate, runGenerate, type Generate as Repo } from './generate-cli.ts'
 import { parseConfig, parseSummary, run, Usage, type Sdk } from './sdk-cli.ts'
 
 const HELP = `flowapi: types from an OpenAPI description or a JSON Schema
@@ -15,6 +17,7 @@ Usage: flowapi <description> [-o <types.ts>] [--sdk] [--quiet]
        flowapi config draft <description> [-o <flowapi-sdk.yml>]
        flowapi config schema
        flowapi config check <flowapi-sdk.yml> [--spec <description>] [--json]
+       flowapi generate <flowapi-sdk.yml> --out <dir> [--check]
 
   -o, --output <file>   where to write the types (standard output by default)
       --sdk             also a function per operation that writes its request and one that
@@ -35,8 +38,14 @@ For an SDK's config, flowapi-sdk.yml, which an agent writes:
   config schema   the config's format, as JSON Schema
   config check    every issue of a config against its description (its \`spec\`, relative to the
                   config, or --spec): text, or JSON with --json; exits 1 on an error
+  generate        the SDK's repository into --out: the client, package.json, scripts, tests
+                  against a mock server, README.md, api.md, and .flowapi/lock.json, the hash of
+                  each file written. A generated file changed by hand since (src/lib/ and
+                  examples/ are yours) is a conflict: nothing is written and it exits 1. A file
+                  no longer generated is deleted unless changed; one the lock does not list is
+                  never touched. --check writes nothing and exits 1 when the output differs
 
-A description named \`summary\` or \`config\` is read by its path: \`flowapi ./summary\`.`
+A description named \`summary\`, \`config\` or \`generate\` is read by its path: \`flowapi ./summary\`.`
 
 interface Generate {
   readonly input: string
@@ -45,11 +54,12 @@ interface Generate {
   readonly sdk: boolean
 }
 
-type Command = 'help' | 'version' | Generate | Sdk
+type Command = 'help' | 'version' | Generate | Sdk | Repo
 
 function parse(args: readonly string[]): Command {
   if (args[0] === 'summary') return parseSummary(args.slice(1))
   if (args[0] === 'config') return parseConfig(args.slice(1))
+  if (args[0] === 'generate') return parseGenerate(args.slice(1))
   let input: string | undefined
   let output: string | undefined
   let quiet = false
@@ -93,7 +103,7 @@ async function main(args: readonly string[]): Promise<number> {
     process.stdout.write(`flowapi ${version()}\n`)
     return 0
   }
-  if ('kind' in command) return run(command)
+  if ('kind' in command) return command.kind === 'generate' ? runGenerate(command) : run(command)
   let documents
   try {
     documents = await readDescription(command.input)

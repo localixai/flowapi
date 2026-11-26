@@ -40,15 +40,27 @@ README says how YAML maps to JSON.
 
 ## A config for a whole SDK
 
-The command has the Rust command's four commands for an agent that writes an SDK's config,
-`flowapi-sdk.yml`, with the same arguments, output and exit codes:
+The command has the Rust command's commands for an agent that writes an SDK's config,
+`flowapi-sdk.yml`, and the SDK's repository from it, with the same arguments, output and exit
+codes:
 
 ```sh
 npx -y @localix-ai/flowapi summary openapi.json --tag pets      # the operations in compact JSON
 npx -y @localix-ai/flowapi config draft openapi.json -o flowapi-sdk.yml   # a first config
 npx -y @localix-ai/flowapi config check flowapi-sdk.yml --json # every issue; 1 on an error
 npx -y @localix-ai/flowapi config schema > flowapi-sdk.schema.json
+npx -y @localix-ai/flowapi generate flowapi-sdk.yml --out sdk  # the whole repository
+npx -y @localix-ai/flowapi generate flowapi-sdk.yml --out sdk --check   # 1 when it differs
 ```
+
+`generate` writes the same files, byte for byte, and the same `.flowapi/lock.json` as the Rust
+command, by the same rules: all or nothing (each file staged beside its target first); a
+generated file changed by hand since is a conflict that writes nothing and exits 1, except under
+`src/lib/` and `examples/`, which are yours and kept; a file the lock does not list is never
+touched; one no longer generated is deleted unless changed, kept with a warning when it was; a
+path out of `--out` or through a symbolic link is refused. Which of those applies is decided in
+the module, by the code the Rust command runs; the package only reads the disk (SHA-256 by
+`node:crypto`) and makes the changes.
 
 `summary` stays under `--max-bytes` (60000): over it, it gives the tags with their counts, to be
 read one at a time with `--tag` or `--path`. `config check` reads the description the config's
@@ -67,11 +79,15 @@ const found = await configCheck({ uri: 'flowapi-sdk.yml', text: yaml }, document
 const schema = await configSchema()
 ```
 
-They are a second module, `flowapi-sdk.wasm` (about 314 KB gzipped), compiled the first time one
-of them is called; `generate` never loads it. `loadSdk(source)` loads it as `load` loads the first
+`generate`'s two halves are there too, with no disk: `repoFiles(config, documents, lock?)` gives
+every file of the repository, its new lock and the paths to look at, and `repoPlan(...)`, given
+what is at each of them, the changes to make, the conflicts and what the command prints.
+
+They are a second module, `flowapi-sdk.wasm` (about 413 KiB gzipped), compiled the first time
+one of them is called; the types' `generate` never loads it. `loadSdk(source)` loads it as `load` loads the first
 (serve `@localix-ai/flowapi/flowapi-sdk.wasm` with a bundler that does not copy it) and gives them
 synchronous, with `configSpec(config)`: the `spec` a config names, for the host to read before
-`configCheck`. A config or a document that cannot be read gives no text and one diagnostic, as
+`configCheck`, and `repoFiles` and `repoPlan`. A config or a document that cannot be read gives no text and one diagnostic, as
 `generate` does.
 
 MIT

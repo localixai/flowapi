@@ -20,10 +20,12 @@ const GENERATOR = { raw: 580_000, gzip: 224_000 }
 /** `flowapi-sdk.wasm`, the second module: the first with the SDK layer's commands about a config
  * (`summary`, `config draft|schema|check`), as built on 2026-11-26 (864 KB, 323 KB: the config's
  * checker and its draft are most of the difference, with a copy of the core, the TypeScript target
- * and the YAML reader), and about 5% room. It is a module of its own so that a user of `generate`
- * alone never downloads it: only those commands load it. It will hold `generate` for whole SDK
- * repositories too. */
-const SDK = { raw: 907_000, gzip: 340_000 }
+ * and the YAML reader), then the `generate` command for whole SDK repositories on 2026-11-26
+ * (1,177 KB, 424 KB: the repository's texts it prints, the client's runtime, scripts, mock server
+ * and licenses held as text, and the plan of its writes), and about 5% room. It is a module of
+ * its own so that a user of the types alone (the API's `generate`, the command without a
+ * subcommand) never loads it: only the SDK commands do. */
+const SDK = { raw: 1_236_000, gzip: 445_000 }
 
 const modules = [
   ['flowapi.wasm', GENERATOR],

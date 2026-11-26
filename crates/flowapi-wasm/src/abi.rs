@@ -65,8 +65,8 @@ pub unsafe extern "C" fn flowapi_references(ptr: *mut u8, len: usize) -> *mut u8
     give(&crate::references(&document))
 }
 
-/// Runs the SDK command in a buffer (`crate::sdk`: `summary`, `draft`, `schema`, `spec` or
-/// `check`) and returns the answer's buffer. Only in the second module (the `sdk` feature).
+/// Runs the SDK command in a buffer (`crate::sdk`: `summary`, `draft`, `schema`, `spec`, `check`,
+/// `repo` or `plan`) and returns the answer's buffer. Only in the second module (the `sdk` feature).
 ///
 /// # Safety
 ///

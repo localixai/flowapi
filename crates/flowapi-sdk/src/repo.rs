@@ -4,18 +4,21 @@
 //! and the release tool's files (`repo/texts.rs`), a mock server printed from the description
 //! (`repo/mock.rs`), a test file per resource calling every method against it (`repo/suite.rs`),
 //! the README, `api.md` and `AGENTS.md` (`repo/readme.rs`), the license; and the lock that says
-//! which files are generated (`repo/lock.rs`, `.flowapi/lock.json`). No I/O (G5): the host reads
-//! the previous lock and the files on disk, and decides what to write.
+//! which files are generated (`repo/lock.rs`, `.flowapi/lock.json`); and what writing them changes
+//! on disk (`repo/plan.rs`). No I/O (G5): the host reads the previous lock and the files on disk,
+//! and makes the changes the plan names.
 
 mod example;
 mod lock;
 mod mock;
 mod package;
+mod plan;
 mod readme;
 mod suite;
 mod texts;
 
 pub use lock::Lock;
+pub use plan::{Change, Disk, Entry, Next, Plan, Report, paths_to_read, plan};
 
 use crate::client::{self, resources};
 use crate::config::check::{effective, find};

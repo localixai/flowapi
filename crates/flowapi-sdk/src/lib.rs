@@ -20,7 +20,8 @@
 //! [`repo_files`] prints the whole repository around that client (the package, scripts, a mock
 //! server, tests, README, CI, the license) with its [`Lock`]: strings and the previous lock's JSON
 //! in, files and the new lock's JSON out, so the command and the WebAssembly module share it; the
-//! host decides what to write by the lock (`flowapi generate`).
+//! host decides what to write by the lock (`flowapi generate`): [`plan`] holds the output to what
+//! the host found on disk and says what to write, keep and delete, so every host decides alike.
 
 mod client;
 mod config;
@@ -45,7 +46,10 @@ pub use draft::draft;
 pub use model::{
     Access, Auth, Encoding, KeyLocation, Requirement, Scheme, Server, Service, Variable,
 };
-pub use repo::{Input, LOCK_PATH, Lock, OWN_ZONES, Owner, Repo, RepoFile, is_own, repo_files};
+pub use repo::{
+    Change, Disk, Entry, Input, LOCK_PATH, Lock, Next, OWN_ZONES, Owner, Plan, Repo, RepoFile,
+    Report, is_own, paths_to_read, plan, repo_files,
+};
 pub use sha256::sha256_hex;
 pub use summary::{Filter, summary};
 

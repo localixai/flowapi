@@ -3,48 +3,16 @@
 // petstore in JSON and YAML, every kept case of crates/flowapi-ts, a description split over three
 // files, and YAML: files reached from a YAML description, its diagnostics and its errors; and the
 // commands about an SDK's config, `summary` and `config draft|schema|check`.
-// Run after the build (`bun run build`); the Rust command is built here if it is stale.
+// Run after the build (`bun run build`); the Rust command is built here if it is stale. `generate`
+// is held to it in generate.test.ts.
 
 import { beforeAll, describe, expect, test } from 'bun:test'
-import { spawnSync } from 'node:child_process'
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  writeFileSync,
-} from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { both, buildRust, github, js, root, run, rust, type Run } from './commands.ts'
 
-const npm = join(import.meta.dir, '..')
-const root = join(npm, '..')
-const target = process.env.CARGO_TARGET_DIR ?? join(root, 'target')
-const rust = join(target, 'release', 'flowapi')
-const js = join(npm, 'dist', 'cli.js')
-
-interface Run {
-  readonly status: number | null
-  readonly stdout: string
-  readonly stderr: string
-}
-
-function run(command: string, args: readonly string[], cwd: string): Run {
-  const done = spawnSync(command, args, { cwd, encoding: 'utf8', maxBuffer: 1 << 28 })
-  if (done.error) throw done.error
-  return { status: done.status, stdout: done.stdout, stderr: done.stderr }
-}
-
-/** Both commands on the same arguments, from the same directory. */
-function both(args: readonly string[], cwd = root): { rust: Run; js: Run } {
-  return { rust: run(rust, args, cwd), js: run('node', [js, ...args], cwd) }
-}
-
-beforeAll(() => {
-  const built = run('cargo', ['build', '--locked', '--release', '-p', 'flowapi-cli'], root)
-  if (built.status !== 0) throw new Error(`the Rust command did not build:\n${built.stderr}`)
-})
+beforeAll(buildRust)
 
 const cases = readdirSync(join(root, 'crates', 'flowapi-ts', 'tests', 'cases'))
   .filter((name) => name.endsWith('.json'))
@@ -145,6 +113,23 @@ describe('the command prints what the Rust command prints', () => {
     }
   })
 
+  test('the help is the Rust command\'s, less its Rust target', () => {
+    const { rust: expected, js: actual } = both(['--help'])
+    const lines = expected.stdout.split('\n')
+    const other: string[] = []
+    let at = 0
+    for (const line of actual.stdout.split('\n')) {
+      const found = lines.indexOf(line, at)
+      if (found === -1) other.push(line)
+      else at = found + 1
+    }
+    expect(other).toEqual([
+      'Usage: flowapi <description> [-o <types.ts>] [--sdk] [--quiet]',
+      '                        reads its response, with no HTTP library and no I/O',
+    ])
+    expect(actual.status).toBe(0)
+  })
+
   test('the exit codes of a bad command line and a missing file', () => {
     for (const args of [[], ['--nope'], ['a.json', 'b.json'], ['-o'], ['missing.json']]) {
       const { rust: expected, js: actual } = both(args)
@@ -152,13 +137,6 @@ describe('the command prints what the Rust command prints', () => {
     }
   })
 })
-
-/** GitHub's description: the benchmarks' pinned copy, else the workspace's reference clone. */
-const clone = join('.references', 'codegen', 'corpus', 'github', 'descriptions', 'api.github.com')
-const github = [
-  join(root, 'bench', 'data', 'github.json'),
-  ...['..', join('..', '..')].map((up) => join(root, up, clone, 'api.github.com.json')),
-].find((path) => existsSync(path))
 
 describe('the commands about an SDK\'s config print what the Rust command prints', () => {
   const sdk = join('crates', 'flowapi-sdk', 'tests', 'config')

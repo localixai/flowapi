@@ -11,25 +11,39 @@ import type {
   Diagnostic,
   Document,
   Input,
+  LockFile,
   Options,
   Output,
+  Plan,
+  PlanInput,
+  Repo,
   Result,
   SummaryFilter,
 } from './types.ts'
 
 export type {
+  Change,
   Check,
   Diagnostic,
+  Disk,
   Document,
   File,
   Input,
   Issue,
+  LockFile,
   Options,
   Output,
+  Plan,
+  PlanInput,
+  Repo,
+  RepoFile,
   Result,
   Severity,
   SummaryFilter,
 } from './types.ts'
+
+/** Where `.flowapi/lock.json` is, from an SDK repository's root (`LOCK_PATH` in flowapi-sdk). */
+export const LOCK_PATH = '.flowapi/lock.json'
 
 /**
  * Where the module comes from: compiled already, its bytes, a response, or its URL. By default
@@ -90,6 +104,18 @@ export interface FlowapiSdk {
    * them. The text names the config by its `uri`.
    */
   configCheck(config: Document, input?: Input): Check
+  /**
+   * An SDK's whole repository from a config and its description, as `flowapi generate` prints
+   * it, with its new lock: nothing is read or written. `lock` is the last generation's lock as
+   * read (none by default: a first generation).
+   */
+  repoFiles(config: Document, input: Input, lock?: LockFile): Repo
+  /**
+   * What writing a repository of `repoFiles` changes in a folder, by the rules of `flowapi
+   * generate`: given what is at each path of its `read`, the files to write, keep and delete, the
+   * conflicts that stop it, and what the command prints.
+   */
+  repoPlan(input: PlanInput): Plan
 }
 
 /** A module compiled once, from its `source` or its default URL; a failed load is tried again
@@ -197,6 +223,9 @@ function loadedSdk(module: WebAssembly.Module): FlowapiSdk {
     configSchema: () => req.outputAnswer(sdk(req.schemaRequest)).text ?? '',
     configSpec: (config) => req.outputAnswer(sdk(req.specRequest(config))),
     configCheck: (config, input) => req.checkAnswer(sdk(req.checkRequest(config, input))),
+    repoFiles: (config, input, lock = { path: LOCK_PATH }) =>
+      req.repoAnswer(sdk(req.repoRequest(config, input, lock))),
+    repoPlan: (input) => req.planAnswer(sdk(req.planRequest(input))),
   }
 }
 

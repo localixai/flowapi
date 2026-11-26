@@ -7,6 +7,7 @@ import { realpathSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { formatDiagnostic, loadSdk, type FlowapiSdk } from './index.ts'
 import { readDescription } from './node.ts'
+import { join, parent } from './paths.ts'
 import type { Diagnostic, Document, Output, SummaryFilter } from './types.ts'
 
 /** A command line the command cannot run: exit 2, with the help. */
@@ -201,21 +202,6 @@ function write(text: string, output: string | undefined): void {
   } catch (error) {
     throw new Failed(`flowapi: cannot write ${output}: ${reason(error)}`)
   }
-}
-
-/** `Path::parent` as text: `''` for a bare name, `'/'` for a file at the root. */
-function parent(path: string): string {
-  const trimmed = path.replace(/(?<=.)\/+$/, '')
-  const slash = trimmed.lastIndexOf('/')
-  if (slash === -1) return ''
-  const head = trimmed.slice(0, slash).replace(/\/+$/, '')
-  return head === '' ? '/' : head
-}
-
-/** `Path::join`: an absolute path replaces, an empty base adds nothing. */
-function join(base: string, path: string): string {
-  if (path.startsWith('/') || base === '') return path
-  return base.endsWith('/') ? `${base}${path}` : `${base}/${path}`
 }
 
 /** The description's path as the config written to `output` names it: relative to the

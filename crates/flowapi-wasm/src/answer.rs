@@ -68,7 +68,7 @@ pub(crate) fn sdk(text: Option<&str>, json: Option<&str>, diags: &[Found<'_>]) -
 }
 
 /// `,"diagnostics":[…]}`, the end of an answer.
-fn diagnostics(out: &mut String, diags: &[Found<'_>]) {
+pub(crate) fn diagnostics(out: &mut String, diags: &[Found<'_>]) {
     out.push_str(",\"diagnostics\":[");
     for (i, d) in diags.iter().enumerate() {
         let severity = match d.severity {
@@ -110,7 +110,7 @@ pub(crate) fn strings(list: &[String]) -> String {
 }
 
 /// A JSON string: quotes, backslashes and control characters escaped, the rest as it is.
-fn string(out: &mut String, s: &str) {
+pub(crate) fn string(out: &mut String, s: &str) {
     out.push('"');
     let mut plain = 0;
     for (i, c) in s.char_indices() {

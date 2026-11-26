@@ -1,18 +1,18 @@
 //! `flowapi generate <flowapi-sdk.yml> --out <dir> [--check]`: an SDK's repository written. The
 //! config is read (YAML or JSON), its description found by its `spec`, relative to the config,
 //! and the previous lock at `<dir>/.flowapi/lock.json`; `flowapi-sdk` prints every file and the
-//! new lock without I/O; `generate/plan.rs` holds them to the files on disk (a conflict stops it)
-//! and `generate/apply.rs` writes all or nothing. `--check` plans and writes nothing: it exits 1
-//! when a file would change, for CI.
+//! new lock without I/O; `flowapi_sdk::plan` holds them to what `generate/disk.rs` finds on disk
+//! (a conflict stops it) and `generate/apply.rs` writes all or nothing. `--check` plans and writes
+//! nothing: it exits 1 when a file would change, for CI.
 
 mod apply;
-mod plan;
+mod disk;
 
 use crate::load;
 use crate::sdk::fail;
 use crate::source::Source;
 use flowapi::{Documents, Severity};
-use flowapi_sdk::{Input, Lock};
+use flowapi_sdk::{Entry, Input, Lock, Next, RepoFile};
 use std::path::Path;
 use std::process::ExitCode;
 
@@ -26,52 +26,24 @@ pub(crate) fn run(config: &str, out: &str, check: bool) -> ExitCode {
         Err(message) => return fail(&message),
     };
     let dir = Path::new(out);
-    let planned = match plan::plan(dir, &repo, previous.as_ref()) {
+    let files: Vec<Entry<'_>> = repo.files.iter().map(RepoFile::entry).collect();
+    let mut read = |path: &str| disk::disk(dir, path);
+    let planned = match flowapi_sdk::plan(out, &files, &repo.lock, previous.as_ref(), &mut read) {
         Ok(p) => p,
         Err(message) => return fail(&message),
     };
-    for warning in &planned.warnings {
-        eprintln!("warning: {warning}");
-    }
-    if !planned.conflicts.is_empty() {
-        for c in &planned.conflicts {
-            eprintln!("conflict: {c}");
-        }
-        return fail(&format!(
-            "flowapi: {} conflict{}: nothing was written. A generated file is changed in flowapi-sdk.yml, or in src/lib/ and examples/, never by hand: restore it (or delete it) and generate again",
-            planned.conflicts.len(),
-            if planned.conflicts.len() == 1 {
-                ""
-            } else {
-                "s"
+    let report = planned.report(out, check);
+    eprint!("{}", report.text);
+    match report.next {
+        Next::Done => ExitCode::SUCCESS,
+        Next::Failed => ExitCode::FAILURE,
+        Next::Apply => match apply::apply(dir, &planned, &repo.files) {
+            Ok(()) => {
+                eprintln!("{}", planned.summary(out));
+                ExitCode::SUCCESS
             }
-        ));
-    }
-    if check {
-        if planned.changes.is_empty() {
-            eprintln!("flowapi: {out} is as generated");
-            return ExitCode::SUCCESS;
-        }
-        for change in &planned.changes {
-            eprintln!("{change}");
-        }
-        return fail(&format!(
-            "flowapi: {out} differs from what generate writes in {} file{}",
-            planned.changes.len(),
-            if planned.changes.len() == 1 { "" } else { "s" }
-        ));
-    }
-    match apply::apply(dir, &planned) {
-        Ok(()) => {
-            eprintln!(
-                "flowapi: {out}: {} written, {} deleted, {} unchanged",
-                planned.written(),
-                planned.deleted(),
-                planned.unchanged
-            );
-            ExitCode::SUCCESS
-        }
-        Err(message) => fail(&message),
+            Err(message) => fail(&message),
+        },
     }
 }
 
