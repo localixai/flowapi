@@ -5,19 +5,17 @@
 //! with no flows; OpenID Connect with no URL) is left out, with a warning. `security` is a list
 //! of alternatives, each naming the schemes it needs together; an operation's replaces the
 //! description's, `[]` meaning none. A name no scheme is declared under is a warning, and kept: a
-//! client cannot meet that alternative, and says so where it is asked to.
+//! client cannot meet that alternative, and says so where it is asked to. The flows are read in
+//! `security/flows.rs`, the requirements in `security/requirements.rs`. A scheme's
+//! Specification Extensions (`x-` members) are read by nothing.
+
+mod flows;
+mod requirements;
 
 use crate::doc::{At, Doc, ROOT, oas};
 use crate::model::{Auth, KeyLocation, Requirement, Scheme};
+use flowapi::spec::Operation;
 use flowapi::{Diagnostics, Version};
-
-/// 2.0's OAuth 2.0 flows and their 3.x names (2.0, "Security Scheme Object", `flow`).
-const FLOWS_20: [(&str, &str); 4] = [
-    ("implicit", "implicit"),
-    ("password", "password"),
-    ("application", "clientCredentials"),
-    ("accessCode", "authorizationCode"),
-];
 
 impl Doc<'_, '_> {
     /// Where the schemes are declared: 3.x's `components.securitySchemes`, 2.0's
@@ -29,6 +27,22 @@ impl Doc<'_, '_> {
                 .get(ROOT, "components")
                 .and_then(|c| self.get(c, "securitySchemes")),
         }
+    }
+
+    /// An operation's security: its own `security`, else the description's (`root`), with
+    /// whether it is the description's.
+    pub(crate) fn effective(
+        &self,
+        op: &Operation,
+        root: &[Requirement],
+        diags: &mut Diagnostics,
+    ) -> (Vec<Requirement>, bool) {
+        let items = self.path_items(op);
+        let own = self
+            .operation(&items, op)
+            .and_then(|at| self.security(at, diags));
+        let inherits = own.is_none();
+        (own.unwrap_or_else(|| root.to_vec()), inherits)
     }
 
     /// The security schemes, in the order written.
@@ -94,7 +108,10 @@ impl Doc<'_, '_> {
                     self.missing(name, at, "flows", diags);
                     return None;
                 }
-                Auth::OAuth2 { flows }
+                Auth::OAuth2 {
+                    client_credentials: self.client_credentials(name, at, diags),
+                    flows,
+                }
             }
             "openIdConnect" if v != Version::V20 => Auth::OpenIdConnect {
                 url: self.need(name, at, "openIdConnectUrl", diags)?,
@@ -156,103 +173,5 @@ impl Doc<'_, '_> {
         let message =
             format!("security scheme `{name}` has no `{field}` it can be used by: left out");
         self.warn(diags, code, at, message);
-    }
-
-    /// An OAuth 2.0 scheme's flows by name: 3.x's `flows` keys, 2.0's `flow` lifted.
-    fn flows(&self, at: At) -> Vec<String> {
-        if self.version == Version::V20 {
-            let flow = self.str(at, "flow");
-            return FLOWS_20
-                .iter()
-                .filter(|(old, _)| flow.as_deref() == Some(*old))
-                .map(|(_, new)| (*new).to_owned())
-                .collect();
-        }
-        self.get(at, "flows")
-            .map(|f| self.members(f).into_iter().map(|(name, _)| name).collect())
-            .unwrap_or_default()
-    }
-
-    /// The description's `security`: `None` when it has none or it is not a list.
-    pub(crate) fn security(&self, owner: At, diags: &mut Diagnostics) -> Option<Vec<Requirement>> {
-        let list = self.get(owner, "security")?;
-        let v = self.version;
-        if !self.is(list, true) {
-            let code = if owner == ROOT {
-                oas!(v, "swagger.security", "openapi-object.security")
-            } else {
-                oas!(v, "swagger.security", "operation-object.security")
-            };
-            self.warn(
-                diags,
-                code,
-                list,
-                String::from("`security` is not a list: left out"),
-            );
-            return None;
-        }
-        let declared: Vec<String> = self
-            .declared()
-            .map(|d| self.members(d).into_iter().map(|(n, _)| n).collect())
-            .unwrap_or_default();
-        let mut out = Vec::new();
-        for item in self.items(list) {
-            if !self.is(item, false) {
-                let code = oas!(
-                    v,
-                    "swagger.security",
-                    "security-requirement-object.pattern-name"
-                );
-                let message = String::from("a security requirement is not an object: left out");
-                self.warn(diags, code, item, message);
-                continue;
-            }
-            let mut requirement = Requirement::default();
-            for (name, scopes) in self.members(item) {
-                if !declared.contains(&name) {
-                    let code = match v {
-                        Version::V20 => "swagger.security",
-                        Version::V30 => {
-                            "oas-3.0.security-requirement-object.pattern-name.must-each-name-correspond-security-scheme-declared"
-                        }
-                        Version::V31 => {
-                            "oas-3.1.security-requirement-object.pattern-name.must-each-name-correspond-security-scheme-declared"
-                        }
-                        Version::V32 => {
-                            "oas-3.2.security-requirement-object.pattern-name.must-each-name-uri-correspond-security-scheme"
-                        }
-                    };
-                    let message = format!(
-                        "a security requirement names `{name}`, which no security scheme is declared under"
-                    );
-                    self.warn(diags, code, item, message);
-                }
-                requirement.schemes.retain(|(n, _)| *n != name);
-                requirement.schemes.push((name, self.scopes(scopes, diags)));
-            }
-            out.push(requirement);
-        }
-        Some(out)
-    }
-
-    /// A requirement's scopes: a list of strings; anything else is a warning and no scope.
-    fn scopes(&self, at: At, diags: &mut Diagnostics) -> Vec<String> {
-        let strings: Vec<String> = self
-            .items(at)
-            .into_iter()
-            .filter_map(|(d, n)| Some(self.tree(d)?.as_str(n)?.into_owned()))
-            .collect();
-        if !self.is(at, true) || strings.len() != self.items(at).len() {
-            let code = oas!(
-                self.version,
-                "swagger.security",
-                "security-requirement-object.pattern-name"
-            );
-            let message = String::from(
-                "a requirement's scopes are not a list of strings: read as the strings it holds",
-            );
-            self.warn(diags, code, at, message);
-        }
-        strings
     }
 }

@@ -5,16 +5,15 @@
 //! `readme.headline_method` (else the first method) called with what its operation requires, and
 //! a section is there only when the API has what it is about (environments, pagination,
 //! streaming). The sections after the usage are in `readme/sections.rs`, `api.md` in
-//! `readme/api.rs`; `tests/texts.mjs` compiles every example of both against the client.
+//! `readme/api.rs`, the authentication in `readme/auth.rs`; `tests/texts.mjs` compiles every example of both against the client.
 
 mod api;
+mod auth;
 mod sections;
 mod servers;
 
-use super::suite::{args, options};
+use super::suite::args;
 use super::{Call, Ctx, HEADER, Kind, RepoFile, generated_file, package};
-use crate::client::camel;
-use crate::model::{Auth, KeyLocation};
 use crate::words;
 use std::fmt::Write as _;
 
@@ -86,7 +85,7 @@ fn readme(ctx: &Ctx<'_>) -> String {
     let _ = writeln!(out, "## Install\n\n```sh\nnpm install {package}\n```\n");
     usage(ctx, &mut out);
     sections::resources(ctx, &mut out);
-    auth(ctx, &mut out);
+    auth::section(ctx, &mut out);
     sections::environments(ctx, &mut out);
     servers::servers(ctx, &mut out);
     let first = headline(ctx);
@@ -133,55 +132,5 @@ fn usage(ctx: &Ctx<'_>, out: &mut String) {
     let _ = writeln!(
         out,
         "\nThe package is built twice, as ES modules and as CommonJS, each with its types, and depends on nothing: it calls the platform's `fetch`. From CommonJS the client is taken by its name, `const {{ {client} }} = require('{package}')`; `import {client} from '{package}'` gives it too."
-    );
-}
-
-fn auth(ctx: &Ctx<'_>, out: &mut String) {
-    if ctx.config.auth.is_empty() {
-        return;
-    }
-    out.push_str("\n## Authentication\n\nEach credential is an option of the client, else read from its environment variable:\n\n| Scheme | Sent as | Option | Variable |\n| --- | --- | --- | --- |\n");
-    for a in &ctx.config.auth {
-        let sent = ctx
-            .service
-            .schemes
-            .iter()
-            .find(|s| s.name == a.name)
-            .map_or_else(String::new, |s| match &s.auth {
-                Auth::ApiKey { location, name } => format!(
-                    "an API key in the {} `{name}`",
-                    match location {
-                        KeyLocation::Header => "header",
-                        KeyLocation::Query => "query parameter",
-                        KeyLocation::Cookie => "cookie",
-                    }
-                ),
-                Auth::Http { scheme, .. } if scheme == "basic" => {
-                    String::from("HTTP basic (`{ username, password }`)")
-                }
-                Auth::Http { scheme, .. } => format!("HTTP `{scheme}`"),
-                Auth::OAuth2 { .. } => String::from("an OAuth 2.0 token"),
-                Auth::OpenIdConnect { .. } => String::from("an OpenID Connect token"),
-                Auth::MutualTls => String::from("a client certificate"),
-            });
-        let var = ctx
-            .config
-            .settings
-            .auth_env
-            .iter()
-            .find(|(n, _)| *n == a.name)
-            .map_or_else(|| String::from("—"), |(_, v)| format!("`{v}`"));
-        let _ = writeln!(
-            out,
-            "| `{}` | {sent} | `{}` | {var} |",
-            a.name,
-            camel(&words::words(&a.name))
-        );
-    }
-    let _ = writeln!(
-        out,
-        "\n```ts\nconst client = new {}({})\n```",
-        ctx.client(),
-        options(ctx, None)
     );
 }

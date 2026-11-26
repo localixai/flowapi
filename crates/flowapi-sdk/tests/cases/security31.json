@@ -1,0 +1,169 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "security",
+  "version": "1"
+ },
+ "paths": {
+  "/a": {
+   "get": {
+    "operationId": "inherits",
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "put": {
+    "operationId": "anonymous",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "post": {
+    "operationId": "token",
+    "security": [
+     {
+      "client": [
+       "read"
+      ]
+     },
+     {
+      "empty": []
+     },
+     {
+      "bearer": [],
+      "headerKey": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "patch": {
+    "operationId": "others",
+    "security": [
+     {
+      "oidc": [
+       "openid"
+      ]
+     },
+     {
+      "headerKey": [
+       "admin"
+      ]
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   }
+  }
+ },
+ "security": [
+  {
+   "headerKey": []
+  },
+  {
+   "bearer": [],
+   "basic": []
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "headerKey": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "X-API-Key",
+    "description": "Your *key*",
+    "x-internal": true
+   },
+   "bearer": {
+    "type": "http",
+    "scheme": "Bearer",
+    "bearerFormat": "JWT"
+   },
+   "basic": {
+    "type": "http",
+    "scheme": "basic"
+   },
+   "client": {
+    "type": "oauth2",
+    "flows": {
+     "clientCredentials": {
+      "tokenUrl": "/token?tenant=a",
+      "scopes": {
+       "read": "Read",
+       "x-not": "a scope: 3.x's scopes are a plain map"
+      },
+      "x-note": true
+     },
+     "x-vendorFlow": {
+      "tokenUrl": "https://vendor.example/token",
+      "scopes": {}
+     }
+    }
+   },
+   "empty": {
+    "type": "oauth2",
+    "flows": {
+     "clientCredentials": {
+      "tokenUrl": "https://example.com/token",
+      "scopes": {}
+     }
+    }
+   },
+   "noTokenUrl": {
+    "type": "oauth2",
+    "flows": {
+     "clientCredentials": {
+      "scopes": {}
+     }
+    }
+   },
+   "badTokenUrl": {
+    "type": "oauth2",
+    "flows": {
+     "clientCredentials": {
+      "tokenUrl": "not a url",
+      "scopes": {}
+     }
+    }
+   },
+   "noScopes": {
+    "type": "oauth2",
+    "flows": {
+     "clientCredentials": {
+      "tokenUrl": "https://example.com/token"
+     }
+    }
+   },
+   "oidc": {
+    "type": "openIdConnect",
+    "openIdConnectUrl": "https://example.com/.well-known/openid-configuration"
+   },
+   "cert": {
+    "type": "mutualTLS"
+   }
+  }
+ },
+ "x-flowapi-covers": [
+  "req: oas-3.1.security-scheme-object.fixed-fields.may-object-extended-specification-extensions \u2014 headerKey's `x-internal` read as no field",
+  "req: oas-3.1.oauth-flows-object.clientCredentials \u2014 the client credentials flow printed, which the client runs itself",
+  "req: oas-3.1.oauth-flows-object.fixed-fields.may-object-extended-specification-extensions \u2014 `x-vendorFlow` is no flow",
+  "req: oas-3.1.oauth-flow-object.tokenUrl \u2014 the token URL printed, a relative one with its query as written",
+  "req: oas-3.1.oauth-flow-object.tokenUrl.must-form-url \u2014 a token URL not in the form of a URL is a warning, and no flow",
+  "req: oas-3.1.oauth-flow-object.tokenUrl.required \u2014 a flow with no token URL is a warning, and no flow",
+  "req: oas-3.1.oauth-flow-object.scopes \u2014 the flow's scopes printed",
+  "req: oas-3.1.oauth-flow-object.scopes.may-map-empty \u2014 `empty` has none, and is used",
+  "req: oas-3.1.oauth-flow-object.scopes.required \u2014 a flow with no scopes is a warning, read as none",
+  "req: oas-3.1.oauth-flow-object.fixed-fields.may-object-extended-specification-extensions \u2014 the flow's `x-note` is no field"
+ ]
+}

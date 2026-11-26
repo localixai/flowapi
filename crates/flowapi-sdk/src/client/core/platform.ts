@@ -72,7 +72,7 @@ type Globals = Coders & {
   setTimeout(callback: () => void, ms: number): unknown;
   clearTimeout(timer: unknown): void;
   AbortController: new () => { readonly signal: Signal; abort(reason?: unknown): void };
-  URL: new (url: string, base?: string) => { readonly origin: string; readonly href: string; readonly protocol: string; readonly username: string; readonly password: string };
+  URL: new (url: string, base?: string) => { readonly origin: string; readonly href: string; readonly protocol: string; readonly hostname: string; readonly username: string; readonly password: string };
   crypto?: { randomUUID?(): string; getRandomValues?(bytes: Uint8Array): Uint8Array };
   console?: Logger;
   process?: { env?: { [name: string]: string | undefined } };

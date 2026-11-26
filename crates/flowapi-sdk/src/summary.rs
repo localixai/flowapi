@@ -1,11 +1,11 @@
 //! `flowapi summary`: a description told to an agent in a few kilobytes of JSON, so that it can
 //! write a config without reading the description: its title and version, servers, security
-//! schemes, counts, tags with their operations' counts, and each operation (how a config names
-//! it, method, path, tags, summary, parameters, the media types of its body and of each response,
+//! schemes, the description's `security` (each alternative the schemes it needs), counts, tags with their operations' counts, and each operation (how a config names
+//! it, method, path, tags, summary, its own `security` where it has one, parameters, the media types of its body and of each response,
 //! and the pagination it looks like it has, with why and how sure). Over the budget, the tags
 //! alone, and how to read on: by `--tag` or `--path`.
 
-use crate::model::{Auth, Scheme};
+use crate::model::{Auth, Requirement, Scheme};
 use crate::ops::{Op, Ops};
 use crate::out::{json_list, json_str, short};
 use crate::paging::suggest;
@@ -76,6 +76,11 @@ pub fn summary(docs: &Documents<'_>, filter: &Filter) -> Option<String> {
         .map(scheme)
         .collect();
     let _ = write!(head, ",\n\"securitySchemes\":{{{}}}", schemes.join(","));
+    let root = ops
+        .doc
+        .security(crate::doc::ROOT, &mut Diagnostics::default())
+        .unwrap_or_default();
+    let _ = write!(head, ",\n\"security\":{}", requirements(&root));
     let tags = tags(&ops);
     let _ = write!(
         head,
@@ -147,11 +152,33 @@ fn scheme(s: &Scheme) -> String {
             )
         }
         Auth::Http { scheme, .. } => format!("\"type\":\"http\",\"scheme\":{}", json_str(scheme)),
-        Auth::OAuth2 { flows } => format!("\"type\":\"oauth2\",\"flows\":{}", json_list(flows)),
+        Auth::OAuth2 {
+            flows,
+            client_credentials,
+        } => {
+            let token = client_credentials
+                .as_ref()
+                .map(|f| format!(",\"tokenUrl\":{}", json_str(&f.token_url)))
+                .unwrap_or_default();
+            format!("\"type\":\"oauth2\",\"flows\":{}{token}", json_list(flows))
+        }
         Auth::OpenIdConnect { .. } => String::from("\"type\":\"openIdConnect\""),
         Auth::MutualTls => String::from("\"type\":\"mutualTLS\""),
     };
     format!("{}:{{{fields}}}", json_str(&s.name))
+}
+
+/// Security requirements compactly: each alternative the names of the schemes it needs
+/// together, `[]` for one that needs none.
+fn requirements(list: &[Requirement]) -> String {
+    let alternatives: Vec<String> = list
+        .iter()
+        .map(|r| {
+            let names: Vec<String> = r.schemes.iter().map(|(n, _)| n.clone()).collect();
+            json_list(&names)
+        })
+        .collect();
+    format!("[{}]", alternatives.join(","))
 }
 
 /// One operation, on one line.
@@ -174,6 +201,14 @@ fn operation(ops: &Ops<'_, '_>, i: usize) -> String {
     }
     if o.deprecated {
         out.push_str(",\"deprecated\":true");
+    }
+    let root = ops
+        .doc
+        .security(crate::doc::ROOT, &mut Diagnostics::default())
+        .unwrap_or_default();
+    let (security, inherits) = ops.doc.effective(o, &root, &mut Diagnostics::default());
+    if !inherits {
+        let _ = write!(out, ",\"security\":{}", requirements(&security));
     }
     let params: Vec<String> = o
         .params

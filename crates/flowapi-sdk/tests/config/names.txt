@@ -1,6 +1,8 @@
 error[config.name.duplicate]: the environment `Production` and the environment `production` are one name (`production`) in `environments`
   at names.yml:11:3 (/environments/Production)
   hint: rename one; `production` is at /environments/production
+warning[config.auth.unlisted]: `pets.list_all` needs `ApiKeyAuth`, which `auth` does not list: the client sends no credential for it
+  at names.yml:15:7 (/resources/pets/methods/list_all)
 error[config.name.duplicate]: the method `listAll` and the method `list_all` are one name (`list all`) in `pets`
   at names.yml:16:7 (/resources/pets/methods/listAll)
   hint: rename one; `list_all` is at /resources/pets/methods/list_all

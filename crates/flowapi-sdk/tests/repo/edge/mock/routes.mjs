@@ -3,6 +3,9 @@
 // The operations the client calls, as the mock server answers them (server.mjs).
 
 export default [
-  { "route": "GET /status", "method": "GET", "path": "/status", "query": [], "headers": [], "cookies": [], "body": null, "status": 200, "media": "application/json", "example": {"up": false} },
-  { "route": "GET /near", "method": "GET", "path": "/near", "query": [], "headers": [], "cookies": [], "body": null, "status": 200, "media": "application/json", "example": {"up": false} },
+  { "route": "GET /status", "method": "GET", "path": "/status", "query": [], "headers": [], "cookies": [], "body": null, "security": [], "status": 200, "media": "application/json", "example": {"up": false} },
+  { "route": "GET /near", "method": "GET", "path": "/near", "query": [], "headers": [], "cookies": [], "body": null, "security": [], "status": 200, "media": "application/json", "example": {"up": false} },
 ]
+
+// The token endpoints of the client credentials flows, by path.
+export const tokens = []

@@ -1,0 +1,4 @@
+warning[config.auth.env]: `CookieKey` names no environment variable: the client sends it only when given its option
+  at flowapi-sdk.yml:10:3 (/auth/CookieKey)
+warning[config.auth.env]: `Oauth` names no environment variable: the client sends it only when given its option
+  at flowapi-sdk.yml:13:3 (/auth/Oauth)

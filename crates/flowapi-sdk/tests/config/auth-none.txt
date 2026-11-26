@@ -1,0 +1,2 @@
+warning[config.auth.none]: no operation needs a credential, by the description's `security` or the config's: the client sends none; if the API takes one, declare it under `auth` and name it in `security`; `security: []` says it takes none
+  at auth-none.yml:3:1 (/)

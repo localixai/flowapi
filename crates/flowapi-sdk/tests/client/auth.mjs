@@ -63,7 +63,8 @@ export function tests(built) {
       assert.ok(fetch.calls[2].url.endsWith('/both?api_key=k'))
       const e = await rejection(client(built, fetch, { token: 't' }).checks.both())
       assert.ok(e instanceof SdkError, String(e))
-      assert.match(e.message, /`GET \/both` needs a credential: set `queryKey` or AUTH_QUERY_KEY and `token` or AUTH_TOKEN/)
+      assert.match(e.message, /`GET \/both` needs a credential: set `queryKey` or AUTH_QUERY_KEY$/)
+      assert.ok(e instanceof built.auth.CredentialError && e.schemes.includes('QueryKey'), String(e))
       assert.equal(fetch.calls.length, 3)
     })],
     ['security: [] sends nothing, whatever the client holds', () => clean(async () => {

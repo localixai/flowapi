@@ -10,7 +10,7 @@ const $settings: $core.Settings = {
   client: "Hosts",
   environments: {  },
   logEnv: "HOSTS_LOG",
-  auth: {  },
+  auth: { "Client": { option: "client", clientIdEnv: "HOSTS_CLIENT_ID", clientSecretEnv: "HOSTS_CLIENT_SECRET" } },
   timeout: 60000,
   maxRetries: 1,
   maxRetryDelay: 60000,
@@ -22,6 +22,8 @@ const $settings: $core.Settings = {
 
 /** The options of a `Hosts`: the runtime's, and a credential for each security scheme it sends. */
 export type HostsOptions = $core.ClientOptions<never> & {
+  /** The credential of the security scheme `Client`: a token, or the client's id and secret to request one with, else `HOSTS_CLIENT_ID`, `HOSTS_CLIENT_SECRET`; `null` reads no variable. */
+  client?: $core.Credential | $core.ClientCredentials | null | undefined;
   /** Values of the servers' variables, over their defaults. */
   serverVariables?: { "region"?: "eu" | "us" | undefined; "version"?: string | undefined; "zone"?: "a" | "b" | undefined } | undefined;
 };

@@ -30,10 +30,10 @@ error[config.schema.required]: `/pagination/paged/request` needs `page`: The par
 error[config.schema.unknown]: `pages` is not a member of `/pagination/paged/request` (it has page, per_page)
   at format.yml:17:16 (/pagination/paged/request/pages)
   hint: did you mean `page`?
-error[config.schema.unknown]: `resoures` is not a member of `/` (it has version, generator, spec, package, environments, auth, defaults, pagination, resources, skip, readme)
+error[config.schema.unknown]: `resoures` is not a member of `/` (it has version, generator, spec, package, environments, auth, security, defaults, pagination, resources, skip, readme)
   at format.yml:18:1 (/resoures)
   hint: did you mean `resources`?
-error[config.schema.unknown]: `overrides` is not a member of `/` (it has version, generator, spec, package, environments, auth, defaults, pagination, resources, skip, readme)
+error[config.schema.unknown]: `overrides` is not a member of `/` (it has version, generator, spec, package, environments, auth, security, defaults, pagination, resources, skip, readme)
   at format.yml:19:1 (/overrides)
 error[config.coverage]: `getPet` is in no resource and not in `skip`
   at format.yml:21:3 (/resources)
@@ -65,7 +65,9 @@ error[config.coverage]: `GET /internal/health` is in no resource and not in `ski
 error[config.schema.unknown]: `methds` is not a member of `/resources/pets` (it has methods, resources)
   at format.yml:22:5 (/resources/pets/methds)
   hint: did you mean `methods`?
-error[config.schema.unknown]: `pagniation` is not a member of `/resources/pets/methods/list` (it has op, pagination, retries, stream)
+warning[config.auth.unlisted]: `pets.list` needs `ApiKeyAuth`, which `auth` does not list: the client sends no credential for it
+  at format.yml:24:7 (/resources/pets/methods/list)
+error[config.schema.unknown]: `pagniation` is not a member of `/resources/pets/methods/list` (it has op, pagination, retries, stream, security)
   at format.yml:24:29 (/resources/pets/methods/list/pagniation)
   hint: did you mean `pagination`?
 error[config.schema.range]: `/resources/pets/methods/list/retries` is 11; it is an integer from 0 to 10

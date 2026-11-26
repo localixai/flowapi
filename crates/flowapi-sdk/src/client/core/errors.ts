@@ -121,3 +121,47 @@ export class CrossOriginRedirectError extends SdkError {
     this.location = location;
   }
 }
+
+/** A call's security cannot be met: none of its alternatives has every credential it needs, or a
+ * credential given is not one its scheme can send. Thrown before anything is sent; `schemes`
+ * names the schemes asked for. */
+export class CredentialError extends SdkError {
+  readonly schemes: readonly string[];
+  constructor(message: string, schemes: readonly string[]) {
+    super(message);
+    this.schemes = schemes;
+  }
+}
+
+/** A request would carry credentials in the clear: over `http:` to a host that is not loopback.
+ * Thrown before it is sent; `allowInsecureCredentials` lets it go. */
+export class InsecureCredentialError extends SdkError {
+  readonly url: string;
+  constructor(url: string) {
+    super(`credentials go only over https or to a loopback host, not to ${url.replace(/[?#].*$/, "")}; set \`allowInsecureCredentials\` to send them anyway`);
+    this.url = url;
+  }
+}
+
+/** The token endpoint refused a client credentials grant (RFC 6749 5.2), or answered with no
+ * token the client can use: `error` its code (`invalid_client`, ...), `description` its text. */
+export class TokenError extends SdkError {
+  readonly status: number;
+  readonly error: string;
+  readonly description: string | null;
+  readonly uri: string | null;
+  constructor(status: number, error: string, description: string | null, uri: string | null) {
+    super(`the token endpoint answered ${status} ${error}${description === null ? "" : `: ${description}`}`);
+    this.status = status;
+    this.error = error;
+    this.description = description;
+    this.uri = uri;
+  }
+
+  /** The error of an answer that is not a success: its `error`, `error_description` and
+   * `error_uri`, else its text. */
+  static of(status: number, body: { readonly [member: string]: unknown }, text: string): TokenError {
+    const str = (v: unknown): string | null => (typeof v === "string" && v !== "" ? v : null);
+    return new TokenError(status, str(body["error"]) ?? "invalid_response", str(body["error_description"]) ?? (str(body["error"]) === null ? text.slice(0, 200) || null : null), str(body["error_uri"]));
+  }
+}

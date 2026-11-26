@@ -1,0 +1,95 @@
+{
+ "swagger": "2.0",
+ "info": {
+  "title": "oauth",
+  "version": "1"
+ },
+ "host": "api.example.com",
+ "schemes": [
+  "https"
+ ],
+ "securityDefinitions": {
+  "app": {
+   "type": "oauth2",
+   "flow": "application",
+   "tokenUrl": "https://example.com/token",
+   "description": "The *client's* own",
+   "x-internal": true,
+   "scopes": {
+    "pets:read": "Read pets",
+    "pets:write": "Write pets",
+    "x-note": "an extension, no scope"
+   }
+  },
+  "relative": {
+   "type": "oauth2",
+   "flow": "application",
+   "tokenUrl": "/token",
+   "scopes": {}
+  },
+  "noTokenUrl": {
+   "type": "oauth2",
+   "flow": "application",
+   "scopes": {}
+  },
+  "noScopes": {
+   "type": "oauth2",
+   "flow": "application",
+   "tokenUrl": "https://example.com/token"
+  },
+  "key": {
+   "type": "apiKey",
+   "in": "header",
+   "name": "X-Key",
+   "description": "A key",
+   "x-vendor": {
+    "a": 1
+   }
+  }
+ },
+ "security": [
+  {
+   "app": [
+    "pets:read"
+   ]
+  }
+ ],
+ "paths": {
+  "/pets": {
+   "get": {
+    "operationId": "listPets",
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "post": {
+    "operationId": "addPet",
+    "security": [
+     {
+      "app": [
+       "pets:write"
+      ]
+     },
+     {
+      "key": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   }
+  }
+ },
+ "x-flowapi-covers": [
+  "req: oas-2.0.security-scheme-object.description \u2014 a scheme's description printed as written",
+  "req: oas-2.0.security-scheme-object.tokenUrl \u2014 the application flow's token URL printed, which the client requests at; a relative one kept as written",
+  "req: oas-2.0.security-scheme-object.scopes \u2014 the application flow's scopes printed; a flow with no scopes is a warning, read as none",
+  "req: oas-2.0.security-scheme-object.x \u2014 `x-internal` and `x-vendor` read as no field",
+  "req: oas-2.0.scopes-object.pattern-name \u2014 each scope by its name",
+  "req: oas-2.0.scopes-object.pattern-x \u2014 `x-note` is an extension, no scope"
+ ]
+}

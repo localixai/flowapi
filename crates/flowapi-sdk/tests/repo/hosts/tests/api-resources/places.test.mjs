@@ -12,7 +12,7 @@ let client
 
 before(async () => {
   server = await mock()
-  client = new Hosts({ baseURL: server.url, maxRetries: 0 })
+  client = new Hosts({ baseURL: server.url, client: { clientId: 'test-client', clientSecret: 'test-secret', tokenURL: `${server.url}/oauth/token` }, maxRetries: 0 })
 })
 
 after(() => server.close())

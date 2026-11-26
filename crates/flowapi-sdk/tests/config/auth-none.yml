@@ -1,0 +1,22 @@
+# No operation needs a credential once the config's `security` is over them (`{}` alone), and
+# the config does not say so with `security: []`: the client sends none, which is warned of.
+version: 1
+spec: spec.json
+package: { name: petshop, client: PetShop }
+security:
+  - {}
+resources:
+  pets:
+    methods:
+      list: listPets
+skip:
+  - { op: createPet, reason: elsewhere }
+  - { op: getPet, reason: elsewhere }
+  - { op: updatePet, reason: elsewhere }
+  - { op: deletePet, reason: elsewhere }
+  - { op: listPhotos, reason: elsewhere }
+  - { op: listOwners, reason: elsewhere }
+  - { op: streamEvents, reason: elsewhere }
+  - { op: getCollision, reason: elsewhere }
+  - { op: listUsers, reason: elsewhere }
+  - { op: "GET /internal/health", reason: not public }

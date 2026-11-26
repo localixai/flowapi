@@ -3,16 +3,19 @@
 // The operations the client calls, as the mock server answers them (server.mjs).
 
 export default [
-  { "route": "GET /query", "method": "GET", "path": "/query", "query": [], "headers": [], "cookies": [], "body": null, "status": 200, "media": "application/json", "example": {"ok": false} },
-  { "route": "GET /cookie", "method": "GET", "path": "/cookie", "query": [], "headers": [], "cookies": [], "body": null, "status": 200, "media": "application/json", "example": {"ok": false} },
-  { "route": "GET /basic", "method": "GET", "path": "/basic", "query": [], "headers": [], "cookies": [], "body": null, "status": 200, "media": "application/json", "example": {"ok": false} },
-  { "route": "GET /either", "method": "GET", "path": "/either", "query": [], "headers": [], "cookies": [], "body": null, "status": 200, "media": "application/json", "example": {"ok": false} },
-  { "route": "GET /both", "method": "GET", "path": "/both", "query": [], "headers": [], "cookies": [], "body": null, "status": 200, "media": "application/json", "example": {"ok": false} },
-  { "route": "GET /open", "method": "GET", "path": "/open", "query": [], "headers": [], "cookies": [], "body": null, "status": 200, "media": "application/json", "example": {"ok": false} },
-  { "route": "GET /oauth", "method": "GET", "path": "/oauth", "query": [], "headers": [], "cookies": [], "body": null, "status": 200, "media": "application/json", "example": {"ok": false} },
-  { "route": "GET /elsewhere", "method": "GET", "path": "/elsewhere", "query": [], "headers": [], "cookies": [], "body": null, "status": 200, "media": "application/json", "example": {"ok": false} },
-  { "route": "GET /lines", "method": "GET", "path": "/lines", "query": [], "headers": [], "cookies": [], "body": null, "status": 200, "media": "application/x-ndjson", "example": {} },
-  { "route": "DELETE /things/{id}", "method": "DELETE", "path": "/things/{id}", "query": [], "headers": [], "cookies": [], "body": null, "status": 204, "media": null, "example": null },
-  { "route": "PUT /things/{id}", "method": "PUT", "path": "/things/{id}", "query": [], "headers": [], "cookies": [], "body": null, "status": 200, "media": "application/json", "example": {"ok": false} },
-  { "route": "GET /deep", "method": "GET", "path": "/deep", "query": [], "headers": [], "cookies": [], "body": null, "status": 200, "media": "application/json", "example": {"ok": false} },
+  { "route": "GET /query", "method": "GET", "path": "/query", "query": [], "headers": [], "cookies": [], "body": null, "security": [[{ "scheme": "QueryKey", "kind": "apiKey", "in": "query", "name": "api_key" }]], "status": 200, "media": "application/json", "example": {"ok": false} },
+  { "route": "GET /cookie", "method": "GET", "path": "/cookie", "query": [], "headers": [], "cookies": [], "body": null, "security": [[{ "scheme": "CookieKey", "kind": "apiKey", "in": "cookie", "name": "session" }]], "status": 200, "media": "application/json", "example": {"ok": false} },
+  { "route": "GET /basic", "method": "GET", "path": "/basic", "query": [], "headers": [], "cookies": [], "body": null, "security": [[{ "scheme": "Basic", "kind": "basic" }]], "status": 200, "media": "application/json", "example": {"ok": false} },
+  { "route": "GET /either", "method": "GET", "path": "/either", "query": [], "headers": [], "cookies": [], "body": null, "security": [[{ "scheme": "Token", "kind": "bearer" }], [{ "scheme": "Basic", "kind": "basic" }]], "status": 200, "media": "application/json", "example": {"ok": false} },
+  { "route": "GET /both", "method": "GET", "path": "/both", "query": [], "headers": [], "cookies": [], "body": null, "security": [[{ "scheme": "QueryKey", "kind": "apiKey", "in": "query", "name": "api_key" }, { "scheme": "Token", "kind": "bearer" }]], "status": 200, "media": "application/json", "example": {"ok": false} },
+  { "route": "GET /open", "method": "GET", "path": "/open", "query": [], "headers": [], "cookies": [], "body": null, "security": [], "status": 200, "media": "application/json", "example": {"ok": false} },
+  { "route": "GET /oauth", "method": "GET", "path": "/oauth", "query": [], "headers": [], "cookies": [], "body": null, "security": [[{ "scheme": "Oauth", "kind": "bearer", "flow": true }]], "status": 200, "media": "application/json", "example": {"ok": false} },
+  { "route": "GET /elsewhere", "method": "GET", "path": "/elsewhere", "query": [], "headers": [], "cookies": [], "body": null, "security": [], "status": 200, "media": "application/json", "example": {"ok": false} },
+  { "route": "GET /lines", "method": "GET", "path": "/lines", "query": [], "headers": [], "cookies": [], "body": null, "security": [], "status": 200, "media": "application/x-ndjson", "example": {} },
+  { "route": "DELETE /things/{id}", "method": "DELETE", "path": "/things/{id}", "query": [], "headers": [], "cookies": [], "body": null, "security": [], "status": 204, "media": null, "example": null },
+  { "route": "PUT /things/{id}", "method": "PUT", "path": "/things/{id}", "query": [], "headers": [], "cookies": [], "body": null, "security": [], "status": 200, "media": "application/json", "example": {"ok": false} },
+  { "route": "GET /deep", "method": "GET", "path": "/deep", "query": [], "headers": [], "cookies": [], "body": null, "security": [], "status": 200, "media": "application/json", "example": {"ok": false} },
 ]
+
+// The token endpoints of the client credentials flows, by path.
+export const tokens = ["/token"]

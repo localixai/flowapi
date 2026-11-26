@@ -1,15 +1,14 @@
 //! The config held to its description (study 03, section 6, items 2, 5 and 6): every reference
 //! names an operation, no operation is in two places, every operation is in a resource or in
 //! `skip`; each method's pagination fits its operation; a streamed method's response is a
-//! stream; `auth` names the description's security schemes; `default` names an environment; the
-//! README's methods exist.
+//! stream; `default` names an environment; the README's methods exist. `auth` and `security` are
+//! held in `auth.rs`.
 
 use super::issue::{At, Issues, closest};
 use super::model::{Config, Method, PagingRef};
 use crate::ops::{Lookup, Ops};
 use crate::paging::{Paging, fit};
 use crate::words;
-use flowapi::Diagnostics;
 
 /// The operation each method calls, by index into `c.methods`; `None` where it names none.
 pub(crate) fn references(c: &Config, ops: &Ops<'_, '_>, issues: &mut Issues) -> Vec<Option<usize>> {
@@ -175,29 +174,8 @@ pub(crate) fn streams(op: &flowapi::spec::Operation) -> bool {
         })
 }
 
-/// `auth`, `environments.default` and `readme`, each held to what it names.
-pub(crate) fn rest(c: &Config, ops: &Ops<'_, '_>, resolved: &[Option<usize>], issues: &mut Issues) {
-    let schemes: Vec<String> = ops
-        .doc
-        .schemes(&mut Diagnostics::default())
-        .into_iter()
-        .map(|s| s.name)
-        .collect();
-    for a in &c.auth {
-        if !schemes.contains(&a.name) {
-            let message = if schemes.is_empty() {
-                format!(
-                    "`{}` names no security scheme: the description has none",
-                    a.name
-                )
-            } else {
-                format!("`{}` names no security scheme of the description", a.name)
-            };
-            let hint = closest(&a.name, schemes.iter().map(String::as_str))
-                .map(|n| format!("did you mean `{n}`?"));
-            issues.error_hint("config.auth.unknown", &a.at, message, hint);
-        }
-    }
+/// `environments.default` and `readme`, each held to what it names (`auth` is `auth.rs`'s).
+pub(crate) fn rest(c: &Config, resolved: &[Option<usize>], issues: &mut Issues) {
     if let Some(d) = &c.default_environment
         && !c.environments.iter().any(|e| words::same(&e.name, &d.name))
     {

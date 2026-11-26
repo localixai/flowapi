@@ -1085,10 +1085,13 @@ export const flowapiServers = [
 /**
  * The security schemes, by name: `apiKey` a key sent `in` a header, a query parameter or a
  * cookie under `name`; `http` as `Authorization: <scheme> <credentials>`; `oauth2` and
- * `openIdConnect` a token the caller obtained, sent as a bearer token. `mutualTLS` is a client
- * certificate, which no request carries: a client cannot send it, only its transport can.
+ * `openIdConnect` a token sent as a bearer token, which the caller obtained or, for OAuth 2.0's
+ * `clientCredentials` flow, the client requests at its `tokenUrl` (relative to the server's URL
+ * where it is relative) for the scopes it needs. `mutualTLS` is a client certificate, which no
+ * request carries: a client cannot send it, only its transport can.
  */
 export const flowapiSecuritySchemes = {
+  "Client": { type: "oauth2", flows: ["clientCredentials"], clientCredentials: { tokenUrl: "https://login.hosts.example/oauth/token", scopes: [] } },
 } as const;
 
 /**
@@ -1105,7 +1108,7 @@ export const flowapiOperations = {
   listItems: {
     method: "GET",
     path: "/items",
-    security: [],
+    security: [{ "Client": [] }, {}],
     responses: { "200": { content: { "application/json": "json" } } },
     request: listItemsRequest,
     response: listItemsResponse,
@@ -1113,7 +1116,7 @@ export const flowapiOperations = {
   createItem: {
     method: "POST",
     path: "/items",
-    security: [],
+    security: [{ "Client": [] }, {}],
     responses: { "201": { content: { "application/json": "json" } } },
     request: createItemRequest,
     response: createItemResponse,
@@ -1121,7 +1124,7 @@ export const flowapiOperations = {
   replaceItem: {
     method: "PUT",
     path: "/items/{id}",
-    security: [],
+    security: [{ "Client": [] }, {}],
     responses: { "200": { content: { "application/json": "json" } } },
     request: replaceItemRequest,
     response: replaceItemResponse,
@@ -1129,7 +1132,7 @@ export const flowapiOperations = {
   deleteItem: {
     method: "DELETE",
     path: "/items/{id}",
-    security: [],
+    security: [{ "Client": [] }, {}],
     responses: { "204": { content: {} } },
     request: deleteItemRequest,
     response: deleteItemResponse,
@@ -1137,7 +1140,7 @@ export const flowapiOperations = {
   describeItem: {
     method: "OPTIONS",
     path: "/items/{id}",
-    security: [],
+    security: [{ "Client": [] }, {}],
     responses: { "204": { content: {} } },
     request: describeItemRequest,
     response: describeItemResponse,
@@ -1145,7 +1148,7 @@ export const flowapiOperations = {
   checkItem: {
     method: "HEAD",
     path: "/items/{id}",
-    security: [],
+    security: [{ "Client": [] }, {}],
     responses: { "200": { content: {} } },
     request: checkItemRequest,
     response: checkItemResponse,
@@ -1153,7 +1156,7 @@ export const flowapiOperations = {
   editItem: {
     method: "PATCH",
     path: "/items/{id}",
-    security: [],
+    security: [{ "Client": [] }, {}],
     responses: { "200": { content: { "application/json": "json" } } },
     request: editItemRequest,
     response: editItemResponse,
@@ -1161,7 +1164,7 @@ export const flowapiOperations = {
   purgeItems: {
     method: "DELETE",
     path: "/purge",
-    security: [],
+    security: [{ "Client": [] }, {}],
     responses: { "204": { content: {} } },
     request: purgeItemsRequest,
     response: purgeItemsResponse,
@@ -1170,7 +1173,7 @@ export const flowapiOperations = {
     method: "GET",
     path: "/status",
     servers: [{ url: "." }],
-    security: [],
+    security: [{ "Client": [] }, {}],
     responses: { "200": { content: { "application/json": "json" } } },
     request: localStatusRequest,
     response: localStatusResponse,
@@ -1179,7 +1182,7 @@ export const flowapiOperations = {
     method: "GET",
     path: "/edge",
     servers: [{ url: "https://{zone}.edge.example", variables: { "zone": { default: "a", enum: ["a", "b"] } } }],
-    security: [],
+    security: [{ "Client": [] }, {}],
     responses: { "200": { content: { "application/json": "json" } } },
     request: edgeStatusRequest,
     response: edgeStatusResponse,

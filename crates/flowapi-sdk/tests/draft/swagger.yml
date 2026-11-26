@@ -17,6 +17,12 @@ auth:
     env_var: API_2ND_HAND_MARKET_KEY
   oauth:
     env_var: API_2ND_HAND_MARKET_OAUTH
+# No operation of the description needs a credential, so the client sends none. If the API
+# takes one, find it in the API's documentation, declare it under `auth` when the
+# description lacks it, and name it in `security`, for example:
+# security:
+#   - key: []
+security: []
 defaults:
   retries: 1
   timeout: 60

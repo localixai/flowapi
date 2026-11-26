@@ -1,0 +1,30 @@
+# OAuth 2.0's client credentials flow run by the client (a token URL relative to the server with a
+# query of its own, scopes by operation; another with the config's scopes), a deprecated API key,
+# an alternative that is `{}`, an HTTP scheme sent as given (GNAP), one that answers a challenge
+# (Digest), a client certificate, and OpenID Connect named by URI (3.2).
+version: 1
+spec: spec.json
+package: { name: tokens-sdk, client: Tokens, license: MIT }
+auth:
+  Client: { client_id_env_var: TOKENS_CLIENT_ID, client_secret_env_var: TOKENS_CLIENT_SECRET }
+  Partner: { env_var: TOKENS_PARTNER_TOKEN, client_id_env_var: TOKENS_PARTNER_ID, client_secret_env_var: TOKENS_PARTNER_SECRET, scopes: [partner.read] }
+  Legacy: { env_var: TOKENS_KEY }
+  Gnap: { env_var: TOKENS_GNAP }
+  Digest: {}
+  Cert: {}
+  Oidc: { env_var: TOKENS_OIDC }
+defaults: { retries: 0 }
+resources:
+  things:
+    methods:
+      list: listThings
+      write: writeThing
+  others:
+    methods:
+      partner: partner
+      legacy: legacy
+      optional: optional
+      gnap: gnap
+      digest: digest
+      cert: cert
+      oidc: oidc

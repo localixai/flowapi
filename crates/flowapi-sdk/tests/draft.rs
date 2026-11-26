@@ -156,3 +156,35 @@ fn a_schema_has_no_draft() {
     docs.add("s.json", r#"{"type":"string"}"#).expect("JSON");
     assert_eq!(flowapi_sdk::draft(&docs, "s.json"), None);
 }
+
+/// A description whose schemes no config can answer in full (a client certificate, an HTTP
+/// scheme that answers a challenge, a deprecated scheme): its draft lists each, and the only
+/// issues are the three warnings of what the description holds.
+#[test]
+fn a_draft_warns_only_of_what_the_description_holds() {
+    let spec = root().join("client/tokens/spec.json");
+    let text = std::fs::read_to_string(&spec).expect("the description");
+    let printed = draft("tokens.json", &text);
+    for listed in [
+        "  Cert: {}",
+        "  Digest: {}",
+        "  Legacy:\n    env_var: TOKENS_LEGACY",
+        "    client_id_env_var: TOKENS_CLIENT_CLIENT_ID",
+    ] {
+        assert!(printed.contains(listed), "{listed:?} in:\n{printed}");
+    }
+    let issues = issues("tokens.json", &text, &printed);
+    let codes: Vec<&str> = issues
+        .lines()
+        .filter_map(|l| l.split_once(']').map(|(c, _)| c))
+        .collect();
+    assert_eq!(
+        codes,
+        [
+            "warning[config.auth.mutual_tls",
+            "warning[config.auth.refused",
+            "warning[config.auth.deprecated"
+        ],
+        "{issues}"
+    );
+}

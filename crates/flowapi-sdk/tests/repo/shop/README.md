@@ -47,12 +47,12 @@ The package is built twice, as ES modules and as CommonJS, each with its types, 
 
 ## Authentication
 
-Each credential is an option of the client, else read from its environment variable:
+| Scheme | Kind | Sent as | Option | Environment variables |
+| --- | --- | --- | --- | --- |
+| `ApiKeyAuth` | API key | the header `X-API-Key` | `apiKeyAuth`: the key | `SHOP_API_KEY`: the key |
+| `BearerAuth` | HTTP bearer | `Authorization: Bearer <token>` | `bearerAuth`: the token | `SHOP_TOKEN`: the token |
 
-| Scheme | Sent as | Option | Variable |
-| --- | --- | --- | --- |
-| `ApiKeyAuth` | an API key in the header `X-API-Key` | `apiKeyAuth` | `SHOP_API_KEY` |
-| `BearerAuth` | HTTP `bearer` | `bearerAuth` | `SHOP_TOKEN` |
+An operation's security is a list of alternatives: the client sends the first one it holds every credential of, and an operation that needs none sends none. Each credential is an option of the client, else read from its environment variables when a call needs it; a call none of whose alternatives can be met throws `CredentialError`, naming the options and variables, before anything is sent. Credentials go only over `https:`, or to `localhost`, `127.0.0.1` and `[::1]`: elsewhere a call over plain `http:` throws `InsecureCredentialError`, unless the client is given `allowInsecureCredentials: true`. The log writes each as `***`, and a redirect to another origin is not followed unless `allowCrossOriginRedirects` is set, and then without them.
 
 ```ts
 const client = new Shop({ apiKeyAuth: '…', bearerAuth: '…' })

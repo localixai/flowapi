@@ -1,0 +1,41 @@
+{
+ "openapi": "3.2.0",
+ "info": { "title": "Tokens", "version": "1" },
+ "servers": [{ "url": "https://api.tokens.example/v1" }],
+ "security": [{ "Client": ["read"] }],
+ "paths": {
+  "/things": {
+   "get": { "operationId": "listThings", "responses": { "200": { "$ref": "#/components/responses/Ok" } } },
+   "post": { "operationId": "writeThing", "security": [{ "Client": ["read", "write"] }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } }
+  },
+  "/partner": { "get": { "operationId": "partner", "security": [{ "Partner": [] }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/legacy": { "get": { "operationId": "legacy", "security": [{ "Legacy": [] }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/optional": { "get": { "operationId": "optional", "security": [{ "Legacy": [] }, {}], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/gnap": { "get": { "operationId": "gnap", "security": [{ "Gnap": [] }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/digest": { "get": { "operationId": "digest", "security": [{ "Digest": [] }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/cert": { "get": { "operationId": "cert", "security": [{ "Cert": [] }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/oidc": { "get": { "operationId": "oidc", "security": [{ "#/components/securitySchemes/Oidc": ["openid"] }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } }
+ },
+ "components": {
+  "responses": {
+   "Ok": { "description": "ok", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } }
+  },
+  "securitySchemes": {
+   "Client": {
+    "type": "oauth2",
+    "description": "The client's own credentials",
+    "flows": {
+     "clientCredentials": { "tokenUrl": "/oauth/token?tenant=main", "scopes": { "read": "Read things", "write": "Write things" }, "x-note": "an extension of the flow" },
+     "x-vendor": { "tokenUrl": "https://nowhere.example" }
+    },
+    "x-internal": true
+   },
+   "Partner": { "type": "oauth2", "flows": { "clientCredentials": { "tokenUrl": "https://login.tokens.example/token", "scopes": {} } } },
+   "Legacy": { "type": "apiKey", "in": "header", "name": "X-Api-Key", "deprecated": true },
+   "Gnap": { "type": "http", "scheme": "GNAP" },
+   "Digest": { "type": "http", "scheme": "Digest" },
+   "Cert": { "type": "mutualTLS" },
+   "Oidc": { "type": "openIdConnect", "openIdConnectUrl": "https://login.tokens.example/.well-known/openid-configuration" }
+  }
+ }
+}

@@ -222,8 +222,8 @@ read one at a time with `--tag` or `--path`. `config check` holds the config to 
 member it does not name is an error) and to the description: every operation is in a resource
 or in `skip` with a reason, every reference names an operation (a typo names the closest), names
 are compared as words (`list_all` and `listAll` are one name), a method's pagination fits its
-operation's parameters and response schema, `auth` names the description's security schemes.
-A draft passes the check, and the same description written in another order gives the same
+operation's parameters and response schema, `auth` and `security` name schemes that exist
+(below). A draft passes the check, but for the warnings of a scheme the client cannot send itself, and the same description written in another order gives the same
 draft. A drafted method's name leaves out the words its resource already says
 (`actions/get-actions-cache-retention-limit-for-enterprise` in `actions` is
 `get_cache_retention_limit_for_enterprise`), keeps a word that qualifies it (`users`'
@@ -263,6 +263,56 @@ It also times each attempt out with its body read, removes its listener from the
 its logs, reads lists by each pagination scheme with a guard against a server that loops, and
 reads server-sent events and JSON lines whatever the chunks. A call is awaited for its data;
 `asResponse()` and `withResponse()` give the raw response.
+
+#### Authentication
+
+The client sends what an operation's security says, as OpenAPI writes it: the alternatives in
+order, the first it holds every credential of; the schemes of one alternative together; `{}` a
+credential that is optional, `security: []` none; an operation's own over the description's,
+and a name in a referenced document read from the entry document (Appendix F). Each scheme is an
+option of the client, else read from the environment variables `auth` names:
+
+| Scheme | Sent as |
+| --- | --- |
+| `apiKey` | The key in its header, query parameter or cookie |
+| `http` `bearer` | `Authorization: Bearer <token>`, the token held to RFC 6750's syntax |
+| `http` `basic` | `Authorization: Basic <base64>` of the UTF-8 `user:password` (RFC 7617: no `:` in the user-id, no control character) |
+| another `http` scheme | `Authorization: <scheme> <credential>`; one that answers a challenge (`digest`, `negotiate`, `hoba`, ...) is refused, and a call gives `Authorization` itself |
+| `oauth2`, `openIdConnect` | `Authorization: Bearer <token>`, a token or a function that gives one |
+| `oauth2` with a client credentials flow | The same, the token requested by the client (RFC 6749 4.4): a POST of the form to `tokenUrl` (relative to the server's URL where it is relative, its query kept), the client's id and secret by HTTP basic and never in the body, the scopes the operation needs; held until shortly before it expires, one request for the calls that wait on it, requested again once on a 401; an error answer is a `TokenError` |
+| `mutualTLS` | Nothing a request carries: the option `true`, and a `fetch` that presents the certificate |
+
+A call none of whose alternatives can be met throws `CredentialError` before sending, naming the
+options and variables that would meet each. Credentials go only over `https:` or to `localhost`,
+`127.0.0.1` and `[::1]`; elsewhere `InsecureCredentialError`, unless `allowInsecureCredentials:
+true`. A deprecated scheme still works, its option marked `@deprecated`.
+
+The config declares what the description lacks, as the Security Scheme Object names it, and a
+`security` over the operations' (the top level for those with none of their own, a method's over
+everything):
+
+```yaml
+auth:
+  Token: { type: http, scheme: bearer, env_var: GITHUB_TOKEN }           # a scheme the description lacks
+  ApiKey: { env_var: ACME_KEY }                                          # one it declares: options only
+  Admin: { type: http, scheme: basic, username_env_var: ACME_USER, password_env_var: ACME_PASSWORD }
+  Service: { type: oauth2, token_url: https://login.acme.com/token, client_id_env_var: ACME_ID, client_secret_env_var: ACME_SECRET, scopes: [read] }
+security: [{ Token: [] }, {}]                                            # a token, optional
+```
+
+`config check` errs on a scheme of the description given a `type` again (`config.auth.declared`),
+a name no scheme has (`config.auth.unknown`, `config.security.unknown`), a missing or foreign
+member (`config.auth.field`), a `type` or `in` no scheme has (`config.auth.type`,
+`config.auth.in`) and an option of another kind or without its pair (`config.auth.option`). It
+warns when no operation needs a credential (`config.auth.none`; `security: []` says so on
+purpose), of a scheme an operation needs that `auth` does not list (`config.auth.unlisted`) or
+that names no variable (`config.auth.env`), and of the description's own: a scheme that answers a
+challenge (`config.auth.refused`), a client certificate (`config.auth.mutual_tls`), a deprecated
+scheme (`config.auth.deprecated`). The draft lists every scheme with a variable named after the
+API and the scheme, and, for a description without security, a commented example and
+`security: []`. The generated repository's mock answers 401 with what is missing, its token
+endpoint holds the client to RFC 6749, its tests send made-up credentials of each kind, and its
+README has a row for every scheme.
 
 `flowapi generate` writes the SDK's whole repository around that client:
 

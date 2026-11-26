@@ -1,0 +1,26 @@
+{
+  "name": "github-like-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the GitHub-like API.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "engines": { "node": ">=20" },
+  "main": "./dist/cjs/index.js",
+  "types": "./dist/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "import": { "types": "./dist/esm/index.d.ts", "default": "./dist/esm/index.js" },
+      "require": { "types": "./dist/cjs/index.d.ts", "default": "./dist/cjs/index.js" }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "scripts/build",
+    "lint": "scripts/lint",
+    "test": "scripts/test",
+    "check": "scripts/check"
+  },
+  "devDependencies": { "typescript": "7.0.2" }
+}

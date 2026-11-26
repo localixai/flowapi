@@ -42,18 +42,20 @@ The package is built twice, as ES modules and as CommonJS, each with its types, 
 
 ## Authentication
 
-Each credential is an option of the client, else read from its environment variable:
+| Scheme | Kind | Sent as | Option | Environment variables |
+| --- | --- | --- | --- | --- |
+| `QueryKey` | API key | the query parameter `api_key` | `queryKey`: the key | `AUTH_QUERY_KEY`: the key |
+| `CookieKey` | API key | the cookie `session` | `cookieKey`: the key | — |
+| `Basic` | HTTP basic | `Authorization: Basic <base64 of user-id:password, UTF-8>` | `basic`: `{ username, password }` (a user-id without `:`) | `AUTH_BASIC`: `username:password` |
+| `Token` | HTTP bearer | `Authorization: Bearer <token>` | `token`: the token | `AUTH_TOKEN`: the token |
+| `Oauth` | OAuth 2.0 client credentials | `Authorization: Bearer <token>`, the token requested at `https://auth.example/token` for the scopes the operation needs | `oauth`: a token, or `{ clientId, clientSecret }` to request one | — |
 
-| Scheme | Sent as | Option | Variable |
-| --- | --- | --- | --- |
-| `QueryKey` | an API key in the query parameter `api_key` | `queryKey` | `AUTH_QUERY_KEY` |
-| `CookieKey` | an API key in the cookie `session` | `cookieKey` | — |
-| `Basic` | HTTP basic (`{ username, password }`) | `basic` | `AUTH_BASIC` |
-| `Token` | HTTP `bearer` | `token` | `AUTH_TOKEN` |
-| `Oauth` | an OAuth 2.0 token | `oauth` | — |
+An operation's security is a list of alternatives: the client sends the first one it holds every credential of, and an operation that needs none sends none. Each credential is an option of the client, else read from its environment variables when a call needs it; a call none of whose alternatives can be met throws `CredentialError`, naming the options and variables, before anything is sent. Credentials go only over `https:`, or to `localhost`, `127.0.0.1` and `[::1]`: elsewhere a call over plain `http:` throws `InsecureCredentialError`, unless the client is given `allowInsecureCredentials: true`. The log writes each as `***`, and a redirect to another origin is not followed unless `allowCrossOriginRedirects` is set, and then without them.
+
+A token of OAuth 2.0's client credentials grant is requested at the token URL (relative to the base URL where it is relative) with the client's id and secret in HTTP basic, cached until a little before it expires, shared by the calls that wait for it, and requested again once when the API answers 401. A refusal of the token endpoint throws `TokenError` with its `error` and `description`.
 
 ```ts
-const client = new AuthClient({ queryKey: '…', cookieKey: '…', basic: { username: '…', password: '…' }, token: '…', oauth: '…' })
+const client = new AuthClient({ queryKey: '…', cookieKey: '…', basic: { username: '…', password: '…' }, token: '…', oauth: { clientId: '…', clientSecret: '…' } })
 ```
 
 ## Servers

@@ -5,7 +5,7 @@ use super::issue::At;
 use crate::paging::Paging;
 
 /// A name written as a key, with where.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub(crate) struct Named {
     pub(crate) name: String,
     pub(crate) at: At,
@@ -42,6 +42,57 @@ pub(crate) struct Method {
     pub(crate) stream: Option<At>,
     /// Its own `retries`.
     pub(crate) retries: Option<i64>,
+    /// Its own `security`.
+    pub(crate) security: Option<Security>,
+}
+
+/// A `security` of the config: OpenAPI's Security Requirement Objects as written.
+#[derive(Clone, Debug, Default)]
+pub(crate) struct Security {
+    /// Each alternative: each scheme it needs, by name with where, and its scopes.
+    pub(crate) alternatives: Vec<Vec<(Named, Vec<String>)>>,
+}
+
+/// A credential of `auth`: the options its scheme is read by and, for a scheme the description
+/// lacks, what that scheme is.
+#[derive(Debug, Default)]
+pub(crate) struct Credential {
+    /// The scheme's name, the key.
+    pub(crate) name: Named,
+    /// `type`, `scheme`, `in`, `name` and `token_url`: a declaration.
+    pub(crate) kind: Option<Named>,
+    pub(crate) scheme: Option<Named>,
+    pub(crate) location: Option<Named>,
+    pub(crate) key: Option<Named>,
+    pub(crate) token_url: Option<Named>,
+    pub(crate) description: Option<String>,
+    /// Its environment variables, by member (`env_var`, `username_env_var`, ...).
+    pub(crate) env: Vec<(&'static str, Named)>,
+    /// `scopes`, with where.
+    pub(crate) scopes: Option<(Vec<String>, At)>,
+}
+
+impl Credential {
+    /// The variable of a member (`env_var`, ...), where one is given.
+    pub(crate) fn var(&self, member: &str) -> Option<&str> {
+        self.env
+            .iter()
+            .find(|(m, _)| *m == member)
+            .map(|(_, n)| n.name.as_str())
+    }
+
+    /// Whether it declares a scheme (gives any of `type`, `scheme`, `in`, `name`, `token_url`).
+    pub(crate) fn declares(&self) -> Option<&Named> {
+        [
+            &self.kind,
+            &self.scheme,
+            &self.location,
+            &self.key,
+            &self.token_url,
+        ]
+        .into_iter()
+        .find_map(Option::as_ref)
+    }
 }
 
 /// What the generated client is made with beside its resources: values no check is about.
@@ -51,8 +102,6 @@ pub(crate) struct Settings {
     pub(crate) urls: Vec<(String, String)>,
     /// `environments.env_var`: the variable that overrides the base URL.
     pub(crate) base_url_env: Option<String>,
-    /// Each security scheme's `env_var`, by its name.
-    pub(crate) auth_env: Vec<(String, String)>,
     /// `defaults.retries`.
     pub(crate) retries: Option<i64>,
     /// `defaults.timeout`, in seconds.
@@ -90,7 +139,9 @@ pub(crate) struct Config {
     pub(crate) generator: Option<Named>,
     pub(crate) environments: Vec<Named>,
     pub(crate) default_environment: Option<Named>,
-    pub(crate) auth: Vec<Named>,
+    pub(crate) auth: Vec<Credential>,
+    /// The top-level `security`.
+    pub(crate) security: Option<Security>,
     pub(crate) default_paging: Option<Named>,
     pub(crate) schemes: Vec<Scheme>,
     pub(crate) resources: Vec<Resource>,

@@ -5,6 +5,7 @@
 //! turns an issue's offset into the YAML's line and column), the description as the core's
 //! [`Documents`]. No I/O (G5).
 
+pub(crate) mod auth;
 mod build;
 pub(crate) mod check;
 pub(crate) mod issue;
@@ -74,7 +75,8 @@ pub(crate) fn checked(docs: &Documents<'_>, config: &str) -> Checked {
             resolved = check::references(&c, &ops, &mut issues);
             names::check(&c, &ops.schema_names, &mut issues);
             check::methods(&c, &ops, &resolved, &mut issues);
-            check::rest(&c, &ops, &resolved, &mut issues);
+            check::rest(&c, &resolved, &mut issues);
+            auth::check(&c, &ops, &resolved, &mut issues);
         }
         None => {
             let message = String::from("the description is not an OpenAPI or Swagger description");
