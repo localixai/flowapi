@@ -16,6 +16,7 @@ pub(crate) fn problem(kind: Str, s: &str) -> Option<(&'static str, String)> {
         Str::Client => is_client(s),
         Str::Version => is_version(s),
         Str::Release => is_version(s) && !s.split('-').next().unwrap_or("").ends_with(".x"),
+        Str::OneOf(_, words) => words.contains(&s),
     };
     if fits {
         return None;
@@ -49,6 +50,10 @@ pub(crate) fn problem(kind: Str, s: &str) -> Option<(&'static str, String)> {
             "config.package.version",
             format!("`{s}` is not a package's version: `0.1.0`, or `1.0.0-beta.1`"),
         ),
+        Str::OneOf(code, words) => (
+            code,
+            format!("`{s}` is not one of `{}`", words.join("`, `")),
+        ),
     })
 }
 
@@ -64,6 +69,7 @@ pub(crate) fn pattern(kind: Str) -> Option<&'static str> {
         Str::Client => Some("^[A-Z][A-Za-z0-9]*$"),
         Str::Version => Some("^[0-9]+\\.[0-9]+\\.([0-9]+|x)(-[0-9A-Za-z.-]+)?$"),
         Str::Release => Some("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"),
+        Str::OneOf(..) => None,
     }
 }
 

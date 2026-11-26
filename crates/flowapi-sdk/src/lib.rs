@@ -45,7 +45,7 @@ pub use client::{Generated, client_files};
 pub use config::{Issue, check, issues_json, issues_text, schema as config_schema, spec_of};
 pub use draft::draft;
 pub use model::{
-    Access, Auth, Encoding, KeyLocation, Requirement, Scheme, Server, Service, Variable,
+    Access, Auth, Encoding, KeyLocation, Requirement, Scheme, Server, Service, TokenFlow, Variable,
 };
 pub use repo::{
     Change, Disk, Entry, Input, LOCK_PATH, Lock, Next, OWN_ZONES, Owner, Plan, Repo, RepoFile,
@@ -75,11 +75,12 @@ pub fn read(docs: &Documents<'_>, program: &Program<'_>) -> (Service, Diagnostic
         .map(|e| {
             let items = doc.path_items(&e.operation);
             let op = doc.operation(&items, &e.operation);
+            let servers = doc.own_servers(&items, op, &mut diags);
+            let (security, inherits) = doc.effective(&e.operation, &security, &mut diags);
             Access {
-                servers: doc.own_servers(&items, op, &mut diags),
-                security: op
-                    .and_then(|op| doc.security(op, &mut diags))
-                    .unwrap_or_else(|| security.clone()),
+                servers,
+                security,
+                inherits,
                 encodings: doc.encodings(op, &mut diags),
             }
         })

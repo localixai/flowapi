@@ -14,7 +14,13 @@ environments:
   env_var: PAYHUB_V1_REST_API_BASE_URL
 auth:
   basicAuth:
-    env_var: PAYHUB_V1_REST_API_BASIC_AUTH
+    env_var: PAYHUB_V1_REST_API_BASIC_AUTH  # username:password
+# No operation of the description needs a credential, so the client sends none. If the API
+# takes one, find it in the API's documentation, declare it under `auth` when the
+# description lacks it, and name it in `security`, for example:
+# security:
+#   - basicAuth: []
+security: []
 defaults:
   retries: 2
   timeout: 60

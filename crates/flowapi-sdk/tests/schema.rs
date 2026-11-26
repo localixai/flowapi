@@ -193,6 +193,9 @@ fn a_member_the_schema_does_not_name_is_refused_everywhere() {
         "/resources",
         "/resources/entry/methods",
         "/resources/entry/resources",
+        // A security requirement: scheme names, each with its scopes.
+        "/security/0",
+        "/resources/entry/methods/entry/security/0",
     ];
     for at in places.iter().filter(|p| !maps.contains(&p.as_str())) {
         let mut wrong = config.clone();

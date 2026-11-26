@@ -11,7 +11,7 @@ use super::model::{Config, Named, Resource, Scheme};
 use super::shape::{self, Field};
 use flowapi::id::NodeId;
 use flowapi::json::{Tree, Value};
-use members::{method, scheme};
+use members::{credential, method, scheme, security};
 
 struct B<'a, 't> {
     tree: &'a Tree<'t>,
@@ -157,11 +157,11 @@ pub(crate) fn build(tree: &Tree<'_>, declared: &[(NodeId, At)], issues: &mut Iss
     }
     if let Some((a, at)) = b.field(root, &top, shape::ROOT, "auth") {
         for (name, node, at) in b.entries(a, &at, &[]) {
-            if let Some(var) = b.named(node, &at, shape::AUTH, "env_var") {
-                c.settings.auth_env.push((name.clone(), var.name));
-            }
-            c.auth.push(Named { name, at });
+            c.auth.push(credential(&mut b, Named { name, at }, node));
         }
+    }
+    if let Some((s, at)) = b.field(root, &top, shape::ROOT, "security") {
+        c.security = Some(security(&mut b, s, &at));
     }
     if let Some((d, at)) = b.field(root, &top, shape::ROOT, "defaults") {
         let retries = b.field(d, &at, shape::DEFAULTS, "retries");

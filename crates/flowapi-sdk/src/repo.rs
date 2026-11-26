@@ -174,7 +174,7 @@ pub fn repo_files(
     ) else {
         return repo;
     };
-    let (service, _) = crate::read(docs, program);
+    let (service, _) = client::service(docs, program, &check);
     let ctx = Ctx {
         config: &check.config,
         ops: &ops,

@@ -70,10 +70,13 @@ pub enum Auth {
         /// How a bearer token is formatted, a hint only (`JWT`).
         format: Option<String>,
     },
-    /// OAuth 2.0: a token the caller obtained, sent as a bearer token; the flows are named only.
+    /// OAuth 2.0: a token sent as a bearer token, which the caller obtained, or which the client
+    /// requests itself by the client credentials flow, the one flow no person takes part in.
     OAuth2 {
         /// The flows' names, as written (2.0's lifted to 3.x names).
         flows: Vec<String>,
+        /// The client credentials flow (2.0's `application`), where it has a token URL.
+        client_credentials: Option<TokenFlow>,
     },
     /// OpenID Connect: a token the caller obtained, sent as a bearer token.
     OpenIdConnect {
@@ -83,6 +86,15 @@ pub enum Auth {
     /// A client certificate (3.1): named so a requirement can say so; a client sends it through
     /// its transport, not in a request.
     MutualTls,
+}
+
+/// Where the client credentials flow asks for a token, and the scopes it may ask for.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TokenFlow {
+    /// The token endpoint as written: a URL, or a reference relative to the server's.
+    pub token_url: String,
+    /// The scopes the scheme defines, in the order written.
+    pub scopes: Vec<String>,
 }
 
 /// A security scheme, by its name in the description.
@@ -125,6 +137,9 @@ pub struct Access {
     /// Its security: the alternatives, any one of which is enough; its own `security`, else the
     /// description's. Empty means no authentication.
     pub security: Vec<Requirement>,
+    /// Whether `security` is the description's, the operation having none of its own: what a
+    /// config's `security` replaces.
+    pub inherits: bool,
     /// Its request body's encodings, one per `multipart/form-data` media type that has one.
     pub encodings: Vec<Encoding>,
 }

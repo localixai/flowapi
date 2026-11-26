@@ -113,18 +113,22 @@ pub(crate) fn check(c: &Config, schema_names: &[String], issues: &mut Issues) {
     let schemes: Vec<(&Named, &'static str)> =
         c.schemes.iter().map(|s| (&s.name, "scheme")).collect();
     siblings(&schemes, "`pagination`", issues);
-    let auth: Vec<(&Named, &'static str)> = c.auth.iter().map(|n| (n, "credential")).collect();
+    let auth: Vec<(&Named, &'static str)> =
+        c.auth.iter().map(|a| (&a.name, "credential")).collect();
     siblings(&auth, "`auth`", issues);
     for a in &c.auth {
-        if words::words(&a.name).is_empty() {
+        if words::words(&a.name.name).is_empty() {
             let message = format!(
                 "the scheme `{}` has no letter or digit to name its option",
-                a.name
+                a.name.name
             );
-            issues.error("config.name.option", &a.at, message);
-        } else if reserved(&a.name, CLIENT_OPTIONS) {
-            let message = format!("the scheme `{}` would be the client's own option", a.name);
-            issues.error("config.name.option", &a.at, message);
+            issues.error("config.name.option", &a.name.at, message);
+        } else if reserved(&a.name.name, CLIENT_OPTIONS) {
+            let message = format!(
+                "the scheme `{}` would be the client's own option",
+                a.name.name
+            );
+            issues.error("config.name.option", &a.name.at, message);
         }
     }
 }

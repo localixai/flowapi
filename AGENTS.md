@@ -43,7 +43,8 @@ work here.
   SDK, which no type depends on. It reads the documents through the core's public modules
   (`doc.rs`: references followed, each endpoint's Operation Object found again), `servers.rs`
   (3.x `servers` at three levels with variables; 2.0's `host`, `basePath`, `schemes` lifted) and
-  `security.rs` (`securitySchemes` or 2.0's `securityDefinitions`, `security`) into `model.rs`,
+  `security.rs` (`securitySchemes` or 2.0's `securityDefinitions`; `security/flows.rs` OAuth 2.0's
+  flows, `security/requirements.rs` `security` and its names) into `model.rs`,
   and `print.rs` prints the TypeScript table put after `--sdk`'s output (`flowapiServers`,
   `flowapiSecuritySchemes`, `flowapiOperations`), naming the functions as `flowapi-ts` does. No
   I/O (G5). `tests/cases/*.json` and the `.ts` kept beside each (`--test table`, each case's
@@ -52,7 +53,8 @@ work here.
   `shape/schemes.rs`) its format once, as tables that `config/read.rs` validates by,
   `config/build.rs` (`build/members.rs`) reads into `config/model.rs` and `config/schema.rs`
   prints as JSON Schema (`shape/package.rs` the `package` and `readme` tables);
-  `config/check.rs` and `config/names.rs` hold it to the description, `config/issue.rs` the
+  `config/check.rs` and `config/names.rs` hold it to the description (`config/auth.rs` and
+  `auth/usage.rs` its `auth` and `security`, also laid over the description's), `config/issue.rs` the
   issues; `ops.rs` the operations by id and route, `words.rs` names as words, `paging/` the
   pagination a schema fits (`fit.rs`) or suggests (`suggest.rs`), `draft.rs` (`draft/naming.rs`,
   a method's name without its resource's words in `draft/naming/trim.rs`) a first config,
@@ -62,7 +64,8 @@ work here.
   `encoding.rs` a `multipart/form-data` body's encoding, put in the table. `client.rs` the whole
   TypeScript client from a config (`client_files`): `client/resources.rs` a class per resource
   (`client/comment.rs` each method's doc comment),
-  `client/entry.rs` the client class and `index.ts`, `client/core/*.ts` the runtime, kept as
+  `client/entry.rs` the client class and `index.ts`, `client/core/*.ts` the runtime (`auth.ts`
+  the credentials, `token.ts` OAuth 2.0's client credentials grant), kept as
   TypeScript and printed as it is (each file held to 300 working lines by `tests/client.mjs`).
   `tests/client/<case>/` a config and a description with the client kept beside them
   (`--test client`); `tests/client.mjs` type-checks them and runs `tests/client/*.mjs` against a

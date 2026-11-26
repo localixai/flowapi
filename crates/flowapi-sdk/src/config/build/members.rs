@@ -1,10 +1,10 @@
 //! The members of a config that are objects of their own, read for `build.rs`: a pagination
-//! scheme (its `type` chooses its members) and a method (an operation's name, or an object with
-//! `op` and the method's own settings).
+//! scheme (its `type` chooses its members), a method (an operation's name, or an object with
+//! `op` and the method's own settings), a credential of `auth`, and a `security`.
 
 use super::B;
 use crate::config::issue::At;
-use crate::config::model::{Method, Named, PagingRef};
+use crate::config::model::{Credential, Method, Named, PagingRef, Security};
 use crate::config::shape::{self, SCHEMES};
 use crate::paging::{Paging, roles};
 use flowapi::id::NodeId;
@@ -61,6 +61,7 @@ pub(super) fn method(
             paging: PagingRef::Unset,
             stream: None,
             retries: None,
+            security: None,
         });
     }
     if !b.object(value) {
@@ -81,6 +82,9 @@ pub(super) fn method(
     let stream = b
         .field(value, &at, shape::METHOD, "stream")
         .and_then(|(s, at)| (b.tree.as_bool(s) == Some(true)).then_some(at));
+    let security = b
+        .field(value, &at, shape::METHOD, "security")
+        .map(|(s, at)| security(b, s, &at));
     Some(Method {
         name,
         resource,
@@ -88,5 +92,69 @@ pub(super) fn method(
         paging,
         stream,
         retries,
+        security,
     })
+}
+
+/// The environment variables a credential may name.
+const VARS: [&str; 5] = [
+    "env_var",
+    "username_env_var",
+    "password_env_var",
+    "client_id_env_var",
+    "client_secret_env_var",
+];
+
+/// A credential of `auth`: its options, and what a scheme it declares is.
+pub(super) fn credential(b: &mut B<'_, '_>, name: Named, node: NodeId) -> Credential {
+    let at = name.at.clone();
+    let mut c = Credential {
+        name,
+        ..Credential::default()
+    };
+    if !b.object(node) {
+        return c;
+    }
+    let fields = shape::AUTH;
+    c.kind = b.named(node, &at, fields, "type");
+    c.scheme = b.named(node, &at, fields, "scheme");
+    c.location = b.named(node, &at, fields, "in");
+    c.key = b.named(node, &at, fields, "name");
+    c.token_url = b.named(node, &at, fields, "token_url");
+    c.description = b.text(node, &at, fields, "description");
+    for member in VARS {
+        if let Some(var) = b.named(node, &at, fields, member) {
+            c.env.push((member, var));
+        }
+    }
+    if let Some((list, at)) = b.field(node, &at, fields, "scopes") {
+        let tree = b.tree;
+        let scopes = tree
+            .items(list)
+            .iter()
+            .filter_map(|&n| b.string(n))
+            .collect();
+        c.scopes = Some((scopes, at));
+    }
+    c
+}
+
+/// A `security`: each alternative's schemes, by name with where, with their scopes.
+pub(super) fn security(b: &mut B<'_, '_>, list: NodeId, at: &At) -> Security {
+    let tree = b.tree;
+    let mut alternatives = Vec::new();
+    for (i, &item) in tree.items(list).iter().enumerate() {
+        let item_at = at.child(&i.to_string(), tree.offset(item));
+        let mut schemes = Vec::new();
+        for (name, scopes, at) in b.entries(item, &item_at, &[]) {
+            let scopes = tree
+                .items(scopes)
+                .iter()
+                .filter_map(|&n| b.string(n))
+                .collect();
+            schemes.push((Named { name, at }, scopes));
+        }
+        alternatives.push(schemes);
+    }
+    Security { alternatives }
 }

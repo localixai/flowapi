@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+- SDK authentication. The client sends each kind of security scheme: an API key in a header, a
+  query parameter or a cookie; HTTP bearer (RFC 6750 2.1's syntax) and basic (RFC 7617: UTF-8, no
+  `:` in the user-id, no control character); another HTTP scheme as `<scheme> <credential>`,
+  while one that answers a challenge (`digest`, ...) is refused with a diagnostic; OAuth 2.0 and
+  OpenID Connect tokens given as a string or a function; and OAuth 2.0's client credentials grant
+  run by the client (RFC 6749 4.4: a POST of the form, the client by HTTP basic, the token URL
+  relative to the server, `TokenError` for 5.2's errors, a cache with a margin, one request in
+  flight, a 401 that asks for another token once). `mutualTLS` is the option `true` beside a
+  `fetch` that presents the certificate. `security` is read as written: alternatives in order,
+  the schemes of one together, `{}` and `[]`, an operation's own over the description's, and a
+  name in a referenced document read from the entry document (Appendix F). Credentials go only
+  over TLS or to a loopback host unless `allowInsecureCredentials: true`
+  (`InsecureCredentialError`); a call that cannot be met throws `CredentialError` before
+  sending, naming the options and variables.
+- `flowapi-sdk.yml`: `auth.<name>` declares a scheme the description lacks (`type`, `scheme`,
+  `in`, `name`, `token_url`, `description`) and takes `username_env_var`/`password_env_var`,
+  `client_id_env_var`/`client_secret_env_var` and `scopes`; a top-level `security` and a
+  method's `security` override the description's. `config check` errs with `config.auth.declared`,
+  `config.auth.unknown`, `config.auth.field`, `config.auth.type`, `config.auth.in`,
+  `config.auth.option` and `config.security.unknown`, and warns with `config.auth.none`,
+  `config.auth.unlisted`, `config.auth.env`, `config.auth.refused`, `config.auth.mutual_tls` and
+  `config.auth.deprecated`. `config draft` names a variable for every scheme and, for a
+  description without security, writes a commented example and `security: []`. The summary shows
+  the description's and each operation's own security and an OAuth 2.0 token URL.
+- The generated repository: the mock answers 401 with JSON naming what is missing and serves a
+  token endpoint held to RFC 6749; `tests/auth.test.mjs` sends made-up credentials of each kind
+  and calls an operation that needs none without any; the README has a row for every scheme.
+
 - The requirements ledger (`conformance/ledger`, O1) reads Swagger 2.0 and five RFCs (6749, 6750,
   7578, 7617 and 9110, pinned in `conformance/specs/`) beside OpenAPI 3.x and JSON Schema, and its
   scope is decided for the SDK: servers, security, the Encoding Object and what the client sends

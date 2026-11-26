@@ -1,0 +1,31 @@
+# A description with no security schemes, as GitHub's is: the config declares the bearer token
+# its API takes and makes it optional for every operation (`{}`), a method that needs none
+# (`security: []`), and two schemes the description lacks for one method each: an API key in a
+# header and HTTP basic read from two variables.
+version: 1
+spec: spec.json
+package: { name: github-like-sdk, client: GitHub, license: MIT }
+auth:
+  Token: { type: http, scheme: bearer, env_var: GITHUB_TOKEN, description: A personal access token }
+  AppKey: { type: apiKey, in: header, name: X-App-Key, env_var: GITHUB_APP_KEY }
+  Admin: { type: http, scheme: basic, username_env_var: GITHUB_ADMIN_USER, password_env_var: GITHUB_ADMIN_PASSWORD }
+security:
+  - Token: []
+  - {}
+defaults: { retries: 0 }
+resources:
+  users:
+    methods:
+      me: users/get-authenticated
+  repos:
+    methods:
+      get: repos/get
+  meta:
+    methods:
+      get: { op: meta/get, security: [] }
+  apps:
+    methods:
+      hook: { op: apps/get-webhook, security: [{ AppKey: [] }] }
+  enterprise:
+    methods:
+      settings: { op: enterprise/get-settings, security: [{ Admin: [] }] }

@@ -12,7 +12,7 @@ let client
 
 before(async () => {
   server = await mock()
-  client = new AuthClient({ baseURL: server.url, queryKey: 'test-credential', cookieKey: 'test-credential', basic: { username: 'user', password: 'pass' }, token: 'test-credential', oauth: 'test-credential', maxRetries: 0 })
+  client = new AuthClient({ baseURL: server.url, queryKey: 'test-credential', cookieKey: 'test-credential', basic: { username: 'user', password: 'pass' }, token: 'test-credential', oauth: { clientId: 'test-client', clientSecret: 'test-secret', tokenURL: `${server.url}/token` }, maxRetries: 0 })
 })
 
 after(() => server.close())

@@ -13,15 +13,17 @@ export const flowapiServers = [
 /**
  * The security schemes, by name: `apiKey` a key sent `in` a header, a query parameter or a
  * cookie under `name`; `http` as `Authorization: <scheme> <credentials>`; `oauth2` and
- * `openIdConnect` a token the caller obtained, sent as a bearer token. `mutualTLS` is a client
- * certificate, which no request carries: a client cannot send it, only its transport can.
+ * `openIdConnect` a token sent as a bearer token, which the caller obtained or, for OAuth 2.0's
+ * `clientCredentials` flow, the client requests at its `tokenUrl` (relative to the server's URL
+ * where it is relative) for the scopes it needs. `mutualTLS` is a client certificate, which no
+ * request carries: a client cannot send it, only its transport can.
  */
 export const flowapiSecuritySchemes = {
   "basic": { type: "http", scheme: "basic" },
   "key": { type: "apiKey", in: "query", name: "key" },
   "headerKey": { type: "apiKey", in: "header", name: "X-Key" },
   "code": { type: "oauth2", flows: ["authorizationCode"] },
-  "app": { type: "oauth2", flows: ["clientCredentials"] },
+  "app": { type: "oauth2", flows: ["clientCredentials"], clientCredentials: { tokenUrl: "https://example.com/t", scopes: [] } },
 } as const;
 
 /**
@@ -62,6 +64,7 @@ export const flowapiOperations = {
 } as const;
 // warning[swagger.server]: a scheme is none of http, https, ws, wss: left out
 // warning[swagger.server]: a scheme is none of http, https, ws, wss: left out
+// warning[swagger.security]: security scheme `app`: the client credentials flow has no `scopes` map: read as none
 // warning[swagger.security]: security scheme `noFlow` has no `flows` it can be used by: left out
 // warning[swagger.security]: security scheme `cookie` has no `in` it can be used by: left out
 // warning[swagger.security]: security scheme `bearer` has a `type` "http" this version does not define: left out

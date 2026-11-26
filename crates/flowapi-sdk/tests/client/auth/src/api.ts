@@ -1021,15 +1021,17 @@ export const flowapiServers = [
 /**
  * The security schemes, by name: `apiKey` a key sent `in` a header, a query parameter or a
  * cookie under `name`; `http` as `Authorization: <scheme> <credentials>`; `oauth2` and
- * `openIdConnect` a token the caller obtained, sent as a bearer token. `mutualTLS` is a client
- * certificate, which no request carries: a client cannot send it, only its transport can.
+ * `openIdConnect` a token sent as a bearer token, which the caller obtained or, for OAuth 2.0's
+ * `clientCredentials` flow, the client requests at its `tokenUrl` (relative to the server's URL
+ * where it is relative) for the scopes it needs. `mutualTLS` is a client certificate, which no
+ * request carries: a client cannot send it, only its transport can.
  */
 export const flowapiSecuritySchemes = {
   "QueryKey": { type: "apiKey", in: "query", name: "api_key" },
   "CookieKey": { type: "apiKey", in: "cookie", name: "session" },
   "Basic": { type: "http", scheme: "basic" },
   "Token": { type: "http", scheme: "bearer", bearerFormat: "JWT" },
-  "Oauth": { type: "oauth2", flows: ["clientCredentials"] },
+  "Oauth": { type: "oauth2", flows: ["clientCredentials"], clientCredentials: { tokenUrl: "https://auth.example/token", scopes: ["read"] } },
 } as const;
 
 /**

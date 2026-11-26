@@ -1,6 +1,7 @@
 {"info":{"title":"Pet Shop","version":"1.2.0"},
 "servers":["https://api.petshop.example/v1","https://sandbox.petshop.example/v1"],
 "securitySchemes":{"ApiKeyAuth":{"type":"apiKey","in":"header","name":"X-Api-Key"},"bearer":{"type":"http","scheme":"bearer"}},
+"security":[["ApiKeyAuth"]],
 "counts":{"operations":11,"shown":11,"tags":6,"schemas":5},
 "tags":[{"name":"pets","operations":6},{"name":"owners","operations":1},{"name":"events","operations":1},{"name":"collision","operations":1},{"name":"users","operations":1},{"name":"","operations":1}],
-"truncated":{"bytes":3416,"max":1000,"next":"the operations are over the budget and left out: read one tag at a time with --tag <name>, or a part of the API with --path <prefix>, or raise --max-bytes"}}
+"truncated":{"bytes":3445,"max":1000,"next":"the operations are over the budget and left out: read one tag at a time with --tag <name>, or a part of the API with --path <prefix>, or raise --max-bytes"}}

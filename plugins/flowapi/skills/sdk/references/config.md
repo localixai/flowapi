@@ -20,7 +20,13 @@ not listed here is an error.
 | `environments.<name>` | A base URL by name |
 | `environments.default` | The environment used when the caller names none |
 | `environments.env_var` | The variable that overrides the base URL (`ACME_BASE_URL`) |
-| `auth.<scheme>.env_var` | The variable a scheme's credential is read from; `<scheme>` is its name in the description |
+| `auth.<scheme>` | A security scheme the client sends: one of the description's by its name, given options only, or one the description lacks, declared with `type` (below) |
+| `auth.<scheme>.env_var` | The variable the credential is read from: the key or the token; HTTP basic's `username:password` |
+| `auth.<scheme>.username_env_var`, `password_env_var` | HTTP basic: the user-id and the password from two variables, given together |
+| `auth.<scheme>.client_id_env_var`, `client_secret_env_var` | OAuth 2.0 with a client credentials flow: the client requests its own token with these, given together |
+| `auth.<scheme>.scopes` | That flow's scopes for every token, instead of each operation's |
+| `auth.<scheme>.description` | What the scheme is, for the README |
+| `security` | The security of every operation with none of its own, over the description's: `[{ Token: [] }, {}]` is a token, optional; `[]` is none, said on purpose |
 | `defaults.retries` | Retries of a failed request (2) |
 | `defaults.timeout` | Seconds a request may take, its body read (60) |
 | `defaults.max_retry_delay` | The longest wait in seconds a server may ask for before a retry; longer is an error, not a sleep |
@@ -35,7 +41,40 @@ not listed here is an error.
 | `readme.pagination_method` | The method the README shows paging with |
 
 A method as an object: `op` (the operation), `pagination` (a scheme's name, or `false`),
-`retries`, `stream: true` (the response is read as server-sent events or JSON lines).
+`retries`, `stream: true` (the response is read as server-sent events or JSON lines), `security`
+(the method's own, over everything; `[]` for none).
+
+## Security schemes
+
+A scheme the description declares takes options only (`env_var`, ...); saying its `type` again
+is an error (`config.auth.declared`). One it lacks is declared with `type` and the members of its
+kind, named as OpenAPI's Security Scheme Object names them:
+
+| `type` | Members | The client sends |
+| --- | --- | --- |
+| `apiKey` | `in` (`header`, `query`, `cookie`), `name` | The key in that header, query parameter or cookie |
+| `http` | `scheme`: `bearer`, `basic`, or another of IANA's registry | `Authorization: Bearer <token>`, `Basic <base64 of user:password>`, `<scheme> <credential>`; a scheme that answers a challenge (`digest`, `negotiate`, ...) is not sent |
+| `oauth2` | `token_url` for the client credentials flow, or none for a token the caller gives | `Authorization: Bearer <token>`, requested at `token_url` with the client's id and secret |
+| `mutualTLS` | none | Nothing: the caller's `fetch` presents the certificate, and the option is `true` |
+
+An alternative of `security` lists schemes needed together; the client sends the first
+alternative it holds every credential of. Credentials go only over `https:` or to a loopback
+host unless the client is given `allowInsecureCredentials: true`.
+
+```yaml
+auth:
+  Token: { type: http, scheme: bearer, env_var: ACME_TOKEN, description: A personal access token }
+  Admin: { type: http, scheme: basic, username_env_var: ACME_USER, password_env_var: ACME_PASSWORD }
+  Service:
+    type: oauth2
+    token_url: https://login.acme.com/oauth/token
+    client_id_env_var: ACME_CLIENT_ID
+    client_secret_env_var: ACME_CLIENT_SECRET
+    scopes: [projects.read]
+security:
+  - Token: []
+  - {}
+```
 
 ## Pagination schemes
 

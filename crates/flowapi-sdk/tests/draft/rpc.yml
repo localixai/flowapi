@@ -15,6 +15,12 @@ environments:
 auth:
   token:
     env_var: CHAT_TOKEN
+# No operation of the description needs a credential, so the client sends none. If the API
+# takes one, find it in the API's documentation, declare it under `auth` when the
+# description lacks it, and name it in `security`, for example:
+# security:
+#   - token: []
+security: []
 defaults:
   retries: 2
   timeout: 60

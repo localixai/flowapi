@@ -3,9 +3,12 @@
 //! (`build.rs`), and `flowapi config schema` prints them as JSON Schema (`schema.rs`), so the
 //! three cannot drift apart. A member they do not name is an error.
 
+mod auth;
 mod package;
 mod schemes;
 
+pub(crate) use auth::AUTH;
+use auth::{AUTH_SCHEME, SECURITY};
 pub(crate) use package::{PACKAGE, README};
 use schemes::SCHEME;
 pub(crate) use schemes::SCHEMES;
@@ -31,6 +34,8 @@ pub(crate) enum Str {
     Version,
     /// A package's own version: `0.1.0`, `1.0.0-beta.1`, never `x`.
     Release,
+    /// One of these words, else the issue of this code.
+    OneOf(&'static str, &'static [&'static str]),
 }
 
 /// What a value must be.
@@ -146,13 +151,6 @@ pub(crate) const ENVIRONMENTS_FIXED: &[Field] = &[
     ),
 ];
 
-static AUTH_SCHEME: Shape = Shape::Named("auth", &Shape::Obj(AUTH));
-pub(crate) const AUTH: &[Field] = &[f(
-    "env_var",
-    &ENV_VAR,
-    "The environment variable the credential is read from",
-)];
-
 pub(crate) const DEFAULTS: &[Field] = &[
     def(
         "retries",
@@ -199,6 +197,11 @@ pub(crate) const METHOD: &[Field] = &[
         "stream",
         &BOOL,
         "Whether the response is read as a stream of events",
+    ),
+    f(
+        "security",
+        &SECURITY,
+        "The method's security, over the description's and the config's: alternatives, each the schemes it needs with their scopes; `[]` for none",
     ),
 ];
 static METHOD_VALUE: Shape = Shape::Named("method", &Shape::Either(&[&OP, &Shape::Obj(METHOD)]));
@@ -288,7 +291,12 @@ pub(crate) const ROOT: &[Field] = &[
     f(
         "auth",
         &AUTHS,
-        "The security schemes the client sends, by their names in the description",
+        "The security schemes the client sends, by their names in the description, and those it lacks",
+    ),
+    f(
+        "security",
+        &SECURITY,
+        "The security of every operation with none of its own, over the description's: alternatives, any one of which is enough, each the schemes it needs with their scopes; `{}` makes a credential optional, `[]` is none",
     ),
     f(
         "defaults",

@@ -3,105 +3,201 @@
 // Credentials attached by the operation's security, as the operations table gives it: a list of
 // alternatives, any one of which is enough, each naming the schemes it needs together. The first
 // alternative the client can meet is sent: every scheme in it has a credential (its option, else
-// its environment variable) or is one the caller sends itself in `defaultHeaders`, `defaultQuery`
+// its environment variables) or is one the caller sends itself in `defaultHeaders`, `defaultQuery`
 // or the call's `headers` and `query` (a `null` there too: that removes it). `security: []` sends
-// nothing. A credential is checked when a call needs it, not when the client is made, so a client
-// made at a module's top level does not fail where no key is set.
+// nothing, and an empty alternative (`{}`) is met by nothing. A credential is checked when a call
+// needs it, not when the client is made, so a client made at a module's top level does not fail
+// where no key is set. Each kind: an API key in its header, query parameter or cookie; HTTP
+// basic's pair, its UTF-8 in base64 (RFC 7617), a user-id without `:` and neither with a control
+// character; a bearer token in `Authorization` alone (RFC 6750, 2.1), never in a query, a body or
+// a cookie; another HTTP scheme's credential as given; a scheme that answers a challenge or signs
+// each request (`digest`, ...) is never met by the client; OAuth 2.0 and OpenID Connect a bearer
+// token, given, or requested by the client credentials flow (`token.ts`); mutual TLS met by
+// `true`, its certificate the transport's. Credentials go only over TLS, or to a loopback host
+// (`guard`, RFC 6749 10.3, RFC 6750 5.3, RFC 7617 4).
 
-import { SdkError } from "./errors.js";
-import { base64, readEnv } from "./platform.js";
+import { CredentialError, InsecureCredentialError } from "./errors.js";
+import { base64, platform, readEnv } from "./platform.js";
+import { type ClientCredentials, type Tokens, flowKey } from "./token.js";
 
 /** A credential: its value, or a function that gives it (called for each request). */
 export type Credential = string | (() => string | Promise<string>);
 
-/** HTTP basic credentials. */
-export type BasicCredential =
-  | { readonly username: string; readonly password: string }
-  | (() => { readonly username: string; readonly password: string } | Promise<{ readonly username: string; readonly password: string }>);
+/** HTTP basic's user-id and password. */
+export type BasicPair = { readonly username: string; readonly password: string };
+
+/** HTTP basic credentials: the pair, `username:password`, or a function that gives either. */
+export type BasicCredential = BasicPair | string | (() => BasicPair | string | Promise<BasicPair | string>);
 
 /** A security scheme, as the operations table's `flowapiSecuritySchemes` gives it. */
-export type SchemeEntry = { readonly type: string; readonly in?: string; readonly name?: string; readonly scheme?: string };
+export type SchemeEntry = {
+  readonly type: string;
+  readonly in?: string;
+  readonly name?: string;
+  readonly scheme?: string;
+  readonly clientCredentials?: { readonly tokenUrl: string; readonly scopes: readonly string[] };
+};
 
-/** Where the client finds a scheme's credential: its option and environment variable. */
-export type AuthSetting = { readonly option: string; readonly env?: string };
+/** Where the client finds a scheme's credential: its option and environment variables, and the
+ * scopes its tokens are requested with. */
+export type AuthSetting = {
+  readonly option: string;
+  readonly env?: string;
+  readonly usernameEnv?: string;
+  readonly passwordEnv?: string;
+  readonly clientIdEnv?: string;
+  readonly clientSecretEnv?: string;
+  readonly scopes?: readonly string[];
+};
 
-/** What the chosen alternative adds to a request. */
-export type Applied = { headers: Record<string, string>; query: [string, string][]; cookies: string[] };
+/** What the chosen alternative adds to a request; `renew` forgets each token it requested. */
+export type Applied = { headers: Record<string, string>; query: [string, string][]; cookies: string[]; renew: (() => void)[] };
 
 /** What the caller sends itself: header names in lower case, query keys. */
 export type Given = { readonly headers: ReadonlySet<string>; readonly query: ReadonlySet<string> };
 
-type Ready = (applied: Applied) => Promise<void>;
+/** What meeting a scheme needs of the client: its options, what the caller sends, its tokens,
+ * and the base URL a relative token URL is resolved against. */
+export type Context = { readonly options: Record<string, unknown>; readonly given: Given; readonly tokens: Tokens; readonly base: string | null };
 
-/** How one scheme is met; `null` when it cannot be. */
-function meet(name: string, s: SchemeEntry | undefined, setting: AuthSetting | undefined, options: Record<string, unknown>, given: Given): Ready | null {
-  if (s === undefined) return null;
-  const http = s.type === "http" || s.type === "oauth2" || s.type === "openIdConnect";
-  if (http && given.headers.has("authorization")) return async () => {};
-  if (s.type === "apiKey" && s.name !== undefined) {
-    const own = s.in === "query" ? given.query.has(s.name) : s.in === "cookie" ? given.headers.has("cookie") : given.headers.has(s.name.toLowerCase());
-    if (own) return async () => {};
+/** HTTP schemes (IANA's registry) the client cannot send up front: each answers a challenge or
+ * signs each request. The generator's `CHALLENGED` holds the same names. */
+const CHALLENGED = ["concealed", "digest", "dpop", "hoba", "mutual", "negotiate", "oauth", "privatetoken", "scram-sha-1", "scram-sha-256"];
+
+/** RFC 6750 2.1's `b64token`. */
+const B64TOKEN = /^[A-Za-z0-9\-._~+/]+=*$/;
+
+/** RFC 5234's CTL. */
+const CTL = /[\u0000-\u001f\u007f]/;
+
+type Ready = (applied: Applied, scopes: readonly string[]) => Promise<void>;
+
+/** A credential's value, its function called. */
+async function value<T>(v: T | (() => T | Promise<T>)): Promise<T> {
+  return typeof v === "function" ? await (v as () => T | Promise<T>)() : v;
+}
+
+/** Where a scheme's credential is set, as an error names it. */
+function ways(s: AuthSetting): string {
+  const out = [`\`${s.option}\``];
+  if (s.env !== undefined) out.push(s.env);
+  if (s.usernameEnv !== undefined && s.passwordEnv !== undefined) out.push(`${s.usernameEnv} with ${s.passwordEnv}`);
+  if (s.clientIdEnv !== undefined && s.clientSecretEnv !== undefined) out.push(`${s.clientIdEnv} with ${s.clientSecretEnv}`);
+  return out.join(" or ");
+}
+
+/** A string with something in it, else a `CredentialError`. */
+function text(name: string, s: AuthSetting, v: unknown): string {
+  if (typeof v !== "string" || v.trim() === "") throw new CredentialError(`the credential of \`${name}\` (the option \`${s.option}\`) is not a string with something in it`, [name]);
+  if (CTL.test(v)) throw new CredentialError(`the credential of \`${name}\` holds a control character`, [name]);
+  return v;
+}
+
+/** HTTP basic's header from a pair or `username:password`, held to RFC 7617 2. */
+function basic(name: string, v: unknown): string {
+  const pair = typeof v === "string" ? { username: v.slice(0, Math.max(0, v.indexOf(":"))), password: v.slice(v.indexOf(":") + 1) } : (v as BasicPair | null);
+  if (typeof v === "string" && !v.includes(":")) throw new CredentialError(`the HTTP basic credential of \`${name}\` is not \`username:password\``, [name]);
+  if (pair === null || typeof pair !== "object" || typeof pair.username !== "string" || typeof pair.password !== "string") {
+    throw new CredentialError(`the HTTP basic credential of \`${name}\` is not \`{ username, password }\``, [name]);
   }
-  if (setting === undefined) return null;
-  const option = options[setting.option];
-  if (option === null) return null;
-  const value = option ?? (setting.env === undefined ? undefined : readEnv(setting.env));
-  if (value === undefined) return null;
-  const scheme = (s.scheme ?? "").toLowerCase();
-  if (s.type === "http" && scheme === "basic") {
+  if (pair.username.includes(":")) throw new CredentialError(`the HTTP basic user-id of \`${name}\` holds \`:\`, which RFC 7617 does not allow`, [name]);
+  if (CTL.test(pair.username) || CTL.test(pair.password)) throw new CredentialError(`the HTTP basic credential of \`${name}\` holds a control character`, [name]);
+  return `Basic ${base64(`${pair.username}:${pair.password}`)}`;
+}
+
+/** The client's id and secret: the option's object, else the two variables. */
+function clientOf(option: unknown, s: AuthSetting): ClientCredentials | undefined {
+  if (typeof option === "object" && option !== null) return option as ClientCredentials;
+  if (option !== undefined || s.clientIdEnv === undefined || s.clientSecretEnv === undefined) return undefined;
+  const clientId = readEnv(s.clientIdEnv);
+  const clientSecret = readEnv(s.clientSecretEnv);
+  return clientId === undefined || clientSecret === undefined ? undefined : { clientId, clientSecret };
+}
+
+/** How one scheme is met; why not, as an error names it, when it cannot be. */
+function meet(name: string, sc: SchemeEntry | undefined, s: AuthSetting | undefined, ctx: Context): Ready | string {
+  if (sc === undefined) return `\`${name}\` (no security scheme has that name)`;
+  const http = sc.type === "http" || sc.type === "oauth2" || sc.type === "openIdConnect";
+  const done = async (): Promise<void> => {};
+  if (http && ctx.given.headers.has("authorization")) return done;
+  if (sc.type === "apiKey" && sc.name !== undefined) {
+    const own = sc.in === "query" ? ctx.given.query.has(sc.name) : sc.in === "cookie" ? ctx.given.headers.has("cookie") : ctx.given.headers.has(sc.name.toLowerCase());
+    if (own) return done;
+  }
+  const scheme = (sc.scheme ?? "").toLowerCase();
+  if (sc.type === "http" && CHALLENGED.includes(scheme)) return `\`${name}\` (HTTP ${scheme} answers a challenge: give \`Authorization\` in the call's \`headers\`)`;
+  if (s === undefined) return `\`${name}\` (the client sends no credential for it)`;
+  const option = ctx.options[s.option];
+  if (option === null) return ways(s);
+  if (sc.type === "mutualTLS") return option === true ? done : `\`${s.option}\` (\`true\` when \`fetch\` presents the client certificate)`;
+  if (sc.type === "http" && scheme === "basic") {
+    const user = s.usernameEnv === undefined ? undefined : readEnv(s.usernameEnv);
+    const password = s.passwordEnv === undefined ? undefined : readEnv(s.passwordEnv);
+    const pair = user === undefined || password === undefined ? undefined : { username: user, password };
+    const v = option ?? (s.env === undefined ? undefined : readEnv(s.env)) ?? pair;
+    if (v === undefined) return ways(s);
     return async (applied) => {
-      const v = typeof value === "function" ? await (value as () => unknown)() : value;
-      const pair = typeof v === "string" ? v : `${(v as { username: string }).username}:${(v as { password: string }).password}`;
-      applied.headers["authorization"] = `Basic ${base64(pair)}`;
+      applied.headers["authorization"] = basic(name, await value(v));
     };
   }
-  if (s.type === "http" && scheme !== "bearer") return null;
-  if (s.type !== "apiKey" && !http) return null;
+  const flow = sc.type === "oauth2" ? clientOf(option, s) : undefined;
+  if (flow !== undefined) {
+    const url = flow.tokenURL ?? sc.clientCredentials?.tokenUrl;
+    if (url === undefined) return `\`${s.option}\` (a token: the scheme has no client credentials flow)`;
+    return async (applied, scopes) => {
+      const wanted = flow.scopes ?? s.scopes ?? scopes;
+      const key = flowKey(name, url, flow.clientId, wanted);
+      applied.headers["authorization"] = `Bearer ${await ctx.tokens.token(key, url, ctx.base, flow, wanted)}`;
+      applied.renew.push(() => ctx.tokens.forget(key));
+    };
+  }
+  const v = option ?? (s.env === undefined ? undefined : readEnv(s.env));
+  if (v === undefined) return ways(s);
+  if (sc.type !== "apiKey" && !http) return `\`${name}\` (a scheme of type ${sc.type}, which the client does not send)`;
   return async (applied) => {
-    const v = typeof value === "function" ? await (value as () => unknown)() : value;
-    if (typeof v !== "string" || v.trim() === "") {
-      throw new SdkError(`the credential of \`${name}\` (the option \`${setting.option}\`) is not a string with something in it`);
+    const t = text(name, s, await value(v));
+    if (sc.type === "apiKey") {
+      if (sc.in === "query") applied.query.push([sc.name ?? "", t]);
+      else if (sc.in === "cookie") applied.cookies.push(`${sc.name ?? ""}=${t}`);
+      else applied.headers[(sc.name ?? "").toLowerCase()] = t;
+    } else if (sc.type === "http" && scheme !== "bearer") {
+      applied.headers["authorization"] = `${sc.scheme} ${t}`;
+    } else {
+      if (!B64TOKEN.test(t)) throw new CredentialError(`the token of \`${name}\` is not a bearer token (RFC 6750 2.1: letters, digits, \`-._~+/\`, then \`=\` at the end)`, [name]);
+      applied.headers["authorization"] = `Bearer ${t}`;
     }
-    if (http) applied.headers["authorization"] = `Bearer ${v}`;
-    else if (s.in === "query") applied.query.push([s.name ?? "", v]);
-    else if (s.in === "cookie") applied.cookies.push(`${s.name ?? ""}=${v}`);
-    else applied.headers[(s.name ?? "").toLowerCase()] = v;
   };
 }
 
-/** The credentials of the first alternative the client can meet; an `SdkError` naming the
+/** The credentials of the first alternative the client can meet; a `CredentialError` naming the
  * options and variables when it can meet none. */
 export async function authorize(
   what: string,
   security: readonly { readonly [scheme: string]: readonly string[] }[],
   schemes: { readonly [name: string]: SchemeEntry },
   settings: { readonly [scheme: string]: AuthSetting },
-  options: Record<string, unknown>,
-  given: Given,
+  ctx: Context,
 ): Promise<Applied> {
-  const applied: Applied = { headers: {}, query: [], cookies: [] };
+  const applied: Applied = { headers: {}, query: [], cookies: [], renew: [] };
   if (security.length === 0) return applied;
+  const reasons: string[] = [];
   for (const alternative of security) {
-    const ready: Ready[] = [];
-    for (const name of Object.keys(alternative)) {
-      const r = meet(name, schemes[name], settings[name], options, given);
-      if (r === null) break;
-      ready.push(r);
+    const ready: [Ready, readonly string[]][] = [];
+    const why: string[] = [];
+    for (const [name, scopes] of Object.entries(alternative)) {
+      const r = meet(name, schemes[name], settings[name], ctx);
+      if (typeof r === "string") why.push(r);
+      else ready.push([r, scopes]);
     }
-    if (ready.length !== Object.keys(alternative).length) continue;
-    for (const r of ready) await r(applied);
+    if (why.length > 0) {
+      reasons.push(why.join(" and "));
+      continue;
+    }
+    for (const [r, scopes] of ready) await r(applied, scopes);
     return applied;
   }
-  const ways = security.map((a) =>
-    Object.keys(a)
-      .map((name) => {
-        const s = settings[name];
-        if (s === undefined) return `\`${name}\` (the client sends no credential for it)`;
-        return `\`${s.option}\`` + (s.env === undefined ? "" : ` or ${s.env}`);
-      })
-      .join(" and "),
-  );
-  throw new SdkError(`${what} needs a credential: set ${ways.join(", or ")}`);
+  const names = security.flatMap((a) => Object.keys(a));
+  throw new CredentialError(`${what} needs a credential: set ${reasons.join(", or ")}`, names);
 }
 
 /** Every scheme the client has a credential for, each met on its own and all sent together: a
@@ -109,16 +205,32 @@ export async function authorize(
 export async function authorizeEvery(
   schemes: { readonly [name: string]: SchemeEntry },
   settings: { readonly [scheme: string]: AuthSetting },
-  options: Record<string, unknown>,
-  given: Given,
+  ctx: Context,
 ): Promise<Applied> {
-  const out: Applied = { headers: {}, query: [], cookies: [] };
+  const out: Applied = { headers: {}, query: [], cookies: [], renew: [] };
   for (const name of Object.keys(settings)) {
     if (schemes[name] === undefined) continue;
-    const one = await authorize(name, [{ [name]: [] }, {}], schemes, settings, options, given);
+    const one = await authorize(name, [{ [name]: [] }, {}], schemes, settings, ctx);
     Object.assign(out.headers, one.headers);
     out.query.push(...one.query);
     out.cookies.push(...one.cookies);
+    out.renew.push(...one.renew);
   }
   return out;
+}
+
+/** Whether a URL may carry credentials: `https:`, or `http:` to a loopback host. */
+export function secure(url: string): boolean {
+  try {
+    const u = new (platform().URL)(url);
+    return u.protocol === "https:" || (u.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(u.hostname));
+  } catch {
+    return false;
+  }
+}
+
+/** An `InsecureCredentialError` before a request that would carry credentials in the clear. */
+export function guard(url: string, applied: Applied, allow: boolean): void {
+  const carries = Object.keys(applied.headers).length > 0 || applied.query.length > 0 || applied.cookies.length > 0;
+  if (carries && !allow && !secure(url)) throw new InsecureCredentialError(url);
 }

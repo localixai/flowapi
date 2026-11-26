@@ -2,7 +2,7 @@
 //
 // The runtime as the client, the resources and the package's entry import it.
 
-export type { AuthSetting, BasicCredential, Credential, SchemeEntry } from "./auth.js";
+export type { AuthSetting, BasicCredential, BasicPair, Credential, SchemeEntry } from "./auth.js";
 export { ApiCall, type Outcome } from "./call.js";
 export { type Data, type Input, type RawRequest, call, page, request, stream } from "./calls.js";
 export { type ClientOptions, Core, type Operation, type RequestOptions, type ServerEntry, type Settings } from "./core.js";
@@ -14,13 +14,16 @@ export {
   AuthenticationError,
   BadRequestError,
   ConflictError,
+  CredentialError,
   CrossOriginRedirectError,
+  InsecureCredentialError,
   InternalServerError,
   NotFoundError,
   PermissionDeniedError,
   RateLimitError,
   RequestTimeoutError,
   SdkError,
+  TokenError,
   UnprocessableEntityError,
 } from "./errors.js";
 export type { LogLevel } from "./log.js";
@@ -28,3 +31,4 @@ export { type ItemOf, type Next, Page, PagePromise, type Paging, linkNext, nextP
 export type { Fetch, FetchInit, FetchResponse, Logger, Signal } from "./platform.js";
 export type { HeadersInput, QueryInput } from "./request.js";
 export { LineDecoder, type ServerSentEvent, SseDecoder, Stream, type StreamOptions } from "./streaming.js";
+export type { ClientCredentials } from "./token.js";

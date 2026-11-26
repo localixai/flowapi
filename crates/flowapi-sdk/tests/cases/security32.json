@@ -1,0 +1,223 @@
+{
+ "openapi": "3.2.0",
+ "info": {
+  "title": "security",
+  "version": "1"
+ },
+ "paths": {
+  "/a": {
+   "get": {
+    "operationId": "inherits",
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "put": {
+    "operationId": "anonymous",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "post": {
+    "operationId": "token",
+    "security": [
+     {
+      "client": [
+       "read"
+      ]
+     },
+     {
+      "empty": []
+     },
+     {
+      "bearer": [],
+      "headerKey": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "patch": {
+    "operationId": "others",
+    "security": [
+     {
+      "oidc": [
+       "openid"
+      ]
+     },
+     {
+      "headerKey": [
+       "admin"
+      ]
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "delete": {
+    "operationId": "byUri",
+    "security": [
+     {
+      "#/components/securitySchemes/queryKey": [],
+      "security32.json#/components/securitySchemes/cookieKey": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   }
+  }
+ },
+ "security": [
+  {
+   "headerKey": []
+  },
+  {
+   "bearer": [],
+   "basic": []
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "headerKey": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "X-API-Key",
+    "description": "Your *key*",
+    "x-internal": true
+   },
+   "noName": {
+    "type": "apiKey",
+    "in": "header"
+   },
+   "badIn": {
+    "type": "apiKey",
+    "in": "body",
+    "name": "k"
+   },
+   "bearer": {
+    "type": "http",
+    "scheme": "Bearer",
+    "bearerFormat": "JWT"
+   },
+   "basic": {
+    "type": "http",
+    "scheme": "basic"
+   },
+   "noScheme": {
+    "type": "http"
+   },
+   "client": {
+    "type": "oauth2",
+    "flows": {
+     "clientCredentials": {
+      "tokenUrl": "/token?tenant=a",
+      "scopes": {
+       "read": "Read",
+       "x-not": "a scope: 3.x's scopes are a plain map"
+      },
+      "x-note": true
+     },
+     "x-vendorFlow": {
+      "tokenUrl": "https://vendor.example/token",
+      "scopes": {}
+     }
+    }
+   },
+   "empty": {
+    "type": "oauth2",
+    "flows": {
+     "clientCredentials": {
+      "tokenUrl": "https://example.com/token",
+      "scopes": {}
+     }
+    }
+   },
+   "noTokenUrl": {
+    "type": "oauth2",
+    "flows": {
+     "clientCredentials": {
+      "scopes": {}
+     }
+    }
+   },
+   "badTokenUrl": {
+    "type": "oauth2",
+    "flows": {
+     "clientCredentials": {
+      "tokenUrl": "not a url",
+      "scopes": {}
+     }
+    }
+   },
+   "noScopes": {
+    "type": "oauth2",
+    "flows": {
+     "clientCredentials": {
+      "tokenUrl": "https://example.com/token"
+     }
+    }
+   },
+   "noFlows": {
+    "type": "oauth2"
+   },
+   "oidc": {
+    "type": "openIdConnect",
+    "openIdConnectUrl": "https://example.com/.well-known/openid-configuration"
+   },
+   "noUrl": {
+    "type": "openIdConnect"
+   },
+   "queryKey": {
+    "type": "apiKey",
+    "in": "query",
+    "name": "api_key"
+   },
+   "cookieKey": {
+    "type": "apiKey",
+    "in": "cookie",
+    "name": "session"
+   }
+  }
+ },
+ "x-flowapi-covers": [
+  "req: oas-3.2.security-scheme-object.description \u2014 a scheme's description printed as written",
+  "req: oas-3.2.security-scheme-object.bearerFormat \u2014 the bearer format printed as a hint",
+  "req: oas-3.2.security-scheme-object.flows \u2014 the flows named, an `x-` member of them no flow",
+  "req: oas-3.2.security-scheme-object.flows.required \u2014 oauth2 with no flows is left out, with a warning",
+  "req: oas-3.2.security-scheme-object.openIdConnectUrl \u2014 the discovery URL printed",
+  "req: oas-3.2.security-scheme-object.openIdConnectUrl.required \u2014 OpenID Connect with no URL is left out, with a warning",
+  "req: oas-3.2.security-scheme-object.fixed-fields.may-object-extended-specification-extensions \u2014 headerKey's `x-internal` read as no field",
+  "req: oas-3.2.oauth-flows-object.clientCredentials \u2014 the client credentials flow printed, which the client runs itself",
+  "req: oas-3.2.oauth-flows-object.fixed-fields.may-object-extended-specification-extensions \u2014 `x-vendorFlow` is no flow",
+  "req: oas-3.2.oauth-flow-object.tokenUrl \u2014 the token URL printed, a relative one with its query as written",
+  "req: oas-3.2.oauth-flow-object.tokenUrl.must-form-url \u2014 a token URL not in the form of a URL is a warning, and no flow",
+  "req: oas-3.2.oauth-flow-object.tokenUrl.required \u2014 a flow with no token URL is a warning, and no flow",
+  "req: oas-3.2.oauth-flow-object.scopes \u2014 the flow's scopes printed",
+  "req: oas-3.2.oauth-flow-object.scopes.may-map-empty \u2014 `empty` has none, and is used",
+  "req: oas-3.2.oauth-flow-object.scopes.required \u2014 a flow with no scopes is a warning, read as none",
+  "req: oas-3.2.oauth-flow-object.fixed-fields.may-object-extended-specification-extensions \u2014 the flow's `x-note` is no field",
+  "req: oas-3.2.security-requirement-object.must-security-requirement-object-refer-multiple-security \u2014 `bearer` and `headerKey` together are one alternative needing both",
+  "req: oas-3.2.components-object.securitySchemes \u2014 every scheme read by name",
+  "req: oas-3.2.security-scheme-object.name \u2014 the key's name",
+  "req: oas-3.2.security-scheme-object.name.required \u2014 a key with no name is left out, with a warning",
+  "req: oas-3.2.security-scheme-object.in \u2014 header, query and cookie keys",
+  "req: oas-3.2.security-scheme-object.in.required \u2014 an in no key can go in leaves the scheme out, with a warning",
+  "req: oas-3.2.security-requirement-object.pattern-name \u2014 each name, or URI, with its scopes",
+  "req: oas-3.2.security-requirement-object.pattern-name.may-other-security-scheme-types-array-contain \u2014 an API key's roles kept as written",
+  "req: oas-3.2.security-requirement-object.pattern-name.may-security-scheme-type-oauth2-openidconnect-value \u2014 OAuth 2.0 and OpenID Connect scopes printed"
+ ]
+}

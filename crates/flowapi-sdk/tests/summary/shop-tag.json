@@ -1,6 +1,7 @@
 {"info":{"title":"Pet Shop","version":"1.2.0"},
 "servers":["https://api.petshop.example/v1","https://sandbox.petshop.example/v1"],
 "securitySchemes":{"ApiKeyAuth":{"type":"apiKey","in":"header","name":"X-Api-Key"},"bearer":{"type":"http","scheme":"bearer"}},
+"security":[["ApiKeyAuth"]],
 "counts":{"operations":11,"shown":6,"tags":6,"schemas":5},
 "filter":{"tag":"Pets","path":null},
 "tags":[{"name":"pets","operations":6},{"name":"owners","operations":1},{"name":"events","operations":1},{"name":"collision","operations":1},{"name":"users","operations":1},{"name":"","operations":1}],

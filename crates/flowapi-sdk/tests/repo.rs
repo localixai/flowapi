@@ -57,7 +57,7 @@ fn case(name: &str) -> (String, String) {
 fn repositories_print_as_kept() {
     let bless = std::env::var_os("FLOWAPI_BLESS").is_some();
     let mut changed = Vec::new();
-    for name in ["auth", "shop"] {
+    for name in ["auth", "github", "shop", "swagger", "tokens"] {
         let (spec, config) = case(name);
         let (repo, found) = generate(&spec, &config, None);
         assert!(!found.contains("error["), "{name}: {found}");
@@ -215,4 +215,44 @@ fn the_package_version_is_exact_and_printed() {
         "{}",
         package.text
     );
+}
+
+/// The README's authentication section has a row for every security scheme the client knows
+/// (the table's `flowapiSecuritySchemes`: the description's and the config's), whatever its kind.
+#[test]
+fn the_readme_names_every_security_scheme() {
+    for name in ["auth", "github", "shop", "swagger", "tokens"] {
+        let (spec, config) = case(name);
+        let (repo, _) = generate(&spec, &config, None);
+        let text = |path: &str| {
+            repo.files
+                .iter()
+                .find(|f| f.path == path)
+                .map(|f| f.text.clone())
+                .expect(path)
+        };
+        let api = text("src/api.ts");
+        let table = api
+            .split("export const flowapiSecuritySchemes = {\n")
+            .nth(1)
+            .and_then(|t| t.split("} as const;").next())
+            .expect("the schemes");
+        let schemes: Vec<&str> = table
+            .lines()
+            .filter_map(|l| l.trim().strip_prefix('"')?.split('"').next())
+            .collect();
+        assert!(!schemes.is_empty(), "{name}: no scheme");
+        let readme = text("README.md");
+        let section = readme
+            .split("## Authentication\n")
+            .nth(1)
+            .and_then(|t| t.split("\n## ").next())
+            .expect("an authentication section");
+        for s in schemes {
+            assert!(
+                section.contains(&format!("| `{s}` |")),
+                "{name}: `{s}` is not in:\n{section}"
+            );
+        }
+    }
 }

@@ -95,3 +95,47 @@ fn a_schema_reads_nothing() {
     assert_eq!(service, flowapi_sdk::Service::default());
     assert!(diags.all().is_empty());
 }
+
+// req: oas-3.0.appendix-f-resolving-security-requirements-in-a-referenced-document.recommended-however-documented-section-tools-resolve-component — a name in a referenced document's operation resolves from the entry document
+// req: oas-3.1.appendix-f-resolving-security-requirements-in-a-referenced-document.recommended-however-documented-section-tools-resolve-component — the same in 3.1
+// req: oas-3.2.security-schemes.recommended-implementation-defined-whether-component-name-used — 3.2: resolved from the entry document, the RECOMMENDED choice
+/// Appendix F: an operation in a referenced document names `Key`, which both documents declare
+/// differently; the entry document's is the one sent, in every version that has the appendix.
+#[test]
+fn security_names_resolve_from_the_entry_document() {
+    for version in ["3.0.3", "3.1.0", "3.2.0"] {
+        let entry = format!(
+            r#"{{"openapi":"{version}","info":{{"title":"t","version":"1"}},"servers":[{{"url":"https://x"}}],
+            "paths":{{"/a":{{"$ref":"other.json#/paths/~1a"}}}},
+            "components":{{"securitySchemes":{{"Key":{{"type":"apiKey","in":"header","name":"X-Entry"}}}}}}}}"#
+        );
+        let other = format!(
+            r#"{{"openapi":"{version}","info":{{"title":"o","version":"1"}},
+            "paths":{{"/a":{{"get":{{"operationId":"get","security":[{{"Key":[]}}],"responses":{{"200":{{"description":"ok"}}}}}}}}}},
+            "components":{{"securitySchemes":{{"Key":{{"type":"apiKey","in":"query","name":"other"}}}}}}}}"#
+        );
+        let mut docs = Documents::new();
+        docs.add("entry.json", &entry).expect("JSON");
+        docs.add("other.json", &other).expect("JSON");
+        let target = flowapi_ts::TypeScript::new("out.ts").with_sdk();
+        let (program, _) = flowapi::program(&docs, &target);
+        let (service, diags) = flowapi_sdk::read(&docs, &program.expect("no error"));
+        let get = service.operations.first().expect("one operation");
+        let names: Vec<&str> = get
+            .security
+            .iter()
+            .flat_map(|r| r.schemes.iter().map(|(n, _)| n.as_str()))
+            .collect();
+        assert_eq!(names, ["Key"], "{version}");
+        let key = service
+            .schemes
+            .iter()
+            .find(|s| s.name == "Key")
+            .expect("Key");
+        assert!(
+            matches!(&key.auth, flowapi_sdk::Auth::ApiKey { name, .. } if name == "X-Entry"),
+            "{version}: {key:?}"
+        );
+        assert!(diags.all().is_empty(), "{version}: {:?}", diags.all());
+    }
+}

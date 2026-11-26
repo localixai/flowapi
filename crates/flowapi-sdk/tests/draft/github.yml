@@ -1,0 +1,43 @@
+# A first flowapi-sdk.yml, drafted by `flowapi config draft` from the description: rename
+# resources and methods, page what pages, then `flowapi config check` it.
+version: 1
+generator:
+  flowapi: "0.2.0"
+spec: github.json
+package:
+  name: github-like
+  version: 0.1.0
+  client: GitHubLike
+environments:
+  production: "https://api.github.example"
+  default: production
+  env_var: GITHUB_LIKE_BASE_URL
+# No operation of the description needs a credential, so the client sends none. If the API
+# takes one, find it in the API's documentation, declare it under `auth` when the
+# description lacks it, and name it in `security`, for example:
+# auth:
+#   token: { type: http, scheme: bearer, env_var: GITHUB_LIKE_TOKEN }
+# security:
+#   - token: []
+security: []
+defaults:
+  retries: 2
+  timeout: 60
+  max_retry_delay: 60
+resources:
+  app:
+    methods:
+      get_webhook: apps/get-webhook  # GET /app/hook
+  enterprise:
+    methods:
+      get_settings: enterprise/get-settings  # GET /enterprise/settings
+  meta:
+    methods:
+      list: meta/get  # GET /meta
+  repos:
+    methods:
+      retrieve: repos/get  # GET /repos/{owner}/{repo}
+  user:
+    methods:
+      list: users/get-authenticated  # GET /user
+skip: []

@@ -25,6 +25,8 @@ error[config.op.unknown]: `listPet` names no operation of the description
 error[config.op.unknown]: `GET /pets/{petId}` names no operation of the description
   at refs.yml:11:17 (/resources/pets/methods/retrieve)
   hint: did you mean `GET /pets/{pet_id}`?
+warning[config.auth.unlisted]: `pets.update` needs `ApiKeyAuth`, which `auth` does not list: the client sends no credential for it
+  at refs.yml:12:7 (/resources/pets/methods/update)
 error[config.op.twice]: `createPet` is in two places: pets.create and pets.make
   at refs.yml:14:19 (/resources/pets/methods/make/op)
 error[config.op.twice]: `deletePet` is in two places: pets.delete and skip
