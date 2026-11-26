@@ -1,10 +1,12 @@
 //! What the benchmark binaries share: where the bench's files are, the corpus it reads
-//! (`corpus/corpus.tsv`), one process run and measured (`process`), and the machine it ran on
-//! (`machine`).
+//! (`corpus/corpus.tsv`), one process run and measured (`process`), the machine it ran on
+//! (`machine`), and an SDK repository built and judged (`sdk_repo`, its table `sdk_report`).
 
 pub mod machine;
 pub mod process;
 pub mod report;
+pub mod sdk_repo;
+pub mod sdk_report;
 
 use std::path::PathBuf;
 

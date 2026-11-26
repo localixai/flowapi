@@ -1,5 +1,5 @@
 {
-  "$comment": "What flowapi holds itself to against the other generators. `cargo run --release --bin check` reads results/speed.json and fails on any rule a run breaks. A ratio is the best other tool's figure over flowapi's on each description; `except` lowers it for one description, where the measurement says less. Change a number only together with its reason, in the change that moves it.",
+  "$comment": "What flowapi holds itself to: against the other generators (speed), and building whole SDK repositories (sdk-repo). `cargo run --release --bin check` reads the results a rule names (`results`, results/speed.json when none) and fails on any rule a run breaks. A ratio is the best other tool's figure over flowapi's on each description; `except` lowers it for one description, where the measurement says less. Change a number only together with its reason, in the change that moves it.",
   "rules": [
     {
       "id": "flowapi-type-checks",
@@ -14,6 +14,33 @@
       "id": "memory",
       "about": "flowapi's peak resident memory is no more than the leanest other generator's on every description.",
       "maxRatio": 1.0
+    },
+    {
+      "id": "sdk-configs-clean",
+      "results": "sdk-repo.json",
+      "about": "Every repository's config, an example's or one drafted, passes `config check` with no error and no warning."
+    },
+    {
+      "id": "sdk-judge-passes",
+      "results": "sdk-repo.json",
+      "about": "The judge's verdict is pass on every repository, every step of 0-6 run and passed."
+    },
+    {
+      "id": "sdk-generate-time",
+      "results": "sdk-repo.json",
+      "about": "`generate`, the whole process into an empty folder, takes at most this many milliseconds (median) on the repositories named; each must be measured.",
+      "maxMs": {
+        "cloudflare": 30000
+      },
+      "why": {
+        "cloudflare": "One run by hand on 2026-11-26 (Intel N150, 4 cores): 16.3 s, 217 MB, 1,237 files for Cloudflare's 3,935 operations, on a drafted config. 30 s leaves room for a slower machine and the noise of a laptop, and fails a change that doubles the time. Lower it from the first full run's median."
+      }
+    },
+    {
+      "id": "agent-judge-passes",
+      "results": "agent.json",
+      "optional": true,
+      "about": "On every live agent run kept (bench/agent/run.sh), the judge, run by the runner after the agent, passes steps 0-6. The runs are the owner's: paid and not deterministic, so their absence is said and does not fail, and their turns, cost and time hold to no budget."
     }
   ]
 }

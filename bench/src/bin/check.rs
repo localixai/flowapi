@@ -1,8 +1,14 @@
 //! The committed results held to `budgets.json`: each rule read against the results it names
-//! (`results/*.json`), one line each, and a failure exit when any is broken or has no results.
-//! Nothing is timed here; `run.sh` takes the times, and this reads what it wrote.
+//! (`results`, `speed.json` when it names none), one line each, and a failure exit when any is
+//! broken or has no results. Nothing is timed here; `run.sh` takes the times, and this reads what
+//! it wrote: `speed`'s rules here, `sdk-repo`'s and the agent runs' in `check/sdk.rs`. A rule
+//! marked `optional` reads results run.sh does not write: when they are missing it says so and
+//! does not fail.
 //!
 //!     cargo run --release --bin check
+
+#[path = "check/sdk.rs"]
+mod sdk;
 
 use flowapi_bench::report::{files, lead, row};
 use flowapi_bench::{bench, results};
@@ -82,14 +88,23 @@ fn ratio(speed: &Value, rule: &Value, key: &str, faster: bool) -> (bool, String)
     (holds, found.join(", "))
 }
 
+/// The results file a rule reads.
+fn source(rule: &Value) -> &str {
+    rule["results"].as_str().unwrap_or("speed.json")
+}
+
 /// Whether `rule` holds, and what was found; `None` when its results are missing.
 fn judge(rule: &Value) -> Option<(bool, String)> {
     let id = rule["id"].as_str().unwrap_or("");
-    let speed = read(&results("speed.json"))?;
+    let found = read(&results(source(rule)))?;
     Some(match id {
-        "flowapi-type-checks" => type_checks(&speed),
-        "faster" => ratio(&speed, rule, "medianMs", true),
-        "memory" => ratio(&speed, rule, "peakRssKb", false),
+        "flowapi-type-checks" => type_checks(&found),
+        "faster" => ratio(&found, rule, "medianMs", true),
+        "memory" => ratio(&found, rule, "peakRssKb", false),
+        "sdk-configs-clean" => sdk::configs_clean(&found),
+        "sdk-judge-passes" => sdk::judge_passes(&found),
+        "sdk-generate-time" => sdk::generate_time(&found, rule),
+        "agent-judge-passes" => sdk::agent_judge_passes(&found),
         _ => (false, format!("no check for the rule {id:?}")),
     })
 }
@@ -106,9 +121,15 @@ fn main() -> ExitCode {
                 broken = true;
                 println!("BROKEN  {id}: {found}");
             }
+            // Results that run.sh does not write (the paid agent runs): their absence is said.
+            None if rule["optional"] == true => {
+                println!("NONE    {id}: no results/{}; not a failure", source(rule));
+            }
             None => {
                 broken = true;
-                println!("MISSING {id}: no results/speed.json; run `speed` (run.sh)");
+                let file = source(rule);
+                let program = file.trim_end_matches(".json");
+                println!("MISSING {id}: no results/{file}; run `{program}` (run.sh)");
             }
         }
     }

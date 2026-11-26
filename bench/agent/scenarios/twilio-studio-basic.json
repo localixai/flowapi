@@ -1,0 +1,12 @@
+{
+  "id": "twilio-studio-basic",
+  "about": "Twilio Studio v2, HTTP basic from the description, the person naming the two variables.",
+  "start": { "description": "examples/twilio-studio/openapi.yaml", "as": "openapi.yaml" },
+  "sdk": "sdk",
+  "prompt": "/flowapi:sdk openapi.yaml sdk\n\nRead the account SID from TWILIO_ACCOUNT_SID and the auth token from TWILIO_AUTH_TOKEN.",
+  "model": "sonnet",
+  "maxBudgetUsd": 5,
+  "expect": {
+    "configMatches": ["username_env_var: *TWILIO_ACCOUNT_SID", "password_env_var: *TWILIO_AUTH_TOKEN"]
+  }
+}

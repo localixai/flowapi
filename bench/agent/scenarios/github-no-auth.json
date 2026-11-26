@@ -1,0 +1,13 @@
+{
+  "id": "github-no-auth",
+  "about": "GitHub's REST API with no word on credentials: the agent must see config.auth.none, and a scheme it declares from the API's documentation must be reported as not in the description and not verified.",
+  "start": { "description": "examples/github/openapi.json", "as": "openapi.json" },
+  "sdk": "sdk",
+  "prompt": "/flowapi:sdk openapi.json sdk",
+  "model": "sonnet",
+  "maxBudgetUsd": 10,
+  "expect": {
+    "warningsSeen": ["config.auth.none"],
+    "reportMatches": ["not (been )?verified|unverified|not in the description"]
+  }
+}

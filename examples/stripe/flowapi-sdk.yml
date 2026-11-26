@@ -1,0 +1,1063 @@
+# Stripe's API as a user would configure it, refined from `flowapi config draft openapi.json`.
+# The description declares HTTP bearer and basic, either one for every operation; the secret key
+# is sent as the bearer token, read from STRIPE_API_KEY; basic reads STRIPE_BASIC_AUTH (`key:`).
+# Stripe reads `Idempotency-Key`, so POSTs carry one and are retried with it. A GET of one object
+# that the draft called `list` is `retrieve`, under the plural resource beside it (`accounts`,
+# `balances`: a resource is not named as a schema). Resources and the other methods keep the
+# draft's names.
+version: 1
+generator:
+  flowapi: "0.3.0"
+spec: openapi.json
+package:
+  name: stripe-rest-sdk
+  client: Stripe
+  license: MIT
+  description: Unofficial TypeScript SDK for the Stripe API.
+  keywords: [stripe, payments]
+environments:
+  production: "https://api.stripe.com/"
+  default: production
+  env_var: STRIPE_BASE_URL
+auth:
+  bearerAuth:
+    env_var: STRIPE_API_KEY
+    description: A secret key (sk_live_ or sk_test_) or a restricted key
+  basicAuth:
+    env_var: STRIPE_BASIC_AUTH  # the key as the user-id and an empty password, `sk_test_...:`
+defaults:
+  retries: 2
+  idempotency_key: Idempotency-Key
+  timeout: 60
+  max_retry_delay: 60
+pagination:
+  last_item_id:
+    type: last_item_id
+    request:
+      cursor: starting_after
+      limit: limit
+    response:
+      items: data
+      has_more: has_more
+resources:
+  account_links:
+    methods:
+      create: PostAccountLinks  # POST /v1/account_links
+  account_sessions:
+    methods:
+      create: PostAccountSessions  # POST /v1/account_sessions
+  accounts:
+    methods:
+      list:  # GET /v1/accounts
+        op: GetAccounts
+        pagination: last_item_id
+      create: PostAccounts  # POST /v1/accounts
+      retrieve_current: GetAccount  # GET /v1/account
+      delete: DeleteAccountsAccount  # DELETE /v1/accounts/{account}
+      retrieve: GetAccountsAccount  # GET /v1/accounts/{account}
+      update: PostAccountsAccount  # POST /v1/accounts/{account}
+      post_bank_accounts: PostAccountsAccountBankAccounts  # POST /v1/accounts/{account}/bank_accounts
+      delete_bank_id: DeleteAccountsAccountBankAccountsId  # DELETE /v1/accounts/{account}/bank_accounts/{id}
+      get_bank_id: GetAccountsAccountBankAccountsId  # GET /v1/accounts/{account}/bank_accounts/{id}
+      post_bank_id: PostAccountsAccountBankAccountsId  # POST /v1/accounts/{account}/bank_accounts/{id}
+      get_capabilities: GetAccountsAccountCapabilities  # GET /v1/accounts/{account}/capabilities
+      get_capabilities_capability: GetAccountsAccountCapabilitiesCapability  # GET /v1/accounts/{account}/capabilities/{capability}
+      post_capabilities_capability: PostAccountsAccountCapabilitiesCapability  # POST /v1/accounts/{account}/capabilities/{capability}
+      get_external_accounts:  # GET /v1/accounts/{account}/external_accounts
+        op: GetAccountsAccountExternalAccounts
+        pagination: last_item_id
+      post_external_accounts: PostAccountsAccountExternalAccounts  # POST /v1/accounts/{account}/external_accounts
+      delete_external_id: DeleteAccountsAccountExternalAccountsId  # DELETE /v1/accounts/{account}/external_accounts/{id}
+      get_external_id: GetAccountsAccountExternalAccountsId  # GET /v1/accounts/{account}/external_accounts/{id}
+      post_external_id: PostAccountsAccountExternalAccountsId  # POST /v1/accounts/{account}/external_accounts/{id}
+      post_login_links: PostAccountsAccountLoginLinks  # POST /v1/accounts/{account}/login_links
+      get_people:  # GET /v1/accounts/{account}/people
+        op: GetAccountsAccountPeople
+        pagination: last_item_id
+      post_people: PostAccountsAccountPeople  # POST /v1/accounts/{account}/people
+      delete_people_person: DeleteAccountsAccountPeoplePerson  # DELETE /v1/accounts/{account}/people/{person}
+      get_people_person: GetAccountsAccountPeoplePerson  # GET /v1/accounts/{account}/people/{person}
+      post_people_person: PostAccountsAccountPeoplePerson  # POST /v1/accounts/{account}/people/{person}
+      get_persons:  # GET /v1/accounts/{account}/persons
+        op: GetAccountsAccountPersons
+        pagination: last_item_id
+      post_persons: PostAccountsAccountPersons  # POST /v1/accounts/{account}/persons
+      delete_persons_person: DeleteAccountsAccountPersonsPerson  # DELETE /v1/accounts/{account}/persons/{person}
+      get_persons_person: GetAccountsAccountPersonsPerson  # GET /v1/accounts/{account}/persons/{person}
+      post_persons_person: PostAccountsAccountPersonsPerson  # POST /v1/accounts/{account}/persons/{person}
+      post_reject: PostAccountsAccountReject  # POST /v1/accounts/{account}/reject
+      post_unreject: PostAccountsAccountUnreject  # POST /v1/accounts/{account}/unreject
+  apple_pay:
+    methods:
+      get_domains:  # GET /v1/apple_pay/domains
+        op: GetApplePayDomains
+        pagination: last_item_id
+      post_domains: PostApplePayDomains  # POST /v1/apple_pay/domains
+      delete_domains_domain: DeleteApplePayDomainsDomain  # DELETE /v1/apple_pay/domains/{domain}
+      get_domains_domain: GetApplePayDomainsDomain  # GET /v1/apple_pay/domains/{domain}
+  application_fees:
+    methods:
+      list:  # GET /v1/application_fees
+        op: GetApplicationFees
+        pagination: last_item_id
+      get_refunds_id: GetApplicationFeesFeeRefundsId  # GET /v1/application_fees/{fee}/refunds/{id}
+      post_refunds_id: PostApplicationFeesFeeRefundsId  # POST /v1/application_fees/{fee}/refunds/{id}
+      retrieve: GetApplicationFeesId  # GET /v1/application_fees/{id}
+      post_id_refund: PostApplicationFeesIdRefund  # POST /v1/application_fees/{id}/refund
+      get_id_refunds:  # GET /v1/application_fees/{id}/refunds
+        op: GetApplicationFeesIdRefunds
+        pagination: last_item_id
+      post_id_refunds: PostApplicationFeesIdRefunds  # POST /v1/application_fees/{id}/refunds
+  apps:
+    methods:
+      get_installs:  # GET /v1/apps/installs
+        op: GetAppsInstalls
+        pagination: last_item_id
+      post_installs: PostAppsInstalls  # POST /v1/apps/installs
+      get_installs_id: GetAppsInstallsId  # GET /v1/apps/installs/{id}
+      post_installs_id: PostAppsInstallsId  # POST /v1/apps/installs/{id}
+      post_installs_id_uninstall: PostAppsInstallsIdUninstall  # POST /v1/apps/installs/{id}/uninstall
+      get_secrets:  # GET /v1/apps/secrets
+        op: GetAppsSecrets
+        pagination: last_item_id
+      post_secrets: PostAppsSecrets  # POST /v1/apps/secrets
+      post_secrets_delete: PostAppsSecretsDelete  # POST /v1/apps/secrets/delete
+      get_secrets_find: GetAppsSecretsFind  # GET /v1/apps/secrets/find
+  balance_transactions:
+    methods:
+      list:  # GET /v1/balance_transactions
+        op: GetBalanceTransactions
+        pagination: last_item_id
+      retrieve: GetBalanceTransactionsId  # GET /v1/balance_transactions/{id}
+  balances:
+    methods:
+      retrieve: GetBalance  # GET /v1/balance
+      retrieve_settings: GetBalanceSettings  # GET /v1/balance_settings
+      update_settings: PostBalanceSettings  # POST /v1/balance_settings
+      list_history:  # GET /v1/balance/history
+        op: GetBalanceHistory
+        pagination: last_item_id
+      retrieve_history: GetBalanceHistoryId  # GET /v1/balance/history/{id}
+  billing:
+    methods:
+      get_alerts:  # GET /v1/billing/alerts
+        op: GetBillingAlerts
+        pagination: last_item_id
+      post_alerts: PostBillingAlerts  # POST /v1/billing/alerts
+      get_alerts_id: GetBillingAlertsId  # GET /v1/billing/alerts/{id}
+      post_alerts_id_activate: PostBillingAlertsIdActivate  # POST /v1/billing/alerts/{id}/activate
+      post_alerts_id_archive: PostBillingAlertsIdArchive  # POST /v1/billing/alerts/{id}/archive
+      post_alerts_id_deactivate: PostBillingAlertsIdDeactivate  # POST /v1/billing/alerts/{id}/deactivate
+      get_credit_balance_summary: GetBillingCreditBalanceSummary  # GET /v1/billing/credit_balance_summary
+      get_credit_balance_transactions:  # GET /v1/billing/credit_balance_transactions
+        op: GetBillingCreditBalanceTransactions
+        pagination: last_item_id
+      get_credit_balance_transactions_id: GetBillingCreditBalanceTransactionsId  # GET /v1/billing/credit_balance_transactions/{id}
+      get_credit_grants:  # GET /v1/billing/credit_grants
+        op: GetBillingCreditGrants
+        pagination: last_item_id
+      post_credit_grants: PostBillingCreditGrants  # POST /v1/billing/credit_grants
+      get_credit_grants_id: GetBillingCreditGrantsId  # GET /v1/billing/credit_grants/{id}
+      post_credit_grants_id: PostBillingCreditGrantsId  # POST /v1/billing/credit_grants/{id}
+      post_credit_grants_id_expire: PostBillingCreditGrantsIdExpire  # POST /v1/billing/credit_grants/{id}/expire
+      post_credit_grants_id_void: PostBillingCreditGrantsIdVoid  # POST /v1/billing/credit_grants/{id}/void
+      get_feedback_options:  # GET /v1/billing/feedback_options
+        op: GetBillingFeedbackOptions
+        pagination: last_item_id
+      post_feedback_options: PostBillingFeedbackOptions  # POST /v1/billing/feedback_options
+      get_feedback_options_id: GetBillingFeedbackOptionsId  # GET /v1/billing/feedback_options/{id}
+      post_feedback_options_id: PostBillingFeedbackOptionsId  # POST /v1/billing/feedback_options/{id}
+      post_feedback_options_id_deactivate: PostBillingFeedbackOptionsIdDeactivate  # POST /v1/billing/feedback_options/{id}/deactivate
+      post_meter_event_adjustments: PostBillingMeterEventAdjustments  # POST /v1/billing/meter_event_adjustments
+      post_meter_events: PostBillingMeterEvents  # POST /v1/billing/meter_events
+      get_meters:  # GET /v1/billing/meters
+        op: GetBillingMeters
+        pagination: last_item_id
+      post_meters: PostBillingMeters  # POST /v1/billing/meters
+      get_meters_id: GetBillingMetersId  # GET /v1/billing/meters/{id}
+      post_meters_id: PostBillingMetersId  # POST /v1/billing/meters/{id}
+      post_meters_id_deactivate: PostBillingMetersIdDeactivate  # POST /v1/billing/meters/{id}/deactivate
+      get_meters_id_event_summaries:  # GET /v1/billing/meters/{id}/event_summaries
+        op: GetBillingMetersIdEventSummaries
+        pagination: last_item_id
+      post_meters_id_reactivate: PostBillingMetersIdReactivate  # POST /v1/billing/meters/{id}/reactivate
+  billing_portal:
+    methods:
+      get_configurations:  # GET /v1/billing_portal/configurations
+        op: GetBillingPortalConfigurations
+        pagination: last_item_id
+      post_configurations: PostBillingPortalConfigurations  # POST /v1/billing_portal/configurations
+      get_configurations_configuration: GetBillingPortalConfigurationsConfiguration  # GET /v1/billing_portal/configurations/{configuration}
+      post_configurations_configuration: PostBillingPortalConfigurationsConfiguration  # POST /v1/billing_portal/configurations/{configuration}
+      post_sessions: PostBillingPortalSessions  # POST /v1/billing_portal/sessions
+  charges:
+    methods:
+      list:  # GET /v1/charges
+        op: GetCharges
+        pagination: last_item_id
+      create: PostCharges  # POST /v1/charges
+      get_search: GetChargesSearch  # GET /v1/charges/search
+      retrieve: GetChargesCharge  # GET /v1/charges/{charge}
+      update: PostChargesCharge  # POST /v1/charges/{charge}
+      post_capture: PostChargesChargeCapture  # POST /v1/charges/{charge}/capture
+      get_dispute: GetChargesChargeDispute  # GET /v1/charges/{charge}/dispute
+      post_dispute: PostChargesChargeDispute  # POST /v1/charges/{charge}/dispute
+      post_dispute_close: PostChargesChargeDisputeClose  # POST /v1/charges/{charge}/dispute/close
+      post_refund: PostChargesChargeRefund  # POST /v1/charges/{charge}/refund
+      get_refunds:  # GET /v1/charges/{charge}/refunds
+        op: GetChargesChargeRefunds
+        pagination: last_item_id
+      post_refunds: PostChargesChargeRefunds  # POST /v1/charges/{charge}/refunds
+      get_refunds_refund: GetChargesChargeRefundsRefund  # GET /v1/charges/{charge}/refunds/{refund}
+      post_refunds_refund: PostChargesChargeRefundsRefund  # POST /v1/charges/{charge}/refunds/{refund}
+  checkout:
+    methods:
+      get_sessions:  # GET /v1/checkout/sessions
+        op: GetCheckoutSessions
+        pagination: last_item_id
+      post_sessions: PostCheckoutSessions  # POST /v1/checkout/sessions
+      get_sessions_session: GetCheckoutSessionsSession  # GET /v1/checkout/sessions/{session}
+      post_sessions_session: PostCheckoutSessionsSession  # POST /v1/checkout/sessions/{session}
+      post_sessions_session_expire: PostCheckoutSessionsSessionExpire  # POST /v1/checkout/sessions/{session}/expire
+      get_sessions_session_line_items:  # GET /v1/checkout/sessions/{session}/line_items
+        op: GetCheckoutSessionsSessionLineItems
+        pagination: last_item_id
+  climate:
+    methods:
+      get_orders:  # GET /v1/climate/orders
+        op: GetClimateOrders
+        pagination: last_item_id
+      post_orders: PostClimateOrders  # POST /v1/climate/orders
+      get_orders_order: GetClimateOrdersOrder  # GET /v1/climate/orders/{order}
+      post_orders_order: PostClimateOrdersOrder  # POST /v1/climate/orders/{order}
+      post_orders_order_cancel: PostClimateOrdersOrderCancel  # POST /v1/climate/orders/{order}/cancel
+      get_products:  # GET /v1/climate/products
+        op: GetClimateProducts
+        pagination: last_item_id
+      get_products_product: GetClimateProductsProduct  # GET /v1/climate/products/{product}
+      get_suppliers:  # GET /v1/climate/suppliers
+        op: GetClimateSuppliers
+        pagination: last_item_id
+      get_suppliers_supplier: GetClimateSuppliersSupplier  # GET /v1/climate/suppliers/{supplier}
+  confirmation_tokens:
+    methods:
+      retrieve: GetConfirmationTokensConfirmationToken  # GET /v1/confirmation_tokens/{confirmation_token}
+  country_specs:
+    methods:
+      list:  # GET /v1/country_specs
+        op: GetCountrySpecs
+        pagination: last_item_id
+      retrieve: GetCountrySpecsCountry  # GET /v1/country_specs/{country}
+  coupons:
+    methods:
+      list:  # GET /v1/coupons
+        op: GetCoupons
+        pagination: last_item_id
+      create: PostCoupons  # POST /v1/coupons
+      delete: DeleteCouponsCoupon  # DELETE /v1/coupons/{coupon}
+      retrieve: GetCouponsCoupon  # GET /v1/coupons/{coupon}
+      update: PostCouponsCoupon  # POST /v1/coupons/{coupon}
+  credit_notes:
+    methods:
+      list:  # GET /v1/credit_notes
+        op: GetCreditNotes
+        pagination: last_item_id
+      create: PostCreditNotes  # POST /v1/credit_notes
+      get_preview: GetCreditNotesPreview  # GET /v1/credit_notes/preview
+      get_preview_lines:  # GET /v1/credit_notes/preview/lines
+        op: GetCreditNotesPreviewLines
+        pagination: last_item_id
+      get_lines:  # GET /v1/credit_notes/{credit_note}/lines
+        op: GetCreditNotesCreditNoteLines
+        pagination: last_item_id
+      retrieve: GetCreditNotesId  # GET /v1/credit_notes/{id}
+      update: PostCreditNotesId  # POST /v1/credit_notes/{id}
+      post_id_void: PostCreditNotesIdVoid  # POST /v1/credit_notes/{id}/void
+  customer_sessions:
+    methods:
+      create: PostCustomerSessions  # POST /v1/customer_sessions
+  customers:
+    methods:
+      list:  # GET /v1/customers
+        op: GetCustomers
+        pagination: last_item_id
+      create: PostCustomers  # POST /v1/customers
+      get_search: GetCustomersSearch  # GET /v1/customers/search
+      delete: DeleteCustomersCustomer  # DELETE /v1/customers/{customer}
+      retrieve: GetCustomersCustomer  # GET /v1/customers/{customer}
+      update: PostCustomersCustomer  # POST /v1/customers/{customer}
+      get_balance_transactions:  # GET /v1/customers/{customer}/balance_transactions
+        op: GetCustomersCustomerBalanceTransactions
+        pagination: last_item_id
+      post_balance_transactions: PostCustomersCustomerBalanceTransactions  # POST /v1/customers/{customer}/balance_transactions
+      get_balance_transactions_transaction: GetCustomersCustomerBalanceTransactionsTransaction  # GET /v1/customers/{customer}/balance_transactions/{transaction}
+      post_balance_transactions_transaction: PostCustomersCustomerBalanceTransactionsTransaction  # POST /v1/customers/{customer}/balance_transactions/{transaction}
+      get_bank_accounts:  # GET /v1/customers/{customer}/bank_accounts
+        op: GetCustomersCustomerBankAccounts
+        pagination: last_item_id
+      post_bank_accounts: PostCustomersCustomerBankAccounts  # POST /v1/customers/{customer}/bank_accounts
+      delete_bank_accounts_id: DeleteCustomersCustomerBankAccountsId  # DELETE /v1/customers/{customer}/bank_accounts/{id}
+      get_bank_accounts_id: GetCustomersCustomerBankAccountsId  # GET /v1/customers/{customer}/bank_accounts/{id}
+      post_bank_accounts_id: PostCustomersCustomerBankAccountsId  # POST /v1/customers/{customer}/bank_accounts/{id}
+      post_bank_accounts_id_verify: PostCustomersCustomerBankAccountsIdVerify  # POST /v1/customers/{customer}/bank_accounts/{id}/verify
+      get_cards:  # GET /v1/customers/{customer}/cards
+        op: GetCustomersCustomerCards
+        pagination: last_item_id
+      post_cards: PostCustomersCustomerCards  # POST /v1/customers/{customer}/cards
+      delete_cards_id: DeleteCustomersCustomerCardsId  # DELETE /v1/customers/{customer}/cards/{id}
+      get_cards_id: GetCustomersCustomerCardsId  # GET /v1/customers/{customer}/cards/{id}
+      post_cards_id: PostCustomersCustomerCardsId  # POST /v1/customers/{customer}/cards/{id}
+      get_cash_balance: GetCustomersCustomerCashBalance  # GET /v1/customers/{customer}/cash_balance
+      post_cash_balance: PostCustomersCustomerCashBalance  # POST /v1/customers/{customer}/cash_balance
+      get_cash_balance_transactions:  # GET /v1/customers/{customer}/cash_balance_transactions
+        op: GetCustomersCustomerCashBalanceTransactions
+        pagination: last_item_id
+      get_cash_balance_transactions_transaction: GetCustomersCustomerCashBalanceTransactionsTransaction  # GET /v1/customers/{customer}/cash_balance_transactions/{transaction}
+      delete_discount: DeleteCustomersCustomerDiscount  # DELETE /v1/customers/{customer}/discount
+      get_discount: GetCustomersCustomerDiscount  # GET /v1/customers/{customer}/discount
+      post_funding_instructions: PostCustomersCustomerFundingInstructions  # POST /v1/customers/{customer}/funding_instructions
+      get_payment_methods:  # GET /v1/customers/{customer}/payment_methods
+        op: GetCustomersCustomerPaymentMethods
+        pagination: last_item_id
+      get_payment_methods_payment_method: GetCustomersCustomerPaymentMethodsPaymentMethod  # GET /v1/customers/{customer}/payment_methods/{payment_method}
+      get_sources:  # GET /v1/customers/{customer}/sources
+        op: GetCustomersCustomerSources
+        pagination: last_item_id
+      post_sources: PostCustomersCustomerSources  # POST /v1/customers/{customer}/sources
+      delete_sources_id: DeleteCustomersCustomerSourcesId  # DELETE /v1/customers/{customer}/sources/{id}
+      get_sources_id: GetCustomersCustomerSourcesId  # GET /v1/customers/{customer}/sources/{id}
+      post_sources_id: PostCustomersCustomerSourcesId  # POST /v1/customers/{customer}/sources/{id}
+      post_sources_id_verify: PostCustomersCustomerSourcesIdVerify  # POST /v1/customers/{customer}/sources/{id}/verify
+      get_subscriptions:  # GET /v1/customers/{customer}/subscriptions
+        op: GetCustomersCustomerSubscriptions
+        pagination: last_item_id
+      post_subscriptions: PostCustomersCustomerSubscriptions  # POST /v1/customers/{customer}/subscriptions
+      delete_subscriptions_subscription_exposed_id: DeleteCustomersCustomerSubscriptionsSubscriptionExposedId  # DELETE /v1/customers/{customer}/subscriptions/{subscription_exposed_id}
+      get_subscriptions_subscription_exposed_id: GetCustomersCustomerSubscriptionsSubscriptionExposedId  # GET /v1/customers/{customer}/subscriptions/{subscription_exposed_id}
+      post_subscriptions_subscription_exposed_id: PostCustomersCustomerSubscriptionsSubscriptionExposedId  # POST /v1/customers/{customer}/subscriptions/{subscription_exposed_id}
+      delete_subscriptions_subscription_exposed_id_discount: DeleteCustomersCustomerSubscriptionsSubscriptionExposedIdDiscount  # DELETE /v1/customers/{customer}/subscriptions/{subscription_exposed_id}/discount
+      get_subscriptions_subscription_exposed_id_discount: GetCustomersCustomerSubscriptionsSubscriptionExposedIdDiscount  # GET /v1/customers/{customer}/subscriptions/{subscription_exposed_id}/discount
+      get_tax_ids:  # GET /v1/customers/{customer}/tax_ids
+        op: GetCustomersCustomerTaxIds
+        pagination: last_item_id
+      post_tax_ids: PostCustomersCustomerTaxIds  # POST /v1/customers/{customer}/tax_ids
+      delete_tax_ids_id: DeleteCustomersCustomerTaxIdsId  # DELETE /v1/customers/{customer}/tax_ids/{id}
+      get_tax_ids_id: GetCustomersCustomerTaxIdsId  # GET /v1/customers/{customer}/tax_ids/{id}
+  disputes:
+    methods:
+      list:  # GET /v1/disputes
+        op: GetDisputes
+        pagination: last_item_id
+      retrieve: GetDisputesDispute  # GET /v1/disputes/{dispute}
+      update: PostDisputesDispute  # POST /v1/disputes/{dispute}
+      post_close: PostDisputesDisputeClose  # POST /v1/disputes/{dispute}/close
+  entitlements:
+    methods:
+      get_active_entitlements:  # GET /v1/entitlements/active_entitlements
+        op: GetEntitlementsActiveEntitlements
+        pagination: last_item_id
+      get_active_id: GetEntitlementsActiveEntitlementsId  # GET /v1/entitlements/active_entitlements/{id}
+      get_features:  # GET /v1/entitlements/features
+        op: GetEntitlementsFeatures
+        pagination: last_item_id
+      post_features: PostEntitlementsFeatures  # POST /v1/entitlements/features
+      get_features_id: GetEntitlementsFeaturesId  # GET /v1/entitlements/features/{id}
+      post_features_id: PostEntitlementsFeaturesId  # POST /v1/entitlements/features/{id}
+  ephemeral_keys:
+    methods:
+      create: PostEphemeralKeys  # POST /v1/ephemeral_keys
+      delete: DeleteEphemeralKeysKey  # DELETE /v1/ephemeral_keys/{key}
+  events:
+    methods:
+      list:  # GET /v1/events
+        op: GetEvents
+        pagination: last_item_id
+      retrieve: GetEventsId  # GET /v1/events/{id}
+  exchange_rates:
+    methods:
+      list:  # GET /v1/exchange_rates
+        op: GetExchangeRates
+        pagination: last_item_id
+      retrieve: GetExchangeRatesRateId  # GET /v1/exchange_rates/{rate_id}
+  external_accounts:
+    methods:
+      update: PostExternalAccountsId  # POST /v1/external_accounts/{id}
+  file_links:
+    methods:
+      list:  # GET /v1/file_links
+        op: GetFileLinks
+        pagination: last_item_id
+      create: PostFileLinks  # POST /v1/file_links
+      retrieve: GetFileLinksLink  # GET /v1/file_links/{link}
+      update: PostFileLinksLink  # POST /v1/file_links/{link}
+  files:
+    methods:
+      list:  # GET /v1/files
+        op: GetFiles
+        pagination: last_item_id
+      create: PostFiles  # POST /v1/files
+      retrieve: GetFilesFile  # GET /v1/files/{file}
+  financial_connections:
+    methods:
+      get_accounts:  # GET /v1/financial_connections/accounts
+        op: GetFinancialConnectionsAccounts
+        pagination: last_item_id
+      get_accounts_account: GetFinancialConnectionsAccountsAccount  # GET /v1/financial_connections/accounts/{account}
+      post_accounts_account_disconnect: PostFinancialConnectionsAccountsAccountDisconnect  # POST /v1/financial_connections/accounts/{account}/disconnect
+      get_accounts_account_owners:  # GET /v1/financial_connections/accounts/{account}/owners
+        op: GetFinancialConnectionsAccountsAccountOwners
+        pagination: last_item_id
+      post_accounts_account_refresh: PostFinancialConnectionsAccountsAccountRefresh  # POST /v1/financial_connections/accounts/{account}/refresh
+      post_accounts_account_subscribe: PostFinancialConnectionsAccountsAccountSubscribe  # POST /v1/financial_connections/accounts/{account}/subscribe
+      post_accounts_account_unsubscribe: PostFinancialConnectionsAccountsAccountUnsubscribe  # POST /v1/financial_connections/accounts/{account}/unsubscribe
+      post_sessions: PostFinancialConnectionsSessions  # POST /v1/financial_connections/sessions
+      get_sessions_session: GetFinancialConnectionsSessionsSession  # GET /v1/financial_connections/sessions/{session}
+      get_transactions:  # GET /v1/financial_connections/transactions
+        op: GetFinancialConnectionsTransactions
+        pagination: last_item_id
+      get_transactions_transaction: GetFinancialConnectionsTransactionsTransaction  # GET /v1/financial_connections/transactions/{transaction}
+  forwarding:
+    methods:
+      get_requests:  # GET /v1/forwarding/requests
+        op: GetForwardingRequests
+        pagination: last_item_id
+      post_requests: PostForwardingRequests  # POST /v1/forwarding/requests
+      get_requests_id: GetForwardingRequestsId  # GET /v1/forwarding/requests/{id}
+  identity:
+    methods:
+      get_verification_reports:  # GET /v1/identity/verification_reports
+        op: GetIdentityVerificationReports
+        pagination: last_item_id
+      get_verification_reports_report: GetIdentityVerificationReportsReport  # GET /v1/identity/verification_reports/{report}
+      get_verification_sessions:  # GET /v1/identity/verification_sessions
+        op: GetIdentityVerificationSessions
+        pagination: last_item_id
+      post_verification_sessions: PostIdentityVerificationSessions  # POST /v1/identity/verification_sessions
+      get_verification_sessions_session: GetIdentityVerificationSessionsSession  # GET /v1/identity/verification_sessions/{session}
+      post_verification_sessions_session: PostIdentityVerificationSessionsSession  # POST /v1/identity/verification_sessions/{session}
+      post_verification_sessions_session_cancel: PostIdentityVerificationSessionsSessionCancel  # POST /v1/identity/verification_sessions/{session}/cancel
+      post_verification_sessions_session_redact: PostIdentityVerificationSessionsSessionRedact  # POST /v1/identity/verification_sessions/{session}/redact
+  invoice_payments:
+    methods:
+      list:  # GET /v1/invoice_payments
+        op: GetInvoicePayments
+        pagination: last_item_id
+      retrieve: GetInvoicePaymentsInvoicePayment  # GET /v1/invoice_payments/{invoice_payment}
+  invoice_rendering_templates:
+    methods:
+      list:  # GET /v1/invoice_rendering_templates
+        op: GetInvoiceRenderingTemplates
+        pagination: last_item_id
+      retrieve: GetInvoiceRenderingTemplatesTemplate  # GET /v1/invoice_rendering_templates/{template}
+      post_archive: PostInvoiceRenderingTemplatesTemplateArchive  # POST /v1/invoice_rendering_templates/{template}/archive
+      post_unarchive: PostInvoiceRenderingTemplatesTemplateUnarchive  # POST /v1/invoice_rendering_templates/{template}/unarchive
+  invoiceitems:
+    methods:
+      list:  # GET /v1/invoiceitems
+        op: GetInvoiceitems
+        pagination: last_item_id
+      create: PostInvoiceitems  # POST /v1/invoiceitems
+      delete: DeleteInvoiceitemsInvoiceitem  # DELETE /v1/invoiceitems/{invoiceitem}
+      retrieve: GetInvoiceitemsInvoiceitem  # GET /v1/invoiceitems/{invoiceitem}
+      update: PostInvoiceitemsInvoiceitem  # POST /v1/invoiceitems/{invoiceitem}
+  invoices:
+    methods:
+      list:  # GET /v1/invoices
+        op: GetInvoices
+        pagination: last_item_id
+      create: PostInvoices  # POST /v1/invoices
+      post_create_preview: PostInvoicesCreatePreview  # POST /v1/invoices/create_preview
+      get_search: GetInvoicesSearch  # GET /v1/invoices/search
+      delete: DeleteInvoicesInvoice  # DELETE /v1/invoices/{invoice}
+      retrieve: GetInvoicesInvoice  # GET /v1/invoices/{invoice}
+      update: PostInvoicesInvoice  # POST /v1/invoices/{invoice}
+      post_add_lines: PostInvoicesInvoiceAddLines  # POST /v1/invoices/{invoice}/add_lines
+      post_attach_payment: PostInvoicesInvoiceAttachPayment  # POST /v1/invoices/{invoice}/attach_payment
+      post_finalize: PostInvoicesInvoiceFinalize  # POST /v1/invoices/{invoice}/finalize
+      get_lines:  # GET /v1/invoices/{invoice}/lines
+        op: GetInvoicesInvoiceLines
+        pagination: last_item_id
+      post_lines_line_item_id: PostInvoicesInvoiceLinesLineItemId  # POST /v1/invoices/{invoice}/lines/{line_item_id}
+      post_mark_uncollectible: PostInvoicesInvoiceMarkUncollectible  # POST /v1/invoices/{invoice}/mark_uncollectible
+      post_pay: PostInvoicesInvoicePay  # POST /v1/invoices/{invoice}/pay
+      post_remove_lines: PostInvoicesInvoiceRemoveLines  # POST /v1/invoices/{invoice}/remove_lines
+      post_send: PostInvoicesInvoiceSend  # POST /v1/invoices/{invoice}/send
+      post_update_lines: PostInvoicesInvoiceUpdateLines  # POST /v1/invoices/{invoice}/update_lines
+      post_void: PostInvoicesInvoiceVoid  # POST /v1/invoices/{invoice}/void
+  issuing:
+    methods:
+      get_authorizations:  # GET /v1/issuing/authorizations
+        op: GetIssuingAuthorizations
+        pagination: last_item_id
+      get_authorizations_authorization: GetIssuingAuthorizationsAuthorization  # GET /v1/issuing/authorizations/{authorization}
+      post_authorizations_authorization: PostIssuingAuthorizationsAuthorization  # POST /v1/issuing/authorizations/{authorization}
+      post_authorizations_authorization_approve: PostIssuingAuthorizationsAuthorizationApprove  # POST /v1/issuing/authorizations/{authorization}/approve
+      post_authorizations_authorization_decline: PostIssuingAuthorizationsAuthorizationDecline  # POST /v1/issuing/authorizations/{authorization}/decline
+      get_cardholders:  # GET /v1/issuing/cardholders
+        op: GetIssuingCardholders
+        pagination: last_item_id
+      post_cardholders: PostIssuingCardholders  # POST /v1/issuing/cardholders
+      get_cardholders_cardholder: GetIssuingCardholdersCardholder  # GET /v1/issuing/cardholders/{cardholder}
+      post_cardholders_cardholder: PostIssuingCardholdersCardholder  # POST /v1/issuing/cardholders/{cardholder}
+      get_cards:  # GET /v1/issuing/cards
+        op: GetIssuingCards
+        pagination: last_item_id
+      post_cards: PostIssuingCards  # POST /v1/issuing/cards
+      get_cards_card: GetIssuingCardsCard  # GET /v1/issuing/cards/{card}
+      post_cards_card: PostIssuingCardsCard  # POST /v1/issuing/cards/{card}
+      get_disputes:  # GET /v1/issuing/disputes
+        op: GetIssuingDisputes
+        pagination: last_item_id
+      post_disputes: PostIssuingDisputes  # POST /v1/issuing/disputes
+      get_disputes_dispute: GetIssuingDisputesDispute  # GET /v1/issuing/disputes/{dispute}
+      post_disputes_dispute: PostIssuingDisputesDispute  # POST /v1/issuing/disputes/{dispute}
+      post_disputes_dispute_submit: PostIssuingDisputesDisputeSubmit  # POST /v1/issuing/disputes/{dispute}/submit
+      get_personalization_designs:  # GET /v1/issuing/personalization_designs
+        op: GetIssuingPersonalizationDesigns
+        pagination: last_item_id
+      post_personalization_designs: PostIssuingPersonalizationDesigns  # POST /v1/issuing/personalization_designs
+      get_personalization_designs_personalization_design: GetIssuingPersonalizationDesignsPersonalizationDesign  # GET /v1/issuing/personalization_designs/{personalization_design}
+      post_personalization_designs_personalization_design: PostIssuingPersonalizationDesignsPersonalizationDesign  # POST /v1/issuing/personalization_designs/{personalization_design}
+      get_physical_bundles:  # GET /v1/issuing/physical_bundles
+        op: GetIssuingPhysicalBundles
+        pagination: last_item_id
+      get_physical_bundles_physical_bundle: GetIssuingPhysicalBundlesPhysicalBundle  # GET /v1/issuing/physical_bundles/{physical_bundle}
+      get_settlements_settlement: GetIssuingSettlementsSettlement  # GET /v1/issuing/settlements/{settlement}
+      post_settlements_settlement: PostIssuingSettlementsSettlement  # POST /v1/issuing/settlements/{settlement}
+      get_tokens:  # GET /v1/issuing/tokens
+        op: GetIssuingTokens
+        pagination: last_item_id
+      get_tokens_token: GetIssuingTokensToken  # GET /v1/issuing/tokens/{token}
+      post_tokens_token: PostIssuingTokensToken  # POST /v1/issuing/tokens/{token}
+      get_transactions:  # GET /v1/issuing/transactions
+        op: GetIssuingTransactions
+        pagination: last_item_id
+      get_transactions_transaction: GetIssuingTransactionsTransaction  # GET /v1/issuing/transactions/{transaction}
+      post_transactions_transaction: PostIssuingTransactionsTransaction  # POST /v1/issuing/transactions/{transaction}
+  link_account_sessions:
+    methods:
+      create: PostLinkAccountSessions  # POST /v1/link_account_sessions
+      retrieve: GetLinkAccountSessionsSession  # GET /v1/link_account_sessions/{session}
+  linked_accounts:
+    methods:
+      list:  # GET /v1/linked_accounts
+        op: GetLinkedAccounts
+        pagination: last_item_id
+      retrieve: GetLinkedAccountsAccount  # GET /v1/linked_accounts/{account}
+      post_disconnect: PostLinkedAccountsAccountDisconnect  # POST /v1/linked_accounts/{account}/disconnect
+      get_owners:  # GET /v1/linked_accounts/{account}/owners
+        op: GetLinkedAccountsAccountOwners
+        pagination: last_item_id
+      post_refresh: PostLinkedAccountsAccountRefresh  # POST /v1/linked_accounts/{account}/refresh
+  mandates:
+    methods:
+      retrieve: GetMandatesMandate  # GET /v1/mandates/{mandate}
+  payment_attempt_records:
+    methods:
+      list:  # GET /v1/payment_attempt_records
+        op: GetPaymentAttemptRecords
+        pagination: last_item_id
+      retrieve: GetPaymentAttemptRecordsId  # GET /v1/payment_attempt_records/{id}
+  payment_intents:
+    methods:
+      list:  # GET /v1/payment_intents
+        op: GetPaymentIntents
+        pagination: last_item_id
+      create: PostPaymentIntents  # POST /v1/payment_intents
+      get_search: GetPaymentIntentsSearch  # GET /v1/payment_intents/search
+      retrieve: GetPaymentIntentsIntent  # GET /v1/payment_intents/{intent}
+      update: PostPaymentIntentsIntent  # POST /v1/payment_intents/{intent}
+      get_amount_details_line_items:  # GET /v1/payment_intents/{intent}/amount_details_line_items
+        op: GetPaymentIntentsIntentAmountDetailsLineItems
+        pagination: last_item_id
+      post_apply_customer_balance: PostPaymentIntentsIntentApplyCustomerBalance  # POST /v1/payment_intents/{intent}/apply_customer_balance
+      post_cancel: PostPaymentIntentsIntentCancel  # POST /v1/payment_intents/{intent}/cancel
+      post_capture: PostPaymentIntentsIntentCapture  # POST /v1/payment_intents/{intent}/capture
+      post_confirm: PostPaymentIntentsIntentConfirm  # POST /v1/payment_intents/{intent}/confirm
+      post_increment_authorization: PostPaymentIntentsIntentIncrementAuthorization  # POST /v1/payment_intents/{intent}/increment_authorization
+      post_verify_microdeposits: PostPaymentIntentsIntentVerifyMicrodeposits  # POST /v1/payment_intents/{intent}/verify_microdeposits
+  payment_links:
+    methods:
+      list:  # GET /v1/payment_links
+        op: GetPaymentLinks
+        pagination: last_item_id
+      create: PostPaymentLinks  # POST /v1/payment_links
+      retrieve: GetPaymentLinksPaymentLink  # GET /v1/payment_links/{payment_link}
+      update: PostPaymentLinksPaymentLink  # POST /v1/payment_links/{payment_link}
+      get_line_items:  # GET /v1/payment_links/{payment_link}/line_items
+        op: GetPaymentLinksPaymentLinkLineItems
+        pagination: last_item_id
+  payment_method_configurations:
+    methods:
+      list:  # GET /v1/payment_method_configurations
+        op: GetPaymentMethodConfigurations
+        pagination: last_item_id
+      create: PostPaymentMethodConfigurations  # POST /v1/payment_method_configurations
+      retrieve: GetPaymentMethodConfigurationsConfiguration  # GET /v1/payment_method_configurations/{configuration}
+      update: PostPaymentMethodConfigurationsConfiguration  # POST /v1/payment_method_configurations/{configuration}
+  payment_method_domains:
+    methods:
+      list:  # GET /v1/payment_method_domains
+        op: GetPaymentMethodDomains
+        pagination: last_item_id
+      create: PostPaymentMethodDomains  # POST /v1/payment_method_domains
+      retrieve: GetPaymentMethodDomainsPaymentMethodDomain  # GET /v1/payment_method_domains/{payment_method_domain}
+      update: PostPaymentMethodDomainsPaymentMethodDomain  # POST /v1/payment_method_domains/{payment_method_domain}
+      post_validate: PostPaymentMethodDomainsPaymentMethodDomainValidate  # POST /v1/payment_method_domains/{payment_method_domain}/validate
+  payment_methods:
+    methods:
+      list:  # GET /v1/payment_methods
+        op: GetPaymentMethods
+        pagination: last_item_id
+      create: PostPaymentMethods  # POST /v1/payment_methods
+      retrieve: GetPaymentMethodsPaymentMethod  # GET /v1/payment_methods/{payment_method}
+      update: PostPaymentMethodsPaymentMethod  # POST /v1/payment_methods/{payment_method}
+      post_attach: PostPaymentMethodsPaymentMethodAttach  # POST /v1/payment_methods/{payment_method}/attach
+      post_detach: PostPaymentMethodsPaymentMethodDetach  # POST /v1/payment_methods/{payment_method}/detach
+  payment_records:
+    methods:
+      list:  # GET /v1/payment_records
+        op: GetPaymentRecords
+        pagination: last_item_id
+      post_report_payment: PostPaymentRecordsReportPayment  # POST /v1/payment_records/report_payment
+      retrieve: GetPaymentRecordsId  # GET /v1/payment_records/{id}
+      post_id_report_attempt: PostPaymentRecordsIdReportPaymentAttempt  # POST /v1/payment_records/{id}/report_payment_attempt
+      post_id_report_attempt_canceled: PostPaymentRecordsIdReportPaymentAttemptCanceled  # POST /v1/payment_records/{id}/report_payment_attempt_canceled
+      post_id_report_attempt_failed: PostPaymentRecordsIdReportPaymentAttemptFailed  # POST /v1/payment_records/{id}/report_payment_attempt_failed
+      post_id_report_attempt_guaranteed: PostPaymentRecordsIdReportPaymentAttemptGuaranteed  # POST /v1/payment_records/{id}/report_payment_attempt_guaranteed
+      post_id_report_attempt_informational: PostPaymentRecordsIdReportPaymentAttemptInformational  # POST /v1/payment_records/{id}/report_payment_attempt_informational
+      post_id_report_refund: PostPaymentRecordsIdReportRefund  # POST /v1/payment_records/{id}/report_refund
+  payouts:
+    methods:
+      list:  # GET /v1/payouts
+        op: GetPayouts
+        pagination: last_item_id
+      create: PostPayouts  # POST /v1/payouts
+      retrieve: GetPayoutsPayout  # GET /v1/payouts/{payout}
+      update: PostPayoutsPayout  # POST /v1/payouts/{payout}
+      post_cancel: PostPayoutsPayoutCancel  # POST /v1/payouts/{payout}/cancel
+      post_reverse: PostPayoutsPayoutReverse  # POST /v1/payouts/{payout}/reverse
+  plans:
+    methods:
+      list:  # GET /v1/plans
+        op: GetPlans
+        pagination: last_item_id
+      create: PostPlans  # POST /v1/plans
+      delete: DeletePlansPlan  # DELETE /v1/plans/{plan}
+      retrieve: GetPlansPlan  # GET /v1/plans/{plan}
+      update: PostPlansPlan  # POST /v1/plans/{plan}
+  prices:
+    methods:
+      list:  # GET /v1/prices
+        op: GetPrices
+        pagination: last_item_id
+      create: PostPrices  # POST /v1/prices
+      get_search: GetPricesSearch  # GET /v1/prices/search
+      retrieve: GetPricesPrice  # GET /v1/prices/{price}
+      update: PostPricesPrice  # POST /v1/prices/{price}
+  product_catalog:
+    methods:
+      get_trial_offers:  # GET /v1/product_catalog/trial_offers
+        op: GetProductCatalogTrialOffers
+        pagination: last_item_id
+      post_trial_offers: PostProductCatalogTrialOffers  # POST /v1/product_catalog/trial_offers
+      get_trial_offers_id: GetProductCatalogTrialOffersId  # GET /v1/product_catalog/trial_offers/{id}
+      post_trial_offers_id: PostProductCatalogTrialOffersId  # POST /v1/product_catalog/trial_offers/{id}
+  products:
+    methods:
+      list:  # GET /v1/products
+        op: GetProducts
+        pagination: last_item_id
+      create: PostProducts  # POST /v1/products
+      get_search: GetProductsSearch  # GET /v1/products/search
+      delete: DeleteProductsId  # DELETE /v1/products/{id}
+      retrieve: GetProductsId  # GET /v1/products/{id}
+      update: PostProductsId  # POST /v1/products/{id}
+      get_features:  # GET /v1/products/{product}/features
+        op: GetProductsProductFeatures
+        pagination: last_item_id
+      post_features: PostProductsProductFeatures  # POST /v1/products/{product}/features
+      delete_features_id: DeleteProductsProductFeaturesId  # DELETE /v1/products/{product}/features/{id}
+      get_features_id: GetProductsProductFeaturesId  # GET /v1/products/{product}/features/{id}
+  promotion_codes:
+    methods:
+      list:  # GET /v1/promotion_codes
+        op: GetPromotionCodes
+        pagination: last_item_id
+      create: PostPromotionCodes  # POST /v1/promotion_codes
+      retrieve: GetPromotionCodesPromotionCode  # GET /v1/promotion_codes/{promotion_code}
+      update: PostPromotionCodesPromotionCode  # POST /v1/promotion_codes/{promotion_code}
+  quotes:
+    methods:
+      list:  # GET /v1/quotes
+        op: GetQuotes
+        pagination: last_item_id
+      create: PostQuotes  # POST /v1/quotes
+      retrieve: GetQuotesQuote  # GET /v1/quotes/{quote}
+      update: PostQuotesQuote  # POST /v1/quotes/{quote}
+      post_accept: PostQuotesQuoteAccept  # POST /v1/quotes/{quote}/accept
+      post_cancel: PostQuotesQuoteCancel  # POST /v1/quotes/{quote}/cancel
+      get_computed_upfront_line_items:  # GET /v1/quotes/{quote}/computed_upfront_line_items
+        op: GetQuotesQuoteComputedUpfrontLineItems
+        pagination: last_item_id
+      post_finalize: PostQuotesQuoteFinalize  # POST /v1/quotes/{quote}/finalize
+      get_line_items:  # GET /v1/quotes/{quote}/line_items
+        op: GetQuotesQuoteLineItems
+        pagination: last_item_id
+      get_pdf: GetQuotesQuotePdf  # GET /v1/quotes/{quote}/pdf
+  radar:
+    methods:
+      get_early_fraud_warnings:  # GET /v1/radar/early_fraud_warnings
+        op: GetRadarEarlyFraudWarnings
+        pagination: last_item_id
+      get_early_fraud_warnings_early_fraud_warning: GetRadarEarlyFraudWarningsEarlyFraudWarning  # GET /v1/radar/early_fraud_warnings/{early_fraud_warning}
+      post_payment_evaluations: PostRadarPaymentEvaluations  # POST /v1/radar/payment_evaluations
+      get_value_list_items:  # GET /v1/radar/value_list_items
+        op: GetRadarValueListItems
+        pagination: last_item_id
+      post_value_list_items: PostRadarValueListItems  # POST /v1/radar/value_list_items
+      delete_value_list_items_item: DeleteRadarValueListItemsItem  # DELETE /v1/radar/value_list_items/{item}
+      get_value_list_items_item: GetRadarValueListItemsItem  # GET /v1/radar/value_list_items/{item}
+      get_value_lists:  # GET /v1/radar/value_lists
+        op: GetRadarValueLists
+        pagination: last_item_id
+      post_value_lists: PostRadarValueLists  # POST /v1/radar/value_lists
+      delete_value_lists_value_list: DeleteRadarValueListsValueList  # DELETE /v1/radar/value_lists/{value_list}
+      get_value_lists_value_list: GetRadarValueListsValueList  # GET /v1/radar/value_lists/{value_list}
+      post_value_lists_value_list: PostRadarValueListsValueList  # POST /v1/radar/value_lists/{value_list}
+  refunds:
+    methods:
+      list:  # GET /v1/refunds
+        op: GetRefunds
+        pagination: last_item_id
+      create: PostRefunds  # POST /v1/refunds
+      retrieve: GetRefundsRefund  # GET /v1/refunds/{refund}
+      update: PostRefundsRefund  # POST /v1/refunds/{refund}
+      post_cancel: PostRefundsRefundCancel  # POST /v1/refunds/{refund}/cancel
+  reporting:
+    methods:
+      get_report_runs:  # GET /v1/reporting/report_runs
+        op: GetReportingReportRuns
+        pagination: last_item_id
+      post_report_runs: PostReportingReportRuns  # POST /v1/reporting/report_runs
+      get_report_runs_report_run: GetReportingReportRunsReportRun  # GET /v1/reporting/report_runs/{report_run}
+      get_report_types: GetReportingReportTypes  # GET /v1/reporting/report_types
+      get_report_types_report_type: GetReportingReportTypesReportType  # GET /v1/reporting/report_types/{report_type}
+  reviews:
+    methods:
+      list:  # GET /v1/reviews
+        op: GetReviews
+        pagination: last_item_id
+      retrieve: GetReviewsReview  # GET /v1/reviews/{review}
+      post_approve: PostReviewsReviewApprove  # POST /v1/reviews/{review}/approve
+  setup_attempts:
+    methods:
+      list:  # GET /v1/setup_attempts
+        op: GetSetupAttempts
+        pagination: last_item_id
+  setup_intents:
+    methods:
+      list:  # GET /v1/setup_intents
+        op: GetSetupIntents
+        pagination: last_item_id
+      create: PostSetupIntents  # POST /v1/setup_intents
+      retrieve: GetSetupIntentsIntent  # GET /v1/setup_intents/{intent}
+      update: PostSetupIntentsIntent  # POST /v1/setup_intents/{intent}
+      post_cancel: PostSetupIntentsIntentCancel  # POST /v1/setup_intents/{intent}/cancel
+      post_confirm: PostSetupIntentsIntentConfirm  # POST /v1/setup_intents/{intent}/confirm
+      post_verify_microdeposits: PostSetupIntentsIntentVerifyMicrodeposits  # POST /v1/setup_intents/{intent}/verify_microdeposits
+  shipping_rates:
+    methods:
+      list:  # GET /v1/shipping_rates
+        op: GetShippingRates
+        pagination: last_item_id
+      create: PostShippingRates  # POST /v1/shipping_rates
+      retrieve: GetShippingRatesShippingRateToken  # GET /v1/shipping_rates/{shipping_rate_token}
+      update: PostShippingRatesShippingRateToken  # POST /v1/shipping_rates/{shipping_rate_token}
+  sigma:
+    methods:
+      post_saved_queries_id: PostSigmaSavedQueriesId  # POST /v1/sigma/saved_queries/{id}
+      get_scheduled_query_runs:  # GET /v1/sigma/scheduled_query_runs
+        op: GetSigmaScheduledQueryRuns
+        pagination: last_item_id
+      get_scheduled_query_runs_scheduled_query_run: GetSigmaScheduledQueryRunsScheduledQueryRun  # GET /v1/sigma/scheduled_query_runs/{scheduled_query_run}
+  sources:
+    methods:
+      create: PostSources  # POST /v1/sources
+      retrieve: GetSourcesSource  # GET /v1/sources/{source}
+      update: PostSourcesSource  # POST /v1/sources/{source}
+      get_mandate_notifications_mandate_notification: GetSourcesSourceMandateNotificationsMandateNotification  # GET /v1/sources/{source}/mandate_notifications/{mandate_notification}
+      get_transactions:  # GET /v1/sources/{source}/source_transactions
+        op: GetSourcesSourceSourceTransactions
+        pagination: last_item_id
+      get_transactions_transaction: GetSourcesSourceSourceTransactionsSourceTransaction  # GET /v1/sources/{source}/source_transactions/{source_transaction}
+      post_verify: PostSourcesSourceVerify  # POST /v1/sources/{source}/verify
+  subscription_items:
+    methods:
+      list:  # GET /v1/subscription_items
+        op: GetSubscriptionItems
+        pagination: last_item_id
+      create: PostSubscriptionItems  # POST /v1/subscription_items
+      delete: DeleteSubscriptionItemsItem  # DELETE /v1/subscription_items/{item}
+      retrieve: GetSubscriptionItemsItem  # GET /v1/subscription_items/{item}
+      update: PostSubscriptionItemsItem  # POST /v1/subscription_items/{item}
+  subscription_schedules:
+    methods:
+      list:  # GET /v1/subscription_schedules
+        op: GetSubscriptionSchedules
+        pagination: last_item_id
+      create: PostSubscriptionSchedules  # POST /v1/subscription_schedules
+      retrieve: GetSubscriptionSchedulesSchedule  # GET /v1/subscription_schedules/{schedule}
+      update: PostSubscriptionSchedulesSchedule  # POST /v1/subscription_schedules/{schedule}
+      post_cancel: PostSubscriptionSchedulesScheduleCancel  # POST /v1/subscription_schedules/{schedule}/cancel
+      post_release: PostSubscriptionSchedulesScheduleRelease  # POST /v1/subscription_schedules/{schedule}/release
+  subscriptions:
+    methods:
+      list:  # GET /v1/subscriptions
+        op: GetSubscriptions
+        pagination: last_item_id
+      create: PostSubscriptions  # POST /v1/subscriptions
+      get_search: GetSubscriptionsSearch  # GET /v1/subscriptions/search
+      delete: DeleteSubscriptionsSubscriptionExposedId  # DELETE /v1/subscriptions/{subscription_exposed_id}
+      retrieve: GetSubscriptionsSubscriptionExposedId  # GET /v1/subscriptions/{subscription_exposed_id}
+      update: PostSubscriptionsSubscriptionExposedId  # POST /v1/subscriptions/{subscription_exposed_id}
+      delete_exposed_id_discount: DeleteSubscriptionsSubscriptionExposedIdDiscount  # DELETE /v1/subscriptions/{subscription_exposed_id}/discount
+      post_migrate: PostSubscriptionsSubscriptionMigrate  # POST /v1/subscriptions/{subscription}/migrate
+      post_pause: PostSubscriptionsSubscriptionPause  # POST /v1/subscriptions/{subscription}/pause
+      post_resume: PostSubscriptionsSubscriptionResume  # POST /v1/subscriptions/{subscription}/resume
+  tax:
+    methods:
+      get_associations_find: GetTaxAssociationsFind  # GET /v1/tax/associations/find
+      post_calculations: PostTaxCalculations  # POST /v1/tax/calculations
+      get_calculations_calculation: GetTaxCalculationsCalculation  # GET /v1/tax/calculations/{calculation}
+      get_calculations_calculation_line_items:  # GET /v1/tax/calculations/{calculation}/line_items
+        op: GetTaxCalculationsCalculationLineItems
+        pagination: last_item_id
+      get_locations:  # GET /v1/tax/locations
+        op: GetTaxLocations
+        pagination: last_item_id
+      post_locations: PostTaxLocations  # POST /v1/tax/locations
+      get_locations_location: GetTaxLocationsLocation  # GET /v1/tax/locations/{location}
+      get_registrations:  # GET /v1/tax/registrations
+        op: GetTaxRegistrations
+        pagination: last_item_id
+      post_registrations: PostTaxRegistrations  # POST /v1/tax/registrations
+      get_registrations_id: GetTaxRegistrationsId  # GET /v1/tax/registrations/{id}
+      post_registrations_id: PostTaxRegistrationsId  # POST /v1/tax/registrations/{id}
+      get_settings: GetTaxSettings  # GET /v1/tax/settings
+      post_settings: PostTaxSettings  # POST /v1/tax/settings
+      post_transactions_create_from_calculation: PostTaxTransactionsCreateFromCalculation  # POST /v1/tax/transactions/create_from_calculation
+      post_transactions_create_reversal: PostTaxTransactionsCreateReversal  # POST /v1/tax/transactions/create_reversal
+      get_transactions_transaction: GetTaxTransactionsTransaction  # GET /v1/tax/transactions/{transaction}
+      get_transactions_transaction_line_items:  # GET /v1/tax/transactions/{transaction}/line_items
+        op: GetTaxTransactionsTransactionLineItems
+        pagination: last_item_id
+  tax_codes:
+    methods:
+      list:  # GET /v1/tax_codes
+        op: GetTaxCodes
+        pagination: last_item_id
+      retrieve: GetTaxCodesId  # GET /v1/tax_codes/{id}
+  tax_ids:
+    methods:
+      list:  # GET /v1/tax_ids
+        op: GetTaxIds
+        pagination: last_item_id
+      create: PostTaxIds  # POST /v1/tax_ids
+      delete: DeleteTaxIdsId  # DELETE /v1/tax_ids/{id}
+      retrieve: GetTaxIdsId  # GET /v1/tax_ids/{id}
+  tax_rates:
+    methods:
+      list:  # GET /v1/tax_rates
+        op: GetTaxRates
+        pagination: last_item_id
+      create: PostTaxRates  # POST /v1/tax_rates
+      retrieve: GetTaxRatesTaxRate  # GET /v1/tax_rates/{tax_rate}
+      update: PostTaxRatesTaxRate  # POST /v1/tax_rates/{tax_rate}
+  terminal:
+    methods:
+      get_configurations:  # GET /v1/terminal/configurations
+        op: GetTerminalConfigurations
+        pagination: last_item_id
+      post_configurations: PostTerminalConfigurations  # POST /v1/terminal/configurations
+      delete_configurations_configuration: DeleteTerminalConfigurationsConfiguration  # DELETE /v1/terminal/configurations/{configuration}
+      get_configurations_configuration: GetTerminalConfigurationsConfiguration  # GET /v1/terminal/configurations/{configuration}
+      post_configurations_configuration: PostTerminalConfigurationsConfiguration  # POST /v1/terminal/configurations/{configuration}
+      post_connection_tokens: PostTerminalConnectionTokens  # POST /v1/terminal/connection_tokens
+      get_locations:  # GET /v1/terminal/locations
+        op: GetTerminalLocations
+        pagination: last_item_id
+      post_locations: PostTerminalLocations  # POST /v1/terminal/locations
+      delete_locations_location: DeleteTerminalLocationsLocation  # DELETE /v1/terminal/locations/{location}
+      get_locations_location: GetTerminalLocationsLocation  # GET /v1/terminal/locations/{location}
+      post_locations_location: PostTerminalLocationsLocation  # POST /v1/terminal/locations/{location}
+      post_onboarding_links: PostTerminalOnboardingLinks  # POST /v1/terminal/onboarding_links
+      get_readers:  # GET /v1/terminal/readers
+        op: GetTerminalReaders
+        pagination: last_item_id
+      post_readers: PostTerminalReaders  # POST /v1/terminal/readers
+      delete_readers_reader: DeleteTerminalReadersReader  # DELETE /v1/terminal/readers/{reader}
+      get_readers_reader: GetTerminalReadersReader  # GET /v1/terminal/readers/{reader}
+      post_readers_reader: PostTerminalReadersReader  # POST /v1/terminal/readers/{reader}
+      post_readers_reader_cancel_action: PostTerminalReadersReaderCancelAction  # POST /v1/terminal/readers/{reader}/cancel_action
+      post_readers_reader_collect_inputs: PostTerminalReadersReaderCollectInputs  # POST /v1/terminal/readers/{reader}/collect_inputs
+      post_readers_reader_collect_payment_method: PostTerminalReadersReaderCollectPaymentMethod  # POST /v1/terminal/readers/{reader}/collect_payment_method
+      post_readers_reader_confirm_payment_intent: PostTerminalReadersReaderConfirmPaymentIntent  # POST /v1/terminal/readers/{reader}/confirm_payment_intent
+      post_readers_reader_process_payment_intent: PostTerminalReadersReaderProcessPaymentIntent  # POST /v1/terminal/readers/{reader}/process_payment_intent
+      post_readers_reader_process_setup_intent: PostTerminalReadersReaderProcessSetupIntent  # POST /v1/terminal/readers/{reader}/process_setup_intent
+      post_readers_reader_refund_payment: PostTerminalReadersReaderRefundPayment  # POST /v1/terminal/readers/{reader}/refund_payment
+      post_readers_reader_set_reader_display: PostTerminalReadersReaderSetReaderDisplay  # POST /v1/terminal/readers/{reader}/set_reader_display
+      post_refunds: PostTerminalRefunds  # POST /v1/terminal/refunds
+  test_helpers:
+    methods:
+      post_confirmation_tokens: PostTestHelpersConfirmationTokens  # POST /v1/test_helpers/confirmation_tokens
+      post_customers_customer_fund_cash_balance: PostTestHelpersCustomersCustomerFundCashBalance  # POST /v1/test_helpers/customers/{customer}/fund_cash_balance
+      post_issuing_authorizations: PostTestHelpersIssuingAuthorizations  # POST /v1/test_helpers/issuing/authorizations
+      post_issuing_authorizations_authorization_capture: PostTestHelpersIssuingAuthorizationsAuthorizationCapture  # POST /v1/test_helpers/issuing/authorizations/{authorization}/capture
+      post_issuing_authorizations_authorization_expire: PostTestHelpersIssuingAuthorizationsAuthorizationExpire  # POST /v1/test_helpers/issuing/authorizations/{authorization}/expire
+      post_issuing_authorizations_authorization_finalize_amount: PostTestHelpersIssuingAuthorizationsAuthorizationFinalizeAmount  # POST /v1/test_helpers/issuing/authorizations/{authorization}/finalize_amount
+      post_issuing_authorizations_authorization_fraud_challenges_respond: PostTestHelpersIssuingAuthorizationsAuthorizationFraudChallengesRespond  # POST /v1/test_helpers/issuing/authorizations/{authorization}/fraud_challenges/respond
+      post_issuing_authorizations_authorization_increment: PostTestHelpersIssuingAuthorizationsAuthorizationIncrement  # POST /v1/test_helpers/issuing/authorizations/{authorization}/increment
+      post_issuing_authorizations_authorization_reverse: PostTestHelpersIssuingAuthorizationsAuthorizationReverse  # POST /v1/test_helpers/issuing/authorizations/{authorization}/reverse
+      post_issuing_cards_card_shipping_deliver: PostTestHelpersIssuingCardsCardShippingDeliver  # POST /v1/test_helpers/issuing/cards/{card}/shipping/deliver
+      post_issuing_cards_card_shipping_fail: PostTestHelpersIssuingCardsCardShippingFail  # POST /v1/test_helpers/issuing/cards/{card}/shipping/fail
+      post_issuing_cards_card_shipping_return: PostTestHelpersIssuingCardsCardShippingReturn  # POST /v1/test_helpers/issuing/cards/{card}/shipping/return
+      post_issuing_cards_card_shipping_ship: PostTestHelpersIssuingCardsCardShippingShip  # POST /v1/test_helpers/issuing/cards/{card}/shipping/ship
+      post_issuing_cards_card_shipping_submit: PostTestHelpersIssuingCardsCardShippingSubmit  # POST /v1/test_helpers/issuing/cards/{card}/shipping/submit
+      post_issuing_personalization_designs_personalization_design_activate: PostTestHelpersIssuingPersonalizationDesignsPersonalizationDesignActivate  # POST /v1/test_helpers/issuing/personalization_designs/{personalization_design}/activate
+      post_issuing_personalization_designs_personalization_design_deactivate: PostTestHelpersIssuingPersonalizationDesignsPersonalizationDesignDeactivate  # POST /v1/test_helpers/issuing/personalization_designs/{personalization_design}/deactivate
+      post_issuing_personalization_designs_personalization_design_reject: PostTestHelpersIssuingPersonalizationDesignsPersonalizationDesignReject  # POST /v1/test_helpers/issuing/personalization_designs/{personalization_design}/reject
+      post_issuing_settlements: PostTestHelpersIssuingSettlements  # POST /v1/test_helpers/issuing/settlements
+      post_issuing_settlements_settlement_complete: PostTestHelpersIssuingSettlementsSettlementComplete  # POST /v1/test_helpers/issuing/settlements/{settlement}/complete
+      post_issuing_transactions_create_force_capture: PostTestHelpersIssuingTransactionsCreateForceCapture  # POST /v1/test_helpers/issuing/transactions/create_force_capture
+      post_issuing_transactions_create_unlinked_refund: PostTestHelpersIssuingTransactionsCreateUnlinkedRefund  # POST /v1/test_helpers/issuing/transactions/create_unlinked_refund
+      post_issuing_transactions_transaction_refund: PostTestHelpersIssuingTransactionsTransactionRefund  # POST /v1/test_helpers/issuing/transactions/{transaction}/refund
+      post_refunds_refund_expire: PostTestHelpersRefundsRefundExpire  # POST /v1/test_helpers/refunds/{refund}/expire
+      post_terminal_readers_reader_present_payment_method: PostTestHelpersTerminalReadersReaderPresentPaymentMethod  # POST /v1/test_helpers/terminal/readers/{reader}/present_payment_method
+      post_terminal_readers_reader_succeed_input_collection: PostTestHelpersTerminalReadersReaderSucceedInputCollection  # POST /v1/test_helpers/terminal/readers/{reader}/succeed_input_collection
+      post_terminal_readers_reader_timeout_input_collection: PostTestHelpersTerminalReadersReaderTimeoutInputCollection  # POST /v1/test_helpers/terminal/readers/{reader}/timeout_input_collection
+      get_clocks:  # GET /v1/test_helpers/test_clocks
+        op: GetTestHelpersTestClocks
+        pagination: last_item_id
+      post_clocks: PostTestHelpersTestClocks  # POST /v1/test_helpers/test_clocks
+      delete_clocks_clock: DeleteTestHelpersTestClocksTestClock  # DELETE /v1/test_helpers/test_clocks/{test_clock}
+      get_clocks_clock: GetTestHelpersTestClocksTestClock  # GET /v1/test_helpers/test_clocks/{test_clock}
+      post_clocks_clock_advance: PostTestHelpersTestClocksTestClockAdvance  # POST /v1/test_helpers/test_clocks/{test_clock}/advance
+      post_treasury_inbound_transfers_id_fail: PostTestHelpersTreasuryInboundTransfersIdFail  # POST /v1/test_helpers/treasury/inbound_transfers/{id}/fail
+      post_treasury_inbound_transfers_id_return: PostTestHelpersTreasuryInboundTransfersIdReturn  # POST /v1/test_helpers/treasury/inbound_transfers/{id}/return
+      post_treasury_inbound_transfers_id_succeed: PostTestHelpersTreasuryInboundTransfersIdSucceed  # POST /v1/test_helpers/treasury/inbound_transfers/{id}/succeed
+      post_treasury_outbound_payments_id: PostTestHelpersTreasuryOutboundPaymentsId  # POST /v1/test_helpers/treasury/outbound_payments/{id}
+      post_treasury_outbound_payments_id_fail: PostTestHelpersTreasuryOutboundPaymentsIdFail  # POST /v1/test_helpers/treasury/outbound_payments/{id}/fail
+      post_treasury_outbound_payments_id_post: PostTestHelpersTreasuryOutboundPaymentsIdPost  # POST /v1/test_helpers/treasury/outbound_payments/{id}/post
+      post_treasury_outbound_payments_id_return: PostTestHelpersTreasuryOutboundPaymentsIdReturn  # POST /v1/test_helpers/treasury/outbound_payments/{id}/return
+      post_treasury_outbound_transfers_outbound_transfer: PostTestHelpersTreasuryOutboundTransfersOutboundTransfer  # POST /v1/test_helpers/treasury/outbound_transfers/{outbound_transfer}
+      post_treasury_outbound_transfers_outbound_transfer_fail: PostTestHelpersTreasuryOutboundTransfersOutboundTransferFail  # POST /v1/test_helpers/treasury/outbound_transfers/{outbound_transfer}/fail
+      post_treasury_outbound_transfers_outbound_transfer_post: PostTestHelpersTreasuryOutboundTransfersOutboundTransferPost  # POST /v1/test_helpers/treasury/outbound_transfers/{outbound_transfer}/post
+      post_treasury_outbound_transfers_outbound_transfer_return: PostTestHelpersTreasuryOutboundTransfersOutboundTransferReturn  # POST /v1/test_helpers/treasury/outbound_transfers/{outbound_transfer}/return
+      post_treasury_received_credits: PostTestHelpersTreasuryReceivedCredits  # POST /v1/test_helpers/treasury/received_credits
+      post_treasury_received_debits: PostTestHelpersTreasuryReceivedDebits  # POST /v1/test_helpers/treasury/received_debits
+  three_d_secure:
+    methods:
+      get_authentications:  # GET /v1/three_d_secure/authentications
+        op: GetThreeDSecureAuthentications
+        pagination: last_item_id
+      post_authentications: PostThreeDSecureAuthentications  # POST /v1/three_d_secure/authentications
+      get_authentications_authentication: GetThreeDSecureAuthenticationsAuthentication  # GET /v1/three_d_secure/authentications/{authentication}
+      post_authentications_authentication_cancel: PostThreeDSecureAuthenticationsAuthenticationCancel  # POST /v1/three_d_secure/authentications/{authentication}/cancel
+      post_authentications_authentication_submit: PostThreeDSecureAuthenticationsAuthenticationSubmit  # POST /v1/three_d_secure/authentications/{authentication}/submit
+  tokens:
+    methods:
+      create: PostTokens  # POST /v1/tokens
+      retrieve: GetTokensToken  # GET /v1/tokens/{token}
+  topups:
+    methods:
+      list:  # GET /v1/topups
+        op: GetTopups
+        pagination: last_item_id
+      create: PostTopups  # POST /v1/topups
+      retrieve: GetTopupsTopup  # GET /v1/topups/{topup}
+      update: PostTopupsTopup  # POST /v1/topups/{topup}
+      post_cancel: PostTopupsTopupCancel  # POST /v1/topups/{topup}/cancel
+  transfers:
+    methods:
+      list:  # GET /v1/transfers
+        op: GetTransfers
+        pagination: last_item_id
+      create: PostTransfers  # POST /v1/transfers
+      get_id_reversals:  # GET /v1/transfers/{id}/reversals
+        op: GetTransfersIdReversals
+        pagination: last_item_id
+      post_id_reversals: PostTransfersIdReversals  # POST /v1/transfers/{id}/reversals
+      retrieve: GetTransfersTransfer  # GET /v1/transfers/{transfer}
+      update: PostTransfersTransfer  # POST /v1/transfers/{transfer}
+      get_reversals_id: GetTransfersTransferReversalsId  # GET /v1/transfers/{transfer}/reversals/{id}
+      post_reversals_id: PostTransfersTransferReversalsId  # POST /v1/transfers/{transfer}/reversals/{id}
+  treasury:
+    methods:
+      get_credit_reversals:  # GET /v1/treasury/credit_reversals
+        op: GetTreasuryCreditReversals
+        pagination: last_item_id
+      post_credit_reversals: PostTreasuryCreditReversals  # POST /v1/treasury/credit_reversals
+      get_credit_reversals_credit_reversal: GetTreasuryCreditReversalsCreditReversal  # GET /v1/treasury/credit_reversals/{credit_reversal}
+      get_debit_reversals:  # GET /v1/treasury/debit_reversals
+        op: GetTreasuryDebitReversals
+        pagination: last_item_id
+      post_debit_reversals: PostTreasuryDebitReversals  # POST /v1/treasury/debit_reversals
+      get_debit_reversals_debit_reversal: GetTreasuryDebitReversalsDebitReversal  # GET /v1/treasury/debit_reversals/{debit_reversal}
+      get_financial_accounts:  # GET /v1/treasury/financial_accounts
+        op: GetTreasuryFinancialAccounts
+        pagination: last_item_id
+      post_financial_accounts: PostTreasuryFinancialAccounts  # POST /v1/treasury/financial_accounts
+      get_financial_accounts_financial_account: GetTreasuryFinancialAccountsFinancialAccount  # GET /v1/treasury/financial_accounts/{financial_account}
+      post_financial_accounts_financial_account: PostTreasuryFinancialAccountsFinancialAccount  # POST /v1/treasury/financial_accounts/{financial_account}
+      post_financial_accounts_financial_account_close: PostTreasuryFinancialAccountsFinancialAccountClose  # POST /v1/treasury/financial_accounts/{financial_account}/close
+      get_financial_accounts_financial_account_features: GetTreasuryFinancialAccountsFinancialAccountFeatures  # GET /v1/treasury/financial_accounts/{financial_account}/features
+      post_financial_accounts_financial_account_features: PostTreasuryFinancialAccountsFinancialAccountFeatures  # POST /v1/treasury/financial_accounts/{financial_account}/features
+      get_inbound_transfers:  # GET /v1/treasury/inbound_transfers
+        op: GetTreasuryInboundTransfers
+        pagination: last_item_id
+      post_inbound_transfers: PostTreasuryInboundTransfers  # POST /v1/treasury/inbound_transfers
+      get_inbound_transfers_id: GetTreasuryInboundTransfersId  # GET /v1/treasury/inbound_transfers/{id}
+      post_inbound_transfers_inbound_transfer_cancel: PostTreasuryInboundTransfersInboundTransferCancel  # POST /v1/treasury/inbound_transfers/{inbound_transfer}/cancel
+      get_outbound_payments:  # GET /v1/treasury/outbound_payments
+        op: GetTreasuryOutboundPayments
+        pagination: last_item_id
+      post_outbound_payments: PostTreasuryOutboundPayments  # POST /v1/treasury/outbound_payments
+      get_outbound_payments_id: GetTreasuryOutboundPaymentsId  # GET /v1/treasury/outbound_payments/{id}
+      post_outbound_payments_id_cancel: PostTreasuryOutboundPaymentsIdCancel  # POST /v1/treasury/outbound_payments/{id}/cancel
+      get_outbound_transfers:  # GET /v1/treasury/outbound_transfers
+        op: GetTreasuryOutboundTransfers
+        pagination: last_item_id
+      post_outbound_transfers: PostTreasuryOutboundTransfers  # POST /v1/treasury/outbound_transfers
+      get_outbound_transfers_outbound_transfer: GetTreasuryOutboundTransfersOutboundTransfer  # GET /v1/treasury/outbound_transfers/{outbound_transfer}
+      post_outbound_transfers_outbound_transfer_cancel: PostTreasuryOutboundTransfersOutboundTransferCancel  # POST /v1/treasury/outbound_transfers/{outbound_transfer}/cancel
+      get_received_credits:  # GET /v1/treasury/received_credits
+        op: GetTreasuryReceivedCredits
+        pagination: last_item_id
+      get_received_credits_id: GetTreasuryReceivedCreditsId  # GET /v1/treasury/received_credits/{id}
+      get_received_debits:  # GET /v1/treasury/received_debits
+        op: GetTreasuryReceivedDebits
+        pagination: last_item_id
+      get_received_debits_id: GetTreasuryReceivedDebitsId  # GET /v1/treasury/received_debits/{id}
+      get_transaction_entries:  # GET /v1/treasury/transaction_entries
+        op: GetTreasuryTransactionEntries
+        pagination: last_item_id
+      get_transaction_entries_id: GetTreasuryTransactionEntriesId  # GET /v1/treasury/transaction_entries/{id}
+      get_transactions:  # GET /v1/treasury/transactions
+        op: GetTreasuryTransactions
+        pagination: last_item_id
+      get_transactions_id: GetTreasuryTransactionsId  # GET /v1/treasury/transactions/{id}
+  webhook_endpoints:
+    methods:
+      list:  # GET /v1/webhook_endpoints
+        op: GetWebhookEndpoints
+        pagination: last_item_id
+      create: PostWebhookEndpoints  # POST /v1/webhook_endpoints
+      delete: DeleteWebhookEndpointsWebhookEndpoint  # DELETE /v1/webhook_endpoints/{webhook_endpoint}
+      retrieve: GetWebhookEndpointsWebhookEndpoint  # GET /v1/webhook_endpoints/{webhook_endpoint}
+      update: PostWebhookEndpointsWebhookEndpoint  # POST /v1/webhook_endpoints/{webhook_endpoint}
+skip: []
+readme:
+  title: Stripe TypeScript SDK (unofficial)
+  headline_method: customers.list
+  pagination_method: customers.list

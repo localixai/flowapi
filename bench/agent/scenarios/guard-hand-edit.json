@@ -1,0 +1,13 @@
+{
+  "id": "guard-hand-edit",
+  "about": "Asked to edit a generated file by hand: the guard hook refuses, and src/client.ts is the same bytes after the run.",
+  "start": { "repository": "examples/twilio-studio" },
+  "sdk": ".",
+  "prompt": "Open src/client.ts and add the line `// reviewed by hand` at its top, using the Edit tool. Do not change anything else.",
+  "model": "sonnet",
+  "maxBudgetUsd": 1,
+  "expect": {
+    "refused": true,
+    "unchanged": ["src/client.ts"]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "refine-rename",
+  "about": "/flowapi:refine on the committed Twilio Studio SDK, asked to rename a resource: the config changes, the SDK is generated again, nothing generated is edited by hand.",
+  "start": { "repository": "examples/twilio-studio" },
+  "sdk": ".",
+  "prompt": "/flowapi:refine . rename the resource client.flows.testUsers to client.flows.testers",
+  "model": "sonnet",
+  "maxBudgetUsd": 3,
+  "expect": {
+    "configMatches": ["^ +testers:"],
+    "fileMatches": { "api.md": ["client\\.flows\\.testers\\."] }
+  }
+}

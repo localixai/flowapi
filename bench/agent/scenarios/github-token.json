@@ -1,0 +1,13 @@
+{
+  "id": "github-token",
+  "about": "GitHub's REST API, the person giving the credential the description lacks: a bearer token read from GITHUB_TOKEN.",
+  "start": { "description": "examples/github/openapi.json", "as": "openapi.json" },
+  "sdk": "sdk",
+  "prompt": "/flowapi:sdk openapi.json sdk\n\nThe API authenticates with a personal access token sent as a bearer token; read it from GITHUB_TOKEN. Most endpoints also answer without one.",
+  "model": "sonnet",
+  "maxBudgetUsd": 10,
+  "expect": {
+    "warningsSeen": ["config.auth.none"],
+    "configMatches": ["GITHUB_TOKEN", "scheme: *bearer"]
+  }
+}

@@ -1,0 +1,77 @@
+# Twilio Studio v2 as a user would configure it, refined from `flowapi config draft openapi.yaml`:
+# one resource tree under `flows` as the paths nest, `retrieve` for a single item, Twilio's
+# paging by `meta.next_page_url` (the description says `Page` is "simply for client state", so the
+# draft's `page` scheme would ask for the same page again), and HTTP basic read from the two
+# variables Twilio's own tools use.
+version: 1
+generator:
+  flowapi: "0.3.0"
+spec: openapi.yaml
+package:
+  name: twilio-studio-sdk
+  client: TwilioStudio
+  license: Apache-2.0
+  description: Unofficial TypeScript SDK for the Twilio Studio API, version 2.
+  keywords: [twilio, studio, flows]
+environments:
+  production: "https://studio.twilio.com"
+  default: production
+  env_var: TWILIO_STUDIO_BASE_URL
+auth:
+  accountSid_authToken:
+    username_env_var: TWILIO_ACCOUNT_SID
+    password_env_var: TWILIO_AUTH_TOKEN
+    description: The account SID and its auth token (or an API key's SID and secret)
+pagination:
+  flows:
+    type: link
+    request: { limit: PageSize }
+    response: { items: flows, next: meta.next_page_url }
+  executions:
+    type: link
+    request: { limit: PageSize }
+    response: { items: executions, next: meta.next_page_url }
+  steps:
+    type: link
+    request: { limit: PageSize }
+    response: { items: steps, next: meta.next_page_url }
+  revisions:
+    type: link
+    request: { limit: PageSize }
+    response: { items: revisions, next: meta.next_page_url }
+resources:
+  flows:
+    methods:
+      list: { op: ListFlow, pagination: flows }
+      create: CreateFlow
+      retrieve: FetchFlow
+      update: UpdateFlow
+      delete: DeleteFlow
+      validate: UpdateFlowValidate
+    resources:
+      revisions:
+        methods:
+          list: { op: ListFlowRevision, pagination: revisions }
+          retrieve: FetchFlowRevision
+      test_users:
+        methods:
+          retrieve: FetchTestUser
+          update: UpdateTestUser
+      executions:
+        methods:
+          list: { op: ListExecution, pagination: executions }
+          create: CreateExecution
+          retrieve: FetchExecution
+          update: UpdateExecution
+          delete: DeleteExecution
+          context: FetchExecutionContext
+        resources:
+          steps:
+            methods:
+              list: { op: ListExecutionStep, pagination: steps }
+              retrieve: FetchExecutionStep
+              context: FetchExecutionStepContext
+readme:
+  title: Twilio Studio TypeScript SDK (unofficial)
+  headline_method: flows.list
+  pagination_method: flows.list

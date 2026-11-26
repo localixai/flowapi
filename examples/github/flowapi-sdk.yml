@@ -1,0 +1,2188 @@
+# GitHub's REST API (api.github.com) as a user would configure it, refined from `flowapi config
+# draft openapi.json`. The description declares no security scheme, so the bearer token the API
+# takes is declared here (docs.github.com, "Authenticating to the REST API") and made optional, as
+# most public endpoints answer without one. Pagination is the draft's: `link` with `header: Link`
+# where a response declares the header, `page` where it does not. Resources are the description's
+# tags, as the draft has them; methods keep the draft's names.
+version: 1
+generator:
+  flowapi: "0.3.0"
+spec: openapi.json
+package:
+  name: github-rest-sdk
+  client: GitHub
+  license: MIT
+  description: Unofficial TypeScript SDK for GitHub's REST API.
+  keywords: [github, rest]
+environments:
+  production: "https://api.github.com"
+  default: production
+  env_var: GITHUB_BASE_URL
+auth:
+  Token:
+    type: http
+    scheme: bearer
+    env_var: GITHUB_TOKEN
+    description: A personal access token, a GitHub App's installation token, or GITHUB_TOKEN in Actions
+security:
+  - Token: []
+  - {}
+defaults:
+  retries: 1
+  timeout: 60
+  max_retry_delay: 60
+pagination:
+  link_repository_cache_usages:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: repository_cache_usages
+      header: Link
+  link_runners:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: runners
+      header: Link
+  page_repositories:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response:
+      items: repositories
+  page_policies:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response:
+      items: policies
+  page_runner_groups:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response:
+      items: runner_groups
+  link_secrets:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: secrets
+      header: Link
+  link_variables:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: variables
+      header: Link
+  link_artifacts:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: artifacts
+      header: Link
+  link_actions_caches:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: actions_caches
+      header: Link
+  link_concurrency_groups:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: concurrency_groups
+      header: Link
+  link_workflow_runs:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: workflow_runs
+      header: Link
+  link_jobs:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: jobs
+      header: Link
+  link_workflows:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: workflows
+      header: Link
+  page_body:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response: {}
+  link_body:
+    type: link
+    request:
+      limit: per_page
+    response:
+      header: Link
+  link_automations:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: automations
+      header: Link
+  link_revisions:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: revisions
+      header: Link
+  link_tasks:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: tasks
+      header: Link
+  link_repositories:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: repositories
+      header: Link
+  link_installations:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: installations
+      header: Link
+  page_budgets:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response:
+      items: budgets
+      has_more: has_next_page
+  link_check_runs:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: check_runs
+      header: Link
+  link_check_suites:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: check_suites
+      header: Link
+  page_codespaces:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response:
+      items: codespaces
+  page_devcontainers:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response:
+      items: devcontainers
+  link_seats:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: seats
+      header: Link
+  link_spaces:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: spaces
+      header: Link
+  page_accessible_repositories:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response:
+      items: accessible_repositories
+  link_network_configurations:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: network_configurations
+      header: Link
+  link_configurations:
+    type: link
+    request:
+      limit: per_page
+    response:
+      items: configurations
+      header: Link
+  page_statuses:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response:
+      items: statuses
+  page_environments:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response:
+      items: environments
+  page_branch_policies:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response:
+      items: branch_policies
+  page_available_custom_deployment_protection_rule_integrations:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response:
+      items: available_custom_deployment_protection_rule_integrations
+  page_names:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response:
+      items: names
+  link_body_2:
+    type: link
+    response:
+      header: Link
+  page_items:
+    type: page
+    request:
+      page: page
+      per_page: per_page
+    response:
+      items: items
+resources:
+  actions:
+    methods:
+      get_cache_retention_limit_for_enterprise: actions/get-actions-cache-retention-limit-for-enterprise  # GET /enterprises/{enterprise}/actions/cache/retention-limit
+      set_cache_retention_limit_for_enterprise: actions/set-actions-cache-retention-limit-for-enterprise  # PUT /enterprises/{enterprise}/actions/cache/retention-limit
+      get_cache_storage_limit_for_enterprise: actions/get-actions-cache-storage-limit-for-enterprise  # GET /enterprises/{enterprise}/actions/cache/storage-limit
+      set_cache_storage_limit_for_enterprise: actions/set-actions-cache-storage-limit-for-enterprise  # PUT /enterprises/{enterprise}/actions/cache/storage-limit
+      get_cache_retention_limit_for_organization: actions/get-actions-cache-retention-limit-for-organization  # GET /organizations/{org}/actions/cache/retention-limit
+      set_cache_retention_limit_for_organization: actions/set-actions-cache-retention-limit-for-organization  # PUT /organizations/{org}/actions/cache/retention-limit
+      get_cache_storage_limit_for_organization: actions/get-actions-cache-storage-limit-for-organization  # GET /organizations/{org}/actions/cache/storage-limit
+      set_cache_storage_limit_for_organization: actions/set-actions-cache-storage-limit-for-organization  # PUT /organizations/{org}/actions/cache/storage-limit
+      get_cache_usage_for_org: actions/get-actions-cache-usage-for-org  # GET /orgs/{org}/actions/cache/usage
+      get_cache_usage_by_repo_for_org:  # GET /orgs/{org}/actions/cache/usage-by-repository
+        op: actions/get-actions-cache-usage-by-repo-for-org
+        pagination: link_repository_cache_usages
+      list_hosted_runners_for_org:  # GET /orgs/{org}/actions/hosted-runners
+        op: actions/list-hosted-runners-for-org
+        pagination: link_runners
+      create_hosted_runner_for_org: actions/create-hosted-runner-for-org  # POST /orgs/{org}/actions/hosted-runners
+      list_custom_images_for_org: actions/list-custom-images-for-org  # GET /orgs/{org}/actions/hosted-runners/images/custom
+      delete_custom_image_from_org: actions/delete-custom-image-from-org  # DELETE /orgs/{org}/actions/hosted-runners/images/custom/{image_definition_id}
+      get_custom_image_for_org: actions/get-custom-image-for-org  # GET /orgs/{org}/actions/hosted-runners/images/custom/{image_definition_id}
+      list_custom_image_versions_for_org: actions/list-custom-image-versions-for-org  # GET /orgs/{org}/actions/hosted-runners/images/custom/{image_definition_id}/versions
+      delete_custom_image_version_from_org: actions/delete-custom-image-version-from-org  # DELETE /orgs/{org}/actions/hosted-runners/images/custom/{image_definition_id}/versions/{version}
+      get_custom_image_version_for_org: actions/get-custom-image-version-for-org  # GET /orgs/{org}/actions/hosted-runners/images/custom/{image_definition_id}/versions/{version}
+      get_hosted_runners_github_owned_images_for_org: actions/get-hosted-runners-github-owned-images-for-org  # GET /orgs/{org}/actions/hosted-runners/images/github-owned
+      get_hosted_runners_partner_images_for_org: actions/get-hosted-runners-partner-images-for-org  # GET /orgs/{org}/actions/hosted-runners/images/partner
+      get_hosted_runners_limits_for_org: actions/get-hosted-runners-limits-for-org  # GET /orgs/{org}/actions/hosted-runners/limits
+      get_hosted_runners_machine_specs_for_org: actions/get-hosted-runners-machine-specs-for-org  # GET /orgs/{org}/actions/hosted-runners/machine-sizes
+      get_hosted_runners_platforms_for_org: actions/get-hosted-runners-platforms-for-org  # GET /orgs/{org}/actions/hosted-runners/platforms
+      delete_hosted_runner_for_org: actions/delete-hosted-runner-for-org  # DELETE /orgs/{org}/actions/hosted-runners/{hosted_runner_id}
+      get_hosted_runner_for_org: actions/get-hosted-runner-for-org  # GET /orgs/{org}/actions/hosted-runners/{hosted_runner_id}
+      update_hosted_runner_for_org: actions/update-hosted-runner-for-org  # PATCH /orgs/{org}/actions/hosted-runners/{hosted_runner_id}
+      get_github_permissions_organization: actions/get-github-actions-permissions-organization  # GET /orgs/{org}/actions/permissions
+      set_github_permissions_organization: actions/set-github-actions-permissions-organization  # PUT /orgs/{org}/actions/permissions
+      get_artifact_and_log_retention_settings_organization: actions/get-artifact-and-log-retention-settings-organization  # GET /orgs/{org}/actions/permissions/artifact-and-log-retention
+      set_artifact_and_log_retention_settings_organization: actions/set-artifact-and-log-retention-settings-organization  # PUT /orgs/{org}/actions/permissions/artifact-and-log-retention
+      get_fork_pr_contributor_approval_permissions_organization: actions/get-fork-pr-contributor-approval-permissions-organization  # GET /orgs/{org}/actions/permissions/fork-pr-contributor-approval
+      set_fork_pr_contributor_approval_permissions_organization: actions/set-fork-pr-contributor-approval-permissions-organization  # PUT /orgs/{org}/actions/permissions/fork-pr-contributor-approval
+      get_private_repo_fork_pr_workflows_settings_organization: actions/get-private-repo-fork-pr-workflows-settings-organization  # GET /orgs/{org}/actions/permissions/fork-pr-workflows-private-repos
+      set_private_repo_fork_pr_workflows_settings_organization: actions/set-private-repo-fork-pr-workflows-settings-organization  # PUT /orgs/{org}/actions/permissions/fork-pr-workflows-private-repos
+      list_selected_repositories_enabled_github_organization:  # GET /orgs/{org}/actions/permissions/repositories
+        op: actions/list-selected-repositories-enabled-github-actions-organization
+        pagination: page_repositories
+      set_selected_repositories_enabled_github_organization: actions/set-selected-repositories-enabled-github-actions-organization  # PUT /orgs/{org}/actions/permissions/repositories
+      disable_selected_repository_github_organization: actions/disable-selected-repository-github-actions-organization  # DELETE /orgs/{org}/actions/permissions/repositories/{repository_id}
+      enable_selected_repository_github_organization: actions/enable-selected-repository-github-actions-organization  # PUT /orgs/{org}/actions/permissions/repositories/{repository_id}
+      get_allowed_organization: actions/get-allowed-actions-organization  # GET /orgs/{org}/actions/permissions/selected-actions
+      set_allowed_organization: actions/set-allowed-actions-organization  # PUT /orgs/{org}/actions/permissions/selected-actions
+      get_self_hosted_runners_permissions_organization: actions/get-self-hosted-runners-permissions-organization  # GET /orgs/{org}/actions/permissions/self-hosted-runners
+      set_self_hosted_runners_permissions_organization: actions/set-self-hosted-runners-permissions-organization  # PUT /orgs/{org}/actions/permissions/self-hosted-runners
+      list_selected_repositories_self_hosted_runners_organization:  # GET /orgs/{org}/actions/permissions/self-hosted-runners/repositories
+        op: actions/list-selected-repositories-self-hosted-runners-organization
+        pagination: page_repositories
+      set_selected_repositories_self_hosted_runners_organization: actions/set-selected-repositories-self-hosted-runners-organization  # PUT /orgs/{org}/actions/permissions/self-hosted-runners/repositories
+      disable_selected_repository_self_hosted_runners_organization: actions/disable-selected-repository-self-hosted-runners-organization  # DELETE /orgs/{org}/actions/permissions/self-hosted-runners/repositories/{repository_id}
+      enable_selected_repository_self_hosted_runners_organization: actions/enable-selected-repository-self-hosted-runners-organization  # PUT /orgs/{org}/actions/permissions/self-hosted-runners/repositories/{repository_id}
+      get_github_default_workflow_permissions_organization: actions/get-github-actions-default-workflow-permissions-organization  # GET /orgs/{org}/actions/permissions/workflow
+      set_github_default_workflow_permissions_organization: actions/set-github-actions-default-workflow-permissions-organization  # PUT /orgs/{org}/actions/permissions/workflow
+      get_org_policies:  # GET /orgs/{org}/actions/policies
+        op: actions/get-org-actions-policies
+        pagination: page_policies
+      create_org_policy: actions/create-org-actions-policy  # POST /orgs/{org}/actions/policies
+      delete_org_policy: actions/delete-org-actions-policy  # DELETE /orgs/{org}/actions/policies/{policy_id}
+      get_org_policy: actions/get-org-actions-policy  # GET /orgs/{org}/actions/policies/{policy_id}
+      update_org_policy: actions/update-org-actions-policy  # PUT /orgs/{org}/actions/policies/{policy_id}
+      list_self_hosted_runner_groups_for_org:  # GET /orgs/{org}/actions/runner-groups
+        op: actions/list-self-hosted-runner-groups-for-org
+        pagination: page_runner_groups
+      create_self_hosted_runner_group_for_org: actions/create-self-hosted-runner-group-for-org  # POST /orgs/{org}/actions/runner-groups
+      delete_self_hosted_runner_group_from_org: actions/delete-self-hosted-runner-group-from-org  # DELETE /orgs/{org}/actions/runner-groups/{runner_group_id}
+      get_self_hosted_runner_group_for_org: actions/get-self-hosted-runner-group-for-org  # GET /orgs/{org}/actions/runner-groups/{runner_group_id}
+      update_self_hosted_runner_group_for_org: actions/update-self-hosted-runner-group-for-org  # PATCH /orgs/{org}/actions/runner-groups/{runner_group_id}
+      list_github_hosted_runners_in_group_for_org:  # GET /orgs/{org}/actions/runner-groups/{runner_group_id}/hosted-runners
+        op: actions/list-github-hosted-runners-in-group-for-org
+        pagination: link_runners
+      list_repo_access_to_self_hosted_runner_group_in_org:  # GET /orgs/{org}/actions/runner-groups/{runner_group_id}/repositories
+        op: actions/list-repo-access-to-self-hosted-runner-group-in-org
+        pagination: page_repositories
+      set_repo_access_to_self_hosted_runner_group_in_org: actions/set-repo-access-to-self-hosted-runner-group-in-org  # PUT /orgs/{org}/actions/runner-groups/{runner_group_id}/repositories
+      remove_repo_access_to_self_hosted_runner_group_in_org: actions/remove-repo-access-to-self-hosted-runner-group-in-org  # DELETE /orgs/{org}/actions/runner-groups/{runner_group_id}/repositories/{repository_id}
+      add_repo_access_to_self_hosted_runner_group_in_org: actions/add-repo-access-to-self-hosted-runner-group-in-org  # PUT /orgs/{org}/actions/runner-groups/{runner_group_id}/repositories/{repository_id}
+      list_self_hosted_runners_in_group_for_org:  # GET /orgs/{org}/actions/runner-groups/{runner_group_id}/runners
+        op: actions/list-self-hosted-runners-in-group-for-org
+        pagination: link_runners
+      set_self_hosted_runners_in_group_for_org: actions/set-self-hosted-runners-in-group-for-org  # PUT /orgs/{org}/actions/runner-groups/{runner_group_id}/runners
+      remove_self_hosted_runner_from_group_for_org: actions/remove-self-hosted-runner-from-group-for-org  # DELETE /orgs/{org}/actions/runner-groups/{runner_group_id}/runners/{runner_id}
+      add_self_hosted_runner_to_group_for_org: actions/add-self-hosted-runner-to-group-for-org  # PUT /orgs/{org}/actions/runner-groups/{runner_group_id}/runners/{runner_id}
+      list_self_hosted_runners_for_org:  # GET /orgs/{org}/actions/runners
+        op: actions/list-self-hosted-runners-for-org
+        pagination: link_runners
+      get_runner_version_deprecation_for_org: actions/get-runner-version-deprecation-for-org  # GET /orgs/{org}/actions/runners/deprecations/{version}
+      list_runner_applications_for_org: actions/list-runner-applications-for-org  # GET /orgs/{org}/actions/runners/downloads
+      generate_runner_jitconfig_for_org: actions/generate-runner-jitconfig-for-org  # POST /orgs/{org}/actions/runners/generate-jitconfig
+      create_registration_token_for_org: actions/create-registration-token-for-org  # POST /orgs/{org}/actions/runners/registration-token
+      create_remove_token_for_org: actions/create-remove-token-for-org  # POST /orgs/{org}/actions/runners/remove-token
+      delete_self_hosted_runner_from_org: actions/delete-self-hosted-runner-from-org  # DELETE /orgs/{org}/actions/runners/{runner_id}
+      get_self_hosted_runner_for_org: actions/get-self-hosted-runner-for-org  # GET /orgs/{org}/actions/runners/{runner_id}
+      remove_all_custom_labels_from_self_hosted_runner_for_org: actions/remove-all-custom-labels-from-self-hosted-runner-for-org  # DELETE /orgs/{org}/actions/runners/{runner_id}/labels
+      list_labels_for_self_hosted_runner_for_org: actions/list-labels-for-self-hosted-runner-for-org  # GET /orgs/{org}/actions/runners/{runner_id}/labels
+      add_custom_labels_to_self_hosted_runner_for_org: actions/add-custom-labels-to-self-hosted-runner-for-org  # POST /orgs/{org}/actions/runners/{runner_id}/labels
+      set_custom_labels_for_self_hosted_runner_for_org: actions/set-custom-labels-for-self-hosted-runner-for-org  # PUT /orgs/{org}/actions/runners/{runner_id}/labels
+      remove_custom_label_from_self_hosted_runner_for_org: actions/remove-custom-label-from-self-hosted-runner-for-org  # DELETE /orgs/{org}/actions/runners/{runner_id}/labels/{name}
+      list_org_secrets:  # GET /orgs/{org}/actions/secrets
+        op: actions/list-org-secrets
+        pagination: link_secrets
+      get_org_public_key: actions/get-org-public-key  # GET /orgs/{org}/actions/secrets/public-key
+      delete_org_secret: actions/delete-org-secret  # DELETE /orgs/{org}/actions/secrets/{secret_name}
+      get_org_secret: actions/get-org-secret  # GET /orgs/{org}/actions/secrets/{secret_name}
+      create_or_update_org_secret: actions/create-or-update-org-secret  # PUT /orgs/{org}/actions/secrets/{secret_name}
+      list_selected_repos_for_org_secret:  # GET /orgs/{org}/actions/secrets/{secret_name}/repositories
+        op: actions/list-selected-repos-for-org-secret
+        pagination: page_repositories
+      set_selected_repos_for_org_secret: actions/set-selected-repos-for-org-secret  # PUT /orgs/{org}/actions/secrets/{secret_name}/repositories
+      remove_selected_repo_from_org_secret: actions/remove-selected-repo-from-org-secret  # DELETE /orgs/{org}/actions/secrets/{secret_name}/repositories/{repository_id}
+      add_selected_repo_to_org_secret: actions/add-selected-repo-to-org-secret  # PUT /orgs/{org}/actions/secrets/{secret_name}/repositories/{repository_id}
+      list_org_variables:  # GET /orgs/{org}/actions/variables
+        op: actions/list-org-variables
+        pagination: link_variables
+      create_org_variable: actions/create-org-variable  # POST /orgs/{org}/actions/variables
+      delete_org_variable: actions/delete-org-variable  # DELETE /orgs/{org}/actions/variables/{name}
+      get_org_variable: actions/get-org-variable  # GET /orgs/{org}/actions/variables/{name}
+      update_org_variable: actions/update-org-variable  # PATCH /orgs/{org}/actions/variables/{name}
+      list_selected_repos_for_org_variable:  # GET /orgs/{org}/actions/variables/{name}/repositories
+        op: actions/list-selected-repos-for-org-variable
+        pagination: page_repositories
+      set_selected_repos_for_org_variable: actions/set-selected-repos-for-org-variable  # PUT /orgs/{org}/actions/variables/{name}/repositories
+      remove_selected_repo_from_org_variable: actions/remove-selected-repo-from-org-variable  # DELETE /orgs/{org}/actions/variables/{name}/repositories/{repository_id}
+      add_selected_repo_to_org_variable: actions/add-selected-repo-to-org-variable  # PUT /orgs/{org}/actions/variables/{name}/repositories/{repository_id}
+      list_artifacts_for_repo:  # GET /repos/{owner}/{repo}/actions/artifacts
+        op: actions/list-artifacts-for-repo
+        pagination: link_artifacts
+      delete_artifact: actions/delete-artifact  # DELETE /repos/{owner}/{repo}/actions/artifacts/{artifact_id}
+      get_artifact: actions/get-artifact  # GET /repos/{owner}/{repo}/actions/artifacts/{artifact_id}
+      download_artifact: actions/download-artifact  # GET /repos/{owner}/{repo}/actions/artifacts/{artifact_id}/{archive_format}
+      get_cache_retention_limit_for_repository: actions/get-actions-cache-retention-limit-for-repository  # GET /repos/{owner}/{repo}/actions/cache/retention-limit
+      set_cache_retention_limit_for_repository: actions/set-actions-cache-retention-limit-for-repository  # PUT /repos/{owner}/{repo}/actions/cache/retention-limit
+      get_cache_storage_limit_for_repository: actions/get-actions-cache-storage-limit-for-repository  # GET /repos/{owner}/{repo}/actions/cache/storage-limit
+      set_cache_storage_limit_for_repository: actions/set-actions-cache-storage-limit-for-repository  # PUT /repos/{owner}/{repo}/actions/cache/storage-limit
+      get_cache_usage: actions/get-actions-cache-usage  # GET /repos/{owner}/{repo}/actions/cache/usage
+      delete_cache_by_key: actions/delete-actions-cache-by-key  # DELETE /repos/{owner}/{repo}/actions/caches
+      get_cache_list:  # GET /repos/{owner}/{repo}/actions/caches
+        op: actions/get-actions-cache-list
+        pagination: link_actions_caches
+      delete_cache_by_id: actions/delete-actions-cache-by-id  # DELETE /repos/{owner}/{repo}/actions/caches/{cache_id}
+      list_concurrency_groups_for_repository:  # GET /repos/{owner}/{repo}/actions/concurrency_groups
+        op: actions/list-concurrency-groups-for-repository
+        pagination: link_concurrency_groups
+      get_concurrency_group_for_repository: actions/get-concurrency-group-for-repository  # GET /repos/{owner}/{repo}/actions/concurrency_groups/{concurrency_group_name}
+      get_job_for_workflow_run: actions/get-job-for-workflow-run  # GET /repos/{owner}/{repo}/actions/jobs/{job_id}
+      download_job_logs_for_workflow_run: actions/download-job-logs-for-workflow-run  # GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs
+      re_run_job_for_workflow_run: actions/re-run-job-for-workflow-run  # POST /repos/{owner}/{repo}/actions/jobs/{job_id}/rerun
+      download_step_logs_for_workflow_run_job: actions/download-step-logs-for-workflow-run-job  # GET /repos/{owner}/{repo}/actions/jobs/{job_id}/steps/{step_number}/logs
+      get_custom_oidc_sub_claim_for_repo: actions/get-custom-oidc-sub-claim-for-repo  # GET /repos/{owner}/{repo}/actions/oidc/customization/sub
+      set_custom_oidc_sub_claim_for_repo: actions/set-custom-oidc-sub-claim-for-repo  # PUT /repos/{owner}/{repo}/actions/oidc/customization/sub
+      list_repo_organization_secrets:  # GET /repos/{owner}/{repo}/actions/organization-secrets
+        op: actions/list-repo-organization-secrets
+        pagination: link_secrets
+      list_repo_organization_variables:  # GET /repos/{owner}/{repo}/actions/organization-variables
+        op: actions/list-repo-organization-variables
+        pagination: link_variables
+      get_github_permissions_repository: actions/get-github-actions-permissions-repository  # GET /repos/{owner}/{repo}/actions/permissions
+      set_github_permissions_repository: actions/set-github-actions-permissions-repository  # PUT /repos/{owner}/{repo}/actions/permissions
+      get_workflow_access_to_repository: actions/get-workflow-access-to-repository  # GET /repos/{owner}/{repo}/actions/permissions/access
+      set_workflow_access_to_repository: actions/set-workflow-access-to-repository  # PUT /repos/{owner}/{repo}/actions/permissions/access
+      get_artifact_and_log_retention_settings_repository: actions/get-artifact-and-log-retention-settings-repository  # GET /repos/{owner}/{repo}/actions/permissions/artifact-and-log-retention
+      set_artifact_and_log_retention_settings_repository: actions/set-artifact-and-log-retention-settings-repository  # PUT /repos/{owner}/{repo}/actions/permissions/artifact-and-log-retention
+      get_fork_pr_contributor_approval_permissions_repository: actions/get-fork-pr-contributor-approval-permissions-repository  # GET /repos/{owner}/{repo}/actions/permissions/fork-pr-contributor-approval
+      set_fork_pr_contributor_approval_permissions_repository: actions/set-fork-pr-contributor-approval-permissions-repository  # PUT /repos/{owner}/{repo}/actions/permissions/fork-pr-contributor-approval
+      get_private_repo_fork_pr_workflows_settings_repository: actions/get-private-repo-fork-pr-workflows-settings-repository  # GET /repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos
+      set_private_repo_fork_pr_workflows_settings_repository: actions/set-private-repo-fork-pr-workflows-settings-repository  # PUT /repos/{owner}/{repo}/actions/permissions/fork-pr-workflows-private-repos
+      get_allowed_repository: actions/get-allowed-actions-repository  # GET /repos/{owner}/{repo}/actions/permissions/selected-actions
+      set_allowed_repository: actions/set-allowed-actions-repository  # PUT /repos/{owner}/{repo}/actions/permissions/selected-actions
+      get_github_default_workflow_permissions_repository: actions/get-github-actions-default-workflow-permissions-repository  # GET /repos/{owner}/{repo}/actions/permissions/workflow
+      set_github_default_workflow_permissions_repository: actions/set-github-actions-default-workflow-permissions-repository  # PUT /repos/{owner}/{repo}/actions/permissions/workflow
+      get_repo_policies:  # GET /repos/{owner}/{repo}/actions/policies
+        op: actions/get-repo-actions-policies
+        pagination: page_policies
+      create_repo_policy: actions/create-repo-actions-policy  # POST /repos/{owner}/{repo}/actions/policies
+      delete_repo_policy: actions/delete-repo-actions-policy  # DELETE /repos/{owner}/{repo}/actions/policies/{policy_id}
+      get_repo_policy: actions/get-repo-actions-policy  # GET /repos/{owner}/{repo}/actions/policies/{policy_id}
+      update_repo_policy: actions/update-repo-actions-policy  # PUT /repos/{owner}/{repo}/actions/policies/{policy_id}
+      list_self_hosted_runners_for_repo:  # GET /repos/{owner}/{repo}/actions/runners
+        op: actions/list-self-hosted-runners-for-repo
+        pagination: link_runners
+      get_runner_version_deprecation_for_repo: actions/get-runner-version-deprecation-for-repo  # GET /repos/{owner}/{repo}/actions/runners/deprecations/{version}
+      list_runner_applications_for_repo: actions/list-runner-applications-for-repo  # GET /repos/{owner}/{repo}/actions/runners/downloads
+      generate_runner_jitconfig_for_repo: actions/generate-runner-jitconfig-for-repo  # POST /repos/{owner}/{repo}/actions/runners/generate-jitconfig
+      create_registration_token_for_repo: actions/create-registration-token-for-repo  # POST /repos/{owner}/{repo}/actions/runners/registration-token
+      create_remove_token_for_repo: actions/create-remove-token-for-repo  # POST /repos/{owner}/{repo}/actions/runners/remove-token
+      delete_self_hosted_runner_from_repo: actions/delete-self-hosted-runner-from-repo  # DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}
+      get_self_hosted_runner_for_repo: actions/get-self-hosted-runner-for-repo  # GET /repos/{owner}/{repo}/actions/runners/{runner_id}
+      remove_all_custom_labels_from_self_hosted_runner_for_repo: actions/remove-all-custom-labels-from-self-hosted-runner-for-repo  # DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}/labels
+      list_labels_for_self_hosted_runner_for_repo: actions/list-labels-for-self-hosted-runner-for-repo  # GET /repos/{owner}/{repo}/actions/runners/{runner_id}/labels
+      add_custom_labels_to_self_hosted_runner_for_repo: actions/add-custom-labels-to-self-hosted-runner-for-repo  # POST /repos/{owner}/{repo}/actions/runners/{runner_id}/labels
+      set_custom_labels_for_self_hosted_runner_for_repo: actions/set-custom-labels-for-self-hosted-runner-for-repo  # PUT /repos/{owner}/{repo}/actions/runners/{runner_id}/labels
+      remove_custom_label_from_self_hosted_runner_for_repo: actions/remove-custom-label-from-self-hosted-runner-for-repo  # DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}/labels/{name}
+      list_workflow_runs_for_repo:  # GET /repos/{owner}/{repo}/actions/runs
+        op: actions/list-workflow-runs-for-repo
+        pagination: link_workflow_runs
+      delete_workflow_run: actions/delete-workflow-run  # DELETE /repos/{owner}/{repo}/actions/runs/{run_id}
+      get_workflow_run: actions/get-workflow-run  # GET /repos/{owner}/{repo}/actions/runs/{run_id}
+      get_reviews_for_run: actions/get-reviews-for-run  # GET /repos/{owner}/{repo}/actions/runs/{run_id}/approvals
+      approve_workflow_run: actions/approve-workflow-run  # POST /repos/{owner}/{repo}/actions/runs/{run_id}/approve
+      list_workflow_run_artifacts:  # GET /repos/{owner}/{repo}/actions/runs/{run_id}/artifacts
+        op: actions/list-workflow-run-artifacts
+        pagination: link_artifacts
+      get_workflow_run_attempt: actions/get-workflow-run-attempt  # GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}
+      list_jobs_for_workflow_run_attempt:  # GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}/jobs
+        op: actions/list-jobs-for-workflow-run-attempt
+        pagination: link_jobs
+      download_workflow_run_attempt_logs: actions/download-workflow-run-attempt-logs  # GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}/logs
+      cancel_workflow_run: actions/cancel-workflow-run  # POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel
+      list_concurrency_groups_for_workflow_run:  # GET /repos/{owner}/{repo}/actions/runs/{run_id}/concurrency_groups
+        op: actions/list-concurrency-groups-for-workflow-run
+        pagination: link_concurrency_groups
+      review_custom_gates_for_run: actions/review-custom-gates-for-run  # POST /repos/{owner}/{repo}/actions/runs/{run_id}/deployment_protection_rule
+      force_cancel_workflow_run: actions/force-cancel-workflow-run  # POST /repos/{owner}/{repo}/actions/runs/{run_id}/force-cancel
+      list_jobs_for_workflow_run:  # GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs
+        op: actions/list-jobs-for-workflow-run
+        pagination: link_jobs
+      delete_workflow_run_logs: actions/delete-workflow-run-logs  # DELETE /repos/{owner}/{repo}/actions/runs/{run_id}/logs
+      download_workflow_run_logs: actions/download-workflow-run-logs  # GET /repos/{owner}/{repo}/actions/runs/{run_id}/logs
+      get_pending_deployments_for_run: actions/get-pending-deployments-for-run  # GET /repos/{owner}/{repo}/actions/runs/{run_id}/pending_deployments
+      review_pending_deployments_for_run: actions/review-pending-deployments-for-run  # POST /repos/{owner}/{repo}/actions/runs/{run_id}/pending_deployments
+      re_run_workflow: actions/re-run-workflow  # POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun
+      re_run_workflow_failed_jobs: actions/re-run-workflow-failed-jobs  # POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun-failed-jobs
+      get_workflow_run_usage: actions/get-workflow-run-usage  # GET /repos/{owner}/{repo}/actions/runs/{run_id}/timing
+      list_repo_secrets:  # GET /repos/{owner}/{repo}/actions/secrets
+        op: actions/list-repo-secrets
+        pagination: link_secrets
+      get_repo_public_key: actions/get-repo-public-key  # GET /repos/{owner}/{repo}/actions/secrets/public-key
+      delete_repo_secret: actions/delete-repo-secret  # DELETE /repos/{owner}/{repo}/actions/secrets/{secret_name}
+      get_repo_secret: actions/get-repo-secret  # GET /repos/{owner}/{repo}/actions/secrets/{secret_name}
+      create_or_update_repo_secret: actions/create-or-update-repo-secret  # PUT /repos/{owner}/{repo}/actions/secrets/{secret_name}
+      list_repo_variables:  # GET /repos/{owner}/{repo}/actions/variables
+        op: actions/list-repo-variables
+        pagination: link_variables
+      create_repo_variable: actions/create-repo-variable  # POST /repos/{owner}/{repo}/actions/variables
+      delete_repo_variable: actions/delete-repo-variable  # DELETE /repos/{owner}/{repo}/actions/variables/{name}
+      get_repo_variable: actions/get-repo-variable  # GET /repos/{owner}/{repo}/actions/variables/{name}
+      update_repo_variable: actions/update-repo-variable  # PATCH /repos/{owner}/{repo}/actions/variables/{name}
+      list_repo_workflows:  # GET /repos/{owner}/{repo}/actions/workflows
+        op: actions/list-repo-workflows
+        pagination: link_workflows
+      get_workflow: actions/get-workflow  # GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}
+      disable_workflow: actions/disable-workflow  # PUT /repos/{owner}/{repo}/actions/workflows/{workflow_id}/disable
+      create_workflow_dispatch: actions/create-workflow-dispatch  # POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches
+      enable_workflow: actions/enable-workflow  # PUT /repos/{owner}/{repo}/actions/workflows/{workflow_id}/enable
+      list_workflow_runs:  # GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs
+        op: actions/list-workflow-runs
+        pagination: link_workflow_runs
+      get_workflow_usage: actions/get-workflow-usage  # GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/timing
+      list_environment_secrets:  # GET /repos/{owner}/{repo}/environments/{environment_name}/secrets
+        op: actions/list-environment-secrets
+        pagination: link_secrets
+      get_environment_public_key: actions/get-environment-public-key  # GET /repos/{owner}/{repo}/environments/{environment_name}/secrets/public-key
+      delete_environment_secret: actions/delete-environment-secret  # DELETE /repos/{owner}/{repo}/environments/{environment_name}/secrets/{secret_name}
+      get_environment_secret: actions/get-environment-secret  # GET /repos/{owner}/{repo}/environments/{environment_name}/secrets/{secret_name}
+      create_or_update_environment_secret: actions/create-or-update-environment-secret  # PUT /repos/{owner}/{repo}/environments/{environment_name}/secrets/{secret_name}
+      list_environment_variables:  # GET /repos/{owner}/{repo}/environments/{environment_name}/variables
+        op: actions/list-environment-variables
+        pagination: link_variables
+      create_environment_variable: actions/create-environment-variable  # POST /repos/{owner}/{repo}/environments/{environment_name}/variables
+      delete_environment_variable: actions/delete-environment-variable  # DELETE /repos/{owner}/{repo}/environments/{environment_name}/variables/{name}
+      get_environment_variable: actions/get-environment-variable  # GET /repos/{owner}/{repo}/environments/{environment_name}/variables/{name}
+      update_environment_variable: actions/update-environment-variable  # PATCH /repos/{owner}/{repo}/environments/{environment_name}/variables/{name}
+  activities:
+    methods:
+      list_public_events:  # GET /events
+        op: activity/list-public-events
+        pagination: page_body
+      get_feeds: activity/get-feeds  # GET /feeds
+      list_public_events_for_repo_network:  # GET /networks/{owner}/{repo}/events
+        op: activity/list-public-events-for-repo-network
+        pagination: page_body
+      list_notifications_for_authenticated_user:  # GET /notifications
+        op: activity/list-notifications-for-authenticated-user
+        pagination: link_body
+      mark_notifications_as_read: activity/mark-notifications-as-read  # PUT /notifications
+      mark_thread_as_done: activity/mark-thread-as-done  # DELETE /notifications/threads/{thread_id}
+      get_thread: activity/get-thread  # GET /notifications/threads/{thread_id}
+      mark_thread_as_read: activity/mark-thread-as-read  # PATCH /notifications/threads/{thread_id}
+      delete_thread_subscription: activity/delete-thread-subscription  # DELETE /notifications/threads/{thread_id}/subscription
+      get_thread_subscription_for_authenticated_user: activity/get-thread-subscription-for-authenticated-user  # GET /notifications/threads/{thread_id}/subscription
+      set_thread_subscription: activity/set-thread-subscription  # PUT /notifications/threads/{thread_id}/subscription
+      list_public_org_events:  # GET /orgs/{org}/events
+        op: activity/list-public-org-events
+        pagination: page_body
+      list_repo_events:  # GET /repos/{owner}/{repo}/events
+        op: activity/list-repo-events
+        pagination: page_body
+      list_repo_notifications_for_authenticated_user:  # GET /repos/{owner}/{repo}/notifications
+        op: activity/list-repo-notifications-for-authenticated-user
+        pagination: link_body
+      mark_repo_notifications_as_read: activity/mark-repo-notifications-as-read  # PUT /repos/{owner}/{repo}/notifications
+      list_stargazers_for_repo:  # GET /repos/{owner}/{repo}/stargazers
+        op: activity/list-stargazers-for-repo
+        pagination: link_body
+      get_stargazer_count_for_repo: activity/get-stargazer-count-for-repo  # GET /repos/{owner}/{repo}/stargazers/count
+      get_stargazer_history_for_repo:  # GET /repos/{owner}/{repo}/stargazers/history
+        op: activity/get-stargazer-history-for-repo
+        pagination: link_body
+      list_watchers_for_repo:  # GET /repos/{owner}/{repo}/subscribers
+        op: activity/list-watchers-for-repo
+        pagination: link_body
+      delete_repo_subscription: activity/delete-repo-subscription  # DELETE /repos/{owner}/{repo}/subscription
+      get_repo_subscription: activity/get-repo-subscription  # GET /repos/{owner}/{repo}/subscription
+      set_repo_subscription: activity/set-repo-subscription  # PUT /repos/{owner}/{repo}/subscription
+      list_repos_starred_by_authenticated_user:  # GET /user/starred
+        op: activity/list-repos-starred-by-authenticated-user
+        pagination: link_body
+      unstar_repo_for_authenticated_user: activity/unstar-repo-for-authenticated-user  # DELETE /user/starred/{owner}/{repo}
+      check_repo_is_starred_by_authenticated_user: activity/check-repo-is-starred-by-authenticated-user  # GET /user/starred/{owner}/{repo}
+      star_repo_for_authenticated_user: activity/star-repo-for-authenticated-user  # PUT /user/starred/{owner}/{repo}
+      list_watched_repos_for_authenticated_user:  # GET /user/subscriptions
+        op: activity/list-watched-repos-for-authenticated-user
+        pagination: link_body
+      list_events_for_authenticated_user:  # GET /users/{username}/events
+        op: activity/list-events-for-authenticated-user
+        pagination: page_body
+      list_org_events_for_authenticated_user: activity/list-org-events-for-authenticated-user  # GET /users/{username}/events/orgs/{org}
+      list_public_events_for_user:  # GET /users/{username}/events/public
+        op: activity/list-public-events-for-user
+        pagination: page_body
+      list_received_events_for_user:  # GET /users/{username}/received_events
+        op: activity/list-received-events-for-user
+        pagination: page_body
+      list_received_public_events_for_user:  # GET /users/{username}/received_events/public
+        op: activity/list-received-public-events-for-user
+        pagination: page_body
+      list_repos_starred_by_user:  # GET /users/{username}/starred
+        op: activity/list-repos-starred-by-user
+        pagination: link_body
+      list_repos_watched_by_user:  # GET /users/{username}/subscriptions
+        op: activity/list-repos-watched-by-user
+        pagination: link_body
+  agent_automations:
+    methods:
+      list:  # GET /agents/automations
+        op: agent-automations/list-automations
+        pagination: link_body
+      list_repo_automations:  # GET /agents/repos/{owner}/{repo}/automations
+        op: agent-automations/list-repo-automations
+        pagination: link_automations
+      create_repo_automation: agent-automations/create-repo-automation  # POST /agents/repos/{owner}/{repo}/automations
+      list_available_repo_tools: agent-automations/list-available-repo-automation-tools  # GET /agents/repos/{owner}/{repo}/automations/available-tools
+      list_available_repo_triggers: agent-automations/list-available-repo-automation-triggers  # GET /agents/repos/{owner}/{repo}/automations/available-triggers
+      delete_repo_automation: agent-automations/delete-repo-automation  # DELETE /agents/repos/{owner}/{repo}/automations/{automation_id}
+      get_repo_automation: agent-automations/get-repo-automation  # GET /agents/repos/{owner}/{repo}/automations/{automation_id}
+      edit_repo_automation: agent-automations/edit-repo-automation  # PATCH /agents/repos/{owner}/{repo}/automations/{automation_id}
+      list_revisions:  # GET /agents/repos/{owner}/{repo}/automations/{automation_id}/revisions
+        op: agent-automations/list-automation-revisions
+        pagination: link_revisions
+      get_revision: agent-automations/get-automation-revision  # GET /agents/repos/{owner}/{repo}/automations/{automation_id}/revisions/{revision_id}
+      list_repo_tasks:  # GET /agents/repos/{owner}/{repo}/automations/{automation_id}/tasks
+        op: agent-automations/list-repo-automation-tasks
+        pagination: link_tasks
+      create_repo_task: agent-automations/create-repo-automation-task  # POST /agents/repos/{owner}/{repo}/automations/{automation_id}/tasks
+  agent_merge:
+    methods:
+      delete_enrollment: agent-merge/delete-agent-merge-enrollment  # DELETE /agents/repos/{owner}/{repo}/pulls/{pull_number}/agent-merge
+      get_enrollment: agent-merge/get-agent-merge-enrollment  # GET /agents/repos/{owner}/{repo}/pulls/{pull_number}/agent-merge
+      put_enrollment: agent-merge/put-agent-merge-enrollment  # PUT /agents/repos/{owner}/{repo}/pulls/{pull_number}/agent-merge
+  agent_tasks:
+    methods:
+      list_for_repo:  # GET /agents/repos/{owner}/{repo}/tasks
+        op: agent-tasks/list-tasks-for-repo
+        pagination: link_tasks
+      create_in_repo: agent-tasks/create-task-in-repo  # POST /agents/repos/{owner}/{repo}/tasks
+      get_by_repo_and_id: agent-tasks/get-task-by-repo-and-id  # GET /agents/repos/{owner}/{repo}/tasks/{task_id}
+      list:  # GET /agents/tasks
+        op: agent-tasks/list-tasks
+        pagination: link_tasks
+      get_by_id: agent-tasks/get-task-by-id  # GET /agents/tasks/{task_id}
+  agents:
+    methods:
+      list_org_secrets:  # GET /orgs/{org}/agents/secrets
+        op: agents/list-org-secrets
+        pagination: link_secrets
+      get_org_public_key: agents/get-org-public-key  # GET /orgs/{org}/agents/secrets/public-key
+      delete_org_secret: agents/delete-org-secret  # DELETE /orgs/{org}/agents/secrets/{secret_name}
+      get_org_secret: agents/get-org-secret  # GET /orgs/{org}/agents/secrets/{secret_name}
+      create_or_update_org_secret: agents/create-or-update-org-secret  # PUT /orgs/{org}/agents/secrets/{secret_name}
+      list_selected_repos_for_org_secret:  # GET /orgs/{org}/agents/secrets/{secret_name}/repositories
+        op: agents/list-selected-repos-for-org-secret
+        pagination: page_repositories
+      set_selected_repos_for_org_secret: agents/set-selected-repos-for-org-secret  # PUT /orgs/{org}/agents/secrets/{secret_name}/repositories
+      remove_selected_repo_from_org_secret: agents/remove-selected-repo-from-org-secret  # DELETE /orgs/{org}/agents/secrets/{secret_name}/repositories/{repository_id}
+      add_selected_repo_to_org_secret: agents/add-selected-repo-to-org-secret  # PUT /orgs/{org}/agents/secrets/{secret_name}/repositories/{repository_id}
+      list_org_variables:  # GET /orgs/{org}/agents/variables
+        op: agents/list-org-variables
+        pagination: link_variables
+      create_org_variable: agents/create-org-variable  # POST /orgs/{org}/agents/variables
+      delete_org_variable: agents/delete-org-variable  # DELETE /orgs/{org}/agents/variables/{name}
+      get_org_variable: agents/get-org-variable  # GET /orgs/{org}/agents/variables/{name}
+      update_org_variable: agents/update-org-variable  # PATCH /orgs/{org}/agents/variables/{name}
+      list_selected_repos_for_org_variable:  # GET /orgs/{org}/agents/variables/{name}/repositories
+        op: agents/list-selected-repos-for-org-variable
+        pagination: page_repositories
+      set_selected_repos_for_org_variable: agents/set-selected-repos-for-org-variable  # PUT /orgs/{org}/agents/variables/{name}/repositories
+      remove_selected_repo_from_org_variable: agents/remove-selected-repo-from-org-variable  # DELETE /orgs/{org}/agents/variables/{name}/repositories/{repository_id}
+      add_selected_repo_to_org_variable: agents/add-selected-repo-to-org-variable  # PUT /orgs/{org}/agents/variables/{name}/repositories/{repository_id}
+      list_repo_organization_secrets:  # GET /repos/{owner}/{repo}/agents/organization-secrets
+        op: agents/list-repo-organization-secrets
+        pagination: link_secrets
+      list_repo_organization_variables:  # GET /repos/{owner}/{repo}/agents/organization-variables
+        op: agents/list-repo-organization-variables
+        pagination: link_variables
+      list_repo_secrets:  # GET /repos/{owner}/{repo}/agents/secrets
+        op: agents/list-repo-secrets
+        pagination: link_secrets
+      get_repo_public_key: agents/get-repo-public-key  # GET /repos/{owner}/{repo}/agents/secrets/public-key
+      delete_repo_secret: agents/delete-repo-secret  # DELETE /repos/{owner}/{repo}/agents/secrets/{secret_name}
+      get_repo_secret: agents/get-repo-secret  # GET /repos/{owner}/{repo}/agents/secrets/{secret_name}
+      create_or_update_repo_secret: agents/create-or-update-repo-secret  # PUT /repos/{owner}/{repo}/agents/secrets/{secret_name}
+      list_repo_variables:  # GET /repos/{owner}/{repo}/agents/variables
+        op: agents/list-repo-variables
+        pagination: link_variables
+      create_repo_variable: agents/create-repo-variable  # POST /repos/{owner}/{repo}/agents/variables
+      delete_repo_variable: agents/delete-repo-variable  # DELETE /repos/{owner}/{repo}/agents/variables/{name}
+      get_repo_variable: agents/get-repo-variable  # GET /repos/{owner}/{repo}/agents/variables/{name}
+      update_repo_variable: agents/update-repo-variable  # PATCH /repos/{owner}/{repo}/agents/variables/{name}
+  apps:
+    methods:
+      list: apps/get-authenticated  # GET /app
+      create_from_manifest: apps/create-from-manifest  # POST /app-manifests/{code}/conversions
+      get_webhook_config: apps/get-webhook-config-for-app  # GET /app/hook/config
+      update_webhook_config: apps/update-webhook-config-for-app  # PATCH /app/hook/config
+      list_webhook_deliveries: apps/list-webhook-deliveries  # GET /app/hook/deliveries
+      get_webhook_delivery: apps/get-webhook-delivery  # GET /app/hook/deliveries/{delivery_id}
+      redeliver_webhook_delivery: apps/redeliver-webhook-delivery  # POST /app/hook/deliveries/{delivery_id}/attempts
+      list_installation_requests_for_authenticated_app:  # GET /app/installation-requests
+        op: apps/list-installation-requests-for-authenticated-app
+        pagination: page_body
+      list_installations:  # GET /app/installations
+        op: apps/list-installations
+        pagination: link_body
+      delete_installation: apps/delete-installation  # DELETE /app/installations/{installation_id}
+      get_installation: apps/get-installation  # GET /app/installations/{installation_id}
+      create_installation_access_token: apps/create-installation-access-token  # POST /app/installations/{installation_id}/access_tokens
+      unsuspend_installation: apps/unsuspend-installation  # DELETE /app/installations/{installation_id}/suspended
+      suspend_installation: apps/suspend-installation  # PUT /app/installations/{installation_id}/suspended
+      delete_authorization: apps/delete-authorization  # DELETE /applications/{client_id}/grant
+      delete_token: apps/delete-token  # DELETE /applications/{client_id}/token
+      reset_token: apps/reset-token  # PATCH /applications/{client_id}/token
+      check_token: apps/check-token  # POST /applications/{client_id}/token
+      scope_token: apps/scope-token  # POST /applications/{client_id}/token/scoped
+      retrieve: apps/get-by-slug  # GET /apps/{app_slug}
+      list_repos_accessible_to_installation:  # GET /installation/repositories
+        op: apps/list-repos-accessible-to-installation
+        pagination: link_repositories
+      revoke_installation_access_token: apps/revoke-installation-access-token  # DELETE /installation/token
+      get_subscription_plan_for_account: apps/get-subscription-plan-for-account  # GET /marketplace_listing/accounts/{account_id}
+      list_plans:  # GET /marketplace_listing/plans
+        op: apps/list-plans
+        pagination: link_body
+      list_accounts_for_plan:  # GET /marketplace_listing/plans/{plan_id}/accounts
+        op: apps/list-accounts-for-plan
+        pagination: link_body
+      get_subscription_plan_for_account_stubbed: apps/get-subscription-plan-for-account-stubbed  # GET /marketplace_listing/stubbed/accounts/{account_id}
+      list_plans_stubbed:  # GET /marketplace_listing/stubbed/plans
+        op: apps/list-plans-stubbed
+        pagination: link_body
+      list_accounts_for_plan_stubbed:  # GET /marketplace_listing/stubbed/plans/{plan_id}/accounts
+        op: apps/list-accounts-for-plan-stubbed
+        pagination: link_body
+      get_org_installation: apps/get-org-installation  # GET /orgs/{org}/installation
+      get_repo_installation: apps/get-repo-installation  # GET /repos/{owner}/{repo}/installation
+      list_installations_for_authenticated_user:  # GET /user/installations
+        op: apps/list-installations-for-authenticated-user
+        pagination: link_installations
+      list_installation_repos_for_authenticated_user:  # GET /user/installations/{installation_id}/repositories
+        op: apps/list-installation-repos-for-authenticated-user
+        pagination: link_repositories
+      remove_repo_from_installation_for_authenticated_user: apps/remove-repo-from-installation-for-authenticated-user  # DELETE /user/installations/{installation_id}/repositories/{repository_id}
+      add_repo_to_installation_for_authenticated_user: apps/add-repo-to-installation-for-authenticated-user  # PUT /user/installations/{installation_id}/repositories/{repository_id}
+      list_subscriptions_for_authenticated_user:  # GET /user/marketplace_purchases
+        op: apps/list-subscriptions-for-authenticated-user
+        pagination: link_body
+      list_subscriptions_for_authenticated_user_stubbed:  # GET /user/marketplace_purchases/stubbed
+        op: apps/list-subscriptions-for-authenticated-user-stubbed
+        pagination: link_body
+      get_user_installation: apps/get-user-installation  # GET /users/{username}/installation
+  billing:
+    methods:
+      get_github_ai_credit_usage_report_org: billing/get-github-billing-ai-credit-usage-report-org  # GET /organizations/{org}/settings/billing/ai_credit/usage
+      get_all_budgets_org:  # GET /organizations/{org}/settings/billing/budgets
+        op: billing/get-all-budgets-org
+        pagination: page_budgets
+      create_organization_budget: billing/create-organization-budget  # POST /organizations/{org}/settings/billing/budgets
+      delete_budget_org: billing/delete-budget-org  # DELETE /organizations/{org}/settings/billing/budgets/{budget_id}
+      get_budget_org: billing/get-budget-org  # GET /organizations/{org}/settings/billing/budgets/{budget_id}
+      update_budget_org: billing/update-budget-org  # PATCH /organizations/{org}/settings/billing/budgets/{budget_id}
+      get_github_premium_request_usage_report_org: billing/get-github-billing-premium-request-usage-report-org  # GET /organizations/{org}/settings/billing/premium_request/usage
+      get_github_usage_report_org: billing/get-github-billing-usage-report-org  # GET /organizations/{org}/settings/billing/usage
+      get_github_usage_summary_report_org: billing/get-github-billing-usage-summary-report-org  # GET /organizations/{org}/settings/billing/usage/summary
+      get_github_ai_credit_usage_report_user: billing/get-github-billing-ai-credit-usage-report-user  # GET /users/{username}/settings/billing/ai_credit/usage
+      get_github_premium_request_usage_report_user: billing/get-github-billing-premium-request-usage-report-user  # GET /users/{username}/settings/billing/premium_request/usage
+      get_github_usage_report_user: billing/get-github-billing-usage-report-user  # GET /users/{username}/settings/billing/usage
+      get_github_usage_summary_report_user: billing/get-github-billing-usage-summary-report-user  # GET /users/{username}/settings/billing/usage/summary
+  campaigns:
+    methods:
+      list_org_campaigns:  # GET /orgs/{org}/campaigns
+        op: campaigns/list-org-campaigns
+        pagination: link_body
+      create: campaigns/create-campaign  # POST /orgs/{org}/campaigns
+      delete: campaigns/delete-campaign  # DELETE /orgs/{org}/campaigns/{campaign_number}
+      get_summary: campaigns/get-campaign-summary  # GET /orgs/{org}/campaigns/{campaign_number}
+      update: campaigns/update-campaign  # PATCH /orgs/{org}/campaigns/{campaign_number}
+  checks:
+    methods:
+      create: checks/create  # POST /repos/{owner}/{repo}/check-runs
+      get: checks/get  # GET /repos/{owner}/{repo}/check-runs/{check_run_id}
+      update: checks/update  # PATCH /repos/{owner}/{repo}/check-runs/{check_run_id}
+      list_annotations:  # GET /repos/{owner}/{repo}/check-runs/{check_run_id}/annotations
+        op: checks/list-annotations
+        pagination: link_body
+      rerequest_run: checks/rerequest-run  # POST /repos/{owner}/{repo}/check-runs/{check_run_id}/rerequest
+      create_suite: checks/create-suite  # POST /repos/{owner}/{repo}/check-suites
+      set_suites_preferences: checks/set-suites-preferences  # PATCH /repos/{owner}/{repo}/check-suites/preferences
+      get_suite: checks/get-suite  # GET /repos/{owner}/{repo}/check-suites/{check_suite_id}
+      list_for_suite:  # GET /repos/{owner}/{repo}/check-suites/{check_suite_id}/check-runs
+        op: checks/list-for-suite
+        pagination: link_check_runs
+      rerequest_suite: checks/rerequest-suite  # POST /repos/{owner}/{repo}/check-suites/{check_suite_id}/rerequest
+      list_for_ref:  # GET /repos/{owner}/{repo}/commits/{ref}/check-runs
+        op: checks/list-for-ref
+        pagination: link_check_runs
+      list_suites_for_ref:  # GET /repos/{owner}/{repo}/commits/{ref}/check-suites
+        op: checks/list-suites-for-ref
+        pagination: link_check_suites
+  classroom:
+    methods:
+      get_an_assignment: classroom/get-an-assignment  # GET /assignments/{assignment_id}
+      list_accepted_assignments_for_an_assignment: classroom/list-accepted-assignments-for-an-assignment  # GET /assignments/{assignment_id}/accepted_assignments
+      get_assignment_grades: classroom/get-assignment-grades  # GET /assignments/{assignment_id}/grades
+      list: classroom/list-classrooms  # GET /classrooms
+      retrieve: classroom/get-a-classroom  # GET /classrooms/{classroom_id}
+      list_assignments_for: classroom/list-assignments-for-a-classroom  # GET /classrooms/{classroom_id}/assignments
+  code_quality:
+    methods:
+      list_findings_for_repo: code-quality/list-findings-for-repo  # GET /repos/{owner}/{repo}/code-quality/findings
+      get_finding: code-quality/get-finding  # GET /repos/{owner}/{repo}/code-quality/findings/{finding_number}
+      get_setup: code-quality/get-setup  # GET /repos/{owner}/{repo}/code-quality/setup
+      update_setup: code-quality/update-setup  # PATCH /repos/{owner}/{repo}/code-quality/setup
+  code_scanning:
+    methods:
+      get_ai_scan_enablement_for_org: code-scanning/get-ai-scan-enablement-for-org  # GET /orgs/{org}/code-scanning/ai-scan
+      update_ai_scan_enablement_for_org: code-scanning/update-ai-scan-enablement-for-org  # PATCH /orgs/{org}/code-scanning/ai-scan
+      list_alerts_for_org:  # GET /orgs/{org}/code-scanning/alerts
+        op: code-scanning/list-alerts-for-org
+        pagination: link_body
+      get_ai_scan_enablement: code-scanning/get-ai-scan-enablement  # GET /repos/{owner}/{repo}/code-scanning/ai-scan
+      update_ai_scan_enablement: code-scanning/update-ai-scan-enablement  # PATCH /repos/{owner}/{repo}/code-scanning/ai-scan
+      list_alerts_for_repo:  # GET /repos/{owner}/{repo}/code-scanning/alerts
+        op: code-scanning/list-alerts-for-repo
+        pagination: page_body
+      get_alert: code-scanning/get-alert  # GET /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}
+      update_alert: code-scanning/update-alert  # PATCH /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}
+      get_autofix: code-scanning/get-autofix  # GET /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}/autofix
+      create_autofix: code-scanning/create-autofix  # POST /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}/autofix
+      commit_autofix: code-scanning/commit-autofix  # POST /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}/autofix/commits
+      list_alert_instances:  # GET /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}/instances
+        op: code-scanning/list-alert-instances
+        pagination: page_body
+      list_recent_analyses:  # GET /repos/{owner}/{repo}/code-scanning/analyses
+        op: code-scanning/list-recent-analyses
+        pagination: page_body
+      delete_analysis: code-scanning/delete-analysis  # DELETE /repos/{owner}/{repo}/code-scanning/analyses/{analysis_id}
+      get_analysis: code-scanning/get-analysis  # GET /repos/{owner}/{repo}/code-scanning/analyses/{analysis_id}
+      list_codeql_databases: code-scanning/list-codeql-databases  # GET /repos/{owner}/{repo}/code-scanning/codeql/databases
+      delete_codeql_database: code-scanning/delete-codeql-database  # DELETE /repos/{owner}/{repo}/code-scanning/codeql/databases/{language}
+      get_codeql_database: code-scanning/get-codeql-database  # GET /repos/{owner}/{repo}/code-scanning/codeql/databases/{language}
+      create_variant_analysis: code-scanning/create-variant-analysis  # POST /repos/{owner}/{repo}/code-scanning/codeql/variant-analyses
+      get_variant_analysis: code-scanning/get-variant-analysis  # GET /repos/{owner}/{repo}/code-scanning/codeql/variant-analyses/{codeql_variant_analysis_id}
+      get_variant_analysis_repo_task: code-scanning/get-variant-analysis-repo-task  # GET /repos/{owner}/{repo}/code-scanning/codeql/variant-analyses/{codeql_variant_analysis_id}/repos/{repo_owner}/{repo_name}
+      get_default_setup: code-scanning/get-default-setup  # GET /repos/{owner}/{repo}/code-scanning/default-setup
+      update_default_setup: code-scanning/update-default-setup  # PATCH /repos/{owner}/{repo}/code-scanning/default-setup
+      upload_sarif: code-scanning/upload-sarif  # POST /repos/{owner}/{repo}/code-scanning/sarifs
+      get_sarif: code-scanning/get-sarif  # GET /repos/{owner}/{repo}/code-scanning/sarifs/{sarif_id}
+  code_security:
+    methods:
+      get_configurations_for_enterprise: code-security/get-configurations-for-enterprise  # GET /enterprises/{enterprise}/code-security/configurations
+      create_configuration_for_enterprise: code-security/create-configuration-for-enterprise  # POST /enterprises/{enterprise}/code-security/configurations
+      get_default_configurations_for_enterprise: code-security/get-default-configurations-for-enterprise  # GET /enterprises/{enterprise}/code-security/configurations/defaults
+      delete_configuration_for_enterprise: code-security/delete-configuration-for-enterprise  # DELETE /enterprises/{enterprise}/code-security/configurations/{configuration_id}
+      get_single_configuration_for_enterprise: code-security/get-single-configuration-for-enterprise  # GET /enterprises/{enterprise}/code-security/configurations/{configuration_id}
+      update_enterprise_configuration: code-security/update-enterprise-configuration  # PATCH /enterprises/{enterprise}/code-security/configurations/{configuration_id}
+      attach_enterprise_configuration: code-security/attach-enterprise-configuration  # POST /enterprises/{enterprise}/code-security/configurations/{configuration_id}/attach
+      set_configuration_as_default_for_enterprise: code-security/set-configuration-as-default-for-enterprise  # PUT /enterprises/{enterprise}/code-security/configurations/{configuration_id}/defaults
+      get_repositories_for_enterprise_configuration: code-security/get-repositories-for-enterprise-configuration  # GET /enterprises/{enterprise}/code-security/configurations/{configuration_id}/repositories
+      get_configurations_for_org: code-security/get-configurations-for-org  # GET /orgs/{org}/code-security/configurations
+      create_configuration: code-security/create-configuration  # POST /orgs/{org}/code-security/configurations
+      get_default_configurations: code-security/get-default-configurations  # GET /orgs/{org}/code-security/configurations/defaults
+      detach_configuration: code-security/detach-configuration  # DELETE /orgs/{org}/code-security/configurations/detach
+      delete_configuration: code-security/delete-configuration  # DELETE /orgs/{org}/code-security/configurations/{configuration_id}
+      get_configuration: code-security/get-configuration  # GET /orgs/{org}/code-security/configurations/{configuration_id}
+      update_configuration: code-security/update-configuration  # PATCH /orgs/{org}/code-security/configurations/{configuration_id}
+      attach_configuration: code-security/attach-configuration  # POST /orgs/{org}/code-security/configurations/{configuration_id}/attach
+      set_configuration_as_default: code-security/set-configuration-as-default  # PUT /orgs/{org}/code-security/configurations/{configuration_id}/defaults
+      get_repositories_for_configuration: code-security/get-repositories-for-configuration  # GET /orgs/{org}/code-security/configurations/{configuration_id}/repositories
+      get_configuration_for_repository: code-security/get-configuration-for-repository  # GET /repos/{owner}/{repo}/code-security-configuration
+  codes_of_conduct:
+    methods:
+      list: codes-of-conduct/get-all-codes-of-conduct  # GET /codes_of_conduct
+      retrieve: codes-of-conduct/get-conduct-code  # GET /codes_of_conduct/{key}
+  codespaces:
+    methods:
+      list_in_organization:  # GET /orgs/{org}/codespaces
+        op: codespaces/list-in-organization
+        pagination: page_codespaces
+      set_access: codespaces/set-codespaces-access  # PUT /orgs/{org}/codespaces/access
+      delete_access_users: codespaces/delete-codespaces-access-users  # DELETE /orgs/{org}/codespaces/access/selected_users
+      set_access_users: codespaces/set-codespaces-access-users  # POST /orgs/{org}/codespaces/access/selected_users
+      list_org_secrets:  # GET /orgs/{org}/codespaces/secrets
+        op: codespaces/list-org-secrets
+        pagination: link_secrets
+      get_org_public_key: codespaces/get-org-public-key  # GET /orgs/{org}/codespaces/secrets/public-key
+      delete_org_secret: codespaces/delete-org-secret  # DELETE /orgs/{org}/codespaces/secrets/{secret_name}
+      get_org_secret: codespaces/get-org-secret  # GET /orgs/{org}/codespaces/secrets/{secret_name}
+      create_or_update_org_secret: codespaces/create-or-update-org-secret  # PUT /orgs/{org}/codespaces/secrets/{secret_name}
+      list_selected_repos_for_org_secret:  # GET /orgs/{org}/codespaces/secrets/{secret_name}/repositories
+        op: codespaces/list-selected-repos-for-org-secret
+        pagination: page_repositories
+      set_selected_repos_for_org_secret: codespaces/set-selected-repos-for-org-secret  # PUT /orgs/{org}/codespaces/secrets/{secret_name}/repositories
+      remove_selected_repo_from_org_secret: codespaces/remove-selected-repo-from-org-secret  # DELETE /orgs/{org}/codespaces/secrets/{secret_name}/repositories/{repository_id}
+      add_selected_repo_to_org_secret: codespaces/add-selected-repo-to-org-secret  # PUT /orgs/{org}/codespaces/secrets/{secret_name}/repositories/{repository_id}
+      get_for_user_in_org:  # GET /orgs/{org}/members/{username}/codespaces
+        op: codespaces/get-codespaces-for-user-in-org
+        pagination: page_codespaces
+      delete_from_organization: codespaces/delete-from-organization  # DELETE /orgs/{org}/members/{username}/codespaces/{codespace_name}
+      stop_in_organization: codespaces/stop-in-organization  # POST /orgs/{org}/members/{username}/codespaces/{codespace_name}/stop
+      list_in_repository_for_authenticated_user:  # GET /repos/{owner}/{repo}/codespaces
+        op: codespaces/list-in-repository-for-authenticated-user
+        pagination: page_codespaces
+      create_with_repo_for_authenticated_user: codespaces/create-with-repo-for-authenticated-user  # POST /repos/{owner}/{repo}/codespaces
+      list_devcontainers_in_repository_for_authenticated_user:  # GET /repos/{owner}/{repo}/codespaces/devcontainers
+        op: codespaces/list-devcontainers-in-repository-for-authenticated-user
+        pagination: page_devcontainers
+      repo_machines_for_authenticated_user: codespaces/repo-machines-for-authenticated-user  # GET /repos/{owner}/{repo}/codespaces/machines
+      pre_flight_with_repo_for_authenticated_user: codespaces/pre-flight-with-repo-for-authenticated-user  # GET /repos/{owner}/{repo}/codespaces/new
+      check_permissions_for_devcontainer: codespaces/check-permissions-for-devcontainer  # GET /repos/{owner}/{repo}/codespaces/permissions_check
+      list_repo_secrets:  # GET /repos/{owner}/{repo}/codespaces/secrets
+        op: codespaces/list-repo-secrets
+        pagination: link_secrets
+      get_repo_public_key: codespaces/get-repo-public-key  # GET /repos/{owner}/{repo}/codespaces/secrets/public-key
+      delete_repo_secret: codespaces/delete-repo-secret  # DELETE /repos/{owner}/{repo}/codespaces/secrets/{secret_name}
+      get_repo_secret: codespaces/get-repo-secret  # GET /repos/{owner}/{repo}/codespaces/secrets/{secret_name}
+      create_or_update_repo_secret: codespaces/create-or-update-repo-secret  # PUT /repos/{owner}/{repo}/codespaces/secrets/{secret_name}
+      create_with_pr_for_authenticated_user: codespaces/create-with-pr-for-authenticated-user  # POST /repos/{owner}/{repo}/pulls/{pull_number}/codespaces
+      list_for_authenticated_user:  # GET /user/codespaces
+        op: codespaces/list-for-authenticated-user
+        pagination: page_codespaces
+      create_for_authenticated_user: codespaces/create-for-authenticated-user  # POST /user/codespaces
+      list_secrets_for_authenticated_user:  # GET /user/codespaces/secrets
+        op: codespaces/list-secrets-for-authenticated-user
+        pagination: link_secrets
+      get_public_key_for_authenticated_user: codespaces/get-public-key-for-authenticated-user  # GET /user/codespaces/secrets/public-key
+      delete_secret_for_authenticated_user: codespaces/delete-secret-for-authenticated-user  # DELETE /user/codespaces/secrets/{secret_name}
+      get_secret_for_authenticated_user: codespaces/get-secret-for-authenticated-user  # GET /user/codespaces/secrets/{secret_name}
+      create_or_update_secret_for_authenticated_user: codespaces/create-or-update-secret-for-authenticated-user  # PUT /user/codespaces/secrets/{secret_name}
+      list_repositories_for_secret_for_authenticated_user: codespaces/list-repositories-for-secret-for-authenticated-user  # GET /user/codespaces/secrets/{secret_name}/repositories
+      set_repositories_for_secret_for_authenticated_user: codespaces/set-repositories-for-secret-for-authenticated-user  # PUT /user/codespaces/secrets/{secret_name}/repositories
+      remove_repository_for_secret_for_authenticated_user: codespaces/remove-repository-for-secret-for-authenticated-user  # DELETE /user/codespaces/secrets/{secret_name}/repositories/{repository_id}
+      add_repository_for_secret_for_authenticated_user: codespaces/add-repository-for-secret-for-authenticated-user  # PUT /user/codespaces/secrets/{secret_name}/repositories/{repository_id}
+      delete_for_authenticated_user: codespaces/delete-for-authenticated-user  # DELETE /user/codespaces/{codespace_name}
+      get_for_authenticated_user: codespaces/get-for-authenticated-user  # GET /user/codespaces/{codespace_name}
+      update_for_authenticated_user: codespaces/update-for-authenticated-user  # PATCH /user/codespaces/{codespace_name}
+      export_for_authenticated_user: codespaces/export-for-authenticated-user  # POST /user/codespaces/{codespace_name}/exports
+      get_export_details_for_authenticated_user: codespaces/get-export-details-for-authenticated-user  # GET /user/codespaces/{codespace_name}/exports/{export_id}
+      machines_for_authenticated_user: codespaces/codespace-machines-for-authenticated-user  # GET /user/codespaces/{codespace_name}/machines
+      publish_for_authenticated_user: codespaces/publish-for-authenticated-user  # POST /user/codespaces/{codespace_name}/publish
+      start_for_authenticated_user: codespaces/start-for-authenticated-user  # POST /user/codespaces/{codespace_name}/start
+      stop_for_authenticated_user: codespaces/stop-for-authenticated-user  # POST /user/codespaces/{codespace_name}/stop
+  copilot:
+    methods:
+      enterprise_one_day_usage_metrics: copilot/copilot-enterprise-one-day-usage-metrics  # GET /enterprises/{enterprise}/copilot/metrics/reports/enterprise-1-day
+      enterprise_usage_metrics: copilot/copilot-enterprise-usage-metrics  # GET /enterprises/{enterprise}/copilot/metrics/reports/enterprise-28-day/latest
+      enterprise_repos_one_day_report: copilot/copilot-enterprise-repos-one-day-report  # GET /enterprises/{enterprise}/copilot/metrics/reports/repos-1-day
+      enterprise_user_teams_one_day_report: copilot/copilot-enterprise-user-teams-one-day-report  # GET /enterprises/{enterprise}/copilot/metrics/reports/user-teams-1-day
+      users_one_day_usage_metrics: copilot/copilot-users-one-day-usage-metrics  # GET /enterprises/{enterprise}/copilot/metrics/reports/users-1-day
+      users_usage_metrics: copilot/copilot-users-usage-metrics  # GET /enterprises/{enterprise}/copilot/metrics/reports/users-28-day/latest
+      get_enterprise_code_review_policy: copilot/get-enterprise-code-review-policy  # GET /enterprises/{enterprise}/copilot/policies/code-review
+      set_enterprise_code_review_policy: copilot/set-enterprise-code-review-policy  # PUT /enterprises/{enterprise}/copilot/policies/code-review
+      set_enterprise_coding_agent_policy: copilot/set-enterprise-coding-agent-policy  # PUT /enterprises/{enterprise}/copilot/policies/coding_agent
+      remove_organizations_from_enterprise_coding_agent_policy: copilot/remove-organizations-from-enterprise-coding-agent-policy  # DELETE /enterprises/{enterprise}/copilot/policies/coding_agent/organizations
+      add_organizations_to_enterprise_coding_agent_policy: copilot/add-organizations-to-enterprise-coding-agent-policy  # POST /enterprises/{enterprise}/copilot/policies/coding_agent/organizations
+      get_organization_details: copilot/get-copilot-organization-details  # GET /orgs/{org}/copilot/billing
+      list_seats:  # GET /orgs/{org}/copilot/billing/seats
+        op: copilot/list-copilot-seats
+        pagination: link_seats
+      cancel_seat_assignment_for_teams: copilot/cancel-copilot-seat-assignment-for-teams  # DELETE /orgs/{org}/copilot/billing/selected_teams
+      add_seats_for_teams: copilot/add-copilot-seats-for-teams  # POST /orgs/{org}/copilot/billing/selected_teams
+      cancel_seat_assignment_for_users: copilot/cancel-copilot-seat-assignment-for-users  # DELETE /orgs/{org}/copilot/billing/selected_users
+      add_seats_for_users: copilot/add-copilot-seats-for-users  # POST /orgs/{org}/copilot/billing/selected_users
+      get_organization_code_review_runner: copilot/get-organization-code-review-runner  # GET /orgs/{org}/copilot/code-review/runner
+      set_organization_code_review_runner: copilot/set-organization-code-review-runner  # PUT /orgs/{org}/copilot/code-review/runner
+      get_organization_code_review_settings: copilot/get-organization-code-review-settings  # GET /orgs/{org}/copilot/code-review/settings
+      update_organization_code_review_settings: copilot/update-organization-code-review-settings  # PATCH /orgs/{org}/copilot/code-review/settings
+      get_coding_agent_permissions_organization: copilot/get-copilot-coding-agent-permissions-organization  # GET /orgs/{org}/copilot/coding-agent/permissions
+      set_coding_agent_permissions_organization: copilot/set-copilot-coding-agent-permissions-organization  # PUT /orgs/{org}/copilot/coding-agent/permissions
+      list_coding_agent_selected_repositories_for_organization:  # GET /orgs/{org}/copilot/coding-agent/permissions/repositories
+        op: copilot/list-copilot-coding-agent-selected-repositories-for-organization
+        pagination: page_repositories
+      set_coding_agent_selected_repositories_for_organization: copilot/set-copilot-coding-agent-selected-repositories-for-organization  # PUT /orgs/{org}/copilot/coding-agent/permissions/repositories
+      disable_coding_agent_for_repository_in_organization: copilot/disable-copilot-coding-agent-for-repository-in-organization  # DELETE /orgs/{org}/copilot/coding-agent/permissions/repositories/{repository_id}
+      enable_coding_agent_for_repository_in_organization: copilot/enable-copilot-coding-agent-for-repository-in-organization  # PUT /orgs/{org}/copilot/coding-agent/permissions/repositories/{repository_id}
+      content_exclusion_for_organization: copilot/copilot-content-exclusion-for-organization  # GET /orgs/{org}/copilot/content_exclusion
+      set_content_exclusion_for_organization: copilot/set-copilot-content-exclusion-for-organization  # PUT /orgs/{org}/copilot/content_exclusion
+      organization_one_day_usage_metrics: copilot/copilot-organization-one-day-usage-metrics  # GET /orgs/{org}/copilot/metrics/reports/organization-1-day
+      organization_usage_metrics: copilot/copilot-organization-usage-metrics  # GET /orgs/{org}/copilot/metrics/reports/organization-28-day/latest
+      organization_repos_one_day_report: copilot/copilot-organization-repos-one-day-report  # GET /orgs/{org}/copilot/metrics/reports/repos-1-day
+      organization_user_teams_one_day_report: copilot/copilot-organization-user-teams-one-day-report  # GET /orgs/{org}/copilot/metrics/reports/user-teams-1-day
+      organization_users_one_day_usage_metrics: copilot/copilot-organization-users-one-day-usage-metrics  # GET /orgs/{org}/copilot/metrics/reports/users-1-day
+      organization_users_usage_metrics: copilot/copilot-organization-users-usage-metrics  # GET /orgs/{org}/copilot/metrics/reports/users-28-day/latest
+      get_organization_code_review_policy: copilot/get-organization-code-review-policy  # GET /orgs/{org}/copilot/policies/code-review
+      set_organization_code_review_policy: copilot/set-organization-code-review-policy  # PUT /orgs/{org}/copilot/policies/code-review
+      get_seat_details_for_user: copilot/get-copilot-seat-details-for-user  # GET /orgs/{org}/members/{username}/copilot
+      delete_team_customizations: copilot/delete-copilot-team-customizations  # DELETE /orgs/{org}/teams/{team_slug}/copilot/customizations
+      get_team_customizations: copilot/get-copilot-team-customizations  # GET /orgs/{org}/teams/{team_slug}/copilot/customizations
+      set_team_customizations: copilot/set-copilot-team-customizations  # PUT /orgs/{org}/teams/{team_slug}/copilot/customizations
+      get_cloud_agent_configuration: copilot/get-copilot-cloud-agent-configuration  # GET /repos/{owner}/{repo}/copilot/cloud-agent/configuration
+      get_repository_code_review_settings: copilot/get-repository-code-review-settings  # GET /repos/{owner}/{repo}/copilot/code-review/settings
+      update_repository_code_review_settings: copilot/update-repository-code-review-settings  # PATCH /repos/{owner}/{repo}/copilot/code-review/settings
+  copilot_spaces:
+    methods:
+      list_for_org:  # GET /orgs/{org}/copilot-spaces
+        op: copilot-spaces/list-for-org
+        pagination: link_spaces
+      create_for_org: copilot-spaces/create-for-org  # POST /orgs/{org}/copilot-spaces
+      delete_for_org: copilot-spaces/delete-for-org  # DELETE /orgs/{org}/copilot-spaces/{space_number}
+      get_for_org: copilot-spaces/get-for-org  # GET /orgs/{org}/copilot-spaces/{space_number}
+      update_for_org: copilot-spaces/update-for-org  # PUT /orgs/{org}/copilot-spaces/{space_number}
+      list_collaborators_for_org: copilot-spaces/list-collaborators-for-org  # GET /orgs/{org}/copilot-spaces/{space_number}/collaborators
+      add_collaborator_for_org: copilot-spaces/add-collaborator-for-org  # POST /orgs/{org}/copilot-spaces/{space_number}/collaborators
+      remove_collaborator_for_org: copilot-spaces/remove-collaborator-for-org  # DELETE /orgs/{org}/copilot-spaces/{space_number}/collaborators/{actor_type}/{actor_identifier}
+      update_collaborator_for_org: copilot-spaces/update-collaborator-for-org  # PUT /orgs/{org}/copilot-spaces/{space_number}/collaborators/{actor_type}/{actor_identifier}
+      list_resources_for_org: copilot-spaces/list-resources-for-org  # GET /orgs/{org}/copilot-spaces/{space_number}/resources
+      create_resource_for_org: copilot-spaces/create-resource-for-org  # POST /orgs/{org}/copilot-spaces/{space_number}/resources
+      delete_resource_for_org: copilot-spaces/delete-resource-for-org  # DELETE /orgs/{org}/copilot-spaces/{space_number}/resources/{space_resource_id}
+      get_resource_for_org: copilot-spaces/get-resource-for-org  # GET /orgs/{org}/copilot-spaces/{space_number}/resources/{space_resource_id}
+      update_resource_for_org: copilot-spaces/update-resource-for-org  # PUT /orgs/{org}/copilot-spaces/{space_number}/resources/{space_resource_id}
+      list_for_user:  # GET /users/{username}/copilot-spaces
+        op: copilot-spaces/list-for-user
+        pagination: link_spaces
+      create_for_user: copilot-spaces/create-for-user  # POST /users/{username}/copilot-spaces
+      delete_for_user: copilot-spaces/delete-for-user  # DELETE /users/{username}/copilot-spaces/{space_number}
+      get_for_user: copilot-spaces/get-for-user  # GET /users/{username}/copilot-spaces/{space_number}
+      update_for_user: copilot-spaces/update-for-user  # PUT /users/{username}/copilot-spaces/{space_number}
+      list_collaborators_for_user: copilot-spaces/list-collaborators-for-user  # GET /users/{username}/copilot-spaces/{space_number}/collaborators
+      add_collaborator_for_user: copilot-spaces/add-collaborator-for-user  # POST /users/{username}/copilot-spaces/{space_number}/collaborators
+      remove_collaborator_for_user: copilot-spaces/remove-collaborator-for-user  # DELETE /users/{username}/copilot-spaces/{space_number}/collaborators/{actor_type}/{actor_identifier}
+      update_collaborator_for_user: copilot-spaces/update-collaborator-for-user  # PUT /users/{username}/copilot-spaces/{space_number}/collaborators/{actor_type}/{actor_identifier}
+      list_resources_for_user: copilot-spaces/list-resources-for-user  # GET /users/{username}/copilot-spaces/{space_number}/resources
+      create_resource_for_user: copilot-spaces/create-resource-for-user  # POST /users/{username}/copilot-spaces/{space_number}/resources
+      delete_resource_for_user: copilot-spaces/delete-resource-for-user  # DELETE /users/{username}/copilot-spaces/{space_number}/resources/{space_resource_id}
+      get_resource_for_user: copilot-spaces/get-resource-for-user  # GET /users/{username}/copilot-spaces/{space_number}/resources/{space_resource_id}
+      update_resource_for_user: copilot-spaces/update-resource-for-user  # PUT /users/{username}/copilot-spaces/{space_number}/resources/{space_resource_id}
+  credentials:
+    methods:
+      revoke: credentials/revoke  # POST /credentials/revoke
+  dependabot:
+    methods:
+      list_alerts_for_enterprise: dependabot/list-alerts-for-enterprise  # GET /enterprises/{enterprise}/dependabot/alerts
+      repository_access_for_enterprise:  # GET /enterprises/{enterprise}/dependabot/repository-access
+        op: dependabot/repository-access-for-enterprise
+        pagination: page_accessible_repositories
+      update_repository_access_for_enterprise: dependabot/update-repository-access-for-enterprise  # PATCH /enterprises/{enterprise}/dependabot/repository-access
+      set_repository_access_default_level_for_enterprise: dependabot/set-repository-access-default-level-for-enterprise  # PUT /enterprises/{enterprise}/dependabot/repository-access/default-level
+      list_alerts_for_org: dependabot/list-alerts-for-org  # GET /orgs/{org}/dependabot/alerts
+      repository_access_for_org:  # GET /orgs/{org}/dependabot/repository-access
+        op: dependabot/repository-access-for-org
+        pagination: page_accessible_repositories
+      update_repository_access_for_org: dependabot/update-repository-access-for-org  # PATCH /orgs/{org}/dependabot/repository-access
+      set_repository_access_default_level: dependabot/set-repository-access-default-level  # PUT /orgs/{org}/dependabot/repository-access/default-level
+      list_org_secrets:  # GET /orgs/{org}/dependabot/secrets
+        op: dependabot/list-org-secrets
+        pagination: link_secrets
+      get_org_public_key: dependabot/get-org-public-key  # GET /orgs/{org}/dependabot/secrets/public-key
+      delete_org_secret: dependabot/delete-org-secret  # DELETE /orgs/{org}/dependabot/secrets/{secret_name}
+      get_org_secret: dependabot/get-org-secret  # GET /orgs/{org}/dependabot/secrets/{secret_name}
+      create_or_update_org_secret: dependabot/create-or-update-org-secret  # PUT /orgs/{org}/dependabot/secrets/{secret_name}
+      list_selected_repos_for_org_secret:  # GET /orgs/{org}/dependabot/secrets/{secret_name}/repositories
+        op: dependabot/list-selected-repos-for-org-secret
+        pagination: page_repositories
+      set_selected_repos_for_org_secret: dependabot/set-selected-repos-for-org-secret  # PUT /orgs/{org}/dependabot/secrets/{secret_name}/repositories
+      remove_selected_repo_from_org_secret: dependabot/remove-selected-repo-from-org-secret  # DELETE /orgs/{org}/dependabot/secrets/{secret_name}/repositories/{repository_id}
+      add_selected_repo_to_org_secret: dependabot/add-selected-repo-to-org-secret  # PUT /orgs/{org}/dependabot/secrets/{secret_name}/repositories/{repository_id}
+      list_alerts_for_repo: dependabot/list-alerts-for-repo  # GET /repos/{owner}/{repo}/dependabot/alerts
+      get_alert: dependabot/get-alert  # GET /repos/{owner}/{repo}/dependabot/alerts/{alert_number}
+      update_alert: dependabot/update-alert  # PATCH /repos/{owner}/{repo}/dependabot/alerts/{alert_number}
+      get_repository_runner_settings: dependabot/get-repository-runner-settings  # GET /repos/{owner}/{repo}/dependabot/runner-settings
+      set_repository_runner_settings: dependabot/set-repository-runner-settings  # PUT /repos/{owner}/{repo}/dependabot/runner-settings
+      list_repo_secrets:  # GET /repos/{owner}/{repo}/dependabot/secrets
+        op: dependabot/list-repo-secrets
+        pagination: link_secrets
+      get_repo_public_key: dependabot/get-repo-public-key  # GET /repos/{owner}/{repo}/dependabot/secrets/public-key
+      delete_repo_secret: dependabot/delete-repo-secret  # DELETE /repos/{owner}/{repo}/dependabot/secrets/{secret_name}
+      get_repo_secret: dependabot/get-repo-secret  # GET /repos/{owner}/{repo}/dependabot/secrets/{secret_name}
+      create_or_update_repo_secret: dependabot/create-or-update-repo-secret  # PUT /repos/{owner}/{repo}/dependabot/secrets/{secret_name}
+  dependency_graph:
+    methods:
+      diff_range: dependency-graph/diff-range  # GET /repos/{owner}/{repo}/dependency-graph/compare/{basehead}
+      export_sbom: dependency-graph/export-sbom  # GET /repos/{owner}/{repo}/dependency-graph/sbom
+      fetch_sbom_report: dependency-graph/fetch-sbom-report  # GET /repos/{owner}/{repo}/dependency-graph/sbom/fetch-report/{sbom_uuid}
+      generate_sbom_report: dependency-graph/generate-sbom-report  # GET /repos/{owner}/{repo}/dependency-graph/sbom/generate-report
+      create_repository_snapshot: dependency-graph/create-repository-snapshot  # POST /repos/{owner}/{repo}/dependency-graph/snapshots
+  emojis:
+    methods:
+      list: emojis/get  # GET /emojis
+  gists:
+    methods:
+      list:  # GET /gists
+        op: gists/list
+        pagination: link_body
+      create: gists/create  # POST /gists
+      list_public:  # GET /gists/public
+        op: gists/list-public
+        pagination: link_body
+      list_starred:  # GET /gists/starred
+        op: gists/list-starred
+        pagination: link_body
+      delete: gists/delete  # DELETE /gists/{gist_id}
+      get: gists/get  # GET /gists/{gist_id}
+      update: gists/update  # PATCH /gists/{gist_id}
+      list_comments:  # GET /gists/{gist_id}/comments
+        op: gists/list-comments
+        pagination: link_body
+      create_comment: gists/create-comment  # POST /gists/{gist_id}/comments
+      delete_comment: gists/delete-comment  # DELETE /gists/{gist_id}/comments/{comment_id}
+      get_comment: gists/get-comment  # GET /gists/{gist_id}/comments/{comment_id}
+      update_comment: gists/update-comment  # PATCH /gists/{gist_id}/comments/{comment_id}
+      list_commits:  # GET /gists/{gist_id}/commits
+        op: gists/list-commits
+        pagination: link_body
+      list_forks:  # GET /gists/{gist_id}/forks
+        op: gists/list-forks
+        pagination: link_body
+      fork: gists/fork  # POST /gists/{gist_id}/forks
+      unstar: gists/unstar  # DELETE /gists/{gist_id}/star
+      check_is_starred: gists/check-is-starred  # GET /gists/{gist_id}/star
+      star: gists/star  # PUT /gists/{gist_id}/star
+      get_revision: gists/get-revision  # GET /gists/{gist_id}/{sha}
+      list_for_user:  # GET /users/{username}/gists
+        op: gists/list-for-user
+        pagination: link_body
+  git:
+    methods:
+      create_blob: git/create-blob  # POST /repos/{owner}/{repo}/git/blobs
+      get_blob: git/get-blob  # GET /repos/{owner}/{repo}/git/blobs/{file_sha}
+      create_commit: git/create-commit  # POST /repos/{owner}/{repo}/git/commits
+      get_commit: git/get-commit  # GET /repos/{owner}/{repo}/git/commits/{commit_sha}
+      list_matching_refs: git/list-matching-refs  # GET /repos/{owner}/{repo}/git/matching-refs/{ref}
+      get_ref: git/get-ref  # GET /repos/{owner}/{repo}/git/ref/{ref}
+      create_ref: git/create-ref  # POST /repos/{owner}/{repo}/git/refs
+      delete_ref: git/delete-ref  # DELETE /repos/{owner}/{repo}/git/refs/{ref}
+      update_ref: git/update-ref  # PATCH /repos/{owner}/{repo}/git/refs/{ref}
+      create_tag: git/create-tag  # POST /repos/{owner}/{repo}/git/tags
+      get_tag: git/get-tag  # GET /repos/{owner}/{repo}/git/tags/{tag_sha}
+      create_tree: git/create-tree  # POST /repos/{owner}/{repo}/git/trees
+      get_tree: git/get-tree  # GET /repos/{owner}/{repo}/git/trees/{tree_sha}
+  gitignore:
+    methods:
+      get_all_templates: gitignore/get-all-templates  # GET /gitignore/templates
+      get_template: gitignore/get-template  # GET /gitignore/templates/{name}
+  hosted_compute:
+    methods:
+      list_network_configurations_for_org:  # GET /orgs/{org}/settings/network-configurations
+        op: hosted-compute/list-network-configurations-for-org
+        pagination: link_network_configurations
+      create_network_configuration_for_org: hosted-compute/create-network-configuration-for-org  # POST /orgs/{org}/settings/network-configurations
+      delete_network_configuration_from_org: hosted-compute/delete-network-configuration-from-org  # DELETE /orgs/{org}/settings/network-configurations/{network_configuration_id}
+      get_network_configuration_for_org: hosted-compute/get-network-configuration-for-org  # GET /orgs/{org}/settings/network-configurations/{network_configuration_id}
+      update_network_configuration_for_org: hosted-compute/update-network-configuration-for-org  # PATCH /orgs/{org}/settings/network-configurations/{network_configuration_id}
+      get_network_settings_for_org: hosted-compute/get-network-settings-for-org  # GET /orgs/{org}/settings/network-settings/{network_settings_id}
+  interactions:
+    methods:
+      remove_restrictions_for_org: interactions/remove-restrictions-for-org  # DELETE /orgs/{org}/interaction-limits
+      get_restrictions_for_org: interactions/get-restrictions-for-org  # GET /orgs/{org}/interaction-limits
+      set_restrictions_for_org: interactions/set-restrictions-for-org  # PUT /orgs/{org}/interaction-limits
+      get_pull_request_creation_cap_for_org: interactions/get-pull-request-creation-cap-for-org  # GET /orgs/{org}/interaction-limits/pulls/creation-cap
+      update_pull_request_creation_cap_for_org: interactions/update-pull-request-creation-cap-for-org  # PATCH /orgs/{org}/interaction-limits/pulls/creation-cap
+      remove_restrictions_for_repo: interactions/remove-restrictions-for-repo  # DELETE /repos/{owner}/{repo}/interaction-limits
+      get_restrictions_for_repo: interactions/get-restrictions-for-repo  # GET /repos/{owner}/{repo}/interaction-limits
+      set_restrictions_for_repo: interactions/set-restrictions-for-repo  # PUT /repos/{owner}/{repo}/interaction-limits
+      remove_pull_request_bypass_list_for_repo: interactions/remove-pull-request-bypass-list-for-repo  # DELETE /repos/{owner}/{repo}/interaction-limits/pulls/bypass-list
+      get_pull_request_bypass_list_for_repo: interactions/get-pull-request-bypass-list-for-repo  # GET /repos/{owner}/{repo}/interaction-limits/pulls/bypass-list
+      set_pull_request_bypass_list_for_repo: interactions/set-pull-request-bypass-list-for-repo  # PUT /repos/{owner}/{repo}/interaction-limits/pulls/bypass-list
+      get_pull_request_creation_cap_for_repo: interactions/get-pull-request-creation-cap-for-repo  # GET /repos/{owner}/{repo}/interaction-limits/pulls/creation-cap
+      update_pull_request_creation_cap_for_repo: interactions/update-pull-request-creation-cap-for-repo  # PATCH /repos/{owner}/{repo}/interaction-limits/pulls/creation-cap
+      remove_restrictions_for_authenticated_user: interactions/remove-restrictions-for-authenticated-user  # DELETE /user/interaction-limits
+      get_restrictions_for_authenticated_user: interactions/get-restrictions-for-authenticated-user  # GET /user/interaction-limits
+      set_restrictions_for_authenticated_user: interactions/set-restrictions-for-authenticated-user  # PUT /user/interaction-limits
+  issues:
+    methods:
+      list:  # GET /issues
+        op: issues/list
+        pagination: link_body
+      list_for_org:  # GET /orgs/{org}/issues
+        op: issues/list-for-org
+        pagination: link_body
+      list_assignees:  # GET /repos/{owner}/{repo}/assignees
+        op: issues/list-assignees
+        pagination: link_body
+      check_user_can_be_assigned: issues/check-user-can-be-assigned  # GET /repos/{owner}/{repo}/assignees/{assignee}
+      list_for_repo:  # GET /repos/{owner}/{repo}/issues
+        op: issues/list-for-repo
+        pagination: link_body
+      create: issues/create  # POST /repos/{owner}/{repo}/issues
+      list_comments_for_repo:  # GET /repos/{owner}/{repo}/issues/comments
+        op: issues/list-comments-for-repo
+        pagination: link_body
+      delete_comment: issues/delete-comment  # DELETE /repos/{owner}/{repo}/issues/comments/{comment_id}
+      get_comment: issues/get-comment  # GET /repos/{owner}/{repo}/issues/comments/{comment_id}
+      update_comment: issues/update-comment  # PATCH /repos/{owner}/{repo}/issues/comments/{comment_id}
+      unpin_comment: issues/unpin-comment  # DELETE /repos/{owner}/{repo}/issues/comments/{comment_id}/pin
+      pin_comment: issues/pin-comment  # PUT /repos/{owner}/{repo}/issues/comments/{comment_id}/pin
+      list_events_for_repo:  # GET /repos/{owner}/{repo}/issues/events
+        op: issues/list-events-for-repo
+        pagination: link_body
+      get_event: issues/get-event  # GET /repos/{owner}/{repo}/issues/events/{event_id}
+      get: issues/get  # GET /repos/{owner}/{repo}/issues/{issue_number}
+      update: issues/update  # PATCH /repos/{owner}/{repo}/issues/{issue_number}
+      list_artifacts:  # GET /repos/{owner}/{repo}/issues/{issue_number}/artifacts
+        op: issues/list-issue-artifacts
+        pagination: page_body
+      create_artifact: issues/create-issue-artifact  # POST /repos/{owner}/{repo}/issues/{issue_number}/artifacts
+      delete_artifact: issues/delete-issue-artifact  # DELETE /repos/{owner}/{repo}/issues/{issue_number}/artifacts/{artifact_number}
+      get_artifact: issues/get-issue-artifact  # GET /repos/{owner}/{repo}/issues/{issue_number}/artifacts/{artifact_number}
+      update_artifact: issues/update-issue-artifact  # PATCH /repos/{owner}/{repo}/issues/{issue_number}/artifacts/{artifact_number}
+      remove_assignees: issues/remove-assignees  # DELETE /repos/{owner}/{repo}/issues/{issue_number}/assignees
+      add_assignees: issues/add-assignees  # POST /repos/{owner}/{repo}/issues/{issue_number}/assignees
+      check_user_can_be_assigned_to_issue: issues/check-user-can-be-assigned-to-issue  # GET /repos/{owner}/{repo}/issues/{issue_number}/assignees/{assignee}
+      list_comments:  # GET /repos/{owner}/{repo}/issues/{issue_number}/comments
+        op: issues/list-comments
+        pagination: link_body
+      create_comment: issues/create-comment  # POST /repos/{owner}/{repo}/issues/{issue_number}/comments
+      list_dependencies_blocked_by:  # GET /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocked_by
+        op: issues/list-dependencies-blocked-by
+        pagination: link_body
+      add_blocked_by_dependency: issues/add-blocked-by-dependency  # POST /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocked_by
+      remove_dependency_blocked_by: issues/remove-dependency-blocked-by  # DELETE /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocked_by/{issue_id}
+      list_dependencies_blocking:  # GET /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocking
+        op: issues/list-dependencies-blocking
+        pagination: link_body
+      list_events:  # GET /repos/{owner}/{repo}/issues/{issue_number}/events
+        op: issues/list-events
+        pagination: link_body
+      list_field_values:  # GET /repos/{owner}/{repo}/issues/{issue_number}/issue-field-values
+        op: issues/list-issue-field-values-for-issue
+        pagination: link_body
+      add_field_values: issues/add-issue-field-values  # POST /repos/{owner}/{repo}/issues/{issue_number}/issue-field-values
+      set_field_values: issues/set-issue-field-values  # PUT /repos/{owner}/{repo}/issues/{issue_number}/issue-field-values
+      delete_field_value: issues/delete-issue-field-value  # DELETE /repos/{owner}/{repo}/issues/{issue_number}/issue-field-values/{issue_field_id}
+      remove_all_labels: issues/remove-all-labels  # DELETE /repos/{owner}/{repo}/issues/{issue_number}/labels
+      list_labels:  # GET /repos/{owner}/{repo}/issues/{issue_number}/labels
+        op: issues/list-labels-on-issue
+        pagination: link_body
+      add_labels: issues/add-labels  # POST /repos/{owner}/{repo}/issues/{issue_number}/labels
+      set_labels: issues/set-labels  # PUT /repos/{owner}/{repo}/issues/{issue_number}/labels
+      remove_label: issues/remove-label  # DELETE /repos/{owner}/{repo}/issues/{issue_number}/labels/{name}
+      unlock: issues/unlock  # DELETE /repos/{owner}/{repo}/issues/{issue_number}/lock
+      lock: issues/lock  # PUT /repos/{owner}/{repo}/issues/{issue_number}/lock
+      get_parent: issues/get-parent  # GET /repos/{owner}/{repo}/issues/{issue_number}/parent
+      list_relates_to:  # GET /repos/{owner}/{repo}/issues/{issue_number}/relates_to
+        op: issues/list-relates-to
+        pagination: link_body
+      add_relates_to: issues/add-relates-to  # POST /repos/{owner}/{repo}/issues/{issue_number}/relates_to
+      remove_relates_to: issues/remove-relates-to  # DELETE /repos/{owner}/{repo}/issues/{issue_number}/relates_to/{issue_id}
+      remove_sub_issue: issues/remove-sub-issue  # DELETE /repos/{owner}/{repo}/issues/{issue_number}/sub_issue
+      list_sub_issues:  # GET /repos/{owner}/{repo}/issues/{issue_number}/sub_issues
+        op: issues/list-sub-issues
+        pagination: link_body
+      add_sub_issue: issues/add-sub-issue  # POST /repos/{owner}/{repo}/issues/{issue_number}/sub_issues
+      reprioritize_sub_issue: issues/reprioritize-sub-issue  # PATCH /repos/{owner}/{repo}/issues/{issue_number}/sub_issues/priority
+      list_suggestions:  # GET /repos/{owner}/{repo}/issues/{issue_number}/suggestions
+        op: issues/list-suggestions
+        pagination: link_body
+      approve_suggestion: issues/approve-suggestion  # POST /repos/{owner}/{repo}/issues/{issue_number}/suggestions/{suggestion_id}/approve
+      dismiss_suggestion: issues/dismiss-suggestion  # POST /repos/{owner}/{repo}/issues/{issue_number}/suggestions/{suggestion_id}/dismiss
+      list_events_for_timeline:  # GET /repos/{owner}/{repo}/issues/{issue_number}/timeline
+        op: issues/list-events-for-timeline
+        pagination: link_body
+      list_labels_for_repo:  # GET /repos/{owner}/{repo}/labels
+        op: issues/list-labels-for-repo
+        pagination: link_body
+      create_label: issues/create-label  # POST /repos/{owner}/{repo}/labels
+      delete_label: issues/delete-label  # DELETE /repos/{owner}/{repo}/labels/{name}
+      get_label: issues/get-label  # GET /repos/{owner}/{repo}/labels/{name}
+      update_label: issues/update-label  # PATCH /repos/{owner}/{repo}/labels/{name}
+      list_milestones:  # GET /repos/{owner}/{repo}/milestones
+        op: issues/list-milestones
+        pagination: link_body
+      create_milestone: issues/create-milestone  # POST /repos/{owner}/{repo}/milestones
+      delete_milestone: issues/delete-milestone  # DELETE /repos/{owner}/{repo}/milestones/{milestone_number}
+      get_milestone: issues/get-milestone  # GET /repos/{owner}/{repo}/milestones/{milestone_number}
+      update_milestone: issues/update-milestone  # PATCH /repos/{owner}/{repo}/milestones/{milestone_number}
+      list_labels_for_milestone:  # GET /repos/{owner}/{repo}/milestones/{milestone_number}/labels
+        op: issues/list-labels-for-milestone
+        pagination: link_body
+      list_for_authenticated_user:  # GET /user/issues
+        op: issues/list-for-authenticated-user
+        pagination: link_body
+  licenses:
+    methods:
+      list:  # GET /licenses
+        op: licenses/get-all-commonly-used
+        pagination: page_body
+      retrieve: licenses/get  # GET /licenses/{license}
+      get_for_repo: licenses/get-for-repo  # GET /repos/{owner}/{repo}/license
+  markdown:
+    methods:
+      create: markdown/render  # POST /markdown
+      render_raw: markdown/render-raw  # POST /markdown/raw
+  meta:
+    methods:
+      root: meta/root  # GET /
+      list: meta/get  # GET /meta
+      get_octocat: meta/get-octocat  # GET /octocat
+      get_all_versions: meta/get-all-versions  # GET /versions
+      get_zen: meta/get-zen  # GET /zen
+  migrations:
+    methods:
+      list_for_org:  # GET /orgs/{org}/migrations
+        op: migrations/list-for-org
+        pagination: link_body
+      start_for_org: migrations/start-for-org  # POST /orgs/{org}/migrations
+      get_status_for_org: migrations/get-status-for-org  # GET /orgs/{org}/migrations/{migration_id}
+      delete_archive_for_org: migrations/delete-archive-for-org  # DELETE /orgs/{org}/migrations/{migration_id}/archive
+      download_archive_for_org: migrations/download-archive-for-org  # GET /orgs/{org}/migrations/{migration_id}/archive
+      unlock_repo_for_org: migrations/unlock-repo-for-org  # DELETE /orgs/{org}/migrations/{migration_id}/repos/{repo_name}/lock
+      list_repos_for_org:  # GET /orgs/{org}/migrations/{migration_id}/repositories
+        op: migrations/list-repos-for-org
+        pagination: link_body
+      cancel_import: migrations/cancel-import  # DELETE /repos/{owner}/{repo}/import
+      get_import_status: migrations/get-import-status  # GET /repos/{owner}/{repo}/import
+      update_import: migrations/update-import  # PATCH /repos/{owner}/{repo}/import
+      start_import: migrations/start-import  # PUT /repos/{owner}/{repo}/import
+      get_commit_authors: migrations/get-commit-authors  # GET /repos/{owner}/{repo}/import/authors
+      map_commit_author: migrations/map-commit-author  # PATCH /repos/{owner}/{repo}/import/authors/{author_id}
+      get_large_files: migrations/get-large-files  # GET /repos/{owner}/{repo}/import/large_files
+      set_lfs_preference: migrations/set-lfs-preference  # PATCH /repos/{owner}/{repo}/import/lfs
+      list_for_authenticated_user:  # GET /user/migrations
+        op: migrations/list-for-authenticated-user
+        pagination: link_body
+      start_for_authenticated_user: migrations/start-for-authenticated-user  # POST /user/migrations
+      get_status_for_authenticated_user: migrations/get-status-for-authenticated-user  # GET /user/migrations/{migration_id}
+      delete_archive_for_authenticated_user: migrations/delete-archive-for-authenticated-user  # DELETE /user/migrations/{migration_id}/archive
+      get_archive_for_authenticated_user: migrations/get-archive-for-authenticated-user  # GET /user/migrations/{migration_id}/archive
+      unlock_repo_for_authenticated_user: migrations/unlock-repo-for-authenticated-user  # DELETE /user/migrations/{migration_id}/repos/{repo_name}/lock
+      list_repos_for_authenticated_user:  # GET /user/migrations/{migration_id}/repositories
+        op: migrations/list-repos-for-authenticated-user
+        pagination: link_body
+  oidc:
+    methods:
+      list_custom_property_inclusions_for_enterprise: oidc/list-oidc-custom-property-inclusions-for-enterprise  # GET /enterprises/{enterprise}/actions/oidc/customization/properties/repo
+      create_custom_property_inclusion_for_enterprise: oidc/create-oidc-custom-property-inclusion-for-enterprise  # POST /enterprises/{enterprise}/actions/oidc/customization/properties/repo
+      delete_custom_property_inclusion_for_enterprise: oidc/delete-oidc-custom-property-inclusion-for-enterprise  # DELETE /enterprises/{enterprise}/actions/oidc/customization/properties/repo/{custom_property_name}
+      list_custom_property_inclusions_for_org: oidc/list-oidc-custom-property-inclusions-for-org  # GET /orgs/{org}/actions/oidc/customization/properties/repo
+      create_custom_property_inclusion_for_org: oidc/create-oidc-custom-property-inclusion-for-org  # POST /orgs/{org}/actions/oidc/customization/properties/repo
+      delete_custom_property_inclusion_for_org: oidc/delete-oidc-custom-property-inclusion-for-org  # DELETE /orgs/{org}/actions/oidc/customization/properties/repo/{custom_property_name}
+      get_custom_sub_template_for_org: oidc/get-oidc-custom-sub-template-for-org  # GET /orgs/{org}/actions/oidc/customization/sub
+      update_custom_sub_template_for_org: oidc/update-oidc-custom-sub-template-for-org  # PUT /orgs/{org}/actions/oidc/customization/sub
+  orgs:
+    methods:
+      list:  # GET /organizations
+        op: orgs/list
+        pagination: link_body
+      delete: orgs/delete  # DELETE /orgs/{org}
+      retrieve: orgs/get  # GET /orgs/{org}
+      update: orgs/update  # PATCH /orgs/{org}
+      create_artifact_deployment_record: orgs/create-artifact-deployment-record  # POST /orgs/{org}/artifacts/metadata/deployment-record
+      set_cluster_deployment_records: orgs/set-cluster-deployment-records  # POST /orgs/{org}/artifacts/metadata/deployment-record/cluster/{cluster}
+      create_cluster_deployment_records_job: orgs/create-cluster-deployment-records-job  # POST /orgs/{org}/artifacts/metadata/deployment-record/cluster/{cluster}/jobs
+      get_cluster_deployment_records_job: orgs/get-cluster-deployment-records-job  # GET /orgs/{org}/artifacts/metadata/deployment-record/cluster/{cluster}/jobs/{job_id}
+      create_artifact_storage_record: orgs/create-artifact-storage-record  # POST /orgs/{org}/artifacts/metadata/storage-record
+      list_artifact_deployment_records: orgs/list-artifact-deployment-records  # GET /orgs/{org}/artifacts/{subject_digest}/metadata/deployment-records
+      list_artifact_storage_records: orgs/list-artifact-storage-records  # GET /orgs/{org}/artifacts/{subject_digest}/metadata/storage-records
+      list_attestations_bulk: orgs/list-attestations-bulk  # POST /orgs/{org}/attestations/bulk-list
+      delete_attestations_bulk: orgs/delete-attestations-bulk  # POST /orgs/{org}/attestations/delete-request
+      delete_attestations_by_subject_digest: orgs/delete-attestations-by-subject-digest  # DELETE /orgs/{org}/attestations/digest/{subject_digest}
+      list_attestation_repositories: orgs/list-attestation-repositories  # GET /orgs/{org}/attestations/repositories
+      delete_attestations_by_id: orgs/delete-attestations-by-id  # DELETE /orgs/{org}/attestations/{attestation_id}
+      list_attestations: orgs/list-attestations  # GET /orgs/{org}/attestations/{subject_digest}
+      list_blocked_users:  # GET /orgs/{org}/blocks
+        op: orgs/list-blocked-users
+        pagination: page_body
+      unblock_user: orgs/unblock-user  # DELETE /orgs/{org}/blocks/{username}
+      check_blocked_user: orgs/check-blocked-user  # GET /orgs/{org}/blocks/{username}
+      block_user: orgs/block-user  # PUT /orgs/{org}/blocks/{username}
+      list_failed_invitations:  # GET /orgs/{org}/failed_invitations
+        op: orgs/list-failed-invitations
+        pagination: link_body
+      list_webhooks:  # GET /orgs/{org}/hooks
+        op: orgs/list-webhooks
+        pagination: link_body
+      create_webhook: orgs/create-webhook  # POST /orgs/{org}/hooks
+      delete_webhook: orgs/delete-webhook  # DELETE /orgs/{org}/hooks/{hook_id}
+      get_webhook: orgs/get-webhook  # GET /orgs/{org}/hooks/{hook_id}
+      update_webhook: orgs/update-webhook  # PATCH /orgs/{org}/hooks/{hook_id}
+      get_webhook_config: orgs/get-webhook-config-for-org  # GET /orgs/{org}/hooks/{hook_id}/config
+      update_webhook_config: orgs/update-webhook-config-for-org  # PATCH /orgs/{org}/hooks/{hook_id}/config
+      list_webhook_deliveries: orgs/list-webhook-deliveries  # GET /orgs/{org}/hooks/{hook_id}/deliveries
+      get_webhook_delivery: orgs/get-webhook-delivery  # GET /orgs/{org}/hooks/{hook_id}/deliveries/{delivery_id}
+      redeliver_webhook_delivery: orgs/redeliver-webhook-delivery  # POST /orgs/{org}/hooks/{hook_id}/deliveries/{delivery_id}/attempts
+      ping_webhook: orgs/ping-webhook  # POST /orgs/{org}/hooks/{hook_id}/pings
+      api_insights_get_route_stats_by_actor: api-insights/get-route-stats-by-actor  # GET /orgs/{org}/insights/api/route-stats/{actor_type}/{actor_id}
+      api_insights_get_subject_stats:  # GET /orgs/{org}/insights/api/subject-stats
+        op: api-insights/get-subject-stats
+        pagination: page_body
+      api_insights_get_summary_stats: api-insights/get-summary-stats  # GET /orgs/{org}/insights/api/summary-stats
+      api_insights_get_summary_stats_by_user: api-insights/get-summary-stats-by-user  # GET /orgs/{org}/insights/api/summary-stats/users/{user_id}
+      api_insights_get_summary_stats_by_actor: api-insights/get-summary-stats-by-actor  # GET /orgs/{org}/insights/api/summary-stats/{actor_type}/{actor_id}
+      api_insights_get_time_stats: api-insights/get-time-stats  # GET /orgs/{org}/insights/api/time-stats
+      api_insights_get_time_stats_by_user: api-insights/get-time-stats-by-user  # GET /orgs/{org}/insights/api/time-stats/users/{user_id}
+      api_insights_get_time_stats_by_actor: api-insights/get-time-stats-by-actor  # GET /orgs/{org}/insights/api/time-stats/{actor_type}/{actor_id}
+      api_insights_get_user_stats: api-insights/get-user-stats  # GET /orgs/{org}/insights/api/user-stats/{user_id}
+      list_app_installations:  # GET /orgs/{org}/installations
+        op: orgs/list-app-installations
+        pagination: link_installations
+      list_pending_invitations:  # GET /orgs/{org}/invitations
+        op: orgs/list-pending-invitations
+        pagination: link_body
+      create_invitation: orgs/create-invitation  # POST /orgs/{org}/invitations
+      cancel_invitation: orgs/cancel-invitation  # DELETE /orgs/{org}/invitations/{invitation_id}
+      list_invitation_teams:  # GET /orgs/{org}/invitations/{invitation_id}/teams
+        op: orgs/list-invitation-teams
+        pagination: link_body
+      list_issue_fields: orgs/list-issue-fields  # GET /orgs/{org}/issue-fields
+      create_issue_field: orgs/create-issue-field  # POST /orgs/{org}/issue-fields
+      delete_issue_field: orgs/delete-issue-field  # DELETE /orgs/{org}/issue-fields/{issue_field_id}
+      update_issue_field: orgs/update-issue-field  # PATCH /orgs/{org}/issue-fields/{issue_field_id}
+      list_issue_types: orgs/list-issue-types  # GET /orgs/{org}/issue-types
+      create_issue_type: orgs/create-issue-type  # POST /orgs/{org}/issue-types
+      delete_issue_type: orgs/delete-issue-type  # DELETE /orgs/{org}/issue-types/{issue_type_id}
+      update_issue_type: orgs/update-issue-type  # PUT /orgs/{org}/issue-types/{issue_type_id}
+      list_members:  # GET /orgs/{org}/members
+        op: orgs/list-members
+        pagination: link_body
+      remove_member: orgs/remove-member  # DELETE /orgs/{org}/members/{username}
+      check_membership_for_user: orgs/check-membership-for-user  # GET /orgs/{org}/members/{username}
+      remove_membership_for_user: orgs/remove-membership-for-user  # DELETE /orgs/{org}/memberships/{username}
+      get_membership_for_user: orgs/get-membership-for-user  # GET /orgs/{org}/memberships/{username}
+      set_membership_for_user: orgs/set-membership-for-user  # PUT /orgs/{org}/memberships/{username}
+      list_roles: orgs/list-org-roles  # GET /orgs/{org}/organization-roles
+      revoke_all_roles_team: orgs/revoke-all-org-roles-team  # DELETE /orgs/{org}/organization-roles/teams/{team_slug}
+      revoke_role_team: orgs/revoke-org-role-team  # DELETE /orgs/{org}/organization-roles/teams/{team_slug}/{role_id}
+      assign_team_to_role: orgs/assign-team-to-org-role  # PUT /orgs/{org}/organization-roles/teams/{team_slug}/{role_id}
+      revoke_all_roles_user: orgs/revoke-all-org-roles-user  # DELETE /orgs/{org}/organization-roles/users/{username}
+      revoke_role_user: orgs/revoke-org-role-user  # DELETE /orgs/{org}/organization-roles/users/{username}/{role_id}
+      assign_user_to_role: orgs/assign-user-to-org-role  # PUT /orgs/{org}/organization-roles/users/{username}/{role_id}
+      get_role: orgs/get-org-role  # GET /orgs/{org}/organization-roles/{role_id}
+      list_role_teams:  # GET /orgs/{org}/organization-roles/{role_id}/teams
+        op: orgs/list-org-role-teams
+        pagination: link_body
+      list_role_users:  # GET /orgs/{org}/organization-roles/{role_id}/users
+        op: orgs/list-org-role-users
+        pagination: link_body
+      list_outside_collaborators:  # GET /orgs/{org}/outside_collaborators
+        op: orgs/list-outside-collaborators
+        pagination: link_body
+      remove_outside_collaborator: orgs/remove-outside-collaborator  # DELETE /orgs/{org}/outside_collaborators/{username}
+      convert_member_to_outside_collaborator: orgs/convert-member-to-outside-collaborator  # PUT /orgs/{org}/outside_collaborators/{username}
+      list_pat_grant_requests:  # GET /orgs/{org}/personal-access-token-requests
+        op: orgs/list-pat-grant-requests
+        pagination: link_body
+      review_pat_grant_requests_in_bulk: orgs/review-pat-grant-requests-in-bulk  # POST /orgs/{org}/personal-access-token-requests
+      review_pat_grant_request: orgs/review-pat-grant-request  # POST /orgs/{org}/personal-access-token-requests/{pat_request_id}
+      list_pat_grant_request_repositories:  # GET /orgs/{org}/personal-access-token-requests/{pat_request_id}/repositories
+        op: orgs/list-pat-grant-request-repositories
+        pagination: link_body
+      list_pat_grants:  # GET /orgs/{org}/personal-access-tokens
+        op: orgs/list-pat-grants
+        pagination: link_body
+      update_pat_accesses: orgs/update-pat-accesses  # POST /orgs/{org}/personal-access-tokens
+      update_pat_access: orgs/update-pat-access  # POST /orgs/{org}/personal-access-tokens/{pat_id}
+      list_pat_grant_repositories:  # GET /orgs/{org}/personal-access-tokens/{pat_id}/repositories
+        op: orgs/list-pat-grant-repositories
+        pagination: link_body
+      external_properties_for_repos_get_organization_app_installations: orgs/external-properties-for-repos-get-organization-app-installations  # GET /orgs/{org}/properties/installations
+      external_properties_for_repos_register_organization_app_installation: orgs/external-properties-for-repos-register-organization-app-installation  # POST /orgs/{org}/properties/installations
+      external_properties_for_repos_get_organization_definitions: orgs/external-properties-for-repos-get-organization-definitions  # GET /orgs/{org}/properties/installations/schema
+      external_properties_for_repos_create_or_update_organization_values: orgs/external-properties-for-repos-create-or-update-organization-values  # PATCH /orgs/{org}/properties/installations/values
+      external_properties_for_repos_delete_organization_values: orgs/external-properties-for-repos-delete-organization-values  # DELETE /orgs/{org}/properties/installations/values/{property_name}
+      external_properties_for_repos_create_or_update_values_for_organization_property: orgs/external-properties-for-repos-create-or-update-values-for-organization-property  # PATCH /orgs/{org}/properties/installations/values/{property_name}
+      custom_properties_for_repos_get_organization_definitions: orgs/custom-properties-for-repos-get-organization-definitions  # GET /orgs/{org}/properties/schema
+      custom_properties_for_repos_create_or_update_organization_definitions: orgs/custom-properties-for-repos-create-or-update-organization-definitions  # PATCH /orgs/{org}/properties/schema
+      custom_properties_for_repos_delete_organization_definition: orgs/custom-properties-for-repos-delete-organization-definition  # DELETE /orgs/{org}/properties/schema/{custom_property_name}
+      custom_properties_for_repos_get_organization_definition: orgs/custom-properties-for-repos-get-organization-definition  # GET /orgs/{org}/properties/schema/{custom_property_name}
+      custom_properties_for_repos_create_or_update_organization_definition: orgs/custom-properties-for-repos-create-or-update-organization-definition  # PUT /orgs/{org}/properties/schema/{custom_property_name}
+      custom_properties_for_repos_get_organization_values:  # GET /orgs/{org}/properties/values
+        op: orgs/custom-properties-for-repos-get-organization-values
+        pagination: link_body
+      custom_properties_for_repos_create_or_update_organization_values: orgs/custom-properties-for-repos-create-or-update-organization-values  # PATCH /orgs/{org}/properties/values
+      list_public_members:  # GET /orgs/{org}/public_members
+        op: orgs/list-public-members
+        pagination: link_body
+      remove_public_membership_for_authenticated_user: orgs/remove-public-membership-for-authenticated-user  # DELETE /orgs/{org}/public_members/{username}
+      check_public_membership_for_user: orgs/check-public-membership-for-user  # GET /orgs/{org}/public_members/{username}
+      set_public_membership_for_authenticated_user: orgs/set-public-membership-for-authenticated-user  # PUT /orgs/{org}/public_members/{username}
+      get_ruleset_history:  # GET /orgs/{org}/rulesets/{ruleset_id}/history
+        op: orgs/get-org-ruleset-history
+        pagination: page_body
+      get_ruleset_version: orgs/get-org-ruleset-version  # GET /orgs/{org}/rulesets/{ruleset_id}/history/{version_id}
+      list_security_manager_teams: orgs/list-security-manager-teams  # GET /orgs/{org}/security-managers
+      remove_security_manager_team: orgs/remove-security-manager-team  # DELETE /orgs/{org}/security-managers/teams/{team_slug}
+      add_security_manager_team: orgs/add-security-manager-team  # PUT /orgs/{org}/security-managers/teams/{team_slug}
+      get_immutable_releases_settings: orgs/get-immutable-releases-settings  # GET /orgs/{org}/settings/immutable-releases
+      set_immutable_releases_settings: orgs/set-immutable-releases-settings  # PUT /orgs/{org}/settings/immutable-releases
+      get_immutable_releases_settings_repositories:  # GET /orgs/{org}/settings/immutable-releases/repositories
+        op: orgs/get-immutable-releases-settings-repositories
+        pagination: page_repositories
+      set_immutable_releases_settings_repositories: orgs/set-immutable-releases-settings-repositories  # PUT /orgs/{org}/settings/immutable-releases/repositories
+      disable_selected_repository_immutable_releases_organization: orgs/disable-selected-repository-immutable-releases-organization  # DELETE /orgs/{org}/settings/immutable-releases/repositories/{repository_id}
+      enable_selected_repository_immutable_releases_organization: orgs/enable-selected-repository-immutable-releases-organization  # PUT /orgs/{org}/settings/immutable-releases/repositories/{repository_id}
+      enable_or_disable_security_product_on_all_repos: orgs/enable-or-disable-security-product-on-all-org-repos  # POST /orgs/{org}/{security_product}/{enablement}
+      list_memberships_for_authenticated_user:  # GET /user/memberships/orgs
+        op: orgs/list-memberships-for-authenticated-user
+        pagination: link_body
+      get_membership_for_authenticated_user: orgs/get-membership-for-authenticated-user  # GET /user/memberships/orgs/{org}
+      update_membership_for_authenticated_user: orgs/update-membership-for-authenticated-user  # PATCH /user/memberships/orgs/{org}
+      list_for_authenticated_user:  # GET /user/orgs
+        op: orgs/list-for-authenticated-user
+        pagination: link_body
+      list_for_user:  # GET /users/{username}/orgs
+        op: orgs/list-for-user
+        pagination: link_body
+  packages:
+    methods:
+      list_docker_migration_conflicting_for_organization: packages/list-docker-migration-conflicting-packages-for-organization  # GET /orgs/{org}/docker/conflicts
+      list_for_organization:  # GET /orgs/{org}/packages
+        op: packages/list-packages-for-organization
+        pagination: page_body
+      delete_for_org: packages/delete-package-for-org  # DELETE /orgs/{org}/packages/{package_type}/{package_name}
+      get_for_organization: packages/get-package-for-organization  # GET /orgs/{org}/packages/{package_type}/{package_name}
+      restore_for_org: packages/restore-package-for-org  # POST /orgs/{org}/packages/{package_type}/{package_name}/restore
+      get_all_versions_for_owned_by_org:  # GET /orgs/{org}/packages/{package_type}/{package_name}/versions
+        op: packages/get-all-package-versions-for-package-owned-by-org
+        pagination: page_body
+      delete_version_for_org: packages/delete-package-version-for-org  # DELETE /orgs/{org}/packages/{package_type}/{package_name}/versions/{package_version_id}
+      get_version_for_organization: packages/get-package-version-for-organization  # GET /orgs/{org}/packages/{package_type}/{package_name}/versions/{package_version_id}
+      restore_version_for_org: packages/restore-package-version-for-org  # POST /orgs/{org}/packages/{package_type}/{package_name}/versions/{package_version_id}/restore
+      list_docker_migration_conflicting_for_authenticated_user: packages/list-docker-migration-conflicting-packages-for-authenticated-user  # GET /user/docker/conflicts
+      list_for_authenticated_user:  # GET /user/packages
+        op: packages/list-packages-for-authenticated-user
+        pagination: page_body
+      delete_for_authenticated_user: packages/delete-package-for-authenticated-user  # DELETE /user/packages/{package_type}/{package_name}
+      get_for_authenticated_user: packages/get-package-for-authenticated-user  # GET /user/packages/{package_type}/{package_name}
+      restore_for_authenticated_user: packages/restore-package-for-authenticated-user  # POST /user/packages/{package_type}/{package_name}/restore
+      get_all_versions_for_owned_by_authenticated_user:  # GET /user/packages/{package_type}/{package_name}/versions
+        op: packages/get-all-package-versions-for-package-owned-by-authenticated-user
+        pagination: page_body
+      delete_version_for_authenticated_user: packages/delete-package-version-for-authenticated-user  # DELETE /user/packages/{package_type}/{package_name}/versions/{package_version_id}
+      get_version_for_authenticated_user: packages/get-package-version-for-authenticated-user  # GET /user/packages/{package_type}/{package_name}/versions/{package_version_id}
+      restore_version_for_authenticated_user: packages/restore-package-version-for-authenticated-user  # POST /user/packages/{package_type}/{package_name}/versions/{package_version_id}/restore
+      list_docker_migration_conflicting_for_user: packages/list-docker-migration-conflicting-packages-for-user  # GET /users/{username}/docker/conflicts
+      list_for_user:  # GET /users/{username}/packages
+        op: packages/list-packages-for-user
+        pagination: page_body
+      delete_for_user: packages/delete-package-for-user  # DELETE /users/{username}/packages/{package_type}/{package_name}
+      get_for_user: packages/get-package-for-user  # GET /users/{username}/packages/{package_type}/{package_name}
+      restore_for_user: packages/restore-package-for-user  # POST /users/{username}/packages/{package_type}/{package_name}/restore
+      get_all_versions_for_owned_by_user: packages/get-all-package-versions-for-package-owned-by-user  # GET /users/{username}/packages/{package_type}/{package_name}/versions
+      delete_version_for_user: packages/delete-package-version-for-user  # DELETE /users/{username}/packages/{package_type}/{package_name}/versions/{package_version_id}
+      get_version_for_user: packages/get-package-version-for-user  # GET /users/{username}/packages/{package_type}/{package_name}/versions/{package_version_id}
+      restore_version_for_user: packages/restore-package-version-for-user  # POST /users/{username}/packages/{package_type}/{package_name}/versions/{package_version_id}/restore
+  private_registries:
+    methods:
+      list_org_private_registries:  # GET /orgs/{org}/private-registries
+        op: private-registries/list-org-private-registries
+        pagination: link_configurations
+      create_org_private_registry: private-registries/create-org-private-registry  # POST /orgs/{org}/private-registries
+      get_org_public_key: private-registries/get-org-public-key  # GET /orgs/{org}/private-registries/public-key
+      delete_org_private_registry: private-registries/delete-org-private-registry  # DELETE /orgs/{org}/private-registries/{secret_name}
+      get_org_private_registry: private-registries/get-org-private-registry  # GET /orgs/{org}/private-registries/{secret_name}
+      update_org_private_registry: private-registries/update-org-private-registry  # PATCH /orgs/{org}/private-registries/{secret_name}
+  projects:
+    methods:
+      list_for_org:  # GET /orgs/{org}/projectsV2
+        op: projects/list-for-org
+        pagination: link_body
+      get_for_org: projects/get-for-org  # GET /orgs/{org}/projectsV2/{project_number}
+      create_draft_item_for_org: projects/create-draft-item-for-org  # POST /orgs/{org}/projectsV2/{project_number}/drafts
+      list_fields_for_org:  # GET /orgs/{org}/projectsV2/{project_number}/fields
+        op: projects/list-fields-for-org
+        pagination: link_body
+      add_field_for_org: projects/add-field-for-org  # POST /orgs/{org}/projectsV2/{project_number}/fields
+      get_field_for_org: projects/get-field-for-org  # GET /orgs/{org}/projectsV2/{project_number}/fields/{field_id}
+      list_items_for_org:  # GET /orgs/{org}/projectsV2/{project_number}/items
+        op: projects/list-items-for-org
+        pagination: link_body
+      add_item_for_org: projects/add-item-for-org  # POST /orgs/{org}/projectsV2/{project_number}/items
+      delete_item_for_org: projects/delete-item-for-org  # DELETE /orgs/{org}/projectsV2/{project_number}/items/{item_id}
+      get_org_item: projects/get-org-item  # GET /orgs/{org}/projectsV2/{project_number}/items/{item_id}
+      update_item_for_org: projects/update-item-for-org  # PATCH /orgs/{org}/projectsV2/{project_number}/items/{item_id}
+      create_view_for_org: projects/create-view-for-org  # POST /orgs/{org}/projectsV2/{project_number}/views
+      list_view_items_for_org:  # GET /orgs/{org}/projectsV2/{project_number}/views/{view_number}/items
+        op: projects/list-view-items-for-org
+        pagination: link_body
+      create_draft_item_for_authenticated_user: projects/create-draft-item-for-authenticated-user  # POST /user/{user_id}/projectsV2/{project_number}/drafts
+      create_view_for_user: projects/create-view-for-user  # POST /users/{user_id}/projectsV2/{project_number}/views
+      list_for_user:  # GET /users/{username}/projectsV2
+        op: projects/list-for-user
+        pagination: link_body
+      get_for_user: projects/get-for-user  # GET /users/{username}/projectsV2/{project_number}
+      list_fields_for_user:  # GET /users/{username}/projectsV2/{project_number}/fields
+        op: projects/list-fields-for-user
+        pagination: link_body
+      add_field_for_user: projects/add-field-for-user  # POST /users/{username}/projectsV2/{project_number}/fields
+      get_field_for_user: projects/get-field-for-user  # GET /users/{username}/projectsV2/{project_number}/fields/{field_id}
+      list_items_for_user:  # GET /users/{username}/projectsV2/{project_number}/items
+        op: projects/list-items-for-user
+        pagination: link_body
+      add_item_for_user: projects/add-item-for-user  # POST /users/{username}/projectsV2/{project_number}/items
+      delete_item_for_user: projects/delete-item-for-user  # DELETE /users/{username}/projectsV2/{project_number}/items/{item_id}
+      get_user_item: projects/get-user-item  # GET /users/{username}/projectsV2/{project_number}/items/{item_id}
+      update_item_for_user: projects/update-item-for-user  # PATCH /users/{username}/projectsV2/{project_number}/items/{item_id}
+      list_view_items_for_user:  # GET /users/{username}/projectsV2/{project_number}/views/{view_number}/items
+        op: projects/list-view-items-for-user
+        pagination: link_body
+  pulls:
+    methods:
+      list:  # GET /repos/{owner}/{repo}/pulls
+        op: pulls/list
+        pagination: link_body
+      create: pulls/create  # POST /repos/{owner}/{repo}/pulls
+      list_review_comments_for_repo:  # GET /repos/{owner}/{repo}/pulls/comments
+        op: pulls/list-review-comments-for-repo
+        pagination: link_body
+      delete_review_comment: pulls/delete-review-comment  # DELETE /repos/{owner}/{repo}/pulls/comments/{comment_id}
+      get_review_comment: pulls/get-review-comment  # GET /repos/{owner}/{repo}/pulls/comments/{comment_id}
+      update_review_comment: pulls/update-review-comment  # PATCH /repos/{owner}/{repo}/pulls/comments/{comment_id}
+      get: pulls/get  # GET /repos/{owner}/{repo}/pulls/{pull_number}
+      update: pulls/update  # PATCH /repos/{owner}/{repo}/pulls/{pull_number}
+      list_review_comments:  # GET /repos/{owner}/{repo}/pulls/{pull_number}/comments
+        op: pulls/list-review-comments
+        pagination: link_body
+      create_review_comment: pulls/create-review-comment  # POST /repos/{owner}/{repo}/pulls/{pull_number}/comments
+      create_reply_for_review_comment: pulls/create-reply-for-review-comment  # POST /repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies
+      list_commits:  # GET /repos/{owner}/{repo}/pulls/{pull_number}/commits
+        op: pulls/list-commits
+        pagination: link_body
+      request_copilot_code_review: pulls/request-copilot-code-review  # POST /repos/{owner}/{repo}/pulls/{pull_number}/copilot-code-review
+      list_files:  # GET /repos/{owner}/{repo}/pulls/{pull_number}/files
+        op: pulls/list-files
+        pagination: link_body
+      check_if_merged: pulls/check-if-merged  # GET /repos/{owner}/{repo}/pulls/{pull_number}/merge
+      merge: pulls/merge  # PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge
+      merge_async: pulls/merge-async  # PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge-async
+      get_merge_async_result: pulls/get-merge-async-result  # GET /repos/{owner}/{repo}/pulls/{pull_number}/merge-async/{uuid}
+      remove_requested_reviewers: pulls/remove-requested-reviewers  # DELETE /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers
+      list_requested_reviewers: pulls/list-requested-reviewers  # GET /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers
+      request_reviewers: pulls/request-reviewers  # POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers
+      rerequest_reviewers: pulls/rerequest-reviewers  # POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers/rerequest
+      list_reviews:  # GET /repos/{owner}/{repo}/pulls/{pull_number}/reviews
+        op: pulls/list-reviews
+        pagination: link_body
+      create_review: pulls/create-review  # POST /repos/{owner}/{repo}/pulls/{pull_number}/reviews
+      delete_pending_review: pulls/delete-pending-review  # DELETE /repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}
+      get_review: pulls/get-review  # GET /repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}
+      update_review: pulls/update-review  # PUT /repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}
+      list_comments_for_review:  # GET /repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}/comments
+        op: pulls/list-comments-for-review
+        pagination: link_body
+      dismiss_review: pulls/dismiss-review  # PUT /repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}/dismissals
+      submit_review: pulls/submit-review  # POST /repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}/events
+      update_branch: pulls/update-branch  # PUT /repos/{owner}/{repo}/pulls/{pull_number}/update-branch
+      request_stacks_list:  # GET /repos/{owner}/{repo}/stacks
+        op: pull-request-stacks/list
+        pagination: page_body
+      request_stacks_create: pull-request-stacks/create  # POST /repos/{owner}/{repo}/stacks
+      request_stacks_get: pull-request-stacks/get  # GET /repos/{owner}/{repo}/stacks/{stack_number}
+      request_stacks_add: pull-request-stacks/add  # POST /repos/{owner}/{repo}/stacks/{stack_number}/add
+      request_stacks_unstack: pull-request-stacks/unstack  # POST /repos/{owner}/{repo}/stacks/{stack_number}/unstack
+  rate_limits:
+    methods:
+      list: rate-limit/get  # GET /rate_limit
+  reactions:
+    methods:
+      list_for_commit_comment:  # GET /repos/{owner}/{repo}/comments/{comment_id}/reactions
+        op: reactions/list-for-commit-comment
+        pagination: link_body
+      create_for_commit_comment: reactions/create-for-commit-comment  # POST /repos/{owner}/{repo}/comments/{comment_id}/reactions
+      delete_for_commit_comment: reactions/delete-for-commit-comment  # DELETE /repos/{owner}/{repo}/comments/{comment_id}/reactions/{reaction_id}
+      list_for_issue_comment:  # GET /repos/{owner}/{repo}/issues/comments/{comment_id}/reactions
+        op: reactions/list-for-issue-comment
+        pagination: link_body
+      create_for_issue_comment: reactions/create-for-issue-comment  # POST /repos/{owner}/{repo}/issues/comments/{comment_id}/reactions
+      delete_for_issue_comment: reactions/delete-for-issue-comment  # DELETE /repos/{owner}/{repo}/issues/comments/{comment_id}/reactions/{reaction_id}
+      list_for_issue:  # GET /repos/{owner}/{repo}/issues/{issue_number}/reactions
+        op: reactions/list-for-issue
+        pagination: link_body
+      create_for_issue: reactions/create-for-issue  # POST /repos/{owner}/{repo}/issues/{issue_number}/reactions
+      delete_for_issue: reactions/delete-for-issue  # DELETE /repos/{owner}/{repo}/issues/{issue_number}/reactions/{reaction_id}
+      list_for_pull_request_review_comment:  # GET /repos/{owner}/{repo}/pulls/comments/{comment_id}/reactions
+        op: reactions/list-for-pull-request-review-comment
+        pagination: link_body
+      create_for_pull_request_review_comment: reactions/create-for-pull-request-review-comment  # POST /repos/{owner}/{repo}/pulls/comments/{comment_id}/reactions
+      delete_for_pull_request_comment: reactions/delete-for-pull-request-comment  # DELETE /repos/{owner}/{repo}/pulls/comments/{comment_id}/reactions/{reaction_id}
+      list_for_release:  # GET /repos/{owner}/{repo}/releases/{release_id}/reactions
+        op: reactions/list-for-release
+        pagination: link_body
+      create_for_release: reactions/create-for-release  # POST /repos/{owner}/{repo}/releases/{release_id}/reactions
+      delete_for_release: reactions/delete-for-release  # DELETE /repos/{owner}/{repo}/releases/{release_id}/reactions/{reaction_id}
+  repos:
+    methods:
+      list_for_org:  # GET /orgs/{org}/repos
+        op: repos/list-for-org
+        pagination: link_body
+      create_in_org: repos/create-in-org  # POST /orgs/{org}/repos
+      get_org_rulesets:  # GET /orgs/{org}/rulesets
+        op: repos/get-org-rulesets
+        pagination: page_body
+      create_org_ruleset: repos/create-org-ruleset  # POST /orgs/{org}/rulesets
+      get_org_rule_suites:  # GET /orgs/{org}/rulesets/rule-suites
+        op: repos/get-org-rule-suites
+        pagination: page_body
+      get_org_rule_suite: repos/get-org-rule-suite  # GET /orgs/{org}/rulesets/rule-suites/{rule_suite_id}
+      delete_org_ruleset: repos/delete-org-ruleset  # DELETE /orgs/{org}/rulesets/{ruleset_id}
+      get_org_ruleset: repos/get-org-ruleset  # GET /orgs/{org}/rulesets/{ruleset_id}
+      update_org_ruleset: repos/update-org-ruleset  # PUT /orgs/{org}/rulesets/{ruleset_id}
+      delete: repos/delete  # DELETE /repos/{owner}/{repo}
+      retrieve: repos/get  # GET /repos/{owner}/{repo}
+      update: repos/update  # PATCH /repos/{owner}/{repo}
+      list_activities:  # GET /repos/{owner}/{repo}/activity
+        op: repos/list-activities
+        pagination: link_body
+      create_attestation: repos/create-attestation  # POST /repos/{owner}/{repo}/attestations
+      list_attestations: repos/list-attestations  # GET /repos/{owner}/{repo}/attestations/{subject_digest}
+      list_autolinks: repos/list-autolinks  # GET /repos/{owner}/{repo}/autolinks
+      create_autolink: repos/create-autolink  # POST /repos/{owner}/{repo}/autolinks
+      delete_autolink: repos/delete-autolink  # DELETE /repos/{owner}/{repo}/autolinks/{autolink_id}
+      get_autolink: repos/get-autolink  # GET /repos/{owner}/{repo}/autolinks/{autolink_id}
+      disable_automated_security_fixes: repos/disable-automated-security-fixes  # DELETE /repos/{owner}/{repo}/automated-security-fixes
+      check_automated_security_fixes: repos/check-automated-security-fixes  # GET /repos/{owner}/{repo}/automated-security-fixes
+      enable_automated_security_fixes: repos/enable-automated-security-fixes  # PUT /repos/{owner}/{repo}/automated-security-fixes
+      list_branches:  # GET /repos/{owner}/{repo}/branches
+        op: repos/list-branches
+        pagination: link_body
+      get_branch: repos/get-branch  # GET /repos/{owner}/{repo}/branches/{branch}
+      delete_branch_protection: repos/delete-branch-protection  # DELETE /repos/{owner}/{repo}/branches/{branch}/protection
+      get_branch_protection: repos/get-branch-protection  # GET /repos/{owner}/{repo}/branches/{branch}/protection
+      update_branch_protection: repos/update-branch-protection  # PUT /repos/{owner}/{repo}/branches/{branch}/protection
+      delete_admin_branch_protection: repos/delete-admin-branch-protection  # DELETE /repos/{owner}/{repo}/branches/{branch}/protection/enforce_admins
+      get_admin_branch_protection: repos/get-admin-branch-protection  # GET /repos/{owner}/{repo}/branches/{branch}/protection/enforce_admins
+      set_admin_branch_protection: repos/set-admin-branch-protection  # POST /repos/{owner}/{repo}/branches/{branch}/protection/enforce_admins
+      delete_pull_request_review_protection: repos/delete-pull-request-review-protection  # DELETE /repos/{owner}/{repo}/branches/{branch}/protection/required_pull_request_reviews
+      get_pull_request_review_protection: repos/get-pull-request-review-protection  # GET /repos/{owner}/{repo}/branches/{branch}/protection/required_pull_request_reviews
+      update_pull_request_review_protection: repos/update-pull-request-review-protection  # PATCH /repos/{owner}/{repo}/branches/{branch}/protection/required_pull_request_reviews
+      delete_commit_signature_protection: repos/delete-commit-signature-protection  # DELETE /repos/{owner}/{repo}/branches/{branch}/protection/required_signatures
+      get_commit_signature_protection: repos/get-commit-signature-protection  # GET /repos/{owner}/{repo}/branches/{branch}/protection/required_signatures
+      create_commit_signature_protection: repos/create-commit-signature-protection  # POST /repos/{owner}/{repo}/branches/{branch}/protection/required_signatures
+      remove_status_check_protection: repos/remove-status-check-protection  # DELETE /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks
+      get_status_checks_protection: repos/get-status-checks-protection  # GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks
+      update_status_check_protection: repos/update-status-check-protection  # PATCH /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks
+      remove_status_check_contexts: repos/remove-status-check-contexts  # DELETE /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks/contexts
+      get_all_status_check_contexts: repos/get-all-status-check-contexts  # GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks/contexts
+      add_status_check_contexts: repos/add-status-check-contexts  # POST /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks/contexts
+      set_status_check_contexts: repos/set-status-check-contexts  # PUT /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks/contexts
+      delete_access_restrictions: repos/delete-access-restrictions  # DELETE /repos/{owner}/{repo}/branches/{branch}/protection/restrictions
+      get_access_restrictions: repos/get-access-restrictions  # GET /repos/{owner}/{repo}/branches/{branch}/protection/restrictions
+      remove_app_access_restrictions: repos/remove-app-access-restrictions  # DELETE /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/apps
+      get_apps_with_access_to_protected_branch: repos/get-apps-with-access-to-protected-branch  # GET /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/apps
+      add_app_access_restrictions: repos/add-app-access-restrictions  # POST /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/apps
+      set_app_access_restrictions: repos/set-app-access-restrictions  # PUT /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/apps
+      remove_team_access_restrictions: repos/remove-team-access-restrictions  # DELETE /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/teams
+      get_teams_with_access_to_protected_branch: repos/get-teams-with-access-to-protected-branch  # GET /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/teams
+      add_team_access_restrictions: repos/add-team-access-restrictions  # POST /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/teams
+      set_team_access_restrictions: repos/set-team-access-restrictions  # PUT /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/teams
+      remove_user_access_restrictions: repos/remove-user-access-restrictions  # DELETE /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users
+      get_users_with_access_to_protected_branch: repos/get-users-with-access-to-protected-branch  # GET /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users
+      add_user_access_restrictions: repos/add-user-access-restrictions  # POST /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users
+      set_user_access_restrictions: repos/set-user-access-restrictions  # PUT /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users
+      rename_branch: repos/rename-branch  # POST /repos/{owner}/{repo}/branches/{branch}/rename
+      codeowners_errors: repos/codeowners-errors  # GET /repos/{owner}/{repo}/codeowners/errors
+      list_collaborators:  # GET /repos/{owner}/{repo}/collaborators
+        op: repos/list-collaborators
+        pagination: link_body
+      remove_collaborator: repos/remove-collaborator  # DELETE /repos/{owner}/{repo}/collaborators/{username}
+      check_collaborator: repos/check-collaborator  # GET /repos/{owner}/{repo}/collaborators/{username}
+      add_collaborator: repos/add-collaborator  # PUT /repos/{owner}/{repo}/collaborators/{username}
+      get_collaborator_permission_level: repos/get-collaborator-permission-level  # GET /repos/{owner}/{repo}/collaborators/{username}/permission
+      list_commit_comments:  # GET /repos/{owner}/{repo}/comments
+        op: repos/list-commit-comments-for-repo
+        pagination: link_body
+      delete_commit_comment: repos/delete-commit-comment  # DELETE /repos/{owner}/{repo}/comments/{comment_id}
+      get_commit_comment: repos/get-commit-comment  # GET /repos/{owner}/{repo}/comments/{comment_id}
+      update_commit_comment: repos/update-commit-comment  # PATCH /repos/{owner}/{repo}/comments/{comment_id}
+      list_commits:  # GET /repos/{owner}/{repo}/commits
+        op: repos/list-commits
+        pagination: link_body
+      list_branches_for_head_commit: repos/list-branches-for-head-commit  # GET /repos/{owner}/{repo}/commits/{commit_sha}/branches-where-head
+      list_comments_for_commit:  # GET /repos/{owner}/{repo}/commits/{commit_sha}/comments
+        op: repos/list-comments-for-commit
+        pagination: link_body
+      create_commit_comment: repos/create-commit-comment  # POST /repos/{owner}/{repo}/commits/{commit_sha}/comments
+      list_pull_requests_associated_with_commit:  # GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls
+        op: repos/list-pull-requests-associated-with-commit
+        pagination: link_body
+      get_commit: repos/get-commit  # GET /repos/{owner}/{repo}/commits/{ref}
+      get_combined_status_for_ref:  # GET /repos/{owner}/{repo}/commits/{ref}/status
+        op: repos/get-combined-status-for-ref
+        pagination: page_statuses
+      list_commit_statuses_for_ref:  # GET /repos/{owner}/{repo}/commits/{ref}/statuses
+        op: repos/list-commit-statuses-for-ref
+        pagination: link_body
+      get_community_profile_metrics: repos/get-community-profile-metrics  # GET /repos/{owner}/{repo}/community/profile
+      compare_commits: repos/compare-commits  # GET /repos/{owner}/{repo}/compare/{basehead}
+      delete_file: repos/delete-file  # DELETE /repos/{owner}/{repo}/contents/{path}
+      get_content: repos/get-content  # GET /repos/{owner}/{repo}/contents/{path}
+      create_or_update_file_contents: repos/create-or-update-file-contents  # PUT /repos/{owner}/{repo}/contents/{path}
+      list_contributors:  # GET /repos/{owner}/{repo}/contributors
+        op: repos/list-contributors
+        pagination: link_body
+      list_deployments:  # GET /repos/{owner}/{repo}/deployments
+        op: repos/list-deployments
+        pagination: link_body
+      create_deployment: repos/create-deployment  # POST /repos/{owner}/{repo}/deployments
+      delete_deployment: repos/delete-deployment  # DELETE /repos/{owner}/{repo}/deployments/{deployment_id}
+      get_deployment: repos/get-deployment  # GET /repos/{owner}/{repo}/deployments/{deployment_id}
+      list_deployment_statuses:  # GET /repos/{owner}/{repo}/deployments/{deployment_id}/statuses
+        op: repos/list-deployment-statuses
+        pagination: link_body
+      create_deployment_status: repos/create-deployment-status  # POST /repos/{owner}/{repo}/deployments/{deployment_id}/statuses
+      get_deployment_status: repos/get-deployment-status  # GET /repos/{owner}/{repo}/deployments/{deployment_id}/statuses/{status_id}
+      create_dispatch_event: repos/create-dispatch-event  # POST /repos/{owner}/{repo}/dispatches
+      get_all_environments:  # GET /repos/{owner}/{repo}/environments
+        op: repos/get-all-environments
+        pagination: page_environments
+      delete_an_environment: repos/delete-an-environment  # DELETE /repos/{owner}/{repo}/environments/{environment_name}
+      get_environment: repos/get-environment  # GET /repos/{owner}/{repo}/environments/{environment_name}
+      create_or_update_environment: repos/create-or-update-environment  # PUT /repos/{owner}/{repo}/environments/{environment_name}
+      list_deployment_branch_policies:  # GET /repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies
+        op: repos/list-deployment-branch-policies
+        pagination: page_branch_policies
+      create_deployment_branch_policy: repos/create-deployment-branch-policy  # POST /repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies
+      delete_deployment_branch_policy: repos/delete-deployment-branch-policy  # DELETE /repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies/{branch_policy_id}
+      get_deployment_branch_policy: repos/get-deployment-branch-policy  # GET /repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies/{branch_policy_id}
+      update_deployment_branch_policy: repos/update-deployment-branch-policy  # PUT /repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies/{branch_policy_id}
+      get_all_deployment_protection_rules: repos/get-all-deployment-protection-rules  # GET /repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules
+      create_deployment_protection_rule: repos/create-deployment-protection-rule  # POST /repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules
+      list_custom_deployment_rule_integrations:  # GET /repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules/apps
+        op: repos/list-custom-deployment-rule-integrations
+        pagination: page_available_custom_deployment_protection_rule_integrations
+      disable_deployment_protection_rule: repos/disable-deployment-protection-rule  # DELETE /repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules/{protection_rule_id}
+      get_custom_deployment_protection_rule: repos/get-custom-deployment-protection-rule  # GET /repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules/{protection_rule_id}
+      list_forks:  # GET /repos/{owner}/{repo}/forks
+        op: repos/list-forks
+        pagination: link_body
+      create_fork: repos/create-fork  # POST /repos/{owner}/{repo}/forks
+      get_hash_algorithm: repos/get-hash-algorithm  # GET /repos/{owner}/{repo}/hash-algorithm
+      list_webhooks:  # GET /repos/{owner}/{repo}/hooks
+        op: repos/list-webhooks
+        pagination: link_body
+      create_webhook: repos/create-webhook  # POST /repos/{owner}/{repo}/hooks
+      delete_webhook: repos/delete-webhook  # DELETE /repos/{owner}/{repo}/hooks/{hook_id}
+      get_webhook: repos/get-webhook  # GET /repos/{owner}/{repo}/hooks/{hook_id}
+      update_webhook: repos/update-webhook  # PATCH /repos/{owner}/{repo}/hooks/{hook_id}
+      get_webhook_config: repos/get-webhook-config-for-repo  # GET /repos/{owner}/{repo}/hooks/{hook_id}/config
+      update_webhook_config: repos/update-webhook-config-for-repo  # PATCH /repos/{owner}/{repo}/hooks/{hook_id}/config
+      list_webhook_deliveries: repos/list-webhook-deliveries  # GET /repos/{owner}/{repo}/hooks/{hook_id}/deliveries
+      get_webhook_delivery: repos/get-webhook-delivery  # GET /repos/{owner}/{repo}/hooks/{hook_id}/deliveries/{delivery_id}
+      redeliver_webhook_delivery: repos/redeliver-webhook-delivery  # POST /repos/{owner}/{repo}/hooks/{hook_id}/deliveries/{delivery_id}/attempts
+      ping_webhook: repos/ping-webhook  # POST /repos/{owner}/{repo}/hooks/{hook_id}/pings
+      test_push_webhook: repos/test-push-webhook  # POST /repos/{owner}/{repo}/hooks/{hook_id}/tests
+      disable_immutable_releases: repos/disable-immutable-releases  # DELETE /repos/{owner}/{repo}/immutable-releases
+      check_immutable_releases: repos/check-immutable-releases  # GET /repos/{owner}/{repo}/immutable-releases
+      enable_immutable_releases: repos/enable-immutable-releases  # PUT /repos/{owner}/{repo}/immutable-releases
+      list_invitations:  # GET /repos/{owner}/{repo}/invitations
+        op: repos/list-invitations
+        pagination: link_body
+      delete_invitation: repos/delete-invitation  # DELETE /repos/{owner}/{repo}/invitations/{invitation_id}
+      update_invitation: repos/update-invitation  # PATCH /repos/{owner}/{repo}/invitations/{invitation_id}
+      list_issue_types: repos/list-issue-types  # GET /repos/{owner}/{repo}/issue-types
+      list_deploy_keys:  # GET /repos/{owner}/{repo}/keys
+        op: repos/list-deploy-keys
+        pagination: link_body
+      create_deploy_key: repos/create-deploy-key  # POST /repos/{owner}/{repo}/keys
+      delete_deploy_key: repos/delete-deploy-key  # DELETE /repos/{owner}/{repo}/keys/{key_id}
+      get_deploy_key: repos/get-deploy-key  # GET /repos/{owner}/{repo}/keys/{key_id}
+      list_languages: repos/list-languages  # GET /repos/{owner}/{repo}/languages
+      merge_upstream: repos/merge-upstream  # POST /repos/{owner}/{repo}/merge-upstream
+      merge: repos/merge  # POST /repos/{owner}/{repo}/merges
+      delete_pages_site: repos/delete-pages-site  # DELETE /repos/{owner}/{repo}/pages
+      get_pages: repos/get-pages  # GET /repos/{owner}/{repo}/pages
+      create_pages_site: repos/create-pages-site  # POST /repos/{owner}/{repo}/pages
+      update_information_about_pages_site: repos/update-information-about-pages-site  # PUT /repos/{owner}/{repo}/pages
+      list_pages_builds:  # GET /repos/{owner}/{repo}/pages/builds
+        op: repos/list-pages-builds
+        pagination: link_body
+      request_pages_build: repos/request-pages-build  # POST /repos/{owner}/{repo}/pages/builds
+      get_latest_pages_build: repos/get-latest-pages-build  # GET /repos/{owner}/{repo}/pages/builds/latest
+      get_pages_build: repos/get-pages-build  # GET /repos/{owner}/{repo}/pages/builds/{build_id}
+      create_pages_deployment: repos/create-pages-deployment  # POST /repos/{owner}/{repo}/pages/deployments
+      get_pages_deployment: repos/get-pages-deployment  # GET /repos/{owner}/{repo}/pages/deployments/{pages_deployment_id}
+      cancel_pages_deployment: repos/cancel-pages-deployment  # POST /repos/{owner}/{repo}/pages/deployments/{pages_deployment_id}/cancel
+      get_pages_health_check: repos/get-pages-health-check  # GET /repos/{owner}/{repo}/pages/health
+      list_planning_statuses: repos/list-planning-statuses  # GET /repos/{owner}/{repo}/planning-statuses
+      disable_private_vulnerability_reporting: repos/disable-private-vulnerability-reporting  # DELETE /repos/{owner}/{repo}/private-vulnerability-reporting
+      check_private_vulnerability_reporting: repos/check-private-vulnerability-reporting  # GET /repos/{owner}/{repo}/private-vulnerability-reporting
+      enable_private_vulnerability_reporting: repos/enable-private-vulnerability-reporting  # PUT /repos/{owner}/{repo}/private-vulnerability-reporting
+      custom_properties_for_get_repository_values: repos/custom-properties-for-repos-get-repository-values  # GET /repos/{owner}/{repo}/properties/values
+      custom_properties_for_create_or_update_repository_values: repos/custom-properties-for-repos-create-or-update-repository-values  # PATCH /repos/{owner}/{repo}/properties/values
+      get_readme: repos/get-readme  # GET /repos/{owner}/{repo}/readme
+      get_readme_in_directory: repos/get-readme-in-directory  # GET /repos/{owner}/{repo}/readme/{dir}
+      list_releases:  # GET /repos/{owner}/{repo}/releases
+        op: repos/list-releases
+        pagination: link_body
+      create_release: repos/create-release  # POST /repos/{owner}/{repo}/releases
+      delete_release_asset: repos/delete-release-asset  # DELETE /repos/{owner}/{repo}/releases/assets/{asset_id}
+      get_release_asset: repos/get-release-asset  # GET /repos/{owner}/{repo}/releases/assets/{asset_id}
+      update_release_asset: repos/update-release-asset  # PATCH /repos/{owner}/{repo}/releases/assets/{asset_id}
+      generate_release_notes: repos/generate-release-notes  # POST /repos/{owner}/{repo}/releases/generate-notes
+      get_latest_release: repos/get-latest-release  # GET /repos/{owner}/{repo}/releases/latest
+      get_release_by_tag: repos/get-release-by-tag  # GET /repos/{owner}/{repo}/releases/tags/{tag}
+      delete_release: repos/delete-release  # DELETE /repos/{owner}/{repo}/releases/{release_id}
+      get_release: repos/get-release  # GET /repos/{owner}/{repo}/releases/{release_id}
+      update_release: repos/update-release  # PATCH /repos/{owner}/{repo}/releases/{release_id}
+      list_release_assets:  # GET /repos/{owner}/{repo}/releases/{release_id}/assets
+        op: repos/list-release-assets
+        pagination: link_body
+      upload_release_asset: repos/upload-release-asset  # POST /repos/{owner}/{repo}/releases/{release_id}/assets
+      get_branch_rules: repos/get-branch-rules  # GET /repos/{owner}/{repo}/rules/branches/{branch}
+      get_rulesets:  # GET /repos/{owner}/{repo}/rulesets
+        op: repos/get-repo-rulesets
+        pagination: page_body
+      create_ruleset: repos/create-repo-ruleset  # POST /repos/{owner}/{repo}/rulesets
+      get_rule_suites:  # GET /repos/{owner}/{repo}/rulesets/rule-suites
+        op: repos/get-repo-rule-suites
+        pagination: page_body
+      get_rule_suite: repos/get-repo-rule-suite  # GET /repos/{owner}/{repo}/rulesets/rule-suites/{rule_suite_id}
+      delete_ruleset: repos/delete-repo-ruleset  # DELETE /repos/{owner}/{repo}/rulesets/{ruleset_id}
+      get_ruleset: repos/get-repo-ruleset  # GET /repos/{owner}/{repo}/rulesets/{ruleset_id}
+      update_ruleset: repos/update-repo-ruleset  # PUT /repos/{owner}/{repo}/rulesets/{ruleset_id}
+      get_ruleset_history:  # GET /repos/{owner}/{repo}/rulesets/{ruleset_id}/history
+        op: repos/get-repo-ruleset-history
+        pagination: page_body
+      get_ruleset_version: repos/get-repo-ruleset-version  # GET /repos/{owner}/{repo}/rulesets/{ruleset_id}/history/{version_id}
+      get_code_frequency_stats: repos/get-code-frequency-stats  # GET /repos/{owner}/{repo}/stats/code_frequency
+      get_commit_activity_stats: repos/get-commit-activity-stats  # GET /repos/{owner}/{repo}/stats/commit_activity
+      get_contributors_stats: repos/get-contributors-stats  # GET /repos/{owner}/{repo}/stats/contributors
+      get_participation_stats: repos/get-participation-stats  # GET /repos/{owner}/{repo}/stats/participation
+      get_punch_card_stats: repos/get-punch-card-stats  # GET /repos/{owner}/{repo}/stats/punch_card
+      create_commit_status: repos/create-commit-status  # POST /repos/{owner}/{repo}/statuses/{sha}
+      list_tags:  # GET /repos/{owner}/{repo}/tags
+        op: repos/list-tags
+        pagination: link_body
+      download_tarball_archive: repos/download-tarball-archive  # GET /repos/{owner}/{repo}/tarball/{ref}
+      list_teams:  # GET /repos/{owner}/{repo}/teams
+        op: repos/list-teams
+        pagination: link_body
+      get_all_topics:  # GET /repos/{owner}/{repo}/topics
+        op: repos/get-all-topics
+        pagination: page_names
+      replace_all_topics: repos/replace-all-topics  # PUT /repos/{owner}/{repo}/topics
+      get_clones: repos/get-clones  # GET /repos/{owner}/{repo}/traffic/clones
+      get_top_paths: repos/get-top-paths  # GET /repos/{owner}/{repo}/traffic/popular/paths
+      get_top_referrers: repos/get-top-referrers  # GET /repos/{owner}/{repo}/traffic/popular/referrers
+      get_views: repos/get-views  # GET /repos/{owner}/{repo}/traffic/views
+      transfer: repos/transfer  # POST /repos/{owner}/{repo}/transfer
+      disable_vulnerability_alerts: repos/disable-vulnerability-alerts  # DELETE /repos/{owner}/{repo}/vulnerability-alerts
+      check_vulnerability_alerts: repos/check-vulnerability-alerts  # GET /repos/{owner}/{repo}/vulnerability-alerts
+      enable_vulnerability_alerts: repos/enable-vulnerability-alerts  # PUT /repos/{owner}/{repo}/vulnerability-alerts
+      download_zipball_archive: repos/download-zipball-archive  # GET /repos/{owner}/{repo}/zipball/{ref}
+      create_using_template: repos/create-using-template  # POST /repos/{template_owner}/{template_repo}/generate
+      list_public:  # GET /repositories
+        op: repos/list-public
+        pagination: link_body_2
+      list_for_authenticated_user:  # GET /user/repos
+        op: repos/list-for-authenticated-user
+        pagination: link_body
+      create_for_authenticated_user: repos/create-for-authenticated-user  # POST /user/repos
+      list_invitations_for_authenticated_user:  # GET /user/repository_invitations
+        op: repos/list-invitations-for-authenticated-user
+        pagination: link_body
+      decline_invitation_for_authenticated_user: repos/decline-invitation-for-authenticated-user  # DELETE /user/repository_invitations/{invitation_id}
+      accept_invitation_for_authenticated_user: repos/accept-invitation-for-authenticated-user  # PATCH /user/repository_invitations/{invitation_id}
+      list_for_user:  # GET /users/{username}/repos
+        op: repos/list-for-user
+        pagination: link_body
+  search:
+    methods:
+      code:  # GET /search/code
+        op: search/code
+        pagination: page_items
+      commits:  # GET /search/commits
+        op: search/commits
+        pagination: page_items
+      issues_and_pull_requests:  # GET /search/issues
+        op: search/issues-and-pull-requests
+        pagination: page_items
+      labels:  # GET /search/labels
+        op: search/labels
+        pagination: page_items
+      repos:  # GET /search/repositories
+        op: search/repos
+        pagination: page_items
+      topics:  # GET /search/topics
+        op: search/topics
+        pagination: page_items
+      users:  # GET /search/users
+        op: search/users
+        pagination: page_items
+  secret_scanning:
+    methods:
+      list_alerts_for_org:  # GET /orgs/{org}/secret-scanning/alerts
+        op: secret-scanning/list-alerts-for-org
+        pagination: link_body
+      bulk_delete_org_custom_patterns: secret-scanning/bulk-delete-org-custom-patterns  # DELETE /orgs/{org}/secret-scanning/custom-patterns
+      list_org_custom_patterns:  # GET /orgs/{org}/secret-scanning/custom-patterns
+        op: secret-scanning/list-org-custom-patterns
+        pagination: link_body_2
+      bulk_create_org_custom_patterns: secret-scanning/bulk-create-org-custom-patterns  # POST /orgs/{org}/secret-scanning/custom-patterns
+      update_org_custom_pattern: secret-scanning/update-org-custom-pattern  # PATCH /orgs/{org}/secret-scanning/custom-patterns/{pattern_id}
+      list_org_pattern_configs: secret-scanning/list-org-pattern-configs  # GET /orgs/{org}/secret-scanning/pattern-configurations
+      update_org_pattern_configs: secret-scanning/update-org-pattern-configs  # PATCH /orgs/{org}/secret-scanning/pattern-configurations
+      list_alerts_for_repo:  # GET /repos/{owner}/{repo}/secret-scanning/alerts
+        op: secret-scanning/list-alerts-for-repo
+        pagination: page_body
+      get_alert: secret-scanning/get-alert  # GET /repos/{owner}/{repo}/secret-scanning/alerts/{alert_number}
+      update_alert: secret-scanning/update-alert  # PATCH /repos/{owner}/{repo}/secret-scanning/alerts/{alert_number}
+      list_locations_for_alert:  # GET /repos/{owner}/{repo}/secret-scanning/alerts/{alert_number}/locations
+        op: secret-scanning/list-locations-for-alert
+        pagination: link_body
+      bulk_delete_repo_custom_patterns: secret-scanning/bulk-delete-repo-custom-patterns  # DELETE /repos/{owner}/{repo}/secret-scanning/custom-patterns
+      list_repo_custom_patterns:  # GET /repos/{owner}/{repo}/secret-scanning/custom-patterns
+        op: secret-scanning/list-repo-custom-patterns
+        pagination: link_body_2
+      bulk_create_repo_custom_patterns: secret-scanning/bulk-create-repo-custom-patterns  # POST /repos/{owner}/{repo}/secret-scanning/custom-patterns
+      update_repo_custom_pattern: secret-scanning/update-repo-custom-pattern  # PATCH /repos/{owner}/{repo}/secret-scanning/custom-patterns/{pattern_id}
+      create_push_protection_bypass: secret-scanning/create-push-protection-bypass  # POST /repos/{owner}/{repo}/secret-scanning/push-protection-bypasses
+      get_scan_history: secret-scanning/get-scan-history  # GET /repos/{owner}/{repo}/secret-scanning/scan-history
+  security_advisories:
+    methods:
+      list_global_advisories: security-advisories/list-global-advisories  # GET /advisories
+      get_global_advisory: security-advisories/get-global-advisory  # GET /advisories/{ghsa_id}
+      list_org_repository_advisories: security-advisories/list-org-repository-advisories  # GET /orgs/{org}/security-advisories
+      list_repository_advisories: security-advisories/list-repository-advisories  # GET /repos/{owner}/{repo}/security-advisories
+      create_repository_advisory: security-advisories/create-repository-advisory  # POST /repos/{owner}/{repo}/security-advisories
+      create_private_vulnerability_report: security-advisories/create-private-vulnerability-report  # POST /repos/{owner}/{repo}/security-advisories/reports
+      get_repository_advisory: security-advisories/get-repository-advisory  # GET /repos/{owner}/{repo}/security-advisories/{ghsa_id}
+      update_repository_advisory: security-advisories/update-repository-advisory  # PATCH /repos/{owner}/{repo}/security-advisories/{ghsa_id}
+      list_repository_comments:  # GET /repos/{owner}/{repo}/security-advisories/{ghsa_id}/comments
+        op: security-advisories/list-repository-advisory-comments
+        pagination: link_body
+      create_repository_comment: security-advisories/create-repository-advisory-comment  # POST /repos/{owner}/{repo}/security-advisories/{ghsa_id}/comments
+      get_repository_comment: security-advisories/get-repository-advisory-comment  # GET /repos/{owner}/{repo}/security-advisories/{ghsa_id}/comments/{comment_id}
+      update_repository_comment: security-advisories/update-repository-advisory-comment  # PATCH /repos/{owner}/{repo}/security-advisories/{ghsa_id}/comments/{comment_id}
+      create_repository_cve_request: security-advisories/create-repository-advisory-cve-request  # POST /repos/{owner}/{repo}/security-advisories/{ghsa_id}/cve
+      create_fork: security-advisories/create-fork  # POST /repos/{owner}/{repo}/security-advisories/{ghsa_id}/forks
+  teams:
+    methods:
+      list:  # GET /orgs/{org}/teams
+        op: teams/list
+        pagination: link_body
+      create: teams/create  # POST /orgs/{org}/teams
+      delete_in_org: teams/delete-in-org  # DELETE /orgs/{org}/teams/{team_slug}
+      get_by_name: teams/get-by-name  # GET /orgs/{org}/teams/{team_slug}
+      update_in_org: teams/update-in-org  # PATCH /orgs/{org}/teams/{team_slug}
+      list_pending_invitations_in_org:  # GET /orgs/{org}/teams/{team_slug}/invitations
+        op: teams/list-pending-invitations-in-org
+        pagination: link_body
+      list_members_in_org:  # GET /orgs/{org}/teams/{team_slug}/members
+        op: teams/list-members-in-org
+        pagination: link_body
+      remove_membership_for_user_in_org: teams/remove-membership-for-user-in-org  # DELETE /orgs/{org}/teams/{team_slug}/memberships/{username}
+      get_membership_for_user_in_org: teams/get-membership-for-user-in-org  # GET /orgs/{org}/teams/{team_slug}/memberships/{username}
+      add_or_update_membership_for_user_in_org: teams/add-or-update-membership-for-user-in-org  # PUT /orgs/{org}/teams/{team_slug}/memberships/{username}
+      list_repos_in_org:  # GET /orgs/{org}/teams/{team_slug}/repos
+        op: teams/list-repos-in-org
+        pagination: link_body
+      remove_repo_in_org: teams/remove-repo-in-org  # DELETE /orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}
+      check_permissions_for_repo_in_org: teams/check-permissions-for-repo-in-org  # GET /orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}
+      add_or_update_repo_permissions_in_org: teams/add-or-update-repo-permissions-in-org  # PUT /orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}
+      list_child_in_org:  # GET /orgs/{org}/teams/{team_slug}/teams
+        op: teams/list-child-in-org
+        pagination: link_body
+      delete: teams/delete-legacy  # DELETE /teams/{team_id}
+      retrieve: teams/get-legacy  # GET /teams/{team_id}
+      update: teams/update-legacy  # PATCH /teams/{team_id}
+      list_pending_invitations_legacy:  # GET /teams/{team_id}/invitations
+        op: teams/list-pending-invitations-legacy
+        pagination: link_body
+      list_members_legacy:  # GET /teams/{team_id}/members
+        op: teams/list-members-legacy
+        pagination: link_body
+      remove_member_legacy: teams/remove-member-legacy  # DELETE /teams/{team_id}/members/{username}
+      get_member_legacy: teams/get-member-legacy  # GET /teams/{team_id}/members/{username}
+      add_member_legacy: teams/add-member-legacy  # PUT /teams/{team_id}/members/{username}
+      remove_membership_for_user_legacy: teams/remove-membership-for-user-legacy  # DELETE /teams/{team_id}/memberships/{username}
+      get_membership_for_user_legacy: teams/get-membership-for-user-legacy  # GET /teams/{team_id}/memberships/{username}
+      add_or_update_membership_for_user_legacy: teams/add-or-update-membership-for-user-legacy  # PUT /teams/{team_id}/memberships/{username}
+      list_repos_legacy:  # GET /teams/{team_id}/repos
+        op: teams/list-repos-legacy
+        pagination: link_body
+      remove_repo_legacy: teams/remove-repo-legacy  # DELETE /teams/{team_id}/repos/{owner}/{repo}
+      check_permissions_for_repo_legacy: teams/check-permissions-for-repo-legacy  # GET /teams/{team_id}/repos/{owner}/{repo}
+      add_or_update_repo_permissions_legacy: teams/add-or-update-repo-permissions-legacy  # PUT /teams/{team_id}/repos/{owner}/{repo}
+      list_child_legacy:  # GET /teams/{team_id}/teams
+        op: teams/list-child-legacy
+        pagination: link_body
+      list_for_authenticated_user:  # GET /user/teams
+        op: teams/list-for-authenticated-user
+        pagination: link_body
+  users:
+    methods:
+      get_authenticated: users/get-authenticated  # GET /user
+      update_authenticated: users/update-authenticated  # PATCH /user
+      list_blocked_by_authenticated_user:  # GET /user/blocks
+        op: users/list-blocked-by-authenticated-user
+        pagination: page_body
+      unblock: users/unblock  # DELETE /user/blocks/{username}
+      check_blocked: users/check-blocked  # GET /user/blocks/{username}
+      block: users/block  # PUT /user/blocks/{username}
+      set_primary_email_visibility_for_authenticated_user: users/set-primary-email-visibility-for-authenticated-user  # PATCH /user/email/visibility
+      delete_email_for_authenticated_user: users/delete-email-for-authenticated-user  # DELETE /user/emails
+      list_emails_for_authenticated_user:  # GET /user/emails
+        op: users/list-emails-for-authenticated-user
+        pagination: link_body
+      add_email_for_authenticated_user: users/add-email-for-authenticated-user  # POST /user/emails
+      list_followers_for_authenticated_user:  # GET /user/followers
+        op: users/list-followers-for-authenticated-user
+        pagination: link_body
+      list_followed_by_authenticated_user:  # GET /user/following
+        op: users/list-followed-by-authenticated-user
+        pagination: link_body
+      unfollow: users/unfollow  # DELETE /user/following/{username}
+      check_person_is_followed_by_authenticated: users/check-person-is-followed-by-authenticated  # GET /user/following/{username}
+      follow: users/follow  # PUT /user/following/{username}
+      list_gpg_keys_for_authenticated_user:  # GET /user/gpg_keys
+        op: users/list-gpg-keys-for-authenticated-user
+        pagination: link_body
+      create_gpg_key_for_authenticated_user: users/create-gpg-key-for-authenticated-user  # POST /user/gpg_keys
+      delete_gpg_key_for_authenticated_user: users/delete-gpg-key-for-authenticated-user  # DELETE /user/gpg_keys/{gpg_key_id}
+      get_gpg_key_for_authenticated_user: users/get-gpg-key-for-authenticated-user  # GET /user/gpg_keys/{gpg_key_id}
+      list_issue_fields_for_authenticated_user: users/list-issue-fields-for-authenticated-user  # GET /user/issue-fields
+      create_issue_field_for_authenticated_user: users/create-issue-field-for-authenticated-user  # POST /user/issue-fields
+      delete_issue_field_for_authenticated_user: users/delete-issue-field-for-authenticated-user  # DELETE /user/issue-fields/{issue_field_id}
+      update_issue_field_for_authenticated_user: users/update-issue-field-for-authenticated-user  # PATCH /user/issue-fields/{issue_field_id}
+      list_issue_types_for_authenticated_user: users/list-issue-types-for-authenticated-user  # GET /user/issue-types
+      create_issue_type_for_authenticated_user: users/create-issue-type-for-authenticated-user  # POST /user/issue-types
+      delete_issue_type_for_authenticated_user: users/delete-issue-type-for-authenticated-user  # DELETE /user/issue-types/{issue_type_id}
+      update_issue_type_for_authenticated_user: users/update-issue-type-for-authenticated-user  # PUT /user/issue-types/{issue_type_id}
+      list_public_ssh_keys_for_authenticated_user:  # GET /user/keys
+        op: users/list-public-ssh-keys-for-authenticated-user
+        pagination: link_body
+      create_public_ssh_key_for_authenticated_user: users/create-public-ssh-key-for-authenticated-user  # POST /user/keys
+      delete_public_ssh_key_for_authenticated_user: users/delete-public-ssh-key-for-authenticated-user  # DELETE /user/keys/{key_id}
+      get_public_ssh_key_for_authenticated_user: users/get-public-ssh-key-for-authenticated-user  # GET /user/keys/{key_id}
+      list_public_emails_for_authenticated_user:  # GET /user/public_emails
+        op: users/list-public-emails-for-authenticated-user
+        pagination: link_body
+      delete_social_account_for_authenticated_user: users/delete-social-account-for-authenticated-user  # DELETE /user/social_accounts
+      list_social_accounts_for_authenticated_user:  # GET /user/social_accounts
+        op: users/list-social-accounts-for-authenticated-user
+        pagination: link_body
+      add_social_account_for_authenticated_user: users/add-social-account-for-authenticated-user  # POST /user/social_accounts
+      list_ssh_signing_keys_for_authenticated_user:  # GET /user/ssh_signing_keys
+        op: users/list-ssh-signing-keys-for-authenticated-user
+        pagination: link_body
+      create_ssh_signing_key_for_authenticated_user: users/create-ssh-signing-key-for-authenticated-user  # POST /user/ssh_signing_keys
+      delete_ssh_signing_key_for_authenticated_user: users/delete-ssh-signing-key-for-authenticated-user  # DELETE /user/ssh_signing_keys/{ssh_signing_key_id}
+      get_ssh_signing_key_for_authenticated_user: users/get-ssh-signing-key-for-authenticated-user  # GET /user/ssh_signing_keys/{ssh_signing_key_id}
+      get_by_id: users/get-by-id  # GET /user/{account_id}
+      list:  # GET /users
+        op: users/list
+        pagination: link_body
+      get_by_username: users/get-by-username  # GET /users/{username}
+      list_attestations_bulk: users/list-attestations-bulk  # POST /users/{username}/attestations/bulk-list
+      delete_attestations_bulk: users/delete-attestations-bulk  # POST /users/{username}/attestations/delete-request
+      delete_attestations_by_subject_digest: users/delete-attestations-by-subject-digest  # DELETE /users/{username}/attestations/digest/{subject_digest}
+      delete_attestations_by_id: users/delete-attestations-by-id  # DELETE /users/{username}/attestations/{attestation_id}
+      list_attestations: users/list-attestations  # GET /users/{username}/attestations/{subject_digest}
+      list_followers:  # GET /users/{username}/followers
+        op: users/list-followers-for-user
+        pagination: link_body
+      list_following:  # GET /users/{username}/following
+        op: users/list-following-for-user
+        pagination: link_body
+      check_following: users/check-following-for-user  # GET /users/{username}/following/{target_user}
+      list_gpg_keys:  # GET /users/{username}/gpg_keys
+        op: users/list-gpg-keys-for-user
+        pagination: link_body
+      get_context: users/get-context-for-user  # GET /users/{username}/hovercard
+      list_public_keys:  # GET /users/{username}/keys
+        op: users/list-public-keys-for-user
+        pagination: link_body
+      list_social_accounts:  # GET /users/{username}/social_accounts
+        op: users/list-social-accounts-for-user
+        pagination: link_body
+      list_ssh_signing_keys:  # GET /users/{username}/ssh_signing_keys
+        op: users/list-ssh-signing-keys-for-user
+        pagination: link_body
+skip: []
+readme:
+  title: GitHub REST TypeScript SDK (unofficial)
+  headline_method: repos.retrieve
+  pagination_method: issues.list_for_repo

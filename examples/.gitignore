@@ -1,0 +1,10 @@
+# The examples whose description is fetched (fetch.sh) keep only their config and SOURCE.md in git:
+# the description and the repository generated beside it are megabytes.
+/github/*
+!/github/flowapi-sdk.yml
+!/github/SOURCE.md
+/stripe/*
+!/stripe/flowapi-sdk.yml
+!/stripe/SOURCE.md
+# What `npm install` writes into a committed SDK; its own .gitignore names node_modules and dist.
+/*/package-lock.json
