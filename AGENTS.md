@@ -68,7 +68,7 @@ work here.
   license, `repo/texts.rs` the scripts, CI, release-please and the repository's `AGENTS.md`,
   `repo/mock.rs` the mock server's routes, `repo/suite.rs` a test per resource, `repo/readme.rs`
   `README.md` and `api.md`, `repo/example.rs` a schema's example value, `repo/lock.rs`
-  `.flowapi/lock.json` (the shape the `sdk-anything` plugin reads), `repo/plan.rs` what writing the
+  `.flowapi/lock.json` (the shape the agent plugin reads), `repo/plan.rs` what writing the
   repository changes on disk (`plan`: by the lock and what the host found at each path; every host
   runs it, none decides alone); `repo/files/` the texts printed
   as they are (scripts, `server.mjs`, the licenses); `sha256.rs` our own SHA-256.
@@ -105,6 +105,16 @@ work here.
   TypeScript compiler they check with (`ts/`), and their results (`results/`, `REPORT.md`).
 - `bench/`: the benchmarks against the other generators, their budgets and results
   ([bench/README.md](bench/README.md)); `bench/competitors/` the other tools, pinned.
+- `plugins/flowapi/`: the agent plugin `flowapi`, a Claude Code plugin and an Agent Plugins
+  1.1.0 core package in one folder ([plugins/flowapi/AGENTS.md](plugins/flowapi/AGENTS.md) is
+  its guide): the `flowapi` skill (how to use flowapi), the `sdk` skill (`/flowapi:sdk`, an SDK
+  repository from a description, checked by its judge), the guard hook that keeps generated
+  files out of hand edits, and Node tests. Its version is the workspace's, held by its tests.
+  The `flowapi` skill's `references/` are copies of the README, `npm/README.md` and the commands'
+  help, written by `plugins/flowapi/scripts/docs.mjs`: an installed plugin cannot read outside
+  its folder, so after changing one of those, run the script (its test fails until you do).
+- `.claude-plugin/marketplace.json`: this repository as a Claude Code marketplace, its one entry
+  `plugins/flowapi` (`claude plugin marketplace add localixai/flowapi`).
 
 ## Commands
 
@@ -135,6 +145,9 @@ cargo test -p flowapi-sdk --test repo                  # the repositories kept i
 cargo test -p flowapi-cli --test generate_cli          # generate's writing rules as the command runs them
 node crates/flowapi-sdk/tests/tsc.mjs                  # them type-checked after --sdk; after cargo build --release
 cargo run --release -p flowapi-cli -- <description.json> -o types.ts
+(cd plugins/flowapi && npm test)      # the agent plugin; its e2e on target/release/flowapi
+(cd plugins/flowapi && npm run docs)  # the flowapi skill's references, after a docs change
+claude plugin validate . --strict     # the marketplace; in plugins/flowapi, the plugin
 bench/run.sh                          # the benchmarks, then held to bench/budgets.json
 ```
 

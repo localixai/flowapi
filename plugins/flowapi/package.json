@@ -1,0 +1,17 @@
+{
+  "name": "flowapi-plugin",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Types and SDKs from API descriptions with flowapi: the library's documentation for any agent, and a pipeline that writes a TypeScript SDK repository from an OpenAPI description, checked by a deterministic judge.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "test:e2e": "FLOWAPI_PLUGIN_E2E=1 node --test test/e2e.test.mjs",
+    "docs": "node scripts/docs.mjs",
+    "validate": "claude plugin validate . --strict"
+  }
+}

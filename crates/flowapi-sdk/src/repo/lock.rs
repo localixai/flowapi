@@ -1,5 +1,5 @@
-//! `.flowapi/lock.json`: the state of a generated repository, in the shape the `sdk-anything`
-//! plugin reads (its `docs/lock.md`): the lock's format version, the flowapi that wrote it, the
+//! `.flowapi/lock.json`: the state of a generated repository, in the shape the agent plugin
+//! reads (`plugins/flowapi/docs/lock.md`): the lock's format version, the flowapi that wrote it, the
 //! hashes of the description and the config, the methods the config maps, every generated file
 //! with the SHA-256 of its bytes, and the names pinned when two would collide. Printed as stable
 //! JSON (keys in a fixed order, files sorted, two spaces), read back from JSON text.

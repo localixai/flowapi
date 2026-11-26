@@ -1,0 +1,51 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Pet Store", "version": "1.0.0" },
+  "servers": [{ "url": "https://api.pets.example/v1" }],
+  "security": [{ "BearerAuth": [] }],
+  "components": {
+    "securitySchemes": { "BearerAuth": { "type": "http", "scheme": "bearer" } },
+    "schemas": {
+      "Pet": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "tag": { "type": "string" } }
+      },
+      "PetList": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/Pet" } },
+          "next_cursor": { "type": ["string", "null"] }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/pets": {
+      "get": {
+        "operationId": "listPets",
+        "parameters": [
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PetList" } } } } }
+      },
+      "post": {
+        "operationId": "createPet",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Pet" } } } },
+        "responses": { "201": { "description": "created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Pet" } } } } }
+      }
+    },
+    "/pets/{pet_id}": {
+      "get": {
+        "operationId": "getPet",
+        "parameters": [{ "name": "pet_id", "in": "path", "required": true, "schema": { "type": "string" }, "example": "pet_123" }],
+        "responses": {
+          "200": { "description": "ok", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Pet" } } } },
+          "404": { "description": "not found" }
+        }
+      }
+    }
+  }
+}
