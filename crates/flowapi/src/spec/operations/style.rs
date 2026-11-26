@@ -34,9 +34,9 @@ impl Reader<'_, '_> {
             None => default,
             Some((n, written)) => {
                 let found = written.as_deref().and_then(parse);
-                match found.filter(|&s| allowed(s, location, self.version)) {
-                    Some(s) => s,
-                    None => {
+                found
+                    .filter(|&s| allowed(s, location, self.version))
+                    .unwrap_or_else(|| {
                         diags.warn(
                             self.style_rule(),
                             self.docs.loc(doc, n),
@@ -48,8 +48,7 @@ impl Reader<'_, '_> {
                             ),
                         );
                         default
-                    }
-                }
+                    })
             }
         };
         let explode = t
@@ -145,9 +144,12 @@ impl Reader<'_, '_> {
             Some("pipes") => (Style::PipeDelimited, false),
             Some("multi") if location == Some(Location::Query) => (Style::Form, true),
             Some(other) => {
+                // A parameter is named by its `in` as written (a `formData` one is read as in a
+                // query); a 2.0 response's header, which has none, by its location.
+                let i = self.tree(doc).and_then(|t| t.as_str(t.get(node, "in")?));
                 let place = location.map_or_else(
                     || String::from("an Items Object"),
-                    |l| format!("a parameter in `{}`", l.name()),
+                    |l| format!("a parameter in `{}`", i.unwrap_or_else(|| l.name().into())),
                 );
                 diags.warn(
                     "swagger.collectionFormat",

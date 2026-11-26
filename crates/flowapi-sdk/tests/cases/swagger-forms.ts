@@ -58,5 +58,3 @@ export const flowapiOperations = {
     response: plainFormResponse,
   },
 } as const;
-// warning[swagger.collectionFormat]: `collectionFormat` commas is none of csv, ssv, tsv, pipes, multi: written as `csv`
-// warning[swagger.collectionFormat]: `collectionFormat` multi is not one an Items Object takes: written as `csv`

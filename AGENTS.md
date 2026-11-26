@@ -65,8 +65,8 @@ work here.
   beside each (`--test config`), `tests/schema.json` (`--test schema`, the reader and the schema
   agree both ways), `tests/draft/` (`--test draft`), `tests/summary/` (`--test summary`).
   `encoding.rs` a form or `multipart` body's Encoding Objects, put in the table (`encoding/inspect.rs`
-  a part's type from its schema, `encoding/swagger.rs` 2.0's `collectionFormat`, `encoding/print.rs`
-  the table's literal). `client.rs` the whole
+  a part's type from its schema, `encoding/swagger.rs` 2.0's forms from the core's
+  `Media::encoding`, which alone reads `collectionFormat`; `encoding/print.rs` the table's literal). `client.rs` the whole
   TypeScript client from a config (`client_files`): `client/resources.rs` a class per resource
   (`client/comment.rs` each method's doc comment),
   `client/entry.rs` the client class and `index.ts`, `client/core/*.ts` the runtime (`auth.ts`
@@ -89,7 +89,8 @@ work here.
 - `crates/flowapi-cli`: the `flowapi` command, all of flowapi's I/O. `src/sdk.rs` the subcommands
   put before the path (`summary`, `config draft|schema|check`; `tests/sdk_cli.rs`);
   `src/generate.rs` `generate`, `generate/disk.rs` what is on disk for the SDK layer's `plan`,
-  `generate/apply.rs` the writes, staged first (`tests/generate_cli.rs`).
+  `generate/apply.rs` the writes, staged first (`tests/generate_cli.rs`; its warnings, the core's
+  and the SDK layer's, each once: `tests/generate_warnings_cli.rs`).
 - `crates/flowapi-yaml`: a description's text as the core reads it, shared by the command and the
   WebAssembly module: which document is YAML (`is_yaml`), YAML 1.2 read into JSON with each node's
   YAML place (`reader.rs`, `saphyr-parser`), and the line and column of an offset. No I/O (G5).

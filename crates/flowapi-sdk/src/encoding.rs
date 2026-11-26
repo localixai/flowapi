@@ -6,9 +6,9 @@
 //! 3.2 for `multipart/form-data`; 3.2's nested `encoding`, `prefixEncoding`, `itemEncoding` for a
 //! part that is itself `multipart`). Request bodies only: the Encoding Object applies to no
 //! response (3.0, 3.1), and to no other media type. Where the description gives a part no type,
-//! its schema may (`inspect.rs`); Swagger 2.0's forms by their fields' `collectionFormat`
-//! (`swagger.rs`). `<op>Request` takes the result in its body, and the client passes the
-//! description's when the caller gives none.
+//! its schema may (`inspect.rs`); Swagger 2.0's forms by their fields' `collectionFormat`, as the
+//! core read it (`swagger.rs`). `<op>Request` takes the result in its body, and the client passes
+//! the description's when the caller gives none.
 
 mod inspect;
 mod print;
@@ -55,7 +55,7 @@ impl Doc<'_, '_> {
         diags: &mut Diagnostics,
     ) -> Vec<Encoding> {
         if self.version == Version::V20 {
-            return self.swagger_encodings(operation, diags);
+            return swagger::encodings(operation);
         }
         let Some(content) = op
             .and_then(|op| self.get(op, "requestBody"))

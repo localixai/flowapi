@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `flowapi generate` prints the description's warnings as `flowapi <description>` does, not only
+  its errors. A Swagger 2.0 form field's `collectionFormat` is read once, by the core, and the
+  SDK's table takes the form's encoding from it: a format 2.0 does not have is reported once, as
+  `` `collectionFormat` commas is not one a parameter in `formData` takes ``, where it named a
+  `query` parameter; the table is written as before.
 - Swagger 2.0's `collectionFormat` is written in every location 2.0 allows it: `ssv`, `tsv` and
   `pipes` in a path and a header too (the delimiter percent-encoded in a URI, as written in a
   header), and `tsv` in a query (`a%09b`), which was written as `csv` with a warning. An Items

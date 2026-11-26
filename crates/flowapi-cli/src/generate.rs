@@ -91,7 +91,9 @@ fn generate(config: &str, out: &str) -> Result<(flowapi_sdk::Repo, Option<Lock>)
             .get(at.doc.index())
             .map_or_else(|| docs.describe(at), |s| s.describe(at.offset))
     };
-    for d in diags.all().iter().filter(|d| d.severity == Severity::Error) {
+    // The core's warnings too: they say how the description's operations are read (a form
+    // field's `collectionFormat`, a parameter's `style`), which the SDK layer takes from it.
+    for d in diags.all() {
         eprintln!("{d}\n  at {}", describe(d.at));
     }
     let program = program.ok_or_else(|| format!("flowapi: {spec} cannot be read into types"))?;
