@@ -2,8 +2,8 @@
 # The repository's checks from one entry point: formatting, the lints, the tests (the
 # repository's rules, the JSON reader on JSONTestSuite, the TypeScript kept for each case), a
 # WebAssembly build of the core and the TypeScript target (which proves they hold no I/O) and of
-# the npm package's second module (the SDK layer's config commands), and
-# the oracles: O3 on the JSON Schema Test Suite (soundness 100%, precision never lower) and the
+# the npm package's second module (the SDK layer's config commands), the agent plugin's tests
+# (plugins/flowapi), and the oracles: O3 on the JSON Schema Test Suite (soundness 100%, precision never lower) and the
 # requirements ledger's report (never stale). The benchmarks are not among them: bench/run.sh.
 #
 #   scripts/check          every check, in order; stops at the first failure
@@ -27,6 +27,9 @@ fi
 (cd conformance/suite-rust && step cargo run --locked --release --quiet -j 1 --bin suite-rust)
 (cd conformance/props && step cargo run --locked --release --quiet)
 step cargo build --locked --release --quiet -p flowapi-cli
+# The agent plugin: its guard, manifests, references and judge, and the SDK pipeline end to end
+# on the command just built (judge step 0 only; no network).
+step node --test plugins/flowapi/test/*.test.mjs
 step node conformance/oai/run.mjs
 step node conformance/sdk/run.mjs
 step node conformance/sdk/extract.mjs --check

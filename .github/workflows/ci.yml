@@ -14,7 +14,8 @@ concurrency:
 
 jobs:
   # scripts/check as it runs locally: formatting, the lints, the tests, the wasm build and the
-  # oracles (O3 for both targets, O5, O2, O8 for both SDKs, the ledger's report); then the npm
+  # oracles (O3 for both targets, O5, O2, O8 for both SDKs, the ledger's report) and the agent
+  # plugin's tests (plugins/flowapi); then the npm
   # package, built and held to the Rust command byte for byte. The benchmarks are not run here.
   check:
     runs-on: ubuntu-24.04

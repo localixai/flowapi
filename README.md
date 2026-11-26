@@ -86,7 +86,7 @@ npx @localix-ai/flowapi openapi.json -o types.ts
 ```
 
 It has the commands for an SDK's config too (`summary`, `config draft|schema|check`, below), with
-the Rust command's output byte for byte; `generate` is the Rust command's alone for now.
+the Rust command's output byte for byte, and `generate` (below) the same files, lock included.
 
 The Rust command, built from a release tag:
 
@@ -221,7 +221,7 @@ and a boundary RFC 2046 does not allow or a part holds (`boundary`). A header's 
 operation, with a warning. The output imports nothing: the runtime is a few functions
 printed once. With `--sdk` the base URL and any authentication are still yours to add: the
 command does not print `servers`, `securitySchemes` or `security`. The SDK layer
-(`crates/flowapi-sdk`, not yet behind a command) reads them, Swagger 2.0's `host`, `basePath` and
+(`crates/flowapi-sdk`, the one `generate` writes a client with) reads them, Swagger 2.0's `host`, `basePath` and
 `schemes` included, and prints a table to put after this output: the servers with their
 variables, the security schemes, and each operation's method, path, own servers, security and
 how each response body is read. Every row of the specification's
@@ -321,6 +321,30 @@ description and of the config. A generated file changed by hand since is a confl
 written and it exits 1; `src/lib/` and `examples/` are the user's, `CHANGELOG.md` is written once,
 and a file the lock does not list is never touched. A file no longer generated is deleted unless
 changed. Every write is staged first, so a refusal leaves the folder as it was.
+
+## Use it from an agent
+
+This repository is also a plugin marketplace. Its plugin, `flowapi`, gives a coding agent
+flowapi's documentation and the SDK pipeline above:
+
+```sh
+claude plugin marketplace add localixai/flowapi
+claude plugin install flowapi@flowapi
+```
+
+In Claude Code 2.1.275 or later, one step does both: `/plugin install flowapi --marketplace localixai/flowapi`.
+
+- The `flowapi` skill says which output fits which need (types, `--sdk` functions, a whole SDK
+  repository) and carries this README's usage, the npm package's API and the commands' help.
+- The `sdk` skill, `/flowapi:sdk <description> [folder]`, makes an SDK repository: summary, a
+  drafted `flowapi-sdk.yml` the agent edits, `config check`, `generate`, then a judge
+  (determinism, typecheck, lint, build, the built types, the package, the tests against the mock
+  server), and around again until the judge passes. `/flowapi:refine`, `/flowapi:update` and
+  `/flowapi:release` take it further; a hook refuses hand edits of generated files.
+
+The same folder is an Agent Plugins 1.1.0 core package, so a core client loads the skills and
+the hook too. Node 20 or newer must be on `PATH`. More in
+[plugins/flowapi/README.md](plugins/flowapi/README.md).
 
 ## How it works
 

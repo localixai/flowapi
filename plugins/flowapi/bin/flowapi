@@ -1,0 +1,14 @@
+#!/bin/sh
+# flowapi at the version this plugin pins (lib/flowapi-version), through npx. Every command and the
+# judge run flowapi through this file, so the agent and the judge use the same one.
+# FLOWAPI_PLUGIN_FLOWAPI names another flowapi to run instead, as a command line (a Rust binary, or
+# `node <path>/npm/dist/cli.js`): for development and the tests.
+set -eu
+if [ -n "${FLOWAPI_PLUGIN_FLOWAPI:-}" ]; then
+  # Split on spaces on purpose: the value is a command and its first arguments.
+  # shellcheck disable=SC2086
+  exec $FLOWAPI_PLUGIN_FLOWAPI "$@"
+fi
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+version=$(tr -d ' \n' < "$root/lib/flowapi-version")
+exec "${FLOWAPI_PLUGIN_NPX:-npx}" -y "@localix-ai/flowapi@$version" "$@"

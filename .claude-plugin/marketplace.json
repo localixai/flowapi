@@ -1,0 +1,14 @@
+{
+  "name": "flowapi",
+  "owner": {
+    "name": "Localix Lab"
+  },
+  "description": "flowapi's agent plugin, installed from flowapi's own repository.",
+  "plugins": [
+    {
+      "name": "flowapi",
+      "source": "./plugins/flowapi",
+      "description": "Types and SDKs from API descriptions with flowapi: the library's documentation for any agent, and a pipeline that writes a TypeScript SDK repository from an OpenAPI description, checked by a deterministic judge."
+    }
+  ]
+}

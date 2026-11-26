@@ -18,15 +18,15 @@ const out = getPetResponse(res.status, Object.fromEntries(res.headers), await re
 if (out.response === "200") out.body // Pet, parsed from JSON
 ```
 
-The output imports nothing: the runtime is a few functions printed once. The base URL is yours, since servers are not read.
+The output imports nothing: the runtime is a few functions printed once. With `--sdk` the base URL and authentication are yours to add; `flowapi generate` writes a whole client that reads `servers`, `securitySchemes` and `security` (see the README).
 
 ## How parameters are written
 
 Parameters follow their `style`, `explode` and `allowReserved`: `simple`, `label`, `matrix`, `form`, `spaceDelimited`, `pipeDelimited`, `deepObject` and 3.2's `cookie`. Swagger 2.0's `collectionFormat` is read as one of those. Values are percent-encoded per RFC 3986 everywhere except headers and `style: cookie`, which pass as given, and cookies go into one `cookie` header.
 
-The body is `{ contentType, value }` for one of the operation's media types: JSON, a form, or text as given. A multipart body is yours to write.
+The body is `{ contentType, value }` for one of the operation's media types: JSON, a form, text as given, or bytes. A `multipart/form-data` body is written from its members, a file part from `flowapiFile` or `flowapiBlob`.
 
-A response is matched by its status (the exact code, then `2XX`, then `default`) and its `Content-Type`. A JSON body is parsed and any other body is returned as text. An answer the description does not name comes back as `response: null` with the text.
+A response is matched by its status (the exact code, then `2XX`, then `default`) and its `Content-Type`. A JSON body is parsed, a text body is a string, and any other body is bytes (`Uint8Array`); the body may be given as a string or as bytes. An answer the description does not name comes back as `response: null` with the text.
 
 ## What it refuses to write
 

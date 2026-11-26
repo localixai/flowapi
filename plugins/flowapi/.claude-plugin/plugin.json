@@ -1,0 +1,21 @@
+{
+  "name": "flowapi",
+  "displayName": "flowapi",
+  "version": "0.2.0",
+  "description": "Types and SDKs from API descriptions with flowapi: the library's documentation for any agent, and a pipeline that writes a TypeScript SDK repository from an OpenAPI description, checked by a deterministic judge.",
+  "author": {
+    "name": "Localix Lab"
+  },
+  "homepage": "https://github.com/localixai/flowapi",
+  "repository": "https://github.com/localixai/flowapi",
+  "license": "MIT",
+  "keywords": [
+    "openapi",
+    "json-schema",
+    "typescript",
+    "rust",
+    "sdk",
+    "codegen",
+    "agents"
+  ]
+}

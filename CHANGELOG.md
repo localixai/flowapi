@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- The agent plugin `flowapi` (`plugins/flowapi`), installed from this repository as a
+  marketplace (`claude plugin marketplace add localixai/flowapi`, then
+  `claude plugin install flowapi@flowapi`). It is a Claude Code plugin and an Agent Plugins 1.1.0
+  core package in one folder. The `flowapi` skill covers how to use flowapi, with its docs
+  copied as references. The `sdk` skill, `/flowapi:sdk`, writes an SDK repository from a
+  description with `flowapi-sdk.yml`, `generate` and a judge (determinism, typecheck, lint,
+  build, the built types, the package, the tests). `/flowapi:refine`, `update` and `release`
+  take it further, and a guard hook refuses hand edits of the files `.flowapi/lock.json` lists.
+  Its version is flowapi's.
+
 ## 0.2.0 — 2026-11-26
 
 - `flowapi generate <flowapi-sdk.yml> --out <dir> [--check]` writes a TypeScript SDK's whole

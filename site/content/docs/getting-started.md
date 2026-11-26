@@ -23,7 +23,7 @@ const { files, diagnostics } = await generate(text, { output: 'types.ts' })
 const result = await generateFile('openapi.json')
 ```
 
-`files` is empty when a diagnostic is an error. Each diagnostic has its `severity`, `code`, `message`, the document's `uri`, the byte `offset`, and the `line` and `column`. The package reads JSON only; for YAML, use the Rust command.
+`files` is empty when a diagnostic is an error. Each diagnostic has its `severity`, `code`, `message`, the document's `uri`, the byte `offset`, and the `line` and `column`. The package reads JSON and YAML, as the Rust command does.
 
 ## The Rust command
 
@@ -34,7 +34,7 @@ cargo install --locked --git https://github.com/localixai/flowapi --tag v0.2.0 f
 flowapi openapi.json -o types.ts
 ```
 
-It prints the same bytes as the npm package and also reads YAML: `.yaml`, `.yml`, or any file that does not open with `{` or `[`. YAML is read as JSON's data model under YAML 1.2's core schema, so `200:` is the key `"200"`. Anything JSON cannot hold (`.inf`, a mapping as a key, a repeated key, `<<` merge keys) is an error that names the YAML line and column.
+It prints the same bytes as the npm package. Both read YAML: `.yaml`, `.yml`, or any file that does not open with `{` or `[`. YAML is read as JSON's data model under YAML 1.2's core schema, so `200:` is the key `"200"`. Anything JSON cannot hold (`.inf`, a mapping as a key, a repeated key, `<<` merge keys) is an error that names the YAML line and column.
 
 `--target rust` prints serde types instead of TypeScript, and `--sdk` adds the request and response functions described in [the SDK](sdk.md).
 
