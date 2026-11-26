@@ -1,0 +1,643 @@
+{
+  "date": "2026-11-26",
+  "commit": "c31c449 (with uncommitted changes)",
+  "machine": {
+    "cores": 4,
+    "cpu": "Intel(R) N150",
+    "memoryGb": 16.5,
+    "os": "Ubuntu 24.04.5 LTS, Linux 7.0.0-43-generic"
+  },
+  "machineLine": "Intel(R) N150, 4 cores, 16.5 GB, Ubuntu 24.04.5 LTS, Linux 7.0.0-43-generic",
+  "node": "v22.23.5",
+  "versions": {
+    "flowapi": "0.3.0",
+    "openapi-typescript": "7.13.0",
+    "openapi-fetch": "0.17.0",
+    "@hey-api/openapi-ts": "0.99.0",
+    "orval": "8.49.0",
+    "swagger-typescript-api": "13.15.0",
+    "typescript": "5.9.3",
+    "tsc (the check)": "7.0.2"
+  },
+  "rounds": 5,
+  "only": [
+    "shop",
+    "auth"
+  ],
+  "typeCheck": {
+    "available": true
+  },
+  "tscFlags": [
+    "--ignoreConfig",
+    "--strict",
+    "--target",
+    "es2022",
+    "--module",
+    "nodenext",
+    "--lib",
+    "es2022,dom",
+    "--skipLibCheck",
+    "--noEmit"
+  ],
+  "descriptions": [
+    {
+      "name": "shop",
+      "about": "a small description of the flowapi tests: two security schemes, a cursor list",
+      "file": "crates/flowapi-sdk/tests/client/shop/spec.json",
+      "bytes": 7729
+    },
+    {
+      "name": "auth",
+      "about": "a small description of the flowapi tests: an API key in a query and in a cookie, HTTP basic and bearer",
+      "file": "crates/flowapi-sdk/tests/client/auth/spec.json",
+      "bytes": 3083
+    }
+  ],
+  "tools": [
+    "flowapi",
+    "hey-api",
+    "openapi-typescript",
+    "orval",
+    "swagger-typescript-api"
+  ],
+  "excluded": [
+    {
+      "tool": "openapi-generator (typescript-fetch)",
+      "why": "runs on Java (or Docker); this machine has neither"
+    },
+    {
+      "tool": "openapi-typescript-codegen",
+      "why": "no longer developed; @hey-api/openapi-ts is the fork that continues it"
+    },
+    {
+      "tool": "kubb",
+      "why": "not measured in this round: its client is a plugin (`@kubb/plugin-client`) set up in a configuration of its own, and it has the fewest weekly installs of the candidates"
+    }
+  ],
+  "features": [
+    [
+      "path",
+      "Path parameters encoded"
+    ],
+    [
+      "query-array",
+      "Query arrays"
+    ],
+    [
+      "json-body",
+      "JSON body"
+    ],
+    [
+      "form-body",
+      "Form body by its Encoding Objects"
+    ],
+    [
+      "apikey-header",
+      "Credential: API key in a header"
+    ],
+    [
+      "apikey-query",
+      "Credential: API key in a query"
+    ],
+    [
+      "apikey-cookie",
+      "Credential: API key in a cookie"
+    ],
+    [
+      "bearer",
+      "Credential: HTTP bearer"
+    ],
+    [
+      "basic",
+      "Credential: HTTP basic"
+    ],
+    [
+      "retry-429",
+      "Retry on 429 after Retry-After"
+    ],
+    [
+      "retry-503",
+      "Retry on 503 after Retry-After"
+    ],
+    [
+      "paging",
+      "Pagination to the last page"
+    ],
+    [
+      "error",
+      "An error as a value with its status and body"
+    ]
+  ],
+  "rows": [
+    {
+      "file": "shop",
+      "tool": "flowapi",
+      "ok": true,
+      "failure": "",
+      "runs": [
+        6.4,
+        7.2,
+        7.2,
+        6.6,
+        6.8
+      ],
+      "medianMs": 6.785571,
+      "peakRssKb": 4332,
+      "files": 55,
+      "bytes": 229326,
+      "tsFiles": 25,
+      "tsBytes": 180090,
+      "tscErrors": 0,
+      "tscSample": [],
+      "typeChecks": true,
+      "tscMs": 198.59570300000001,
+      "behavior": {
+        "path": {
+          "result": "pass",
+          "observed": "GET /v1/pets/a%20b%2Fc"
+        },
+        "query-array": {
+          "result": "pass",
+          "observed": "GET /v1/pets?limit=2&tags=red&tags=big%20dog"
+        },
+        "json-body": {
+          "result": "pass",
+          "observed": "POST /v1/pets"
+        },
+        "apikey-header": {
+          "result": "pass",
+          "observed": "GET /v1/pets/p1 x-api-key: key-1"
+        },
+        "bearer": {
+          "result": "pass",
+          "observed": "GET /v1/pets/p1 authorization: Bearer tok-1"
+        },
+        "retry-429": {
+          "result": "pass",
+          "observed": "2 request(s), the second after 1003 ms, then data"
+        },
+        "retry-503": {
+          "result": "pass",
+          "observed": "2 request(s), the second after 1002 ms, then data"
+        },
+        "paging": {
+          "result": "pass",
+          "observed": "3 item(s) in 2 request(s); the second GET /v1/pets?page_token=n2&limit=2"
+        },
+        "error": {
+          "result": "pass",
+          "observed": "status 404, body {\"message\":\"no pet\",\"code\":\"missing\"}"
+        }
+      }
+    },
+    {
+      "file": "shop",
+      "tool": "hey-api",
+      "ok": true,
+      "failure": "",
+      "runs": [
+        936.6,
+        1840,
+        1227.3,
+        1114.5,
+        934
+      ],
+      "medianMs": 1114.5445750000001,
+      "peakRssKb": 156280,
+      "files": 16,
+      "bytes": 68222,
+      "tsFiles": 16,
+      "tsBytes": 68222,
+      "tscErrors": 0,
+      "tscSample": [],
+      "typeChecks": true,
+      "tscMs": 225.778606,
+      "behavior": {
+        "path": {
+          "result": "fail",
+          "observed": "fetch failed (no request)"
+        },
+        "query-array": {
+          "result": "pass",
+          "observed": "GET /v1/pets?tags=red&tags=big%20dog&limit=2"
+        },
+        "json-body": {
+          "result": "pass",
+          "observed": "POST /v1/pets"
+        },
+        "apikey-header": {
+          "result": "pass",
+          "observed": "GET /v1/pets/p1 x-api-key: key-1"
+        },
+        "bearer": {
+          "result": "pass",
+          "observed": "GET /v1/pets/p1 authorization: Bearer tok-1"
+        },
+        "retry-429": {
+          "result": "n/a",
+          "observed": "no retry option; 1 request(s), then an error 429"
+        },
+        "retry-503": {
+          "result": "n/a",
+          "observed": "no retry option; 1 request(s), then an error 503"
+        },
+        "paging": {
+          "result": "n/a",
+          "observed": "no pagination surface: the caller follows the next page"
+        },
+        "error": {
+          "result": "pass",
+          "observed": "status 404, body {\"message\":\"no pet\",\"code\":\"missing\"}"
+        }
+      }
+    },
+    {
+      "file": "shop",
+      "tool": "openapi-typescript",
+      "ok": true,
+      "failure": "",
+      "runs": [
+        845.5,
+        1274.4,
+        1251.2,
+        1206.5,
+        1094.6
+      ],
+      "medianMs": 1206.477695,
+      "peakRssKb": 149140,
+      "files": 1,
+      "bytes": 14612,
+      "tsFiles": 1,
+      "tsBytes": 14612,
+      "tscErrors": 0,
+      "tscSample": [],
+      "typeChecks": true,
+      "tscMs": 122.95266600000001,
+      "behavior": {
+        "path": {
+          "result": "pass",
+          "observed": "GET /v1/pets/a%20b%2Fc"
+        },
+        "query-array": {
+          "result": "pass",
+          "observed": "GET /v1/pets?tags=red&tags=big%20dog&limit=2"
+        },
+        "json-body": {
+          "result": "pass",
+          "observed": "POST /v1/pets"
+        },
+        "apikey-header": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "bearer": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "retry-429": {
+          "result": "n/a",
+          "observed": "no retry option; 1 request(s), then an error 429"
+        },
+        "retry-503": {
+          "result": "n/a",
+          "observed": "no retry option; 1 request(s), then an error 503"
+        },
+        "paging": {
+          "result": "n/a",
+          "observed": "no pagination surface: the caller follows the next page"
+        },
+        "error": {
+          "result": "pass",
+          "observed": "status 404, body {\"message\":\"no pet\",\"code\":\"missing\"}"
+        }
+      }
+    },
+    {
+      "file": "shop",
+      "tool": "orval",
+      "ok": true,
+      "failure": "",
+      "runs": [
+        920.8,
+        1129.7,
+        911.3,
+        773,
+        946.1
+      ],
+      "medianMs": 920.765987,
+      "peakRssKb": 107304,
+      "files": 1,
+      "bytes": 17637,
+      "tsFiles": 1,
+      "tsBytes": 17637,
+      "tscErrors": 0,
+      "tscSample": [],
+      "typeChecks": true,
+      "tscMs": 183.60933400000002,
+      "behavior": {
+        "path": {
+          "result": "fail",
+          "observed": "path /v1/pets/a%20b/c"
+        },
+        "query-array": {
+          "result": "pass",
+          "observed": "GET /v1/pets?tags=red&tags=big+dog&limit=2"
+        },
+        "json-body": {
+          "result": "pass",
+          "observed": "POST /v1/pets"
+        },
+        "apikey-header": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "bearer": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "retry-429": {
+          "result": "n/a",
+          "observed": "no retry option; 1 request(s), then an error 429"
+        },
+        "retry-503": {
+          "result": "n/a",
+          "observed": "no retry option; 1 request(s), then an error 503"
+        },
+        "paging": {
+          "result": "n/a",
+          "observed": "no pagination surface: the caller follows the next page"
+        },
+        "error": {
+          "result": "pass",
+          "observed": "status 404, body {\"message\":\"no pet\",\"code\":\"missing\"}"
+        }
+      }
+    },
+    {
+      "file": "shop",
+      "tool": "swagger-typescript-api",
+      "ok": true,
+      "failure": "",
+      "runs": [
+        1955,
+        2499,
+        1810,
+        1848.1,
+        1820.8
+      ],
+      "medianMs": 1848.132498,
+      "peakRssKb": 316408,
+      "files": 1,
+      "bytes": 14896,
+      "tsFiles": 1,
+      "tsBytes": 14896,
+      "tscErrors": 0,
+      "tscSample": [],
+      "typeChecks": true,
+      "tscMs": 129.790873,
+      "behavior": {
+        "path": {
+          "result": "fail",
+          "observed": "fetch failed (no request)"
+        },
+        "query-array": {
+          "result": "pass",
+          "observed": "GET /v1/pets?tags=red&tags=big%20dog&limit=2"
+        },
+        "json-body": {
+          "result": "pass",
+          "observed": "POST /v1/pets"
+        },
+        "apikey-header": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "bearer": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "retry-429": {
+          "result": "n/a",
+          "observed": "no retry option; 1 request(s), then an error 429"
+        },
+        "retry-503": {
+          "result": "n/a",
+          "observed": "no retry option; 1 request(s), then an error 503"
+        },
+        "paging": {
+          "result": "n/a",
+          "observed": "no pagination surface: the caller follows the next page"
+        },
+        "error": {
+          "result": "pass",
+          "observed": "status 404, body {\"message\":\"no pet\",\"code\":\"missing\"}"
+        }
+      }
+    },
+    {
+      "file": "auth",
+      "tool": "flowapi",
+      "ok": true,
+      "failure": "",
+      "runs": [
+        7.2,
+        7.3,
+        8,
+        7.6,
+        7.3
+      ],
+      "medianMs": 7.33755,
+      "peakRssKb": 4140,
+      "files": 63,
+      "bytes": 225474,
+      "tsFiles": 29,
+      "tsBytes": 172833,
+      "tscErrors": 0,
+      "tscSample": [],
+      "typeChecks": true,
+      "tscMs": 208.35925699999999,
+      "behavior": {
+        "apikey-query": {
+          "result": "pass",
+          "observed": "GET /v2/query?q=x&api_key=key-1"
+        },
+        "apikey-cookie": {
+          "result": "pass",
+          "observed": "GET /v2/cookie cookie: session=s-1"
+        },
+        "basic": {
+          "result": "pass",
+          "observed": "GET /v2/basic authorization: Basic YW5uOnA6dw=="
+        },
+        "bearer": {
+          "result": "pass",
+          "observed": "GET /v2/either authorization: Bearer tok-1"
+        }
+      }
+    },
+    {
+      "file": "auth",
+      "tool": "hey-api",
+      "ok": true,
+      "failure": "",
+      "runs": [
+        819.2,
+        825.2,
+        927.4,
+        801.6,
+        933.7
+      ],
+      "medianMs": 825.227959,
+      "peakRssKb": 153892,
+      "files": 16,
+      "bytes": 63663,
+      "tsFiles": 16,
+      "tsBytes": 63663,
+      "tscErrors": 0,
+      "tscSample": [],
+      "typeChecks": true,
+      "tscMs": 212.637722,
+      "behavior": {
+        "apikey-query": {
+          "result": "pass",
+          "observed": "GET /v2/query?q=x&api_key=key-1"
+        },
+        "apikey-cookie": {
+          "result": "pass",
+          "observed": "GET /v2/cookie cookie: session=s-1"
+        },
+        "basic": {
+          "result": "pass",
+          "observed": "GET /v2/basic authorization: Basic YW5uOnA6dw=="
+        },
+        "bearer": {
+          "result": "pass",
+          "observed": "GET /v2/either authorization: Bearer tok-1"
+        }
+      }
+    },
+    {
+      "file": "auth",
+      "tool": "openapi-typescript",
+      "ok": true,
+      "failure": "",
+      "runs": [
+        994.3,
+        860.9,
+        822.2,
+        779.3,
+        921.7
+      ],
+      "medianMs": 860.860239,
+      "peakRssKb": 144560,
+      "files": 1,
+      "bytes": 8379,
+      "tsFiles": 1,
+      "tsBytes": 8379,
+      "tscErrors": 0,
+      "tscSample": [],
+      "typeChecks": true,
+      "tscMs": 133.936679,
+      "behavior": {
+        "apikey-query": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "apikey-cookie": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "basic": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "bearer": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        }
+      }
+    },
+    {
+      "file": "auth",
+      "tool": "orval",
+      "ok": true,
+      "failure": "",
+      "runs": [
+        732.3,
+        745.7,
+        759.9,
+        710.6,
+        805.7
+      ],
+      "medianMs": 745.690942,
+      "peakRssKb": 110248,
+      "files": 1,
+      "bytes": 10372,
+      "tsFiles": 1,
+      "tsBytes": 10372,
+      "tscErrors": 0,
+      "tscSample": [],
+      "typeChecks": true,
+      "tscMs": 182.574614,
+      "behavior": {
+        "apikey-query": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "apikey-cookie": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "basic": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "bearer": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        }
+      }
+    },
+    {
+      "file": "auth",
+      "tool": "swagger-typescript-api",
+      "ok": true,
+      "failure": "",
+      "runs": [
+        1897.2,
+        2841.9,
+        2479.2,
+        2176.1,
+        2062.3
+      ],
+      "medianMs": 2176.094592,
+      "peakRssKb": 317244,
+      "files": 1,
+      "bytes": 12336,
+      "tsFiles": 1,
+      "tsBytes": 12336,
+      "tscErrors": 0,
+      "tscSample": [],
+      "typeChecks": true,
+      "tscMs": 123.018147,
+      "behavior": {
+        "apikey-query": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "apikey-cookie": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "basic": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        },
+        "bearer": {
+          "result": "n/a",
+          "observed": "no option for the scheme: the caller writes the credential"
+        }
+      }
+    }
+  ]
+}

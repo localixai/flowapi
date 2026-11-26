@@ -1,5 +1,5 @@
 {
-  "$comment": "What flowapi holds itself to against the other generators. `cargo run --release --bin check` reads results/speed.json and fails on any rule a run breaks. A ratio is the best other tool's figure over flowapi's on each description; `except` lowers it for one description, where the measurement says less. Change a number only together with its reason, in the change that moves it.",
+  "$comment": "What flowapi holds itself to against the other generators. `cargo run --release --bin check` reads the results each rule names (`results`, else results/speed.json) and fails on any rule a run breaks. A ratio is the best other tool's figure over flowapi's on each description; `except` lowers it for one description, where the measurement says less. Change a number only together with its reason, in the change that moves it.",
   "rules": [
     {
       "id": "flowapi-type-checks",
@@ -14,6 +14,34 @@
       "id": "memory",
       "about": "flowapi's peak resident memory is no more than the leanest other generator's on every description.",
       "maxRatio": 1.0
+    },
+    {
+      "id": "sdk-type-checks",
+      "results": "sdk-compare.json",
+      "about": "flowapi's SDK (its src/) type-checks with tsc --strict on every description of competitors/sdk-compare.mjs."
+    },
+    {
+      "id": "sdk-behavior",
+      "results": "sdk-compare.json",
+      "about": "flowapi's SDK passes every behavior test sdk-compare gives it, on every description: none fails and none is n/a."
+    },
+    {
+      "id": "sdk-generate-faster",
+      "results": "sdk-compare.json",
+      "about": "flowapi's generate (the whole repository, the process timed) is at least 10x faster than the fastest other generator's client on every description. Set at the first runs, on the two small descriptions, where it holds by far; the whole run on GitHub, Stripe and Twilio says whether it holds there.",
+      "minRatio": 10.0
+    },
+    {
+      "id": "sdk-complete",
+      "results": "sdk-compare.json",
+      "about": "results/sdk-compare.json is a whole run: every description of sdk-compare/cases.mjs, no --only.",
+      "descriptions": [
+        "shop",
+        "auth",
+        "github",
+        "stripe",
+        "twilio"
+      ]
     }
   ]
 }

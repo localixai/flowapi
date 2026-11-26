@@ -10,6 +10,8 @@
     "@hey-api/openapi-ts": "0.99.0",
     "openapi-fetch": "0.17.0",
     "openapi-typescript": "7.13.0",
+    "orval": "8.49.0",
+    "swagger-typescript-api": "13.15.0",
     "typescript": "5.9.3",
     "yaml": "2.9.1"
   }

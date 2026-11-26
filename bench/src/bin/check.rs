@@ -1,6 +1,7 @@
 //! The committed results held to `budgets.json`: each rule read against the results it names
-//! (`results/*.json`), one line each, and a failure exit when any is broken or has no results.
-//! Nothing is timed here; `run.sh` takes the times, and this reads what it wrote.
+//! (`results/*.json`: its `results`, `speed.json` when it names none), one line each, and a
+//! failure exit when any is broken or has no results. Nothing is timed here; `run.sh` and
+//! `competitors/sdk-compare.mjs` take the times, and this reads what they wrote.
 //!
 //!     cargo run --release --bin check
 
@@ -82,14 +83,60 @@ fn ratio(speed: &Value, rule: &Value, key: &str, faster: bool) -> (bool, String)
     (holds, found.join(", "))
 }
 
+/// flowapi's SDK passed every behavior test it was given on every description: none failed,
+/// none was `n/a`.
+fn behavior(all: &Value) -> (bool, String) {
+    let mut wrong = vec![];
+    let mut passed = 0;
+    for file in files(all) {
+        let Some(row) = row(all, &file, "flowapi").filter(|row| row["ok"] == true) else {
+            wrong.push(format!("{file} not generated"));
+            continue;
+        };
+        let tests = row["behavior"].as_object().cloned().unwrap_or_default();
+        if tests.is_empty() {
+            wrong.push(format!("{file} ran no test"));
+        }
+        for (id, test) in &tests {
+            match test["result"].as_str() {
+                Some("pass") => passed += 1,
+                other => wrong.push(format!("{file} {id} {}", other.unwrap_or("?"))),
+            }
+        }
+    }
+    (wrong.is_empty(), format!("{passed} passed; not: {wrong:?}"))
+}
+
+/// The results cover every description the rule names, from a whole run (no `--only`).
+fn complete(all: &Value, rule: &Value) -> (bool, String) {
+    let measured = files(all);
+    let missing: Vec<&str> = (rule["descriptions"].as_array().into_iter().flatten())
+        .filter_map(Value::as_str)
+        .filter(|name| !measured.iter().any(|file| file == name))
+        .collect();
+    let partial = all["only"].is_array();
+    let mark = if partial { " (a run with --only)" } else { "" };
+    (
+        missing.is_empty() && !partial,
+        format!("{} measured{mark}; missing: {missing:?}", measured.len()),
+    )
+}
+
+/// The results file `rule` is read against.
+fn source(rule: &Value) -> &str {
+    rule["results"].as_str().unwrap_or("speed.json")
+}
+
 /// Whether `rule` holds, and what was found; `None` when its results are missing.
 fn judge(rule: &Value) -> Option<(bool, String)> {
     let id = rule["id"].as_str().unwrap_or("");
-    let speed = read(&results("speed.json"))?;
+    let all = read(&results(source(rule)))?;
     Some(match id {
-        "flowapi-type-checks" => type_checks(&speed),
-        "faster" => ratio(&speed, rule, "medianMs", true),
-        "memory" => ratio(&speed, rule, "peakRssKb", false),
+        "flowapi-type-checks" | "sdk-type-checks" => type_checks(&all),
+        "faster" | "sdk-generate-faster" => ratio(&all, rule, "medianMs", true),
+        "memory" => ratio(&all, rule, "peakRssKb", false),
+        "sdk-behavior" => behavior(&all),
+        "sdk-complete" => complete(&all, rule),
         _ => (false, format!("no check for the rule {id:?}")),
     })
 }
@@ -108,7 +155,8 @@ fn main() -> ExitCode {
             }
             None => {
                 broken = true;
-                println!("MISSING {id}: no results/speed.json; run `speed` (run.sh)");
+                let file = source(rule);
+                println!("MISSING {id}: no results/{file}; run what writes it (bench/README.md)");
             }
         }
     }

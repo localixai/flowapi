@@ -145,6 +145,7 @@ node conformance/compare/compare.mjs                   # O3 on the other generat
 node conformance/oai/run.mjs                           # O2, after cargo build --release
 node conformance/sdk/run.mjs --corpus                  # O8, the SDK; after cargo build --release
 node bench/competitors/sdk.mjs                         # writing requests against openapi-fetch
+node bench/competitors/sdk-compare.mjs                 # the whole SDK against other client generators (bench/README.md)
 cargo test -p flowapi-rust --test sdk                  # the Rust SDK kept for each case (FLOWAPI_BLESS=1)
 (cd conformance/sdk-rust && cargo run --release -j 1 --bin sdk-rust)   # O8 for the Rust SDK
 (cd conformance/sdk-rust && cargo run --release -j 1 --bin corpus -- --build)   # its corpus
