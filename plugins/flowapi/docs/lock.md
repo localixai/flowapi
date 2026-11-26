@@ -19,7 +19,7 @@ relative to it.
 ```json
 {
   "version": 1,
-  "flowapi": "0.2.0",
+  "flowapi": "0.3.0",
   "spec_sha256": "3b1f…",
   "config_sha256": "9a0c…",
   "configured_endpoints": 42,

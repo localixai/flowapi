@@ -12,7 +12,7 @@ It is one package in two forms: a Claude Code plugin (`.claude-plugin/plugin.jso
 `hooks/hooks.json`) and an Agent Plugins 1.1.0 core package (`plugin.json`, `hooks.json`). The
 skills and the guard are shared. The commands and the reviewer agent are Claude Code's alone.
 
-It runs flowapi 0.2.0 through `npx` (`bin/flowapi`), so nothing else needs installing.
+It runs flowapi 0.3.0 through `npx` (`bin/flowapi`), so nothing else needs installing.
 
 ## Install
 

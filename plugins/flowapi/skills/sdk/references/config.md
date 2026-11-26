@@ -8,7 +8,7 @@ not listed here is an error.
 | Key | Meaning |
 | --- | --- |
 | `version` | The format's version: `1` |
-| `generator.flowapi` | The flowapi version the SDK is generated with (`0.2.0`, or `0.2.x` for any patch) |
+| `generator.flowapi` | The flowapi version the SDK is generated with (`0.3.0`, or `0.3.x` for any patch) |
 | `spec` | The description: a path relative to the config, or a URL |
 | `package.name` | The npm package's name (`@acme/sdk`) |
 | `package.version` | The package's version, `0.1.0` unless given; the release tool raises it |
@@ -95,7 +95,7 @@ body itself when `items` is not given).
 
 ```yaml
 version: 1
-generator: { flowapi: "0.2.0" }
+generator: { flowapi: "0.3.0" }
 spec: openapi.json
 package:
   name: "@acme/sdk"

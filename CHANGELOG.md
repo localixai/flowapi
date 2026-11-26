@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 — 2026-11-26
+
 - `flowapi generate` prints the description's warnings as `flowapi <description>` does, not only
   its errors. A Swagger 2.0 form field's `collectionFormat` is read once, by the core, and the
   SDK's table takes the form's encoding from it: a format 2.0 does not have is reported once, as

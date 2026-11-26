@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "flowapi": "0.2.0",
+  "flowapi": "0.3.0",
   "spec_sha256": "e4b9f2f959ef8117fe3866f447115e339cd0035e34d2589263b75dcb27bc2a19",
   "config_sha256": "fc268764e708533c719e15e75e6cd17ebe51a04b6b2015e4ee308646ee492919",
   "configured_endpoints": 10,
   "files": {
     ".github/workflows/ci.yml": "319d85a3444b69e1e1b131745159c0b6f90c817a1b79995cb4e1a6f319d7f907",
     ".gitignore": "e36fab51e2c0e068b3d45372618aad54844c6df08f80714b20d8dc4855363e0a",
-    "AGENTS.md": "b928e8ab9c148d0265d5b4210d44037401fcdf389435772668f56aae21eae8d3",
+    "AGENTS.md": "4bada00a97dd22a645d53a39b06e0e5fca9881c2ac47cd62fdfe38d5c6e6aa6b",
     "LICENSE": "77702c67cf238a0bb2f74f8f13a7b1c2ae8f31bdef792b8b635162fe07a20b61",
     "README.md": "992078b37fbd521e97c7065cb362a8ba7b7879074185773698102b63a3905d01",
     "api.md": "384b0f9771393aa9b3cfe9cfa4075c1f204df2598d976a92a8c2a2b9f9ef66c6",

@@ -9,6 +9,6 @@ TypeScript compiler, and every valid value passes. With `--sdk` it also prints, 
 function that writes the request and one that reads the response, sending nothing itself; and
 `flowapi generate` writes a whole TypeScript client package from the description and a small config
 (`flowapi-sdk.yml`): resources, retries, errors, pagination, tests. It is a
-Rust command (`cargo install --git https://github.com/localixai/flowapi --tag v0.2.0
+Rust command (`cargo install --git https://github.com/localixai/flowapi --tag v0.3.0
 flowapi-cli`) and an npm package compiled to WebAssembly (`npx @localix-ai/flowapi`), MIT-licensed,
 from https://github.com/localixai/flowapi, made by Localix Lab (https://localix.ai).

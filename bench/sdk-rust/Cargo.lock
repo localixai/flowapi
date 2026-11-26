@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "flowapi"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "flowapi-bench-sdk-rust"
@@ -21,7 +21,7 @@ dependencies = [
 
 [[package]]
 name = "flowapi-rust"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "flowapi",
 ]

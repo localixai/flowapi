@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "flowapi"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "flowapi-props"
@@ -18,7 +18,7 @@ dependencies = [
 
 [[package]]
 name = "flowapi-ts"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "flowapi",
 ]

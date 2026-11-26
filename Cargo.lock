@@ -10,11 +10,11 @@ checksum = "7d902e3d592a523def97af8f317b08ce16b7ab854c1985a0c671e6f15cebc236"
 
 [[package]]
 name = "flowapi"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "flowapi-cli"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "flowapi",
  "flowapi-rust",
@@ -25,14 +25,14 @@ dependencies = [
 
 [[package]]
 name = "flowapi-rust"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "flowapi",
 ]
 
 [[package]]
 name = "flowapi-sdk"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "flowapi",
  "flowapi-ts",
@@ -42,14 +42,14 @@ dependencies = [
 
 [[package]]
 name = "flowapi-ts"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "flowapi",
 ]
 
 [[package]]
 name = "flowapi-wasm"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "flowapi",
  "flowapi-sdk",
@@ -59,14 +59,14 @@ dependencies = [
 
 [[package]]
 name = "flowapi-wasm-sdk"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "flowapi-wasm",
 ]
 
 [[package]]
 name = "flowapi-yaml"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "saphyr-parser",
  "serde_json",

@@ -1,6 +1,6 @@
 # Every member of the format, each naming what the description has: no issue.
 version: 1
-generator: { flowapi: "0.2.x" }
+generator: { flowapi: "0.3.x" }
 spec: spec.json
 package:
   name: "@petshop/sdk"

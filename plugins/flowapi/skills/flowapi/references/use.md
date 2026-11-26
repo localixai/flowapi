@@ -15,7 +15,7 @@ the Rust command's output byte for byte, and `generate` (below) the same files, 
 The Rust command, built from a release tag:
 
 ```sh
-cargo install --locked --git https://github.com/localixai/flowapi --tag v0.2.0 flowapi-cli
+cargo install --locked --git https://github.com/localixai/flowapi --tag v0.3.0 flowapi-cli
 flowapi openapi.json -o types.ts
 ```
 
@@ -23,8 +23,8 @@ The crates are not on crates.io. A program takes them from the repository at a t
 
 ```toml
 [dependencies]
-flowapi = { git = "https://github.com/localixai/flowapi", tag = "v0.2.0" }
-flowapi-ts = { git = "https://github.com/localixai/flowapi", tag = "v0.2.0" }
+flowapi = { git = "https://github.com/localixai/flowapi", tag = "v0.3.0" }
+flowapi-ts = { git = "https://github.com/localixai/flowapi", tag = "v0.3.0" }
 ```
 
 In a checkout, `cargo run --release -p flowapi-cli -- openapi.json -o types.ts` does the same.
