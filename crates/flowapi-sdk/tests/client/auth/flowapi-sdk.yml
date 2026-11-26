@@ -4,7 +4,7 @@
 # of resources, and no environments (the description's server is the base URL).
 version: 1
 spec: spec.json
-package: { name: auth-sdk, client: AuthClient }
+package: { name: auth-sdk, client: AuthClient, license: Apache-2.0 }
 auth:
   QueryKey: { env_var: AUTH_QUERY_KEY }
   CookieKey: {}

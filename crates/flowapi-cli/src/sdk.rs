@@ -1,6 +1,7 @@
 //! The commands about an SDK's config, `flowapi-sdk.yml`: `summary`, `config draft`, `config
-//! schema` and `config check`. Each reads its files here and hands their text to `flowapi-sdk`,
-//! which does no I/O; an issue's offset into the config's JSON is printed as the YAML's line.
+//! schema` and `config check` (`generate` is `generate.rs`). Each reads its files here and hands
+//! their text to `flowapi-sdk`, which does no I/O; an issue's offset into the config's JSON is
+//! printed as the YAML's line.
 
 use crate::args::Sdk;
 use crate::load;
@@ -27,6 +28,7 @@ pub(crate) fn run(command: Sdk) -> ExitCode {
         .map(|text| (text, output)),
         Sdk::Schema => Ok((flowapi_sdk::config_schema(), None)),
         Sdk::Check { config, spec, json } => return check(&config, spec.as_deref(), json),
+        Sdk::Repo { config, out, check } => return crate::generate::run(&config, &out, check),
     };
     match done.and_then(|(text, output)| write(&text, output.as_deref())) {
         Ok(()) => ExitCode::SUCCESS,
@@ -35,7 +37,7 @@ pub(crate) fn run(command: Sdk) -> ExitCode {
 }
 
 #[expect(clippy::print_stderr, reason = "the command's errors")]
-fn fail(message: &str) -> ExitCode {
+pub(crate) fn fail(message: &str) -> ExitCode {
     eprintln!("{message}");
     ExitCode::FAILURE
 }
@@ -88,7 +90,7 @@ fn relative(input: &str, output: &str) -> String {
 }
 
 /// The documents of a description, the files its references reach read too, given to `f`.
-fn with_docs<R>(input: &str, f: impl FnOnce(&Documents<'_>) -> R) -> Result<R, String> {
+pub(crate) fn with_docs<R>(input: &str, f: impl FnOnce(&Documents<'_>) -> R) -> Result<R, String> {
     let texts = load::all(input)?;
     let mut docs = Documents::new();
     for source in &texts {

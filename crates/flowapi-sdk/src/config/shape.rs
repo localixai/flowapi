@@ -27,6 +27,8 @@ pub(crate) enum Str {
     Client,
     /// A version, `0.1.0` or `0.1.x`.
     Version,
+    /// A package's own version: `0.1.0`, `1.0.0-beta.1`, never `x`.
+    Release,
 }
 
 /// What a value must be.
@@ -131,6 +133,11 @@ pub(crate) const GENERATOR: &[Field] = &[req(
 
 pub(crate) const PACKAGE: &[Field] = &[
     req("name", &Shape::Str(Str::Package), "The npm package's name"),
+    f(
+        "version",
+        &Shape::Str(Str::Release),
+        "The package's version (0.1.0 unless given); the release tool raises it",
+    ),
     req(
         "client",
         &Shape::Str(Str::Client),

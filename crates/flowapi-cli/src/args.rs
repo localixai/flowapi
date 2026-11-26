@@ -8,6 +8,7 @@ Usage: flowapi <description> [-o <types.ts>] [--target ts|rust] [--sdk] [--quiet
        flowapi config draft <description> [-o <flowapi-sdk.yml>]
        flowapi config schema
        flowapi config check <flowapi-sdk.yml> [--spec <description>] [--json]
+       flowapi generate <flowapi-sdk.yml> --out <dir> [--check]
 
   -o, --output <file>   where to write the types (standard output by default)
   -t, --target <lang>   the language of the types: ts (the default) or rust (serde)
@@ -30,8 +31,14 @@ For an SDK's config, flowapi-sdk.yml, which an agent writes:
   config schema   the config's format, as JSON Schema
   config check    every issue of a config against its description (its `spec`, relative to the
                   config, or --spec): text, or JSON with --json; exits 1 on an error
+  generate        the SDK's repository into --out: the client, package.json, scripts, tests
+                  against a mock server, README.md, api.md, and .flowapi/lock.json, the hash of
+                  each file written. A generated file changed by hand since (src/lib/ and
+                  examples/ are yours) is a conflict: nothing is written and it exits 1. A file
+                  no longer generated is deleted unless changed; one the lock does not list is
+                  never touched. --check writes nothing and exits 1 when the output differs
 
-A description named `summary` or `config` is read by its path: `flowapi ./summary`.";
+A description named `summary`, `config` or `generate` is read by its path: `flowapi ./summary`.";
 
 pub(crate) struct Generate {
     pub(crate) input: String,
@@ -59,6 +66,12 @@ pub(crate) enum Sdk {
         spec: Option<String>,
         json: bool,
     },
+    /// `generate <config> --out <dir> [--check]`.
+    Repo {
+        config: String,
+        out: String,
+        check: bool,
+    },
 }
 
 pub(crate) enum Command {
@@ -78,6 +91,10 @@ pub(crate) fn parse(args: impl Iterator<Item = String>) -> Result<Command, Strin
         Some("config") => {
             args.next();
             return config(args);
+        }
+        Some("generate") => {
+            args.next();
+            return generate(args);
         }
         Some(_) | None => {}
     }
@@ -186,4 +203,29 @@ fn config(mut args: impl Iterator<Item = String>) -> Result<Command, String> {
         }
     };
     Ok(Command::Sdk(sdk))
+}
+
+/// `generate <flowapi-sdk.yml> --out <dir> [--check]`.
+fn generate(mut args: impl Iterator<Item = String>) -> Result<Command, String> {
+    let mut config = None;
+    let mut out = None;
+    let mut check = false;
+    while let Some(arg) = args.next() {
+        match arg.as_str() {
+            "-h" | "--help" => return Ok(Command::Help),
+            "-o" | "--out" => out = Some(args.next().ok_or("`--out` needs a directory")?),
+            "--check" => check = true,
+            flag if flag.starts_with('-') => {
+                return Err(format!("unknown flag `{flag}` for `generate`"));
+            }
+            p => {
+                if config.replace(p.to_owned()).is_some() {
+                    return Err(String::from("one config at a time"));
+                }
+            }
+        }
+    }
+    let config = config.ok_or("`generate` needs a config")?;
+    let out = out.ok_or("`generate` needs `--out <dir>`")?;
+    Ok(Command::Sdk(Sdk::Repo { config, out, check }))
 }

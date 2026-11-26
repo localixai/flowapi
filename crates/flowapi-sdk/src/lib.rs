@@ -16,6 +16,11 @@
 //! [`client_files`] prints a whole client from a config that passes the check: `src/api.ts`
 //! (the `--sdk` output and the table), a class per resource, the client class, and the runtime
 //! of `src/client/core/`, TypeScript kept here and printed as it is.
+//!
+//! [`repo_files`] prints the whole repository around that client (the package, scripts, a mock
+//! server, tests, README, CI, the license) with its [`Lock`]: strings and the previous lock's JSON
+//! in, files and the new lock's JSON out, so the command and the WebAssembly module share it; the
+//! host decides what to write by the lock (`flowapi generate`).
 
 mod client;
 mod config;
@@ -27,8 +32,10 @@ mod ops;
 mod out;
 mod paging;
 mod print;
+mod repo;
 mod security;
 mod servers;
+mod sha256;
 mod summary;
 mod words;
 
@@ -38,6 +45,8 @@ pub use draft::draft;
 pub use model::{
     Access, Auth, Encoding, KeyLocation, Requirement, Scheme, Server, Service, Variable,
 };
+pub use repo::{Input, LOCK_PATH, Lock, OWN_ZONES, Owner, Repo, RepoFile, is_own, repo_files};
+pub use sha256::sha256_hex;
 pub use summary::{Filter, summary};
 
 use doc::Doc;

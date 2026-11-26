@@ -83,6 +83,17 @@ impl B<'_, '_> {
         })
     }
 
+    /// A string member's value.
+    fn text(
+        &mut self,
+        node: NodeId,
+        at: &At,
+        fields: &'static [Field],
+        key: &'static str,
+    ) -> Option<String> {
+        self.named(node, at, fields, key).map(|n| n.name)
+    }
+
     /// A number as `T` (an integer as `i64`, seconds as `f64`); `None` for another value.
     fn number<T: std::str::FromStr>(&self, node: NodeId) -> Option<T> {
         match self.tree.value(node) {
@@ -119,10 +130,11 @@ pub(crate) fn build(tree: &Tree<'_>, declared: &[(NodeId, At)], issues: &mut Iss
         c.generator = b.named(g, &at, shape::GENERATOR, "flowapi");
     }
     if let Some((p, at)) = b.field(root, &top, shape::ROOT, "package") {
-        b.field(p, &at, shape::PACKAGE, "name");
+        c.settings.package = b.text(p, &at, shape::PACKAGE, "name");
+        c.settings.version = b.text(p, &at, shape::PACKAGE, "version");
         c.client = b.named(p, &at, shape::PACKAGE, "client");
-        b.field(p, &at, shape::PACKAGE, "license");
-        b.field(p, &at, shape::PACKAGE, "repository");
+        c.license = b.named(p, &at, shape::PACKAGE, "license");
+        c.settings.repository = b.text(p, &at, shape::PACKAGE, "repository");
     }
     if let Some((e, at)) = b.field(root, &top, shape::ROOT, "environments") {
         c.default_environment = b.named(e, &at, shape::ENVIRONMENTS_FIXED, "default");
@@ -192,7 +204,7 @@ fn rest(b: &mut B<'_, '_>, root: NodeId, top: &At, c: &mut Config) {
                 c.readme.push((key, n));
             }
         }
-        b.field(r, &at, shape::README, "intro");
+        c.settings.intro = b.text(r, &at, shape::README, "intro");
     }
 }
 

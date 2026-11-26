@@ -3,6 +3,7 @@
 //! All the I/O of flowapi is here (G5).
 
 mod args;
+mod generate;
 mod load;
 mod sdk;
 mod source;

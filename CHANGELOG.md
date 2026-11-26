@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- `flowapi generate <flowapi-sdk.yml> --out <dir> [--check]` writes a TypeScript SDK's whole
+  repository: the client's `src/`, `package.json` (ES modules and CommonJS, each with its types,
+  `sideEffects: false`, `engines.node >=20`, `typescript` 7.0.2 the one development dependency),
+  the TypeScript configs (`tsconfig.json`, `.build`, `.cjs`, `.dist`), POSIX `scripts/` (`build`,
+  `lint`, `test`, `check`, `mock`), a mock server printed from the description (`mock/`, strict on
+  path, method, required parameters and the body's media type, answering with an example of each
+  operation's schema: `example`, else `default`, `const`, the first `enum` value, else one made
+  from its type and `format`), `tests/api-resources/*.test.mjs` calling every method against it
+  under `node --test`, `README.md`, `api.md`, `AGENTS.md`, `LICENSE` (MIT or Apache-2.0; another
+  `package.license` is `error[repo.license]`), `.github/workflows/ci.yml`, release-please's config,
+  `.gitignore`, `examples/.keep`, and on the first generation `CHANGELOG.md` and the release
+  manifest. `.flowapi/lock.json` records the flowapi version, the description's and the config's
+  SHA-256, the methods mapped and every file's SHA-256. A generated file changed since it was
+  written is a conflict (nothing is written, exit 1), except under `src/lib/` and `examples/`,
+  where it is kept; a file the lock does not list is never touched; one no longer generated is
+  deleted unless changed. A path out of `--out` or through a symbolic link is refused. `--check`
+  writes nothing and exits 1 when anything would change. In the SDK layer: `repo_files`, `Lock`,
+  `sha256_hex` (our own SHA-256, checked on FIPS 180-4's vectors).
+- `flowapi-sdk.yml` has `package.version` (`0.1.0` unless given; release-please raises it).
+
 - The TypeScript SDK writes `multipart/form-data` request bodies: `<op>Request` takes the value
   as its schema says (a string member also as a file: a `Uint8Array`, `flowapiFile(bytes or text,
   name, type)`, or `await flowapiBlob(blobOrFile)`, the one step that waits) and returns the parts

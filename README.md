@@ -86,7 +86,7 @@ npx @localix-ai/flowapi openapi.json -o types.ts
 ```
 
 It has the commands for an SDK's config too (`summary`, `config draft|schema|check`, below), with
-the Rust command's output byte for byte.
+the Rust command's output byte for byte; `generate` is the Rust command's alone for now.
 
 The Rust command, built from a release tag:
 
@@ -290,7 +290,7 @@ A draft passes the check, and the same description written in another order give
 draft. A description named `summary` or `config` is read by its path: `flowapi ./summary`.
 
 From a config that passes the check, the SDK layer prints the client itself in TypeScript
-(`flowapi_sdk::client_files`; not behind a command yet): `src/api.ts` (the `--sdk` output and the
+(`flowapi_sdk::client_files`): `src/api.ts` (the `--sdk` output and the
 operations table), a class for each resource (`client.pets.photos.list(params, options)`), the
 client class with its options, and the runtime in `src/core/`, which needs no dependency and
 type-checks with `lib: ["es2022"]` alone. The runtime retries by status and `x-should-retry`,
@@ -300,6 +300,27 @@ the credentials of the first security alternative it can meet, masks them in its
 redirect to another origin unless allowed, reads lists by each pagination scheme with a guard
 against a server that loops, and reads server-sent events and JSON lines whatever the chunks. A
 call is awaited for its data; `asResponse()` and `withResponse()` give the raw response.
+
+`flowapi generate` writes the SDK's whole repository around that client:
+
+```sh
+flowapi generate flowapi-sdk.yml --out .         # the repository, and .flowapi/lock.json
+flowapi generate flowapi-sdk.yml --out . --check # in CI: exits 1 when the output would differ
+```
+
+It is one package with no dependency at run time and `typescript` as its one development
+dependency: built by `tsc` twice, ES modules and CommonJS, each with its types (`exports` sends
+`import` and `require` each to its own); POSIX `scripts/` (`build`, `lint`, `test`, `check`,
+`mock`); a mock server on `node:http` printed from the description, strict where a client goes
+wrong (a path, a method, a required parameter, a body's media type) and answering each operation
+with an example of its schema; a `node --test` file per resource calling every method against
+it; `README.md` (its counts and examples written from the config, never typed), `api.md`, the
+repository's `AGENTS.md`, the license (MIT or Apache-2.0), CI on Node 20, 22 and 24, and
+release-please's config. `.flowapi/lock.json` holds the hash of every file written, of the
+description and of the config. A generated file changed by hand since is a conflict: nothing is
+written and it exits 1; `src/lib/` and `examples/` are the user's, `CHANGELOG.md` is written once,
+and a file the lock does not list is never touched. A file no longer generated is deleted unless
+changed. Every write is staged first, so a refusal leaves the folder as it was.
 
 ## How it works
 

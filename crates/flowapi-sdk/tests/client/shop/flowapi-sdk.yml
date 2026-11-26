@@ -2,7 +2,7 @@
 # download read as bytes, two alternatives of security and one operation that needs none.
 version: 1
 spec: spec.json
-package: { name: "@shop/sdk", client: Shop }
+package: { name: "@shop/sdk", version: 1.2.0, client: Shop, license: MIT, repository: https://github.com/shop/sdk }
 environments:
   production: https://api.shop.example/v1
   sandbox: https://sandbox.shop.example/v1
@@ -68,3 +68,6 @@ resources:
   system:
     methods:
       health: health
+readme:
+  headline_method: pets.retrieve
+  pagination_method: pets.list

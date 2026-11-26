@@ -59,6 +59,12 @@ pub(crate) struct Settings {
     pub(crate) timeout: Option<f64>,
     /// `defaults.max_retry_delay`, in seconds.
     pub(crate) max_retry_delay: Option<f64>,
+    /// `package.name`, `package.version` and `package.repository`.
+    pub(crate) package: Option<String>,
+    pub(crate) version: Option<String>,
+    pub(crate) repository: Option<String>,
+    /// `readme.intro`.
+    pub(crate) intro: Option<String>,
 }
 
 /// A pagination scheme defined under `pagination`.
@@ -73,6 +79,8 @@ pub(crate) struct Scheme {
 pub(crate) struct Config {
     pub(crate) spec: Option<String>,
     pub(crate) client: Option<Named>,
+    /// `package.license`, with where: the repository refuses one it has no text for.
+    pub(crate) license: Option<Named>,
     pub(crate) generator: Option<Named>,
     pub(crate) environments: Vec<Named>,
     pub(crate) default_environment: Option<Named>,

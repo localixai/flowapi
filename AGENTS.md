@@ -63,9 +63,18 @@ work here.
   TypeScript and printed as it is (each file held to 300 working lines by `tests/client.mjs`).
   `tests/client/<case>/` a config and a description with the client kept beside them
   (`--test client`); `tests/client.mjs` type-checks them and runs `tests/client/*.mjs` against a
-  stub `fetch`, each test naming the pitfall it holds.
+  stub `fetch`, each test naming the pitfall it holds. `repo.rs` the whole repository around the
+  client (`repo_files`): `repo/package.rs` `package.json`, the TypeScript configs and the
+  license, `repo/texts.rs` the scripts, CI, release-please and the repository's `AGENTS.md`,
+  `repo/mock.rs` the mock server's routes, `repo/suite.rs` a test per resource, `repo/readme.rs`
+  `README.md` and `api.md`, `repo/example.rs` a schema's example value, `repo/lock.rs`
+  `.flowapi/lock.json` (the shape the `sdk-anything` plugin reads); `repo/files/` the texts printed
+  as they are (scripts, `server.mjs`, the licenses); `sha256.rs` our own SHA-256.
+  `tests/repo/<case>/` the repository of each client case but its `src/`, kept (`--test repo`).
 - `crates/flowapi-cli`: the `flowapi` command, all of flowapi's I/O. `src/sdk.rs` the subcommands
-  put before the path (`summary`, `config draft|schema|check`; `tests/sdk_cli.rs`).
+  put before the path (`summary`, `config draft|schema|check`; `tests/sdk_cli.rs`);
+  `src/generate.rs` `generate`, `generate/plan.rs` what it changes against the lock and the disk,
+  `generate/apply.rs` the writes, staged first (`tests/generate_cli.rs`).
 - `crates/flowapi-yaml`: a description's text as the core reads it, shared by the command and the
   WebAssembly module: which document is YAML (`is_yaml`), YAML 1.2 read into JSON with each node's
   YAML place (`reader.rs`, `saphyr-parser`), and the line and column of an offset. No I/O (G5).
@@ -118,6 +127,8 @@ cargo test -p flowapi-sdk --test config                # also --test schema, dra
 cargo test -p flowapi-sdk --test client                # the clients kept in tests/client/ (FLOWAPI_BLESS=1)
 node crates/flowapi-sdk/tests/client.mjs               # them type-checked and run against a stub fetch
 cargo test -p flowapi-cli --test sdk_cli               # summary and config as the command runs them
+cargo test -p flowapi-sdk --test repo                  # the repositories kept in tests/repo/ (FLOWAPI_BLESS=1)
+cargo test -p flowapi-cli --test generate_cli          # generate's writing rules as the command runs them
 node crates/flowapi-sdk/tests/tsc.mjs                  # them type-checked after --sdk; after cargo build --release
 cargo run --release -p flowapi-cli -- <description.json> -o types.ts
 bench/run.sh                          # the benchmarks, then held to bench/budgets.json

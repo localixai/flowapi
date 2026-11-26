@@ -7,9 +7,9 @@
 //! operation through the runtime (`client/resources.rs`). No I/O (G5): the files are returned.
 
 mod entry;
-mod resources;
+pub(crate) mod resources;
 
-use crate::config::{Issue, checked, issue::Issues};
+use crate::config::{Checked, Issue, checked, issue::Issues};
 use crate::ops::Ops;
 use crate::words;
 use flowapi::{Diagnostics, Documents, File, Program, Severity, Target};
@@ -50,12 +50,23 @@ pub struct Generated {
 /// JSON text. Nothing is printed when the config has an error: `issues` says what to change.
 #[must_use]
 pub fn client_files(docs: &Documents<'_>, program: &Program<'_>, config: &str) -> Generated {
-    let checked = checked(docs, config);
+    let mut checked = checked(docs, config);
+    let issues = std::mem::take(&mut checked.issues);
+    print(docs, program, issues, &checked)
+}
+
+/// [`client_files`] of a config read and checked already; `issues` are the check's.
+pub(crate) fn print(
+    docs: &Documents<'_>,
+    program: &Program<'_>,
+    issues: Vec<Issue>,
+    checked: &Checked,
+) -> Generated {
     let (service, diagnostics) = crate::read(docs, program);
     let mut out = Generated {
         files: Vec::new(),
         diagnostics,
-        issues: checked.issues,
+        issues,
     };
     let (Some(ops), false) = (
         Ops::read(docs).0,
@@ -113,7 +124,7 @@ fn file(path: &str, text: String) -> File {
 }
 
 /// `"METHOD /path"`, the method in upper case.
-fn route(op: &flowapi::spec::Operation) -> String {
+pub(crate) fn route(op: &flowapi::spec::Operation) -> String {
     format!("{} {}", op.method.to_ascii_uppercase(), op.path)
 }
 
