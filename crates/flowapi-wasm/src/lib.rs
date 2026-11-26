@@ -1,6 +1,7 @@
 //! flowapi compiled to WebAssembly, for the npm package `@localix-ai/flowapi`: the core and the
 //! TypeScript target, the same code the `flowapi` command runs, behind an ABI of four exports
-//! (`abi`). A request and its answer are JSON text in linear memory; the host reads the files
+//! (`abi`). With the `sdk` feature, which `crates/flowapi-wasm-sdk` builds as the package's second
+//! module, also the SDK layer's commands about a config (`sdk`), a fifth export. A request and its answer are JSON text in linear memory; the host reads the files
 //! and writes the output, as the CLI does (G5). A document's text is JSON or YAML, told apart and
 //! read into JSON by `flowapi_yaml`, the crate the command reads its files with.
 //!
@@ -24,6 +25,11 @@
 pub mod abi;
 mod answer;
 mod request;
+#[cfg(feature = "sdk")]
+mod sdk;
+
+#[cfg(feature = "sdk")]
+pub use sdk::sdk;
 
 use answer::Found;
 use flowapi::json::{self, Value};
@@ -56,15 +62,10 @@ pub fn generate(request: &[u8]) -> String {
         Ok(r) => r,
         Err(message) => return answer::refused(&message),
     };
-    // Every document read into JSON before the core is given one, as the command reads every
-    // file first: the same document is the first refused.
-    let mut sources = Vec::with_capacity(documents.len());
-    for doc in documents {
-        match Text::read(&doc.uri, doc.text) {
-            Ok(text) => sources.push(Source { uri: doc.uri, text }),
-            Err(e) => return answer::write(&[], &[unread(&doc.uri, &e)]),
-        }
-    }
+    let sources = match read_all(documents) {
+        Ok(s) => s,
+        Err((uri, e)) => return answer::write(&[], &[unread(&uri, &e)]),
+    };
     let mut docs = Documents::new();
     for source in &sources {
         if let Err(d) = docs.add(source.uri.as_ref(), source.text.json()) {
@@ -77,6 +78,21 @@ pub fn generate(request: &[u8]) -> String {
     let diags: Vec<Found<'_>> = diags.all().iter().map(|d| found(&sources, d)).collect();
     let files = output.map(|o| o.files).unwrap_or_default();
     answer::write(&files, &diags)
+}
+
+/// Every document read into JSON before the core is given one, as the command reads every file
+/// first: the same document is the first refused, with its URI and why.
+fn read_all(
+    documents: Vec<request::Doc<'_>>,
+) -> Result<Vec<Source<'_>>, (Cow<'_, str>, flowapi_yaml::Error)> {
+    let mut sources = Vec::with_capacity(documents.len());
+    for doc in documents {
+        match Text::read(&doc.uri, doc.text) {
+            Ok(text) => sources.push(Source { uri: doc.uri, text }),
+            Err(e) => return Err((doc.uri, e)),
+        }
+    }
+    Ok(sources)
 }
 
 /// A diagnostic with its document's URI and its place as a line and a column, counted as the

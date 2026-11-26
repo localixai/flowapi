@@ -85,6 +85,9 @@ From npm, the same generator compiled to WebAssembly, reading JSON and YAML alik
 npx @localix-ai/flowapi openapi.json -o types.ts
 ```
 
+It has the commands for an SDK's config too (`summary`, `config draft|schema|check`, below), with
+the Rust command's output byte for byte.
+
 The Rust command, built from a release tag:
 
 ```sh

@@ -65,10 +65,15 @@ work here.
 - `crates/flowapi-wasm`: the core, the TypeScript target and the YAML reader as a WebAssembly
   module for the npm package, behind four exports of its own (`src/abi.rs`: JSON in and out
   through linear memory, no wasm-bindgen); the one crate with `unsafe` (`deny`, not `forbid`;
-  `tests/lints.rs`).
-- `npm/`: `@localix-ai/flowapi`, the module with a typed API (`src/index.ts`), the files a
-  description reaches read from disk (`src/node.ts`) and the `flowapi` command (`src/cli.ts`);
-  JSON and YAML. `bun run check` in `npm/` builds it and holds it to the Rust command byte for byte.
+  `tests/lints.rs`). Its `sdk` feature adds the SDK layer's config commands (`src/sdk.rs`, the
+  export `flowapi_sdk`).
+- `crates/flowapi-wasm-sdk`: the package's second module, `flowapi-wasm` with `sdk` linked into
+  a module of its own (no code, no `unsafe`; `tests/sdk.rs`), so the generator's module stays
+  without it. Built in a cargo run of its own: with `-p flowapi-wasm` it would turn `sdk` on.
+- `npm/`: `@localix-ai/flowapi`, the modules with a typed API (`src/index.ts`, its requests in
+  `src/request.ts`), the files a description reaches read from disk (`src/node.ts`) and the
+  `flowapi` command (`src/cli.ts`; `summary` and `config` in `src/sdk-cli.ts`); JSON and YAML.
+  `bun run check` in `npm/` builds it and holds it to the Rust command byte for byte.
 - `conformance/`: the oracles that hold flowapi to the specifications
   ([conformance/README.md](conformance/README.md)): the official suites' pinned copies
   (`suites/`), the suite oracle (`suite/`, O3; `suite-rust/` for the Rust target), the same

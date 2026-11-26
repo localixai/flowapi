@@ -52,8 +52,16 @@ name = "flowapi-wasm"
 version = "0.1.0"
 dependencies = [
  "flowapi",
+ "flowapi-sdk",
  "flowapi-ts",
  "flowapi-yaml",
+]
+
+[[package]]
+name = "flowapi-wasm-sdk"
+version = "0.1.0"
+dependencies = [
+ "flowapi-wasm",
 ]
 
 [[package]]

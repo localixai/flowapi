@@ -1,7 +1,8 @@
 #!/bin/sh
 # The repository's checks from one entry point: formatting, the lints, the tests (the
 # repository's rules, the JSON reader on JSONTestSuite, the TypeScript kept for each case), a
-# WebAssembly build of the core and the TypeScript target (which proves they hold no I/O), and
+# WebAssembly build of the core and the TypeScript target (which proves they hold no I/O) and of
+# the npm package's second module (the SDK layer's config commands), and
 # the oracles: O3 on the JSON Schema Test Suite (soundness 100%, precision never lower) and the
 # requirements ledger's report (never stale). The benchmarks are not among them: bench/run.sh.
 #
@@ -13,6 +14,8 @@ step cargo fmt --check
 step cargo clippy --locked --all-targets -- -D warnings
 step cargo test --locked
 step cargo build --locked --release -p flowapi -p flowapi-ts -p flowapi-wasm --target wasm32-unknown-unknown
+# The second module apart: built in one run with the first, it would turn on flowapi-wasm's `sdk`.
+step cargo build --locked --release -p flowapi-wasm-sdk --target wasm32-unknown-unknown
 for crate in bench conformance/suite conformance/suite-rust conformance/ledger conformance/props; do
     step cargo fmt --check --manifest-path "$crate/Cargo.toml"
 done

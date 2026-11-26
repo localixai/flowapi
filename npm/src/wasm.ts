@@ -9,10 +9,11 @@ interface Exports {
   flowapi_free(ptr: number, len: number): void
   flowapi_generate(ptr: number, len: number): number
   flowapi_references(ptr: number, len: number): number
+  flowapi_sdk(ptr: number, len: number): number
 }
 
 /** An export that takes a request and returns an answer. */
-export type Call = 'flowapi_generate' | 'flowapi_references'
+export type Call = 'flowapi_generate' | 'flowapi_references' | 'flowapi_sdk'
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder('utf-8', { fatal: true })

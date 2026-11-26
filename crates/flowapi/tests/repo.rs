@@ -44,6 +44,7 @@ fn all_sources() -> Vec<PathBuf> {
         "flowapi-cli",
         "flowapi-rust",
         "flowapi-wasm",
+        "flowapi-wasm-sdk",
         "flowapi-yaml",
         "flowapi-sdk",
     ]

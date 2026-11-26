@@ -3,10 +3,21 @@
 import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { formatDiagnostic, generate, load, type Diagnostic } from '../dist/index.js'
+import {
+  configCheck,
+  configDraft,
+  configSchema,
+  formatDiagnostic,
+  generate,
+  load,
+  loadSdk,
+  summary,
+  type Diagnostic,
+} from '../dist/index.js'
 import { ReadError, generateFile, readDescription } from '../dist/node.js'
 
 const root = join(import.meta.dir, '..', '..')
+const dist = join(import.meta.dir, '..', 'dist')
 const petstore = join(root, 'crates', 'flowapi-cli', 'tests', 'yaml', 'petstore.json')
 
 describe('generate', () => {
@@ -118,5 +129,64 @@ describe('readDescription', () => {
 
   test('a missing file is a ReadError', async () => {
     expect(readDescription(join(root, 'missing.json'))).rejects.toBeInstanceOf(ReadError)
+  })
+})
+
+describe('the commands about an SDK\'s config', () => {
+  const spec = join(root, 'crates', 'flowapi-sdk', 'tests', 'config', 'spec.json')
+  const description = { uri: 'openapi.json', text: readFileSync(spec, 'utf8') }
+  const refs = join(root, 'crates', 'flowapi-sdk', 'tests', 'config', 'refs.yml')
+
+  test('only the second module has the SDK commands', () => {
+    const exports = (file: string) =>
+      WebAssembly.Module.exports(new WebAssembly.Module(readFileSync(join(dist, file)))).map(
+        (e) => e.name,
+      )
+    expect(exports('flowapi.wasm')).not.toContain('flowapi_sdk')
+    expect(exports('flowapi-sdk.wasm')).toContain('flowapi_sdk')
+    expect(exports('flowapi-sdk.wasm')).toEqual(expect.arrayContaining(exports('flowapi.wasm')))
+  })
+
+  test('summary: compact JSON, filtered; null for what is not a description', async () => {
+    const all = await summary(description)
+    expect(all.diagnostics).toEqual([])
+    expect(JSON.parse(all.text ?? '')).toHaveProperty('info')
+    const owners = await summary(description, { tag: 'owners' })
+    expect(owners.text).toContain('"id":"listOwners"')
+    expect((await summary(description, { maxBytes: 500 })).text).toContain('"truncated"')
+    expect(await summary('{"type": "string"}')).toEqual({ text: null, diagnostics: [] })
+    const bad = await summary({ uri: 'bad.yaml', text: 'a: 1\nb:\n  c: 2\n d: 3\n' })
+    expect(bad.text).toBeNull()
+    expect(bad.diagnostics[0]).toMatchObject({ code: 'yaml.syntax', uri: 'bad.yaml', line: 4 })
+    const refused = await summary(description, { maxBytes: 1.5 })
+    expect(refused.diagnostics[0]).toMatchObject({ code: 'flowapi.request' })
+  })
+
+  test('a draft names its spec, passes its check, and the schema is the kept one', async () => {
+    const draft = await configDraft(description, '../openapi.json')
+    expect(draft.text).toStartWith('# A first sdk-anything.yml')
+    expect(draft.text).toContain('spec: "../openapi.json"')
+    expect((await configDraft(description)).text).toContain('spec: openapi.json')
+    const checked = await configCheck({ uri: 'sdk.yml', text: draft.text ?? '' }, description)
+    expect(checked).toMatchObject({ ok: true, errors: 0, issues: [], text: '', diagnostics: [] })
+    const kept = readFileSync(join(root, 'crates', 'flowapi-sdk', 'tests', 'schema.json'), 'utf8')
+    expect(await configSchema()).toBe(kept)
+  })
+
+  test('a check gives every issue as data, text and JSON, at the YAML lines', async () => {
+    const flowapi = await loadSdk()
+    const config = { uri: 'refs.yml', text: readFileSync(refs, 'utf8') }
+    expect(flowapi.configSpec(config)).toEqual({ text: 'spec.json', diagnostics: [] })
+    const found = flowapi.configCheck(config, description)
+    expect(found.ok).toBe(false)
+    expect(found.errors).toBeGreaterThan(1)
+    expect(found.issues).toContainEqual(
+      expect.objectContaining({ code: 'config.op.unknown', line: 10, column: 13 }),
+    )
+    expect(found.text).toContain('  at refs.yml:10:13 (/resources/pets/methods/list)')
+    expect(JSON.parse(found.json ?? '')).toMatchObject({ ok: false, errors: found.errors })
+    const unread = flowapi.configCheck({ uri: 'c.yml', text: 'a:\n  b: 1\n c: 2\n' })
+    expect(unread).toMatchObject({ ok: false, text: null, json: null, issues: [] })
+    expect(unread.diagnostics[0]).toMatchObject({ code: 'yaml.syntax', uri: 'c.yml' })
   })
 })

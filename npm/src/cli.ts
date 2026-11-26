@@ -1,14 +1,20 @@
 #!/usr/bin/env node
 // The `flowapi` command of the npm package: the Rust command's flags, output and exit codes
-// (crates/flowapi-cli/src/main.rs), over the WebAssembly module; JSON and YAML, read alike.
+// (crates/flowapi-cli/src/main.rs), over the WebAssembly module; JSON and YAML, read alike. The
+// commands about an SDK's config, `summary` and `config`, are in `sdk-cli.ts`.
 
 import { readFileSync, writeFileSync } from 'node:fs'
 import { formatDiagnostic, load } from './index.ts'
 import { readDescription } from './node.ts'
+import { parseConfig, parseSummary, run, Usage, type Sdk } from './sdk-cli.ts'
 
 const HELP = `flowapi: types from an OpenAPI description or a JSON Schema
 
 Usage: flowapi <description> [-o <types.ts>] [--sdk] [--quiet]
+       flowapi summary <description> [--tag <tag>] [--path <prefix>] [--max-bytes <n>]
+       flowapi config draft <description> [-o <sdk-anything.yml>]
+       flowapi config schema
+       flowapi config check <sdk-anything.yml> [--spec <description>] [--json]
 
   -o, --output <file>   where to write the types (standard output by default)
       --sdk             also a function per operation that writes its request and one that
@@ -19,7 +25,18 @@ Usage: flowapi <description> [-o <types.ts>] [--sdk] [--quiet]
 
 The description is Swagger 2.0, OpenAPI 3.0, 3.1 or 3.2, or a JSON Schema (2020-12 when it names no
 $schema), in JSON or YAML (.yaml, .yml, or any text not opening with { or [). Files its
-$refs name by a relative path are read too.`
+$refs name by a relative path are read too.
+
+For an SDK's config, sdk-anything.yml, which an agent writes:
+  summary         the description in compact JSON: operations with their parameters, media
+                  types and the pagination they look like they have; over --max-bytes (60000)
+                  the tags alone, to be read on by --tag or --path
+  config draft    a first config, every operation in a resource, as YAML
+  config schema   the config's format, as JSON Schema
+  config check    every issue of a config against its description (its \`spec\`, relative to the
+                  config, or --spec): text, or JSON with --json; exits 1 on an error
+
+A description named \`summary\` or \`config\` is read by its path: \`flowapi ./summary\`.`
 
 interface Generate {
   readonly input: string
@@ -28,9 +45,11 @@ interface Generate {
   readonly sdk: boolean
 }
 
-type Command = 'help' | 'version' | Generate
+type Command = 'help' | 'version' | Generate | Sdk
 
 function parse(args: readonly string[]): Command {
+  if (args[0] === 'summary') return parseSummary(args.slice(1))
+  if (args[0] === 'config') return parseConfig(args.slice(1))
   let input: string | undefined
   let output: string | undefined
   let quiet = false
@@ -51,8 +70,6 @@ function parse(args: readonly string[]): Command {
   if (input === undefined) throw new Usage('a description to read')
   return { input, output, quiet, sdk }
 }
-
-class Usage extends Error {}
 
 function version(): string {
   const manifest = readFileSync(new URL('../package.json', import.meta.url), 'utf8')
@@ -76,6 +93,7 @@ async function main(args: readonly string[]): Promise<number> {
     process.stdout.write(`flowapi ${version()}\n`)
     return 0
   }
+  if ('kind' in command) return run(command)
   let documents
   try {
     documents = await readDescription(command.input)

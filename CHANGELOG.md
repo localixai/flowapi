@@ -43,6 +43,12 @@
   pagination fields missing from the parameters or the response schema or of the wrong type,
   `auth`, environments and the README's methods. It exits 1 on an error. The old form,
   `flowapi <description>`, is unchanged; a description named `summary` is read as `./summary`.
+- The npm package runs the same four commands, `npx -y @localix-ai/flowapi summary|config …`,
+  with the Rust command's arguments, output and exit codes, byte for byte, and gives them as
+  functions: `summary`, `configDraft`, `configSchema` and `configCheck` (issues as data, as text
+  and as `--json` prints them), and `loadSdk()` with them synchronous and `configSpec`. They are a
+  second module, `flowapi-sdk.wasm`, loaded only when one of them is first used; the generator's
+  module is as it was.
 - The TypeScript SDK reads binary responses as bytes, as the Rust SDK does: `<op>Response(status,
   headers, body)` takes `body: string | Uint8Array` (it took a `string`) and reads it by the type
   sent: JSON parsed, `text/*` a `string`, any other a `Uint8Array` (an `application/xml` or

@@ -61,3 +61,56 @@ export interface Result {
   readonly files: readonly File[]
   readonly diagnostics: readonly Diagnostic[]
 }
+
+/** Which operations `summary` gives, as the command's `--tag`, `--path` and `--max-bytes`. */
+export interface SummaryFilter {
+  /** Only the operations with this tag. */
+  readonly tag?: string
+  /** Only the operations whose path starts so. */
+  readonly path?: string
+  /** Over this many bytes, the tags alone with their counts, to be read on by `tag` or `path`.
+   * 60000 by default. */
+  readonly maxBytes?: number
+}
+
+/**
+ * What `summary` and `configDraft` give: the text the command prints, `null` when the documents
+ * are not an OpenAPI or Swagger description; or, with no text, the document that could not be
+ * read.
+ */
+export interface Output {
+  readonly text: string | null
+  readonly diagnostics: readonly Diagnostic[]
+}
+
+/** One issue of a config, as `config check --json` gives it. */
+export interface Issue {
+  readonly severity: Severity
+  /** The rule: `config.<what>`. */
+  readonly code: string
+  /** The member it is about, as a JSON Pointer into the config. */
+  readonly pointer: string
+  /** The line, from 1: in a YAML config, the YAML's. */
+  readonly line: number
+  /** The column, in characters, from 1. */
+  readonly column: number
+  readonly message: string
+  /** What to write instead (the closest operation for a typo), where one is known. */
+  readonly hint?: string
+}
+
+/**
+ * What `configCheck` finds. `text` is the issues as `config check` prints them (empty when there
+ * are none) and `json` as `config check --json` prints them; both are `null`, and `ok` false,
+ * when the config or a document could not be read (`diagnostics` says why).
+ */
+export interface Check {
+  /** No issue is an error. */
+  readonly ok: boolean
+  readonly errors: number
+  readonly warnings: number
+  readonly issues: readonly Issue[]
+  readonly text: string | null
+  readonly json: string | null
+  readonly diagnostics: readonly Diagnostic[]
+}

@@ -7,7 +7,7 @@
 # compared with and the suites never reach a build.
 [workspace]
 resolver = "3"
-members = ["crates/flowapi", "crates/flowapi-ts", "crates/flowapi-cli", "crates/flowapi-rust", "crates/flowapi-wasm", "crates/flowapi-yaml", "crates/flowapi-sdk"]
+members = ["crates/flowapi", "crates/flowapi-ts", "crates/flowapi-cli", "crates/flowapi-rust", "crates/flowapi-wasm", "crates/flowapi-wasm-sdk", "crates/flowapi-yaml", "crates/flowapi-sdk"]
 exclude = ["bench", "conformance"]
 
 [workspace.package]

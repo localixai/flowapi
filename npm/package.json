@@ -48,6 +48,7 @@
       "default": "./dist/node.js"
     },
     "./flowapi.wasm": "./dist/flowapi.wasm",
+    "./flowapi-sdk.wasm": "./dist/flowapi-sdk.wasm",
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -59,7 +60,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "bun test",
     "size": "bun scripts/size.ts",
-    "check": "bun run build && bun run typecheck && bun run size && publint --strict && attw --pack . --profile esm-only --exclude-entrypoints flowapi.wasm && bun test",
+    "check": "bun run build && bun run typecheck && bun run size && publint --strict && attw --pack . --profile esm-only --exclude-entrypoints flowapi.wasm flowapi-sdk.wasm && bun test",
     "prepack": "bun run build"
   },
   "devDependencies": {
