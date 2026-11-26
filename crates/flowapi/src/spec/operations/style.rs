@@ -1,7 +1,9 @@
 //! How a parameter or a header is serialized: 3.x's `style`, `explode`, `allowReserved` and
 //! `content`, with the spec's defaults per `in`; Swagger 2.0's `collectionFormat` mapped onto the
 //! same styles (3.2, "Style Values": `csv` is `simple` or `form` without `explode`, `multi` is
-//! `form` with it, `ssv` is `spaceDelimited`, `pipes` is `pipeDelimited`).
+//! `form` with it, `ssv` is `spaceDelimited`, `pipes` is `pipeDelimited`; `tsv`, which no 3.x
+//! style is, is `tabDelimited`), in each location 2.0 allows it, and an Items Object's own for
+//! the arrays inside the value.
 
 use super::reader::Reader;
 use super::{Location, Serialization, Style};
@@ -60,10 +62,12 @@ impl Reader<'_, '_> {
             explode,
             allow_reserved: self.flag(doc, node, "allowReserved"),
             media_type,
+            nested: Vec::new(),
         }
     }
 
-    /// Swagger 2.0: `collectionFormat` (default `csv`) as a 3.x style.
+    /// Swagger 2.0: `collectionFormat` (default `csv`) as a 3.x style, and the formats of the
+    /// arrays inside the value: each `items` that is an array, by its own `collectionFormat`.
     fn collection_format(
         &self,
         doc: DocId,
@@ -71,35 +75,60 @@ impl Reader<'_, '_> {
         location: Location,
         diags: &mut Diagnostics,
     ) -> Serialization {
-        let default = default_style(location);
-        let Some(t) = self.tree(doc) else {
-            return plain(default);
-        };
-        let found = t.get(node, "collectionFormat");
-        let written = found.and_then(|n| t.as_str(n));
-        let (style, explode) = match (written.as_deref(), location) {
-            (None | Some("csv"), _) => (default, false),
-            (Some("multi"), Location::Query) => (Style::Form, true),
-            (Some("ssv"), Location::Query) => (Style::SpaceDelimited, false),
-            (Some("pipes"), Location::Query) => (Style::PipeDelimited, false),
-            (Some(other), _) => {
-                let at = self.docs.loc(doc, found.unwrap_or(node));
-                diags.warn(
-                    "swagger.collectionFormat",
-                    at,
-                    format!(
-                        "`collectionFormat` {other} has no 3.x style in `{}`: written as `csv`",
-                        location.name()
-                    ),
-                );
-                (default, false)
-            }
-        };
+        let (style, explode) = self.format(doc, node, Some(location), diags);
+        let mut nested = Vec::new();
+        let mut at = node;
+        while let Some(items) = self.tree(doc).and_then(|t| {
+            let items = t.get(at, "items")?;
+            let ty = t.get(items, "type").and_then(|n| t.as_str(n));
+            (ty.as_deref() == Some("array")).then_some(items)
+        }) {
+            nested.push(self.format(doc, items, None, diags).0);
+            at = items;
+        }
         Serialization {
             style,
             explode,
             allow_reserved: false,
             media_type: None,
+            nested,
+        }
+    }
+
+    /// The style a parameter's (in `location`) or an Items Object's `collectionFormat` names,
+    /// and whether it explodes: `csv` is the location's default unexploded (`Simple` in an
+    /// Items Object), `multi` is `form` exploded where 2.0 allows it (a query). Any other value
+    /// is reported and read as `csv`.
+    fn format(
+        &self,
+        doc: DocId,
+        node: NodeId,
+        location: Option<Location>,
+        diags: &mut Diagnostics,
+    ) -> (Style, bool) {
+        let csv = location.map_or(Style::Simple, default_style);
+        let found = self.tree(doc).and_then(|t| t.get(node, "collectionFormat"));
+        let written = found.and_then(|n| self.tree(doc)?.as_str(n));
+        match written.as_deref() {
+            None | Some("csv") => (csv, false),
+            Some("ssv") => (Style::SpaceDelimited, false),
+            Some("tsv") => (Style::TabDelimited, false),
+            Some("pipes") => (Style::PipeDelimited, false),
+            Some("multi") if location == Some(Location::Query) => (Style::Form, true),
+            Some(other) => {
+                let place = location.map_or_else(
+                    || String::from("an Items Object"),
+                    |l| format!("a parameter in `{}`", l.name()),
+                );
+                diags.warn(
+                    "swagger.collectionFormat",
+                    self.docs.loc(doc, found.unwrap_or(node)),
+                    format!(
+                        "`collectionFormat` {other} is not one {place} takes: written as `csv`"
+                    ),
+                );
+                (csv, false)
+            }
         }
     }
 
@@ -129,6 +158,7 @@ fn plain(style: Style) -> Serialization {
         explode: matches!(style, Style::Form | Style::Cookie),
         allow_reserved: false,
         media_type: None,
+        nested: Vec::new(),
     }
 }
 

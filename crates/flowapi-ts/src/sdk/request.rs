@@ -160,18 +160,34 @@ fn expand(p: &Param) -> String {
     } else {
         lit(&percent(&p.name))
     };
+    // A delimited style is `form` in a query and `simple` elsewhere (Swagger 2.0's path and
+    // header) but for what joins an unexploded array: its delimiter, encoded in a URI.
+    let delimited = |join| match p.location {
+        Location::Query => ("", "&", true, "=", join),
+        Location::Path | Location::Header | Location::QueryString | Location::Cookie => {
+            ("", ",", false, "", join)
+        }
+    };
     let (first, sep, named, ifemp, join) = match style {
         Style::Simple => ("", ",", false, "", ","),
         Style::Label => (".", ".", false, "", ","),
         Style::Matrix => (";", ";", true, "", ","),
         Style::Form => ("", "&", true, "=", ","),
-        Style::SpaceDelimited => ("", "&", true, "=", "%20"),
-        Style::PipeDelimited => ("", "&", true, "=", "%7C"),
+        Style::SpaceDelimited | Style::PipeDelimited | Style::TabDelimited => {
+            delimited(delimiter(style, raw))
+        }
         Style::Cookie => ("", "; ", true, "=", ","),
         Style::DeepObject => return format!("$deep({}, {name}, {enc})", finite(p)),
     };
+    // Swagger 2.0: the joins of the arrays inside the value, outermost first.
+    let nested = if s.nested.is_empty() {
+        String::new()
+    } else {
+        let joins: Vec<String> = s.nested.iter().map(|&n| lit(delimiter(n, raw))).collect();
+        format!(", [{}]", joins.join(", "))
+    };
     format!(
-        "$x({value}, {name}, {}, {}, {named}, {}, {}, {}, {enc}, {}, {})",
+        "$x({value}, {name}, {}, {}, {named}, {}, {}, {}, {enc}, {}, {}{nested})",
         lit(first),
         lit(sep),
         lit(ifemp),
@@ -180,6 +196,28 @@ fn expand(p: &Param) -> String {
         lit(p.location.name()),
         lit(&p.name)
     )
+}
+
+/// What joins an unexploded array's items in a style: a comma, or a delimited style's
+/// delimiter, percent-encoded unless the value is written raw (a header).
+fn delimiter(style: Style, raw: bool) -> &'static str {
+    match (style, raw) {
+        (Style::SpaceDelimited, true) => " ",
+        (Style::SpaceDelimited, false) => "%20",
+        (Style::PipeDelimited, true) => "|",
+        (Style::PipeDelimited, false) => "%7C",
+        (Style::TabDelimited, true) => "\t",
+        (Style::TabDelimited, false) => "%09",
+        (
+            Style::Simple
+            | Style::Label
+            | Style::Matrix
+            | Style::Form
+            | Style::DeepObject
+            | Style::Cookie,
+            _,
+        ) => ",",
+    }
 }
 
 /// One parameter's statement: added to the query, the cookie header or the headers. A path

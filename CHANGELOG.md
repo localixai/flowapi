@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Swagger 2.0's `collectionFormat` is written in every location 2.0 allows it: `ssv`, `tsv` and
+  `pipes` in a path and a header too (the delimiter percent-encoded in a URI, as written in a
+  header), and `tsv` in a query (`a%09b`), which was written as `csv` with a warning. An Items
+  Object's own `collectionFormat` joins the arrays inside an array, level by level
+  (`spec::Serialization::nested`, `spec::Style::TabDelimited`), in both SDKs. `multi` outside a
+  query, or a format 2.0 does not have, is still `csv` with a warning.
 - The SDK's client retries and redirects as RFC 9110 says. A request whose method is
   not idempotent (POST, PATCH, QUERY; 9.2.2) is not retried on its own unless the server answers
   `x-should-retry: true` or it carries an idempotency key; `defaults.idempotency_key` in

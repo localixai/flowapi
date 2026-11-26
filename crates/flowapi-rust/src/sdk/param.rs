@@ -129,6 +129,10 @@ pub(super) fn access(locs: &[(Field<'_>, Vec<Field<'_>>)], p: &Param) -> Option<
 pub(super) fn call(p: &Param, v: &str) -> String {
     let s = &p.serialization;
     let raw = p.location == Location::Header || s.style == Style::Cookie;
+    let query = p.location == Location::Query;
+    // A delimited style outside a query (Swagger 2.0's path and header) is `simple` joined by
+    // its delimiter; the arrays inside a 2.0 value are joined by their own, outermost first.
+    let mut more = String::new();
     let shape = if s.media_type.is_some() {
         match p.location {
             Location::Query | Location::Cookie => "Form",
@@ -140,12 +144,25 @@ pub(super) fn call(p: &Param, v: &str) -> String {
             Style::Label => "Label",
             Style::Matrix => "Matrix",
             Style::Form => "Form",
-            Style::SpaceDelimited => "SpaceDelimited",
-            Style::PipeDelimited => "PipeDelimited",
+            Style::SpaceDelimited if query => "SpaceDelimited",
+            Style::PipeDelimited if query => "PipeDelimited",
+            Style::TabDelimited if query => "TabDelimited",
+            Style::SpaceDelimited | Style::PipeDelimited | Style::TabDelimited => {
+                let _ = write!(more, ".joined({})", literal(delimiter(s.style, raw)));
+                "Simple"
+            }
             Style::DeepObject => "Deep",
             Style::Cookie => "Cookie",
         }
     };
+    if !s.nested.is_empty() {
+        let joins: Vec<String> = s
+            .nested
+            .iter()
+            .map(|&n| literal(delimiter(n, raw)))
+            .collect();
+        let _ = write!(more, ".nested(&[{}])", joins.join(", "));
+    }
     let enc = if raw {
         "Raw"
     } else if s.allow_reserved {
@@ -159,7 +176,7 @@ pub(super) fn call(p: &Param, v: &str) -> String {
         percent(&p.name)
     });
     let style = format!(
-        "const {{ sdk::Style::new(sdk::Shape::{shape}, {}, sdk::Enc::{enc}) }}",
+        "const {{ sdk::Style::new(sdk::Shape::{shape}, {}, sdk::Enc::{enc}){more} }}",
         s.explode
     );
     let at = format!(
@@ -189,5 +206,27 @@ pub(super) fn call(p: &Param, v: &str) -> String {
                 )
             }
         }
+    }
+}
+
+/// What joins an unexploded array's items in a style: a comma, or a delimited style's
+/// delimiter, percent-encoded unless the value is written raw (a header).
+fn delimiter(style: Style, raw: bool) -> &'static str {
+    match (style, raw) {
+        (Style::SpaceDelimited, true) => " ",
+        (Style::SpaceDelimited, false) => "%20",
+        (Style::PipeDelimited, true) => "|",
+        (Style::PipeDelimited, false) => "%7C",
+        (Style::TabDelimited, true) => "\t",
+        (Style::TabDelimited, false) => "%09",
+        (
+            Style::Simple
+            | Style::Label
+            | Style::Matrix
+            | Style::Form
+            | Style::DeepObject
+            | Style::Cookie,
+            _,
+        ) => ",",
     }
 }

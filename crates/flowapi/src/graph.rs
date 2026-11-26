@@ -82,7 +82,7 @@ pub struct Type<'t> {
 impl Type<'_> {
     /// A type with only a shape.
     #[must_use]
-    pub fn of(kind: Kind<'_>) -> Type<'_> {
+    pub const fn of(kind: Kind<'_>) -> Type<'_> {
         Type {
             kind,
             origin: None,
@@ -170,13 +170,4 @@ impl<'t> Graph<'t> {
     }
 }
 
-static ANY: Type<'static> = Type {
-    kind: Kind::Any,
-    origin: None,
-    title: None,
-    description: None,
-    lossy: Vec::new(),
-    deprecated: false,
-    read_only: false,
-    write_only: false,
-};
+static ANY: Type<'static> = Type::of(Kind::Any);

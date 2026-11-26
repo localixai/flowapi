@@ -228,18 +228,27 @@ impl<'t> Reader<'_, 't> {
                 diags.warn("parameter.token", self.docs.loc(pd, p), message);
                 continue;
             }
-            let required = location == Location::Path || self.flag(pd, p, "required");
-            let deprecated = self.flag(pd, p, "deprecated");
-            out.push(Param {
-                name: name.into_owned(),
-                location,
-                required,
-                deprecated,
-                schema: self.value_schema(pd, p, diags),
-                serialization: self.serialization(pd, p, location, diags),
-            });
+            out.push(self.param(name.into_owned(), location, (pd, p), diags));
         }
         Some(out)
+    }
+
+    /// The parameter or the header at `(doc, node)`, named `name` and sent in `location`.
+    pub(super) fn param(
+        &self,
+        name: String,
+        location: Location,
+        (doc, node): (DocId, NodeId),
+        diags: &mut Diagnostics,
+    ) -> Param {
+        Param {
+            required: location == Location::Path || self.flag(doc, node, "required"),
+            deprecated: self.flag(doc, node, "deprecated"),
+            schema: self.value_schema(doc, node, diags),
+            serialization: self.serialization(doc, node, location, diags),
+            name,
+            location,
+        }
     }
 
     pub(super) fn content(&self, doc: DocId, owner: NodeId, diags: &mut Diagnostics) -> Vec<Media> {

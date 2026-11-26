@@ -21,7 +21,7 @@
     "scripts/lint": "780bf10052bb3fd55d3a9ccc55e428b553b1cbedd1e64e848e64c22ffdb68163",
     "scripts/mock": "e50dfc2cd67f9177e3ca7d1098d34cbb54bdb06797f770d10a8e66d7753c13a5",
     "scripts/test": "62a1d9b8fa147a3c9a5598a25d1b8c5453ebeac5e464c72ef6b051412ef4152b",
-    "src/api.ts": "9edae4b32b16209e8c8622aa977618c3dfb7b5824a9110996481919dcbd6b03f",
+    "src/api.ts": "55592a7461aee189aeb567d1dbdb35d41bd647aa33393678b936ae587a53b497",
     "src/client.ts": "a1fab8d65c33663b2f45af4f7c6ff487d13475d95b552497f0d5e44de4814cee",
     "src/core/auth.ts": "5e755a6123fcb68d573f6af1af9d06abcf8c79bc7a96924f8fe315b916883de5",
     "src/core/call.ts": "9b716346a364857728fb90fc7704d5d7b029bfea33e4e51f8e6a107b986e9bc7",

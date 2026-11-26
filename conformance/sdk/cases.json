@@ -331,30 +331,72 @@
    "calls": [{ "input": {}, "expect": { "method": "COPY", "path": "", "query": "" } }]
   },
   {
-   "name": "Swagger 2.0 collectionFormat as 3.x styles",
+   "name": "Swagger 2.0 collectionFormat in each location: csv, ssv, tsv and pipes in a path, a query and a header, multi in a query",
    "versions": ["2.0"],
-   "path": "/{p}",
+   "covers": [
+    "req: oas-2.0.parameter-object.collectionFormat — csv a,b, ssv a b, tsv a<tab>b, pipes a|b (percent-encoded in a URI, as written in a header), multi a pair per item, csv the default"
+   ],
+   "path": "/{p}/{s}/{t}/{b}",
    "parameters": [
     { "name": "p", "in": "path", "required": true, "type": "array", "items": { "type": "string" } },
-    { "name": "csv", "in": "query", "type": "array", "items": { "type": "string" } },
+    { "name": "s", "in": "path", "required": true, "type": "array", "items": { "type": "string" }, "collectionFormat": "ssv" },
+    { "name": "t", "in": "path", "required": true, "type": "array", "items": { "type": "string" }, "collectionFormat": "tsv" },
+    { "name": "b", "in": "path", "required": true, "type": "array", "items": { "type": "string" }, "collectionFormat": "pipes" },
+    { "name": "csv", "in": "query", "type": "array", "items": { "type": "string" }, "collectionFormat": "csv" },
     { "name": "multi", "in": "query", "type": "array", "items": { "type": "string" }, "collectionFormat": "multi" },
     { "name": "ssv", "in": "query", "type": "array", "items": { "type": "string" }, "collectionFormat": "ssv" },
+    { "name": "tsv", "in": "query", "type": "array", "items": { "type": "string" }, "collectionFormat": "tsv" },
     { "name": "pipes", "in": "query", "type": "array", "items": { "type": "string" }, "collectionFormat": "pipes" },
-    { "name": "X-H", "in": "header", "type": "array", "items": { "type": "string" } }
+    { "name": "X-C", "in": "header", "type": "array", "items": { "type": "string" } },
+    { "name": "X-S", "in": "header", "type": "array", "items": { "type": "string" }, "collectionFormat": "ssv" },
+    { "name": "X-T", "in": "header", "type": "array", "items": { "type": "string" }, "collectionFormat": "tsv" },
+    { "name": "X-P", "in": "header", "type": "array", "items": { "type": "string" }, "collectionFormat": "pipes" }
    ],
    "calls": [
     {
-     "input": { "path": { "p": ["a", "b"] }, "query": { "csv": ["a", "b"], "multi": ["a", "b"], "ssv": ["a", "b"], "pipes": ["a", "b"] }, "header": { "X-H": ["a", "b"] } },
-     "expect": { "path": "/a,b", "query": "csv=a,b&multi=a&multi=b&ssv=a%20b&pipes=a%7Cb", "headers": { "X-H": "a,b" } }
+     "input": {
+      "path": { "p": ["a", "b"], "s": ["a", "b"], "t": ["a", "b"], "b": ["a", "b"] },
+      "query": { "csv": ["a", "b"], "multi": ["a", "b"], "ssv": ["a", "b"], "tsv": ["a", "b"], "pipes": ["a", "b"] },
+      "header": { "X-C": ["a", "b"], "X-S": ["a", "b"], "X-T": ["a", "b"], "X-P": ["a", "b"] }
+     },
+     "expect": {
+      "path": "/a,b/a%20b/a%09b/a%7Cb",
+      "query": "csv=a,b&multi=a&multi=b&ssv=a%20b&tsv=a%09b&pipes=a%7Cb",
+      "headers": { "X-C": "a,b", "X-S": "a b", "X-T": "a\tb", "X-P": "a|b" }
+     }
     }
    ]
   },
   {
-   "name": "Swagger 2.0 tsv has no 3.x style: a warning, and csv",
+   "name": "Swagger 2.0 an Items Object's collectionFormat: the arrays inside an array joined by their own, level by level",
+   "versions": ["2.0"],
+   "covers": [
+    "req: oas-2.0.items-object.collectionFormat — an array of arrays: the outer by the parameter's format, each inner one by its Items Object's (csv by default), in a path, a query and a header"
+   ],
+   "path": "/{m}",
+   "parameters": [
+    { "name": "m", "in": "path", "required": true, "type": "array", "items": { "type": "array", "collectionFormat": "ssv", "items": { "type": "string" } } },
+    { "name": "grid", "in": "query", "type": "array", "collectionFormat": "multi", "items": { "type": "array", "collectionFormat": "pipes", "items": { "type": "array", "items": { "type": "integer" } } } },
+    { "name": "n", "in": "query", "type": "array", "items": { "type": "array", "collectionFormat": "tsv", "items": { "type": "string" } } },
+    { "name": "X-N", "in": "header", "type": "array", "collectionFormat": "pipes", "items": { "type": "array", "collectionFormat": "tsv", "items": { "type": "string" } } }
+   ],
+   "calls": [
+    {
+     "input": {
+      "path": { "m": [["a", "b"], ["c"]] },
+      "query": { "grid": [[[1, 2], [3]], [[4]]], "n": [["a", "b"], ["c"]] },
+      "header": { "X-N": [["a", "b"], ["c"]] }
+     },
+     "expect": { "path": "/a%20b,c", "query": "grid=1,2%7C3&grid=4&n=a%09b,c", "headers": { "X-N": "a\tb|c" } }
+    }
+   ]
+  },
+  {
+   "name": "Swagger 2.0 multi outside a query: a warning, and csv",
    "versions": ["2.0"],
    "warns": "swagger.collectionFormat",
-   "parameters": [{ "name": "t", "in": "query", "type": "array", "items": { "type": "string" }, "collectionFormat": "tsv" }],
-   "calls": [{ "input": { "query": { "t": ["a", "b"] } }, "expect": { "query": "t=a,b" } }]
+   "parameters": [{ "name": "X-M", "in": "header", "type": "array", "items": { "type": "string" }, "collectionFormat": "multi" }],
+   "calls": [{ "input": { "header": { "X-M": ["a", "b"] } }, "expect": { "headers": { "X-M": "a,b" } } }]
   },
   {
    "name": "a style a location does not take: a warning, and the default",

@@ -24,6 +24,17 @@ pub struct Resource {
     pub dialect: Dialect,
 }
 
+impl Resource {
+    /// The schema at `node` of the same document, read in the same base and dialect.
+    pub(crate) fn at(&self, node: NodeId) -> Self {
+        Self {
+            node,
+            base: Arc::clone(&self.base),
+            ..*self
+        }
+    }
+}
+
 /// What a reference resolved to.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Target {
@@ -89,12 +100,7 @@ impl Index {
                 .seen
                 .insert((at.doc, at.node), (Arc::clone(&at.base), at.dialect));
             for (_, node) in subschemas(tree, at.node, dialect).into_iter().rev() {
-                stack.push(Resource {
-                    doc: at.doc,
-                    node,
-                    base: Arc::clone(&base),
-                    dialect,
-                });
+                stack.push(scoped.at(node));
             }
         }
         index

@@ -104,9 +104,12 @@ const up = uploadPhotoRequest({
 ```
 
 Parameters are written as their `style`, `explode` and `allowReserved` say (`simple`, `label`,
-`matrix`, `form`, `spaceDelimited`, `pipeDelimited`, `deepObject` and 3.2's `cookie`; Swagger
-2.0's `collectionFormat` read as those), percent-encoded per RFC 3986 everywhere but headers and
-`style: cookie`, which pass as given; a parameter with `content` as its media type's text; cookies
+`matrix`, `form`, `spaceDelimited`, `pipeDelimited`, `deepObject` and 3.2's `cookie`), percent-encoded
+per RFC 3986 everywhere but headers and `style: cookie`, which pass as given. Swagger 2.0's
+`collectionFormat` is read as those in a path, a query and a header (`csv` `a,b`, `ssv` `a b`,
+`tsv` `a<tab>b`, `pipes` `a|b`, the delimiter percent-encoded in a URI; `multi` a pair per item, in
+a query), and an Items Object's own joins the arrays inside an array, level by level (`multi` and
+`pipes` over `csv`: `grid=1,2%7C3&grid=4`); a parameter with `content` as its media type's text; cookies
 into one `cookie` header. The body is `{ contentType, value }` of one of the operation's media
 types: JSON, a form, text as given, or bytes (a `Uint8Array`, for a type neither JSON, text nor a
 form, sent as they are). A form (`application/x-www-form-urlencoded`) is percent-encoded by the
