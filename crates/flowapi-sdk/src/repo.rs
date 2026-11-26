@@ -12,6 +12,7 @@ mod lock;
 mod mock;
 mod package;
 mod readme;
+mod sample;
 mod suite;
 mod texts;
 

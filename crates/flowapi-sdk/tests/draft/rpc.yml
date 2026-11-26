@@ -6,6 +6,7 @@ generator:
 spec: rpc.json
 package:
   name: chat
+  version: 0.1.0
   client: Chat
 environments:
   production: "https://eu.chat.example/api"

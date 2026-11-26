@@ -11,6 +11,33 @@ use crate::ops::Op;
 use crate::words::{join, words};
 use std::collections::BTreeSet;
 
+#[cfg(test)]
+#[path = "naming_tests.rs"]
+mod tests;
+
+/// The words of a description's `info.title`, twice. First as the package's name and the
+/// environment variables read them: the title split where it is split (at what is no ASCII letter
+/// or digit), each piece one word whatever its capitals, since a title is prose and its pieces
+/// are words already (`GitHub` is `github`, as npm and the platform spell it, never `git hub`;
+/// `REST` is `rest`). Then as the client's class: the same text read as a name (`words`), which is
+/// how the generator and `config check` read the class (`GitHubV3RestApi`, its words `git hub v3
+/// rest api`). Both open with a letter: `api` is put first when the title does not.
+pub(crate) fn title(text: &str) -> (Vec<String>, Vec<String>) {
+    let lettered = |w: Vec<String>| {
+        if usable(&w) {
+            w
+        } else {
+            [vec![String::from("api")], w].concat()
+        }
+    };
+    let prose = text
+        .split(|c: char| !c.is_ascii_alphanumeric())
+        .filter(|piece| !piece.is_empty())
+        .map(str::to_ascii_lowercase)
+        .collect();
+    (lettered(prose), lettered(words(text)))
+}
+
 /// A path's segments that are no parameter, a version (`v1`, `v2beta`) left out.
 pub(crate) fn statics(path: &str) -> Vec<&str> {
     path.split('/')

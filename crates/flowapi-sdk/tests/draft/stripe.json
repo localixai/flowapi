@@ -1,6 +1,6 @@
 {
   "openapi": "3.0.0",
-  "info": { "title": "Payments", "version": "2026-11-01" },
+  "info": { "title": "PayHub v1 REST API", "version": "2026-11-01" },
   "servers": [{ "url": "https://api.payments.example/" }],
   "components": {
     "securitySchemes": { "basicAuth": { "type": "http", "scheme": "basic" } },

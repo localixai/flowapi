@@ -5,7 +5,8 @@
 // beside a file that hands the client the platform's own fetch, Response and AbortSignal, and
 // emits JavaScript that Node imports. Then the tests of every module of tests/client/ but
 // `stub.mjs` (what they run against) run against a stub fetch, each naming the pitfall it holds:
-// R<n> of the runtime's list, P<n> of the lists' and streams', each module's head saying what its
+// R<n> of the runtime's list, P<n> of the lists' and streams', M<n> of the generated repository's
+// mock server (`mock.mjs`, over HTTP rather than the stub), each module's head saying what its
 // numbers are. Every runtime file holds at most 300 lines of working code (G10, as for Rust).
 // Run from the repository root, after `(cd conformance/ts && npm ci)`:
 //   node crates/flowapi-sdk/tests/client.mjs

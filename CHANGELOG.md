@@ -7,11 +7,16 @@
   `sideEffects: false`, `engines.node >=20`, `typescript` 7.0.2 the one development dependency),
   the TypeScript configs (`tsconfig.json`, `.build`, `.cjs`, `.dist`), POSIX `scripts/` (`build`,
   `lint`, `test`, `check`, `mock`), a mock server printed from the description (`mock/`, strict on
-  path, method, required parameters and the body's media type, answering with an example of each
-  operation's schema: `example`, else `default`, `const`, the first `enum` value, else one made
-  from its type and `format`), `tests/api-resources/*.test.mjs` calling every method against it
-  under `node --test`, `README.md`, `api.md`, `AGENTS.md`, `LICENSE` (MIT or Apache-2.0; another
-  `package.license` is `error[repo.license]`), `.github/workflows/ci.yml`, release-please's config,
+  path, method, required parameters and the body's media type, a concrete path matched before a
+  templated one and, of two templated paths, the one literal at the first segment where they
+  differ; it answers with an example of each operation's schema: `example`, else `default`,
+  `const`, the first `enum` value, else one made from its type and `format`),
+  `tests/api-resources/*.test.mjs` calling every method against it under `node --test`,
+  `README.md` (its example's parameters from their own `example` or `examples`, 2.0's
+  `x-example`, the schema's value, else their name for a string, `true` for a boolean; CommonJS
+  takes the client by its name, `const { Client } = require(pkg)`), `api.md`, `AGENTS.md`,
+  `LICENSE` (MIT or Apache-2.0; another `package.license` is `error[repo.license]`),
+  `.github/workflows/ci.yml`, release-please's config,
   `.gitignore`, `examples/.keep`, and on the first generation `CHANGELOG.md` and the release
   manifest. `.flowapi/lock.json` records the flowapi version, the description's and the config's
   SHA-256, the methods mapped and every file's SHA-256. A generated file changed since it was
@@ -20,7 +25,8 @@
   deleted unless changed. A path out of `--out` or through a symbolic link is refused. `--check`
   writes nothing and exits 1 when anything would change. In the SDK layer: `repo_files`, `Lock`,
   `sha256_hex` (our own SHA-256, checked on FIPS 180-4's vectors).
-- `flowapi-sdk.yml` has `package.version` (`0.1.0` unless given; release-please raises it).
+- `flowapi-sdk.yml` has `package.version` (`0.1.0` unless given; release-please raises it);
+  `config draft` writes `0.1.0`.
 
 - The TypeScript SDK writes `multipart/form-data` request bodies: `<op>Request` takes the value
   as its schema says (a string member also as a file: a `Uint8Array`, `flowapiFile(bytes or text,
@@ -50,7 +56,9 @@
   description in compact JSON (servers, security schemes, counts, tags, each operation with its
   parameters, the media types of its body and responses, and the pagination it looks like it has,
   with a reason and how sure; over the budget, 60 KB by default, the tags alone);
-  `flowapi config draft <description> [-o file]`, a first config in YAML (resources by tag, else
+  `flowapi config draft <description> [-o file]`, a first config in YAML (the package named from
+  `info.title`, each word of the title one word of the name whatever its capitals: `GitHub v3 REST
+  API` is `github-v3-rest-api`, its client `GitHubV3RestApi`; resources by tag, else
   by the path's first segment, the verbs `list`, `create`, `retrieve`, `update`, `delete`, the
   suggested pagination, environments from the servers, `auth` from the security schemes,
   `skip: []`), which passes `config check` and does not depend on the order the description is

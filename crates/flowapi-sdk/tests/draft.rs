@@ -10,8 +10,10 @@
 //! (resources by path), `skip` and `pageSize` as an offset, a page, a title opening with a digit.
 //! rpc.json: dotted RPC paths that are no collection, a cursor one level down
 //! (`response_metadata.next_cursor`), a server variable, a relative server and `mutualTLS` left
-//! out, a tag that is no name (`2fa`), a resource named as the client. stripe.json: `/v1` passed
-//! over, the last item's id, a resource named as a client member (`request`).
+//! out, a tag that is no name (`2fa`), a resource named as the client. stripe.json: a title with
+//! a word in mixed case (`PayHub`, one word in the package's name and the variables, two in the
+//! client's), `/v1` passed over, the last item's id, a resource named as a client member
+//! (`request`). Every draft writes `package.version`.
 #![expect(
     clippy::expect_used,
     reason = "a fixture that cannot be read fails the test by panicking"

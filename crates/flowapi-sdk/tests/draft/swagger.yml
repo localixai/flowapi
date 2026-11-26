@@ -6,6 +6,7 @@ generator:
 spec: swagger.json
 package:
   name: api-2nd-hand-market
+  version: 0.1.0
   client: Api2ndHandMarket
 environments:
   production: "https://market.example/v2"

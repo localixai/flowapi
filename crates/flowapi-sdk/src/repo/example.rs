@@ -2,8 +2,9 @@
 //! first of `examples`), else its `default`, `const` or first `enum` value, else one made from its
 //! type and `format` (pitfall 20 of the study: a value made from a field's name breaks a `uuid`
 //! or a `date`). The mock server answers with it, the generated tests send it, the README shows
-//! it. Bounded: past `MAX_DEPTH` schemas deep, or past `MAX_JSON` levels of a written value, it is
-//! `null`, so no description exhausts the stack (G1).
+//! it in a body (a parameter's value there is `sample.rs`'s). Bounded: past `MAX_DEPTH` schemas
+//! deep, or past `MAX_JSON` levels of a written value, it is `null`, so no description exhausts
+//! the stack (G1).
 
 use crate::doc::{At, Doc};
 use crate::out::json_str;
@@ -99,15 +100,8 @@ fn walk(doc: &Doc<'_, '_>, at: At, all: bool, depth: usize) -> Value {
     if depth > MAX_DEPTH || !doc.is(at, false) {
         return Value::Null;
     }
-    for key in ["example", "default", "const"] {
-        if let Some(v) = doc.get(at, key) {
-            return written(doc, v, 0);
-        }
-    }
-    for key in ["examples", "enum"] {
-        if let Some(first) = doc.get(at, key).and_then(|v| doc.items(v).first().copied()) {
-            return written(doc, first, 0);
-        }
+    if let Some(v) = own(doc, at) {
+        return v;
     }
     if let Some(parts) = doc.get(at, "allOf") {
         let mut members = Vec::new();
@@ -147,6 +141,22 @@ fn walk(doc: &Doc<'_, '_>, at: At, all: bool, depth: usize) -> Value {
         }
     }
     made(doc, at, all, depth)
+}
+
+/// The value a schema (its references followed) writes itself: its `example`, `default` or
+/// `const`, else the first of its `examples` or `enum`.
+pub(crate) fn own(doc: &Doc<'_, '_>, at: At) -> Option<Value> {
+    for key in ["example", "default", "const"] {
+        if let Some(v) = doc.get(at, key) {
+            return Some(written(doc, v, 0));
+        }
+    }
+    ["examples", "enum"].into_iter().find_map(|key| {
+        let first = doc
+            .get(at, key)
+            .and_then(|v| doc.items(v).first().copied())?;
+        Some(written(doc, first, 0))
+    })
 }
 
 /// The schema's type: the first of `type` that is not `null`, else what its members imply.
@@ -229,6 +239,11 @@ fn string(doc: &Doc<'_, '_>, at: At) -> Value {
         Some("duration") => "P1D",
         Some(_) | None => "string",
     };
+    Value::Str(fitted(doc, at, text))
+}
+
+/// A text made as long as the schema's `minLength` and `maxLength` let it be.
+pub(crate) fn fitted(doc: &Doc<'_, '_>, at: At, text: &str) -> String {
     let mut s = text.to_owned();
     let min = int(doc, at, "minLength").map_or(0, |n| usize::try_from(n).unwrap_or(0));
     while s.chars().count() < min.min(256) {
@@ -237,7 +252,7 @@ fn string(doc: &Doc<'_, '_>, at: At) -> Value {
     if let Some(max) = int(doc, at, "maxLength").and_then(|n| usize::try_from(n).ok()) {
         s = s.chars().take(max).collect();
     }
-    Value::Str(s)
+    s
 }
 
 /// A number within the schema's bounds: 1 unless they leave it out.
@@ -265,7 +280,7 @@ fn int(doc: &Doc<'_, '_>, at: At, key: &str) -> Option<i64> {
 }
 
 /// A value written in the description, copied.
-fn written(doc: &Doc<'_, '_>, at: At, depth: usize) -> Value {
+pub(crate) fn written(doc: &Doc<'_, '_>, at: At, depth: usize) -> Value {
     let Some(tree) = doc.tree(at.0) else {
         return Value::Null;
     };
