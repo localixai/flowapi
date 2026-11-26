@@ -1,0 +1,70 @@
+# Every pagination scheme, a stream, a multipart upload with the description's encoding, a
+# download read as bytes, two alternatives of security and one operation that needs none.
+version: 1
+spec: spec.json
+package: { name: "@shop/sdk", client: Shop }
+environments:
+  production: https://api.shop.example/v1
+  sandbox: https://sandbox.shop.example/v1
+  default: production
+  env_var: SHOP_BASE_URL
+auth:
+  ApiKeyAuth: { env_var: SHOP_API_KEY }
+  BearerAuth: { env_var: SHOP_TOKEN }
+defaults: { retries: 2, timeout: 30, max_retry_delay: 20, pagination: cursor }
+pagination:
+  cursor:
+    type: cursor
+    request: { cursor: page_token, limit: limit }
+    response: { items: data, next: next_page_token, has_more: has_more }
+  by_id:
+    type: last_item_id
+    request: { cursor: after, limit: limit }
+    response: { items: data, has_more: has_more }
+  photos:
+    type: offset
+    request: { offset: offset, limit: limit }
+    response: { items: items, total: total }
+  owners:
+    type: link
+    request: { limit: per_page }
+    response: { header: Link }
+  numbered:
+    type: page
+    request: { page: page, per_page: per_page }
+    response: { items: items, total_pages: total_pages }
+  one:
+    type: single
+    response: { items: tags }
+resources:
+  pets:
+    methods:
+      list: listPets
+      create: createPet
+      retrieve: { op: getPet, retries: 0 }
+      update: updatePet
+      delete: deletePet
+    resources:
+      photos:
+        methods:
+          list: { op: listPhotos, pagination: photos }
+          upload: uploadPhoto
+          download: getPhotoRaw
+  owners:
+    methods:
+      list: { op: listOwners, pagination: owners }
+  users:
+    methods:
+      list: { op: listUsers, pagination: by_id }
+  pages:
+    methods:
+      list: { op: listPages, pagination: numbered }
+  tags:
+    methods:
+      list: { op: listTags, pagination: one }
+  events:
+    methods:
+      stream: { op: streamEvents, stream: true }
+  system:
+    methods:
+      health: health

@@ -83,7 +83,8 @@ impl B<'_, '_> {
         })
     }
 
-    fn int(&self, node: NodeId) -> Option<i64> {
+    /// A number as `T` (an integer as `i64`, seconds as `f64`); `None` for another value.
+    fn number<T: std::str::FromStr>(&self, node: NodeId) -> Option<T> {
         match self.tree.value(node) {
             Value::Number(span) => self.tree.raw(span).parse().ok(),
             Value::Null
@@ -125,21 +126,31 @@ pub(crate) fn build(tree: &Tree<'_>, declared: &[(NodeId, At)], issues: &mut Iss
     }
     if let Some((e, at)) = b.field(root, &top, shape::ROOT, "environments") {
         c.default_environment = b.named(e, &at, shape::ENVIRONMENTS_FIXED, "default");
-        b.field(e, &at, shape::ENVIRONMENTS_FIXED, "env_var");
-        for (name, _, at) in b.entries(e, &at, shape::ENVIRONMENTS_FIXED) {
+        c.settings.base_url_env = b
+            .named(e, &at, shape::ENVIRONMENTS_FIXED, "env_var")
+            .map(|n| n.name);
+        for (name, url, at) in b.entries(e, &at, shape::ENVIRONMENTS_FIXED) {
+            if let Some(url) = b.string(url) {
+                c.settings.urls.push((name.clone(), url));
+            }
             c.environments.push(Named { name, at });
         }
     }
     if let Some((a, at)) = b.field(root, &top, shape::ROOT, "auth") {
         for (name, node, at) in b.entries(a, &at, &[]) {
-            b.field(node, &at, shape::AUTH, "env_var");
+            if let Some(var) = b.named(node, &at, shape::AUTH, "env_var") {
+                c.settings.auth_env.push((name.clone(), var.name));
+            }
             c.auth.push(Named { name, at });
         }
     }
     if let Some((d, at)) = b.field(root, &top, shape::ROOT, "defaults") {
-        for key in ["retries", "timeout", "max_retry_delay"] {
-            b.field(d, &at, shape::DEFAULTS, key);
-        }
+        let retries = b.field(d, &at, shape::DEFAULTS, "retries");
+        c.settings.retries = retries.and_then(|(n, _)| b.number(n));
+        let timeout = b.field(d, &at, shape::DEFAULTS, "timeout");
+        c.settings.timeout = timeout.and_then(|(n, _)| b.number(n));
+        let delay = b.field(d, &at, shape::DEFAULTS, "max_retry_delay");
+        c.settings.max_retry_delay = delay.and_then(|(n, _)| b.number(n));
         c.default_paging = b.named(d, &at, shape::DEFAULTS, "pagination");
     }
     if let Some((p, at)) = b.field(root, &top, shape::ROOT, "pagination") {
@@ -212,7 +223,7 @@ fn scheme(b: &mut B<'_, '_>, node: NodeId, at: &At) -> Option<Paging> {
     if fields.iter().any(|f| f.name == "start")
         && let Some((s, _)) = b.field(node, at, fields, "start")
     {
-        paging.start = b.int(s);
+        paging.start = b.number(s);
     }
     Some(paging)
 }
@@ -261,6 +272,7 @@ fn method(b: &mut B<'_, '_>, name: Named, value: NodeId, resource: usize) -> Opt
             op: Named { name: op, at },
             paging: PagingRef::Unset,
             stream: None,
+            retries: None,
         });
     }
     if !b.object(value) {
@@ -275,7 +287,9 @@ fn method(b: &mut B<'_, '_>, name: Named, value: NodeId, resource: usize) -> Opt
         },
         None => PagingRef::Unset,
     };
-    b.field(value, &at, shape::METHOD, "retries");
+    let retries = b
+        .field(value, &at, shape::METHOD, "retries")
+        .and_then(|(n, _)| b.number(n));
     let stream = b
         .field(value, &at, shape::METHOD, "stream")
         .and_then(|(s, at)| (b.tree.as_bool(s) == Some(true)).then_some(at));
@@ -285,6 +299,7 @@ fn method(b: &mut B<'_, '_>, name: Named, value: NodeId, resource: usize) -> Opt
         op,
         paging,
         stream,
+        retries,
     })
 }
 

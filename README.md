@@ -289,6 +289,18 @@ operation's parameters and response schema, `auth` names the description's secur
 A draft passes the check, and the same description written in another order gives the same
 draft. A description named `summary` or `config` is read by its path: `flowapi ./summary`.
 
+From a config that passes the check, the SDK layer prints the client itself in TypeScript
+(`flowapi_sdk::client_files`; not behind a command yet): `src/api.ts` (the `--sdk` output and the
+operations table), a class for each resource (`client.pets.photos.list(params, options)`), the
+client class with its options, and the runtime in `src/core/`, which needs no dependency and
+type-checks with `lib: ["es2022"]` alone. The runtime retries by status and `x-should-retry`,
+waits what `retry-after-ms` or `Retry-After` ask (and refuses a wait past `maxRetryDelay`), times
+each attempt out with its body read, removes its listener from the caller's `AbortSignal`, sends
+the credentials of the first security alternative it can meet, masks them in its logs, refuses a
+redirect to another origin unless allowed, reads lists by each pagination scheme with a guard
+against a server that loops, and reads server-sent events and JSON lines whatever the chunks. A
+call is awaited for its data; `asResponse()` and `withResponse()` give the raw response.
+
 ## How it works
 
 The core (`crates/flowapi`) reads the documents into a graph of types that belongs to no

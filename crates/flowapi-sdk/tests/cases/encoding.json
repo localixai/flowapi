@@ -1,0 +1,63 @@
+{
+ "openapi": "3.1.0",
+ "info": { "title": "encoding", "version": "1" },
+ "servers": [{ "url": "https://files.example" }],
+ "paths": {
+  "/photos": {
+   "post": {
+    "operationId": "uploadPhoto",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "type": "object",
+        "properties": { "photo": { "type": "string", "contentMediaType": "image/png" }, "meta": { "type": "object" }, "thumb": { "type": "string" } }
+       },
+       "encoding": {
+        "photo": { "contentType": "image/png" },
+        "meta": { "contentType": "application/json; charset=utf-8", "headers": { "X-Trace": { "schema": { "type": "string" } } } },
+        "thumb": { "contentType": "image/png, image/jpeg" },
+        "none": { "style": "form" }
+       }
+      },
+      "application/x-www-form-urlencoded": {
+       "schema": { "type": "object" },
+       "encoding": { "photo": { "contentType": "text/plain" } }
+      }
+     }
+    },
+    "responses": { "201": { "description": "made" } }
+   }
+  },
+  "/docs": {
+   "put": {
+    "operationId": "putDoc",
+    "requestBody": { "$ref": "#/components/requestBodies/Doc" },
+    "responses": { "204": { "description": "kept" } }
+   }
+  },
+  "/plain": {
+   "post": {
+    "operationId": "plain",
+    "requestBody": { "content": { "multipart/form-data": { "schema": { "type": "object" } } } },
+    "responses": { "204": { "description": "kept" } }
+   }
+  }
+ },
+ "components": {
+  "requestBodies": {
+   "Doc": {
+    "content": {
+     "multipart/form-data; charset=utf-8": {
+      "schema": { "type": "object", "properties": { "file": { "type": "string" } } },
+      "encoding": { "file": { "contentType": "application/pdf" } }
+     }
+    }
+   }
+  }
+ },
+ "x-flowapi-covers": [
+  "req: oas-3.1.encoding-object.contentType — a part's one type read; a list or a range of types is a warning and left out"
+ ]
+}

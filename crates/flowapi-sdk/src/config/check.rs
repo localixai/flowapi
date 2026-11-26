@@ -143,7 +143,7 @@ pub(crate) fn methods(
 }
 
 /// The scheme of a name, as words.
-fn find<'c>(c: &'c Config, name: &str) -> Option<&'c Paging> {
+pub(crate) fn find<'c>(c: &'c Config, name: &str) -> Option<&'c Paging> {
     c.schemes
         .iter()
         .find(|s| words::same(&s.name.name, name))

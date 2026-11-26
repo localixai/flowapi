@@ -12,10 +12,16 @@
 //! its format and to the description, every issue at once; [`config_schema`] is the format as
 //! JSON Schema. Each takes the documents and JSON text and returns text, so the WebAssembly
 //! module can call them with JSON in and out as the command does.
+//!
+//! [`client_files`] prints a whole client from a config that passes the check: `src/api.ts`
+//! (the `--sdk` output and the table), a class per resource, the client class, and the runtime
+//! of `src/client/core/`, TypeScript kept here and printed as it is.
 
+mod client;
 mod config;
 mod doc;
 mod draft;
+mod encoding;
 mod model;
 mod ops;
 mod out;
@@ -26,9 +32,12 @@ mod servers;
 mod summary;
 mod words;
 
+pub use client::{Generated, client_files};
 pub use config::{Issue, check, issues_json, issues_text, schema as config_schema, spec_of};
 pub use draft::draft;
-pub use model::{Access, Auth, KeyLocation, Requirement, Scheme, Server, Service, Variable};
+pub use model::{
+    Access, Auth, Encoding, KeyLocation, Requirement, Scheme, Server, Service, Variable,
+};
 pub use summary::{Filter, summary};
 
 use doc::Doc;
@@ -57,6 +66,7 @@ pub fn read(docs: &Documents<'_>, program: &Program<'_>) -> (Service, Diagnostic
                 security: op
                     .and_then(|op| doc.security(op, &mut diags))
                     .unwrap_or_else(|| security.clone()),
+                encodings: doc.encodings(op, &mut diags),
             }
         })
         .collect();
