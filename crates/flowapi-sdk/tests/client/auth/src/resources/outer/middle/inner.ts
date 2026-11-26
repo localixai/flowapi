@@ -3,7 +3,7 @@
 import * as $api from "../../../api.js";
 import * as $core from "../../../core/index.js";
 
-/** The resource `outer.middle.inner`. */
+/** The methods of `client.outer.middle.inner`. */
 export class Inner {
   readonly #core: $core.Core;
 

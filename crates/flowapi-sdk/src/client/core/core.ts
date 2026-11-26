@@ -49,12 +49,17 @@ export type ClientOptions<Environment extends string = string> = {
   maxRetryDelay?: number | null | undefined;
   /** The most pages a list is read to before it is refused as endless. */
   maxPages?: number | undefined;
+  /** The `fetch` requests are sent with: the platform's unless given. */
   fetch?: Fetch | undefined;
   /** What every `fetch` is given beside the client's own members (`dispatcher`, `credentials`). */
   fetchOptions?: { readonly [option: string]: unknown } | undefined;
+  /** Headers every request sends; the operation's own headers and a call's `headers` win over them. */
   defaultHeaders?: HeadersInput | undefined;
+  /** Query parameters every request sends, where the operation sets none of that name; a call's `query` wins over them. */
   defaultQuery?: QueryInput | undefined;
+  /** The least level logged (`off`, `error`, `warn`, `info`, `debug`): the log environment variable's unless given, else `warn`. */
   logLevel?: LogLevel | undefined;
+  /** Where the log goes: `console` unless given. */
   logger?: Logger | undefined;
   /** Follow a redirect to another origin, with the headers that carry credentials removed. */
   allowCrossOriginRedirects?: boolean | undefined;
@@ -62,13 +67,21 @@ export type ClientOptions<Environment extends string = string> = {
 
 /** What one call may change. */
 export type RequestOptions = {
+  /** Headers of this call, over the client's and the operation's; `null` removes one. */
   headers?: HeadersInput | undefined;
+  /** Query parameters of this call, over the client's and the operation's. */
   query?: QueryInput | undefined;
+  /** The base URL of this call, over the client's. */
   baseURL?: string | undefined;
+  /** Milliseconds each attempt of this call may take, its body read; `null` for no limit. */
   timeout?: number | null | undefined;
+  /** How many times this call is tried again when it fails. */
   maxRetries?: number | undefined;
+  /** The most pages this list is read to. */
   maxPages?: number | undefined;
+  /** Aborts the call: it then throws `APIUserAbortError`. */
   signal?: Signal | undefined;
+  /** What this call's `fetch` is given beside the client's `fetchOptions`. */
   fetchOptions?: { readonly [option: string]: unknown } | undefined;
 };
 
@@ -130,7 +143,7 @@ export class Core {
     const env = settings.baseURLEnv === undefined || options.baseURL === null ? undefined : readEnv(settings.baseURLEnv);
     const named = options.environment ?? settings.defaultEnvironment ?? Object.keys(settings.environments)[0];
     const environment = named === undefined ? undefined : settings.environments[named];
-    if (options.environment !== undefined && environment === undefined) throw new RangeError(`no environment is named \`${options.environment}\``);
+    if (options.environment !== undefined && environment === undefined) throw new RangeError(`no environment is named \`${options.environment}\`: give one of ${Object.keys(settings.environments).map((n) => `\`${n}\``).join(", ") || "none (the config names no environment)"}`);
     const first = settings.servers[0];
     this.#explicit = options.baseURL != null || env !== undefined;
     this.baseURL = options.baseURL ?? env ?? environment ?? (first === undefined ? null : serverURL(first));

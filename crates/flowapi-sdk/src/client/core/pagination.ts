@@ -48,7 +48,7 @@ function at(body: unknown, path: Path): unknown {
 export function itemsOf(paging: Paging, body: unknown): unknown[] {
   const items = at(body, paging.items);
   if (items === undefined || items === null) return [];
-  if (!Array.isArray(items)) throw new SdkError(`the page's items (\`${paging.items.join(".") || "the body"}\`) are not an array`);
+  if (!Array.isArray(items)) throw new SdkError(`the page's items (\`${paging.items.join(".") || "the body"}\`) are not an array: the answer does not fit the list's pagination`);
   return items;
 }
 
@@ -170,7 +170,7 @@ export class Page<Item> implements AsyncIterable<Item> {
     const next = this.#next;
     if (next === null) throw new SdkError("no next page: ask `hasNextPage()` first");
     if ("refused" in next) throw new SdkError(next.refused);
-    if (this.#chain.pages >= this.#chain.maxPages) throw new SdkError(`more than ${this.#chain.maxPages} pages (\`maxPages\`): the list looks endless`);
+    if (this.#chain.pages >= this.#chain.maxPages) throw new SdkError(`more than ${this.#chain.maxPages} pages: the list looks endless; raise \`maxPages\` to read further`);
     return this.#fetch(next, this.#chain);
   }
 

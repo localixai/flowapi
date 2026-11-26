@@ -45,7 +45,11 @@ the person's own goes in `src/lib/` and `examples/`, which flowapi never touches
      method turns a default off.
    - `skip`: internal, deprecated or admin operations the SDK should not have, each with its
      reason. Never skip an operation only because its name is hard.
-   - `package.name`, `package.client`, `package.license`, `auth.<scheme>.env_var`, `readme`.
+   - `package.name`, `package.client`, `package.license`, `auth.<scheme>.env_var`.
+   - What the package says of itself: `readme.title` (the README's heading), `readme.intro` or
+     `package.description` (its first paragraph; the description also goes into `package.json`),
+     `package.keywords`, `readme.headline_method`. Their defaults come from the description's
+     `info`; set them when the person names a title or says the SDK is unofficial.
 5. **Check.** `F config check flowapi-sdk.yml --json`. Each issue has a `code`, a `pointer` into
    the config, a `line` and a `hint`. Fix every error, read every warning, and check again until
    `"errors":0`.

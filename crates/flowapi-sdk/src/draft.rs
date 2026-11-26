@@ -51,6 +51,13 @@ pub fn draft(docs: &Documents<'_>, spec: &str) -> Option<String> {
         .filter(|g| own(g))
         .map(|g| join(g, "_"))
         .collect();
+    // The paths with a `PUT` or `PATCH`: a `POST` to an item is its `update` only without one.
+    let edited: BTreeSet<&str> = ops
+        .list
+        .iter()
+        .filter(|op| matches!(op.operation.method.as_str(), "put" | "patch"))
+        .map(|op| op.operation.path.as_str())
+        .collect();
     let mut schemes: Vec<Paging> = Vec::new();
     let mut resources: Vec<(String, Vec<Method>)> = Vec::new();
     for (group, mut members) in groups {
@@ -61,10 +68,10 @@ pub fn draft(docs: &Documents<'_>, spec: &str) -> Option<String> {
             naming::resource(&group, &models, &title, &taken)
         };
         taken.insert(name.clone());
-        let names: Vec<(Vec<String>, Vec<String>)> = members
+        let names: Vec<Vec<Vec<String>>> = members
             .iter()
             .filter_map(|&i| ops.list.get(i))
-            .map(|op| naming::method(op, &group))
+            .map(|op| naming::method(op, &group, edited.contains(op.operation.path.as_str())))
             .collect();
         let mut methods = Vec::new();
         for (&i, method) in members.iter().zip(naming::methods(&names)) {

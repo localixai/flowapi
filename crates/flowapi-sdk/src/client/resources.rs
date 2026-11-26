@@ -5,7 +5,7 @@
 //! methods and members in camel case, classes in Pascal case, files in kebab case. A class
 //! imports another under a `$` name, which no word can make, so no name of the config shadows one.
 
-use super::{camel, doc};
+use super::{camel, comment};
 use crate::config::check::{effective, find};
 use crate::config::issue::Issues;
 use crate::config::model::{Config, Method};
@@ -61,6 +61,21 @@ pub(crate) fn member_of(c: &Config, resource: usize) -> String {
         .unwrap_or_default()
 }
 
+/// A resource as a caller reaches it from the client: `pets.photos`.
+pub(crate) fn access_of(c: &Config, resource: usize) -> String {
+    let mut members = Vec::new();
+    let mut next = Some(resource);
+    while let Some(r) = next {
+        members.push(member_of(c, r));
+        next = c.resources.get(r).and_then(|x| x.parent);
+        if members.len() > c.resources.len() {
+            break;
+        }
+    }
+    members.reverse();
+    members.join(".")
+}
+
 /// Every resource's file.
 pub(crate) fn files(ctx: &Context<'_>, issues: &mut Issues) -> Vec<File> {
     let c = ctx.config;
@@ -87,7 +102,11 @@ pub(crate) fn files(ctx: &Context<'_>, issues: &mut Issues) -> Vec<File> {
                 "import {{ {class} as ${class} }} from \"./{leaf}/{file}.js\";"
             );
         }
-        let _ = writeln!(text, "\n/** The resource `{}`. */", c.path(i));
+        let _ = writeln!(
+            text,
+            "\n/** The methods of `client.{}`. */",
+            access_of(c, i)
+        );
         let _ = writeln!(text, "export class {} {{", class_of(c, i));
         text.push_str("  readonly #core: $core.Core;\n");
         for &j in &children {
@@ -129,21 +148,18 @@ fn method(ctx: &Context<'_>, k: usize, m: &Method, out: &mut String, issues: &mu
     };
     let op = &e.operation;
     let name = camel(&words::words(&m.name.name));
-    let summary = ctx
+    let described = ctx
         .resolved
         .get(k)
         .copied()
         .flatten()
-        .and_then(|i| ctx.ops.list.get(i))
-        .and_then(|o| o.summary.as_deref())
-        .map(|s| format!(": {}", doc(s)))
-        .unwrap_or_default();
-    let _ = writeln!(
-        out,
-        "\n  /** `{} {}`{summary} */",
-        flowapi_ts::sdk_method(op),
-        doc(&op.path)
-    );
+        .and_then(|i| ctx.ops.list.get(i));
+    out.push('\n');
+    out.push_str(&comment::method(
+        described,
+        &flowapi_ts::sdk_method(op),
+        &op.path,
+    ));
     let optional =
         !op.params.iter().any(|p| p.required) && !op.body.as_ref().is_some_and(|b| b.required);
     let params = format!(
@@ -190,7 +206,7 @@ fn method(ctx: &Context<'_>, k: usize, m: &Method, out: &mut String, issues: &mu
 }
 
 /// Whether every streamed 2xx response is server-sent events.
-fn sse_only(op: &Operation) -> bool {
+pub(crate) fn sse_only(op: &Operation) -> bool {
     op.responses
         .iter()
         .filter(|r| r.status.starts_with('2'))

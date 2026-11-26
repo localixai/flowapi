@@ -63,7 +63,11 @@ pub(crate) struct Settings {
     pub(crate) package: Option<String>,
     pub(crate) version: Option<String>,
     pub(crate) repository: Option<String>,
-    /// `readme.intro`.
+    /// `package.description` and `package.keywords`.
+    pub(crate) description: Option<String>,
+    pub(crate) keywords: Vec<String>,
+    /// `readme.title` and `readme.intro`.
+    pub(crate) title: Option<String>,
     pub(crate) intro: Option<String>,
 }
 

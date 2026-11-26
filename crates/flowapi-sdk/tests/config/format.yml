@@ -3,7 +3,7 @@
 # values of the wrong type or out of range, required members missing, strings of the wrong kind.
 version: 2
 spec: spec.json
-package: { name: PetShop, client: petShop }
+package: { name: PetShop, client: petShop, keywords: pets }
 environments:
   production: api.petshop.example
   2nd: https://api.petshop.example

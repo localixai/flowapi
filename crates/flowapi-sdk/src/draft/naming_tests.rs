@@ -1,9 +1,10 @@
 //! A title's words: a piece in mixed case is one word of the package's name and two or more of
 //! the client's (as the client is read everywhere), an acronym a word, a version a word, `api`
 //! put first before a digit; and the package's name is one npm takes (lower case, URL-safe).
+//! Methods whose names meet both take their longer names.
 
-use super::title;
-use crate::words::{join, pascal};
+use super::{methods, title};
+use crate::words::{join, pascal, words};
 
 /// The package's name and the client's class drafted from a title.
 fn named(text: &str) -> (String, String) {
@@ -44,6 +45,65 @@ fn a_word_in_mixed_case_stays_one_word_of_the_package() {
             "{text}"
         );
     }
+}
+
+fn w(names: &[&str]) -> Vec<Vec<String>> {
+    names.iter().map(|n| words(n)).collect()
+}
+
+#[test]
+fn two_names_that_meet_both_take_their_longer_names() {
+    // `get_cache` twice: both are raised, and the third, which met nobody, keeps its short one.
+    let names = [
+        w(&[
+            "get_cache",
+            "get_actions_cache",
+            "actions_get_actions_cache",
+        ]),
+        w(&["get_cache", "get_cache_usage", "actions_get_cache_usage"]),
+        w(&["list_for_org", "repos_list_for_org"]),
+    ];
+    assert_eq!(
+        methods(&names),
+        ["get_actions_cache", "get_cache_usage", "list_for_org"]
+    );
+}
+
+#[test]
+fn names_are_raised_a_kind_at_a_time() {
+    // GitHub's `GET /users` and `GET /user` are both `list` by the verb; the first's trimmed name
+    // is `list` again, the second's `get_authenticated`: neither needs its full `operationId`.
+    let names = [
+        w(&["list", "list", "list", "users_list"]),
+        w(&[
+            "list",
+            "get_authenticated",
+            "get_authenticated",
+            "users_get_authenticated",
+        ]),
+    ];
+    assert_eq!(methods(&names), ["list", "get_authenticated"]);
+}
+
+#[test]
+fn a_name_raised_into_another_raises_that_one_too_and_numbers_end_it() {
+    let names = [
+        w(&["list", "list_runs"]),
+        w(&["list", "get_runs"]),
+        w(&["list_runs", "list_runs_for_repo"]),
+        w(&["delete"]),
+        w(&["delete"]),
+    ];
+    assert_eq!(
+        methods(&names),
+        [
+            "list_runs",
+            "get_runs",
+            "list_runs_for_repo",
+            "delete",
+            "delete_2"
+        ]
+    );
 }
 
 #[test]

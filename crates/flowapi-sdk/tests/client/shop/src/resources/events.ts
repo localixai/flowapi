@@ -3,7 +3,7 @@
 import * as $api from "../api.js";
 import * as $core from "../core/index.js";
 
-/** The resource `events`. */
+/** The methods of `client.events`. */
 export class Events {
   readonly #core: $core.Core;
 

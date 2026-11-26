@@ -2,52 +2,41 @@
 
 # API
 
-14 methods in 8 resources of `Shop`.
+Every method of `Shop`, by resource: 14 methods in 8 resources. A method takes its operation's parameters (`params`) and the options of one call (`options`); the types are the package's:
 
-## pets
+```ts
+import type { ApiCall, Data, Input, ItemOf, PagePromise, RequestOptions, ServerSentEvent, Stream } from '@shop/sdk'
+```
+
+## client.events
+
+- `client.events.stream(params?: Input<typeof streamEventsRequest>, options?: RequestOptions): ApiCall<Stream<ServerSentEvent>>`  
+  `GET /events`
+
+## client.owners
+
+- `client.owners.list(params?: Input<typeof listOwnersRequest>, options?: RequestOptions): PagePromise<ItemOf<Data<typeof listOwnersResponse>, []>>`  
+  `GET /owners`
+
+## client.pages
+
+- `client.pages.list(params?: Input<typeof listPagesRequest>, options?: RequestOptions): PagePromise<ItemOf<Data<typeof listPagesResponse>, ["items"]>>`  
+  `GET /pages`
+
+## client.pets
 
 - `client.pets.list(params?: Input<typeof listPetsRequest>, options?: RequestOptions): PagePromise<ItemOf<Data<typeof listPetsResponse>, ["data"]>>`  
   `GET /pets`: List the pets */ one page at a time
 - `client.pets.create(params: Input<typeof createPetRequest>, options?: RequestOptions): ApiCall<Data<typeof createPetResponse>>`  
-  `POST /pets`
+  `POST /pets`: Add a pet
 - `client.pets.retrieve(params: Input<typeof getPetRequest>, options?: RequestOptions): ApiCall<Data<typeof getPetResponse>>`  
   `GET /pets/{pet_id}`: One pet
 - `client.pets.update(params: Input<typeof updatePetRequest>, options?: RequestOptions): ApiCall<Data<typeof updatePetResponse>>`  
   `PATCH /pets/{pet_id}`
 - `client.pets.delete(params: Input<typeof deletePetRequest>, options?: RequestOptions): ApiCall<Data<typeof deletePetResponse>>`  
-  `DELETE /pets/{pet_id}`
+  `DELETE /pets/{pet_id}` (deprecated)
 
-## owners
-
-- `client.owners.list(params?: Input<typeof listOwnersRequest>, options?: RequestOptions): PagePromise<ItemOf<Data<typeof listOwnersResponse>, []>>`  
-  `GET /owners`
-
-## users
-
-- `client.users.list(params?: Input<typeof listUsersRequest>, options?: RequestOptions): PagePromise<ItemOf<Data<typeof listUsersResponse>, ["data"]>>`  
-  `GET /users`
-
-## pages
-
-- `client.pages.list(params?: Input<typeof listPagesRequest>, options?: RequestOptions): PagePromise<ItemOf<Data<typeof listPagesResponse>, ["items"]>>`  
-  `GET /pages`
-
-## tags
-
-- `client.tags.list(params?: Input<typeof listTagsRequest>, options?: RequestOptions): PagePromise<ItemOf<Data<typeof listTagsResponse>, ["tags"]>>`  
-  `GET /tags`
-
-## events
-
-- `client.events.stream(params?: Input<typeof streamEventsRequest>, options?: RequestOptions): ApiCall<Stream<…>>`  
-  `GET /events`
-
-## system
-
-- `client.system.health(params?: Input<typeof healthRequest>, options?: RequestOptions): ApiCall<Data<typeof healthResponse>>`  
-  `GET /health`
-
-## pets.photos
+## client.pets.photos
 
 - `client.pets.photos.list(params: Input<typeof listPhotosRequest>, options?: RequestOptions): PagePromise<ItemOf<Data<typeof listPhotosResponse>, ["items"]>>`  
   `GET /pets/{pet_id}/photos`
@@ -55,3 +44,18 @@
   `POST /pets/{pet_id}/photos`
 - `client.pets.photos.download(params: Input<typeof getPhotoRawRequest>, options?: RequestOptions): ApiCall<Data<typeof getPhotoRawResponse>>`  
   `GET /pets/{pet_id}/photos/{photo_id}/raw`
+
+## client.system
+
+- `client.system.health(params?: Input<typeof healthRequest>, options?: RequestOptions): ApiCall<Data<typeof healthResponse>>`  
+  `GET /health`
+
+## client.tags
+
+- `client.tags.list(params?: Input<typeof listTagsRequest>, options?: RequestOptions): PagePromise<ItemOf<Data<typeof listTagsResponse>, ["tags"]>>`  
+  `GET /tags`
+
+## client.users
+
+- `client.users.list(params?: Input<typeof listUsersRequest>, options?: RequestOptions): PagePromise<ItemOf<Data<typeof listUsersResponse>, ["data"]>>`  
+  `GET /users`

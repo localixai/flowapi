@@ -287,7 +287,10 @@ or in `skip` with a reason, every reference names an operation (a typo names the
 are compared as words (`list_all` and `listAll` are one name), a method's pagination fits its
 operation's parameters and response schema, `auth` names the description's security schemes.
 A draft passes the check, and the same description written in another order gives the same
-draft. A description named `summary` or `config` is read by its path: `flowapi ./summary`.
+draft. A drafted method's name leaves out the words its resource already says
+(`actions/get-actions-cache-retention-limit-for-enterprise` in `actions` is
+`get_cache_retention_limit_for_enterprise`), keeps a word that qualifies it (`users`'
+`list_followers_for_authenticated_user`), and where two names meet, both take a longer one. A description named `summary` or `config` is read by its path: `flowapi ./summary`.
 
 From a config that passes the check, the SDK layer prints the client itself in TypeScript
 (`flowapi_sdk::client_files`): `src/api.ts` (the `--sdk` output and the
@@ -314,9 +317,15 @@ dependency: built by `tsc` twice, ES modules and CommonJS, each with its types (
 `mock`); a mock server on `node:http` printed from the description, strict where a client goes
 wrong (a path, a method, a required parameter, a body's media type) and answering each operation
 with an example of its schema; a `node --test` file per resource calling every method against
-it; `README.md` (its counts and examples written from the config, never typed), `api.md`, the
-repository's `AGENTS.md`, the license (MIT or Apache-2.0), CI on Node 20, 22 and 24, and
-release-please's config. `.flowapi/lock.json` holds the hash of every file written, of the
+it; `README.md` (its counts and examples written from the config, never typed, and each example
+compiled against the client by flowapi's tests), `api.md` (every method's signature in the
+package's types), the repository's `AGENTS.md`, the license (MIT or Apache-2.0), CI on Node 20, 22
+and 24, and release-please's config. The README's heading is `readme.title`, else the
+description's `info.title` with `TypeScript SDK` (`Twilio Studio API` is `Twilio Studio TypeScript
+SDK`); its first paragraph is `readme.intro`, else `package.description`, which is also
+`package.json`'s description and defaults to a sentence of `info`; `package.keywords` go to
+`package.json`. Each method's doc comment is its operation's summary and description as plain
+text, with a link to its `externalDocs` and `@deprecated` where the description says so. `.flowapi/lock.json` holds the hash of every file written, of the
 description and of the config. A generated file changed by hand since is a conflict: nothing is
 written and it exits 1; `src/lib/` and `examples/` are the user's, `CHANGELOG.md` is written once,
 and a file the lock does not list is never touched. A file no longer generated is deleted unless

@@ -4,7 +4,7 @@ import * as $api from "../api.js";
 import * as $core from "../core/index.js";
 import { Middle as $Middle } from "./outer/middle.js";
 
-/** The resource `outer`. */
+/** The methods of `client.outer`. */
 export class Outer {
   readonly #core: $core.Core;
   readonly middle: $Middle;

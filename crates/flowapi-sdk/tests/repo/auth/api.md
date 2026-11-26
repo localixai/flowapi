@@ -2,9 +2,13 @@
 
 # API
 
-12 methods in 3 resources of `AuthClient`.
+Every method of `AuthClient`, by resource: 12 methods in 3 resources. A method takes its operation's parameters (`params`) and the options of one call (`options`); the types are the package's:
 
-## checks
+```ts
+import type { ApiCall, Data, Input, ItemOf, PagePromise, RequestOptions, ServerSentEvent, Stream } from 'auth-sdk'
+```
+
+## client.checks
 
 - `client.checks.queryKey(params?: Input<typeof byQueryRequest>, options?: RequestOptions): ApiCall<Data<typeof byQueryResponse>>`  
   `GET /query`
@@ -22,17 +26,17 @@
   `GET /oauth`
 - `client.checks.elsewhere(params?: Input<typeof elsewhereRequest>, options?: RequestOptions): ApiCall<Data<typeof elsewhereResponse>>`  
   `GET /elsewhere`
-- `client.checks.lines(params?: Input<typeof linesRequest>, options?: RequestOptions): ApiCall<Stream<…>>`  
+- `client.checks.lines(params?: Input<typeof linesRequest>, options?: RequestOptions): ApiCall<Stream<unknown>>`  
   `GET /lines`
 
-## default
+## client.default
 
 - `client.default.delete(params: Input<typeof deleteThingRequest>, options?: RequestOptions): ApiCall<Data<typeof deleteThingResponse>>`  
   `DELETE /things/{id}`
 - `client.default.new(params: Input<typeof newThingRequest>, options?: RequestOptions): ApiCall<Data<typeof newThingResponse>>`  
   `PUT /things/{id}`
 
-## outer.middle.inner
+## client.outer.middle.inner
 
 - `client.outer.middle.inner.get(params?: Input<typeof deepRequest>, options?: RequestOptions): ApiCall<Data<typeof deepResponse>>`  
   `GET /deep`

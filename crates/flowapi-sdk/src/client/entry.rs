@@ -28,6 +28,11 @@ fn names(c: &Config) -> (String, String) {
     (client, options)
 }
 
+/// The environment variable the client reads its log level from: `SHOP_LOG` for `Shop`.
+pub(crate) fn log_env(client: &str) -> String {
+    format!("{}_LOG", words::upper(&words::words(client)))
+}
+
 /// `src/client.ts`.
 pub(crate) fn client(c: &Config, service: &Service) -> String {
     let (client, options) = names(c);
@@ -71,8 +76,7 @@ pub(crate) fn client(c: &Config, service: &Service) -> String {
     if let Some(v) = &s.base_url_env {
         let _ = writeln!(out, "  baseURLEnv: {},", lit(v));
     }
-    let log = format!("{}_LOG", words::upper(&words::words(&client)));
-    let _ = writeln!(out, "  logEnv: {},", lit(&log));
+    let _ = writeln!(out, "  logEnv: {},", lit(&log_env(&client)));
     let auth: Vec<String> = c
         .auth
         .iter()
@@ -151,9 +155,13 @@ fn options_type(c: &Config, service: &Service, client: &str, options: &str, out:
 
 /// The client class.
 fn class(c: &Config, client: &str, options: &str, top: &[usize], out: &mut String) {
+    let example = top
+        .first()
+        .map(|&i| format!(" (`client.{}`)", member_of(c, i)))
+        .unwrap_or_default();
     let _ = writeln!(
         out,
-        "\n/** The API's client: a member for each resource of the config. */"
+        "\n/** The API's client: a member for each resource{example}, and `request` for a call no\n * operation describes. */"
     );
     let _ = writeln!(out, "export class {client} {{");
     out.push_str("  readonly #core: $core.Core;\n");
@@ -198,7 +206,8 @@ fn class(c: &Config, client: &str, options: &str, top: &[usize], out: &mut Strin
     ));
 }
 
-/// `src/index.ts`: the client, its options, the runtime's errors and types, and the API module.
+/// `src/index.ts`: the client, its options, the runtime's errors and types (those `api.md` writes
+/// a method's signature with among them: `Input`, `Data`, `ItemOf`), and the API module.
 pub(crate) fn index(c: &Config) -> String {
     let (client, options) = names(c);
     let mut out = String::from(
@@ -211,10 +220,10 @@ pub(crate) fn index(c: &Config) -> String {
     out.push_str(concat!(
         "export {\n  APIConnectionError,\n  APIConnectionTimeoutError,\n  APIError,\n  APIUserAbortError,\n",
         "  ApiCall,\n  AuthenticationError,\n  BadRequestError,\n  type BasicCredential,\n  ConflictError,\n",
-        "  type Credential,\n  CrossOriginRedirectError,\n  type Fetch,\n  type FetchResponse,\n",
-        "  type HeadersInput,\n  InternalServerError,\n  type LogLevel,\n  type Logger,\n  NotFoundError,\n",
-        "  Page,\n  PagePromise,\n  PermissionDeniedError,\n  type QueryInput,\n  RateLimitError,\n",
-        "  type RequestOptions,\n  RequestTimeoutError,\n  SdkError,\n  type ServerSentEvent,\n  Stream,\n",
+        "  type Credential,\n  CrossOriginRedirectError,\n  type Data,\n  type Fetch,\n  type FetchResponse,\n",
+        "  type HeadersInput,\n  type Input,\n  InternalServerError,\n  type ItemOf,\n  type LogLevel,\n",
+        "  type Logger,\n  NotFoundError,\n  type Outcome,\n  Page,\n  PagePromise,\n  PermissionDeniedError,\n",
+        "  type QueryInput,\n  RateLimitError,\n  type RawRequest,\n  type RequestOptions,\n  RequestTimeoutError,\n  SdkError,\n  type ServerSentEvent,\n  Stream,\n",
         "  UnprocessableEntityError,\n} from \"./core/index.js\";\nexport * from \"./api.js\";\n",
     ));
     out

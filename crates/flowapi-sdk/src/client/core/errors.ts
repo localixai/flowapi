@@ -34,7 +34,7 @@ export class APIError<TBody = unknown> extends SdkError {
   readonly body: TBody;
   readonly requestId: string | null;
   constructor(status: number, headers: Record<string, string>, body: TBody, requestId: string | null) {
-    super(`${status} ${messageOf(body) ?? "status code (no body)"}`);
+    super(`${status} ${messageOf(body) ?? "with no message in its body"}`);
     this.status = status;
     this.headers = headers;
     this.body = body;
@@ -88,14 +88,14 @@ export class APIConnectionError extends SdkError {
 /** No answer came within the attempt's `timeout`, the body read included. */
 export class APIConnectionTimeoutError extends APIConnectionError {
   constructor(options?: { cause?: unknown }) {
-    super("the request timed out", options);
+    super("the request timed out: no answer within `timeout`; raise it on the client or on the call", options);
   }
 }
 
 /** The caller's signal aborted the call. */
 export class APIUserAbortError extends APIConnectionError {
   constructor() {
-    super("the request was aborted");
+    super("the request was aborted by its `signal`");
   }
 }
 
@@ -106,7 +106,7 @@ export class CrossOriginRedirectError extends SdkError {
   readonly status: number;
   readonly location: string;
   constructor(status: number, location: string) {
-    super(`${status} redirect to another origin, not followed: ${location}`);
+    super(`${status} redirect to another origin, not followed: ${location}; set \`allowCrossOriginRedirects\` to follow it without the credentials`);
     this.status = status;
     this.location = location;
   }

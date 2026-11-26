@@ -35,6 +35,7 @@ step node conformance/sdk/run.mjs
 step node conformance/sdk/extract.mjs --check
 step node crates/flowapi-sdk/tests/tsc.mjs
 step node crates/flowapi-sdk/tests/client.mjs
+step node crates/flowapi-sdk/tests/texts.mjs
 (cd conformance/sdk-rust && step cargo run --locked --release --quiet -j 1 --bin sdk-rust)
 (cd conformance/ledger && step cargo run --locked --release --quiet --bin report -- --check)
 printf '\nall checks passed\n'

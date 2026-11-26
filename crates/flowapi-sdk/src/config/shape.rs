@@ -3,8 +3,10 @@
 //! (`build.rs`), and `flowapi config schema` prints them as JSON Schema (`schema.rs`), so the
 //! three cannot drift apart. A member they do not name is an error.
 
+mod package;
 mod schemes;
 
+pub(crate) use package::{PACKAGE, README};
 use schemes::SCHEME;
 pub(crate) use schemes::SCHEMES;
 
@@ -130,26 +132,6 @@ pub(crate) const GENERATOR: &[Field] = &[req(
     &Shape::Str(Str::Version),
     "The flowapi version the SDK is generated with",
 )];
-
-pub(crate) const PACKAGE: &[Field] = &[
-    req("name", &Shape::Str(Str::Package), "The npm package's name"),
-    f(
-        "version",
-        &Shape::Str(Str::Release),
-        "The package's version (0.1.0 unless given); the release tool raises it",
-    ),
-    req(
-        "client",
-        &Shape::Str(Str::Client),
-        "The client class's name, in PascalCase",
-    ),
-    f(
-        "license",
-        &TEXT,
-        "The package's license, an SPDX expression",
-    ),
-    f("repository", &TEXT, "The package's repository URL"),
-];
 
 pub(crate) const ENVIRONMENTS_FIXED: &[Field] = &[
     f(
@@ -282,20 +264,6 @@ pub(crate) const SKIP: &[Field] = &[
         "The operation: its `operationId`, or `\"METHOD /path\"`",
     ),
     req("reason", &TEXT, "Why the SDK leaves it out"),
-];
-
-pub(crate) const README: &[Field] = &[
-    f(
-        "headline_method",
-        &TEXT,
-        "The method the README shows first, as `resource.method`",
-    ),
-    f(
-        "pagination_method",
-        &TEXT,
-        "The method the README shows pagination with",
-    ),
-    f("intro", &TEXT, "The README's opening paragraph"),
 ];
 
 /// The config's root.

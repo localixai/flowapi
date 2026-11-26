@@ -4,6 +4,8 @@ error[config.package.name]: `/package/name`: `PetShop` is not an npm package nam
   at format.yml:6:12 (/package/name)
 error[config.package.client]: `/package/client`: `petShop` is not a class name in PascalCase: a capital, then letters and digits
   at format.yml:6:27 (/package/client)
+error[config.schema.type]: `/package/keywords` is a string; it is an array
+  at format.yml:6:44 (/package/keywords)
 error[config.env.url]: `/environments/production`: `api.petshop.example` is not an absolute http or https URL with a host
   at format.yml:8:3 (/environments/production)
 error[config.name.invalid]: `2nd` is not a name: ASCII letters, digits, `_` and `-`, opening with a letter

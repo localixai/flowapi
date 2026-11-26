@@ -56,6 +56,19 @@
           "type": "string",
           "pattern": "\\S",
           "description": "The package's repository URL"
+        },
+        "description": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "One or two sentences of plain text: `package.json`'s `description` and, without `readme.intro`, the README's first paragraph. Unless given, made from the description's `info.title` and the first sentence of its `info.summary` or `info.description`"
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "description": "`package.json`'s `keywords`, for npm's search; none unless given"
         }
       },
       "required": [
@@ -157,6 +170,16 @@
     "readme": {
       "type": "object",
       "properties": {
+        "title": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "The README's heading. Unless given, the description's `info.title` without a last `API`, then `TypeScript SDK` (`Twilio Studio API` is `Twilio Studio TypeScript SDK`); the package's name when the description has no title"
+        },
+        "intro": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "The README's first paragraph, Markdown; `package.description` unless given"
+        },
         "headline_method": {
           "type": "string",
           "pattern": "\\S",
@@ -166,11 +189,6 @@
           "type": "string",
           "pattern": "\\S",
           "description": "The method the README shows pagination with"
-        },
-        "intro": {
-          "type": "string",
-          "pattern": "\\S",
-          "description": "The README's opening paragraph"
         }
       },
       "additionalProperties": false,

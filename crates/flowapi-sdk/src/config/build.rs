@@ -4,12 +4,14 @@
 //! keep the format, its JSON Schema and this reader one thing. A value of the wrong type was
 //! reported already and is passed over.
 
+mod members;
+
 use super::issue::{At, Issues};
-use super::model::{Config, Method, Named, PagingRef, Resource, Scheme};
-use super::shape::{self, Field, SCHEMES};
-use crate::paging::{Paging, roles};
+use super::model::{Config, Named, Resource, Scheme};
+use super::shape::{self, Field};
 use flowapi::id::NodeId;
 use flowapi::json::{Tree, Value};
+use members::{method, scheme};
 
 struct B<'a, 't> {
     tree: &'a Tree<'t>,
@@ -135,6 +137,11 @@ pub(crate) fn build(tree: &Tree<'_>, declared: &[(NodeId, At)], issues: &mut Iss
         c.client = b.named(p, &at, shape::PACKAGE, "client");
         c.license = b.named(p, &at, shape::PACKAGE, "license");
         c.settings.repository = b.text(p, &at, shape::PACKAGE, "repository");
+        c.settings.description = b.text(p, &at, shape::PACKAGE, "description");
+        if let Some((k, _)) = b.field(p, &at, shape::PACKAGE, "keywords") {
+            let tree = b.tree;
+            c.settings.keywords = tree.items(k).iter().filter_map(|&n| b.string(n)).collect();
+        }
     }
     if let Some((e, at)) = b.field(root, &top, shape::ROOT, "environments") {
         c.default_environment = b.named(e, &at, shape::ENVIRONMENTS_FIXED, "default");
@@ -204,40 +211,9 @@ fn rest(b: &mut B<'_, '_>, root: NodeId, top: &At, c: &mut Config) {
                 c.readme.push((key, n));
             }
         }
+        c.settings.title = b.text(r, &at, shape::README, "title");
         c.settings.intro = b.text(r, &at, shape::README, "intro");
     }
-}
-
-/// A pagination scheme: its `type` chooses its members.
-fn scheme(b: &mut B<'_, '_>, node: NodeId, at: &At) -> Option<Paging> {
-    let tag = b.tree.get(node, "type").and_then(|t| b.string(t))?;
-    let (kind, fields) = SCHEMES.iter().find(|(name, _)| *name == tag)?;
-    b.field(node, at, fields, "type");
-    let mut paging = Paging::new(kind, &[], &[]);
-    for part in ["request", "response"] {
-        if !fields.iter().any(|f| f.name == part) {
-            continue;
-        }
-        let Some((obj, at)) = b.field(node, at, fields, part) else {
-            continue;
-        };
-        for role in roles(kind, part) {
-            if let Some(value) = b.named(obj, &at, roles(kind, part), role.name) {
-                let list = if part == "request" {
-                    &mut paging.request
-                } else {
-                    &mut paging.response
-                };
-                list.push((role.name, value.name));
-            }
-        }
-    }
-    if fields.iter().any(|f| f.name == "start")
-        && let Some((s, _)) = b.field(node, at, fields, "start")
-    {
-        paging.start = b.number(s);
-    }
-    Some(paging)
 }
 
 /// The resource tree, flattened, with each resource's methods.
@@ -268,51 +244,6 @@ fn resources(b: &mut B<'_, '_>, map: NodeId, at: &At, c: &mut Config) {
             }
         }
     }
-}
-
-/// A method: an operation's name, or an object with `op` and the method's own settings.
-fn method(b: &mut B<'_, '_>, name: Named, value: NodeId, resource: usize) -> Option<Method> {
-    let at = name.at.clone();
-    let at = At {
-        offset: b.tree.offset(value),
-        ..at
-    };
-    if let Some(op) = b.string(value) {
-        return Some(Method {
-            name,
-            resource,
-            op: Named { name: op, at },
-            paging: PagingRef::Unset,
-            stream: None,
-            retries: None,
-        });
-    }
-    if !b.object(value) {
-        return None;
-    }
-    let op = b.named(value, &at, shape::METHOD, "op")?;
-    let paging = match b.field(value, &at, shape::METHOD, "pagination") {
-        Some((p, at)) => match (b.string(p), b.tree.as_bool(p)) {
-            (Some(s), _) => PagingRef::Scheme(Named { name: s, at }),
-            (None, Some(false)) => PagingRef::Off,
-            (None, Some(true) | None) => PagingRef::Unset,
-        },
-        None => PagingRef::Unset,
-    };
-    let retries = b
-        .field(value, &at, shape::METHOD, "retries")
-        .and_then(|(n, _)| b.number(n));
-    let stream = b
-        .field(value, &at, shape::METHOD, "stream")
-        .and_then(|(s, at)| (b.tree.as_bool(s) == Some(true)).then_some(at));
-    Some(Method {
-        name,
-        resource,
-        op,
-        paging,
-        stream,
-        retries,
-    })
 }
 
 /// A member the format names that nothing read: the reader and the format have drifted.

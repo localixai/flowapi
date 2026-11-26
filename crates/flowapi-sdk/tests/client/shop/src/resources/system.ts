@@ -3,7 +3,7 @@
 import * as $api from "../api.js";
 import * as $core from "../core/index.js";
 
-/** The resource `system`. */
+/** The methods of `client.system`. */
 export class System {
   readonly #core: $core.Core;
 
