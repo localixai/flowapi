@@ -30,8 +30,8 @@ work here.
     that names every type.
 - `crates/flowapi-ts`: the TypeScript target. `tests/cases/*.json` and the `.ts` kept beside each.
   `src/sdk.rs` the opt-in SDK (`--sdk`): `sdk/request.rs`, `sdk/response.rs` and the runtime
-  printed once (`sdk/runtime.ts` writes requests, `sdk/multipart.ts` their `multipart/form-data`
-  bodies, `sdk/read.ts` reads responses);
+  printed once (`sdk/runtime.ts` writes requests, `sdk/form.ts` their form bodies by the
+  Encoding Objects, `sdk/multipart.ts` their `multipart` bodies, `sdk/read.ts` reads responses);
   `tests/sdk/*.json` kept like the cases.
 - `crates/flowapi-rust`: the Rust target (serde types). `tests/cases/*.rs`, kept like the TypeScript ones.
   `src/sdk.rs` the opt-in SDK (`--target rust --sdk`): `sdk/request.rs`, `sdk/param.rs`,
@@ -59,7 +59,9 @@ work here.
   `prose.rs` a description's CommonMark as plain text, `summary.rs` the compact summary. `tests/config/*.yml` with the issues kept
   beside each (`--test config`), `tests/schema.json` (`--test schema`, the reader and the schema
   agree both ways), `tests/draft/` (`--test draft`), `tests/summary/` (`--test summary`).
-  `encoding.rs` a `multipart/form-data` body's encoding, put in the table. `client.rs` the whole
+  `encoding.rs` a form or `multipart` body's Encoding Objects, put in the table (`encoding/inspect.rs`
+  a part's type from its schema, `encoding/swagger.rs` 2.0's `collectionFormat`, `encoding/print.rs`
+  the table's literal). `client.rs` the whole
   TypeScript client from a config (`client_files`): `client/resources.rs` a class per resource
   (`client/comment.rs` each method's doc comment),
   `client/entry.rs` the client class and `index.ts`, `client/core/*.ts` the runtime, kept as

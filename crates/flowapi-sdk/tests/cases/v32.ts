@@ -25,9 +25,10 @@ export const flowapiSecuritySchemes = {
  * instead of `flowapiServers`, where it has its own; its security, alternatives of which any one
  * is enough, each naming the schemes it needs with their scopes (`[]`: none); how each response's
  * body is read, by media type (`json`, `text`, `bytes`, or `sent`: by the `Content-Type` the
- * answer sends, as `flowapiReadsBytes` says); by `multipart/form-data` media type, the type
- * each part is sent as (`encoding`, the description's Encoding Objects: give it as
- * `body.encoding`); and its `<name>Request` and `<name>Response`.
+ * answer sends, as `flowapiReadsBytes` says); by form and `multipart` media type, how the body's
+ * values are written (`encoding`: the description's Encoding Objects by name and by position,
+ * given as the body's `encoding`, `prefixEncoding` and `itemEncoding`); and its `<name>Request`
+ * and `<name>Response`.
  */
 export const flowapiOperations = {
   sharedGet: {

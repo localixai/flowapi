@@ -423,30 +423,15 @@ function $json(type: string): boolean {
   return bare === "application/json" || bare.endsWith("+json");
 }
 
-/** An object as `application/x-www-form-urlencoded`: each member a pair, an array's items
- * pairs of the same name, an object member as JSON (the Encoding Object's defaults). */
-function $form(v: unknown): string {
-  if (v === null || typeof v !== "object") return v === undefined ? "" : $enc($str(v));
-  let out = "";
-  for (const key of Object.keys(v)) {
-    const item = (v as Record<string, unknown>)[key];
-    if (item === undefined) continue;
-    for (const one of Array.isArray(item) ? item : [item]) {
-      out += (out === "" ? "" : "&") + $enc(key) + "=" + $enc(one === null ? "" : $str(one));
-    }
-  }
-  return out;
-}
-
-/** A body in its media type: bytes as given, JSON, a form, or text as given (anything else as
- * JSON). NaN or an infinity in a JSON or form body is refused: `JSON.stringify` would write
- * `null`. */
-function $body(type: string, v: unknown): string | Uint8Array {
+/** A body in its media type: bytes as given, JSON, a form (by the Encoding Objects `enc`), or
+ * text as given (anything else as JSON). NaN or an infinity in a JSON or form body is refused:
+ * `JSON.stringify` would write `null`. */
+function $body(type: string, v: unknown, enc?: FlowapiEncoding): string | Uint8Array {
   if (v instanceof Uint8Array) return v;
   if (!$json(type)) {
     if ($bare(type) === "application/x-www-form-urlencoded") {
       if ($bad(v)) throw new FlowapiRequestError("body", null, "non-finite");
-      return $form(v);
+      return $form(v, enc);
     }
     if (typeof v === "string") return v;
   }
@@ -481,6 +466,90 @@ function $set(headers: Record<string, string>, name: string, s: string | undefin
   headers[name] = s;
 }
 
+/** WHATWG's `application/x-www-form-urlencoded` byte serializer: the UTF-8 of every character but
+ * the ASCII letters and digits and `*-._` percent-encoded, a space as `+` (3.2, "Encoding the
+ * `x-www-form-urlencoded` Media Type"; Appendix E, browsers). What it writes is also valid RFC
+ * 3986 query text. */
+function $wenc(s: string): string {
+  if ($unreserved.test(s) && s.indexOf("~") < 0) return s;
+  return encodeURIComponent(s).replace($wmarks, $mark).replace($space, "+");
+}
+
+const $wmarks = /[!'()~]/g;
+const $space = /%20/g;
+
+/** Whether an Encoding Object serializes its value by style: any of `style`, `explode` and
+ * `allowReserved` written makes it so, and its `contentType` is then not used. */
+function $styled(e: FlowapiPart): boolean {
+  return e.style !== undefined || e.explode !== undefined || e.allowReserved !== undefined;
+}
+
+/** The join of an unexploded array or object in each style a form takes (2.0's `tsv` as
+ * `tabDelimited`), as written in a URI. */
+function $joins(style: string): string {
+  return style === "spaceDelimited" ? " " : style === "pipeDelimited" ? "|" : style === "tabDelimited" ? "\t" : ",";
+}
+
+/** A member of a form serialized by style, as a `query` parameter of that style is: `style`
+ * `form` unless written, `explode` true for `form` unless written, `allowReserved` keeping the
+ * reserved characters; no leading `?`. */
+function $stylePairs(v: unknown, key: string, e: FlowapiPart): string | undefined {
+  const style = e.style ?? "form";
+  const enc = e.allowReserved === true ? $res : $enc;
+  const name = $enc(key);
+  if (style === "deepObject") return $deep(v, name, enc);
+  const join = style === "form" ? "," : $enc($joins(style));
+  return $x(v, name, "", "&", true, "=", e.explode ?? style === "form", join, enc, "body", key);
+}
+
+/** An object as `application/x-www-form-urlencoded`. A member whose Encoding Object (`enc`, by
+ * its name) has a style is serialized by it; any other is serialized by its `contentType`, JSON
+ * for a JSON type and for an object, else its text (a string as it is), then encoded by WHATWG's
+ * rules; an array's items are pairs of the same name, `null` an empty value. */
+function $form(v: unknown, enc?: FlowapiEncoding): string {
+  if (v === null || typeof v !== "object") return v === undefined ? "" : $wenc($str(v));
+  let out = "";
+  for (const key of Object.keys(v)) {
+    const item = (v as Record<string, unknown>)[key];
+    if (item === undefined) continue;
+    const e = enc?.[key];
+    if (e !== undefined && $styled(e)) {
+      out = $add(out, $stylePairs(item, key, e), "&");
+      continue;
+    }
+    const json = e?.contentType !== undefined && $json(e.contentType);
+    for (const one of Array.isArray(item) ? item : [item]) {
+      const s = one === null ? "" : json ? JSON.stringify(one) : $str(one);
+      out += (out === "" ? "" : "&") + $wenc(key) + "=" + $wenc(s);
+    }
+  }
+  return out;
+}
+
+/** A `multipart/form-data` member serialized by style (3.1, 3.2): as a form member is, but each
+ * pair its own part and no percent-encoding (`allowReserved` has no effect). `form` exploded
+ * makes a part per item, or per member of an object under the member's name; unexploded, one
+ * part of the items joined; `deepObject` a part per member, named `name[key]`. */
+function $styleParts(v: unknown, name: string, e: FlowapiPart): [string, string][] {
+  const style = e.style ?? "form";
+  const explode = e.explode ?? style === "form";
+  const out: [string, string][] = [];
+  if (Array.isArray(v)) {
+    const items = v.filter((x) => x !== null && x !== undefined).map($str);
+    if (explode && style === "form") for (const s of items) out.push([name, s]);
+    else if (items.length > 0) out.push([name, items.join($joins(style))]);
+  } else if (typeof v === "object" && v !== null) {
+    const keys = Object.keys(v).filter((k) => (v as Record<string, unknown>)[k] != null);
+    const at = (k: string) => $str((v as Record<string, unknown>)[k]);
+    if (style === "deepObject") for (const k of keys) out.push([`${name}[${k}]`, at(k)]);
+    else if (explode && style === "form") for (const k of keys) out.push([k, at(k)]);
+    else if (keys.length > 0) out.push([name, keys.map((k) => k + $joins(style) + at(k)).join($joins(style))]);
+  } else if (v !== undefined && v !== null) {
+    out.push([name, $str(v)]);
+  }
+  return out;
+}
+
 /** A file to send as a part of a `multipart/form-data` body: its bytes, the name its part's
  * `filename` is written from and the `Content-Type` it is sent as. Made by `flowapiFile` or
  * `flowapiBlob`. */
@@ -511,12 +580,25 @@ export async function flowapiBlob(blob: $Blob, name?: string, type?: string): Pr
   return new FlowapiFile(bytes, name ?? blob.name, type ?? (blob.type === "" ? undefined : blob.type));
 }
 
-/** Per part's name, what the description's Encoding Object says of it: the `Content-Type` its
- * value is sent as, and the headers its part carries (`Content-Type` among them is ignored, as
- * the spec says). An array's items each take their property's. */
-export type FlowapiEncoding = {
-  readonly [name: string]: { readonly contentType?: string; readonly headers?: { readonly [name: string]: string } } | undefined;
+/** One Encoding Object as it applies to a value: the `Content-Type` it is sent as (a list or a
+ * range needs a file's own type to pick one), the headers of its part (`Content-Type` among them
+ * ignored, as the spec says; values written as they are), the style it is serialized by in a form
+ * (`style`, `explode`, `allowReserved`: any written, and `contentType` is not used), and for a
+ * part that is itself `multipart`, the Encoding Objects of its own parts (3.2's nesting). */
+export type FlowapiPart = {
+  readonly contentType?: string;
+  readonly headers?: { readonly [name: string]: string };
+  readonly style?: "form" | "spaceDelimited" | "pipeDelimited" | "deepObject" | "tabDelimited";
+  readonly explode?: boolean;
+  readonly allowReserved?: boolean;
+  readonly encoding?: FlowapiEncoding;
+  readonly prefixEncoding?: readonly (FlowapiPart | undefined)[];
+  readonly itemEncoding?: FlowapiPart;
 };
+
+/** Per property's name, its Encoding Object (a form's, or a `multipart/form-data` part's). An
+ * array's items each take their property's. */
+export type FlowapiEncoding = { readonly [name: string]: FlowapiPart | undefined };
 
 /** A `multipart/form-data` value as `<op>Request` takes it: a string member may also be a file
  * (the types cannot tell `format: binary` from text), an array member's items one part each. */
@@ -524,37 +606,60 @@ type $Upload<T> = T extends string ? T | Uint8Array | FlowapiFile : T;
 type $Member<T> = T extends readonly (infer U)[] ? readonly $Upload<U>[] : $Upload<T>;
 type $Fields<T> = T extends object ? { [K in keyof T]: $Member<T[K]> } : T;
 export type $Form<T> = T extends readonly (infer U)[] ? readonly $Fields<U>[] : $Fields<T>;
+/** Another `multipart` type's value: an array, an item a part each, in order (3.2, "Encoding By
+ * Position"); its parts' types cannot tell a file from text either. */
+export type $Mixed<T> = unknown extends T ? readonly unknown[] : T extends readonly (infer U)[] ? readonly $Upload<U>[] : never;
 
-/** A request body as the input gives it. */
-type $Given = { readonly contentType: string; readonly value: unknown; readonly encoding?: FlowapiEncoding };
+/** A request body as the input gives it, with the Encoding Objects of its media type: by name
+ * (`encoding`) or by position (`prefixEncoding`, then `itemEncoding`). */
+type $Given = { readonly contentType: string; readonly value: unknown } & $Layout;
+type $Layout = { readonly encoding?: FlowapiEncoding; readonly prefixEncoding?: readonly (FlowapiPart | undefined)[]; readonly itemEncoding?: FlowapiPart };
+
+/** How deep `multipart` parts nest: 3.2 asks one level, and more are written up to this. */
+const $nesting = 8;
 
 /** The body set on a request with its `Content-Type`: a `multipart/form-data` object (or 3.2's
- * array of objects, its parts in order) written as parts, any other value by `$body`. */
+ * array of objects, its parts in order) and any `multipart` array written as parts, any other
+ * value by `$body`. */
 function $put(request: $Request, body: $Given): void {
   const v = body.value;
-  if ($bare(body.contentType) === "multipart/form-data" && typeof v === "object" && v !== null && !ArrayBuffer.isView(v)) {
-    const parts: $Part[] = [];
-    for (const one of Array.isArray(v) ? v : [v]) {
-      if (one === undefined) continue;
-      if (one === null) throw new FlowapiRequestError("body", null, "null");
-      if (typeof one !== "object" || Array.isArray(one) || ArrayBuffer.isView(one) || one instanceof FlowapiFile || $unread(one)) {
-        throw new FlowapiRequestError("body", null, "unnamed-part");
-      }
-      for (const name of Object.keys(one)) $member(parts, name, (one as Record<string, unknown>)[name], body.encoding?.[name]);
-    }
-    const [type, bytes] = $multipart(body.contentType, parts);
+  const kind = $bare(body.contentType);
+  if (kind.startsWith("multipart/") && typeof v === "object" && v !== null && !ArrayBuffer.isView(v) && (kind === "multipart/form-data" || Array.isArray(v))) {
+    const [type, bytes] = $multipart(body.contentType, $parts(kind, v, body, 0));
     request.headers["content-type"] = type;
     request.body = bytes;
     return;
   }
   request.headers["content-type"] = body.contentType;
-  request.body = $body(body.contentType, v);
+  request.body = $body(body.contentType, v, body.encoding);
+}
+
+/** A `multipart` value's parts: `multipart/form-data`'s by its members' names (an array's items
+ * each an object of them), any other type's an item each, unnamed. An item at position `i` takes
+ * `prefixEncoding[i]`, else `itemEncoding`; a member without one takes its name's `encoding`. */
+function $parts(kind: string, v: object, layout: $Layout, depth: number): $Part[] {
+  const parts: $Part[] = [];
+  const named = kind === "multipart/form-data";
+  const list: unknown[] = Array.isArray(v) ? v : [v];
+  for (let i = 0; i < list.length; i++) {
+    const one = list[i];
+    if (one === undefined) continue;
+    if (one === null) throw new FlowapiRequestError("body", null, "null");
+    const at = Array.isArray(v) ? (layout.prefixEncoding?.[i] ?? layout.itemEncoding) : undefined;
+    if (!named) {
+      $part(parts, undefined, one, at, depth);
+      continue;
+    }
+    if (typeof one !== "object" || Array.isArray(one) || ArrayBuffer.isView(one) || one instanceof FlowapiFile || $unread(one)) {
+      throw new FlowapiRequestError("body", null, "unnamed-part");
+    }
+    for (const name of Object.keys(one)) $member(parts, name, (one as Record<string, unknown>)[name], at ?? layout.encoding?.[name], depth);
+  }
+  return parts;
 }
 
 /** One part: its head (`Content-Disposition` and the other headers, each line ended) and data. */
 type $Part = { head: string; data: Uint8Array };
-
-type $One = { readonly contentType?: string; readonly headers?: { readonly [name: string]: string } } | undefined;
 
 let $encoder: { encode(text: string): Uint8Array } | undefined;
 
@@ -571,7 +676,7 @@ const $token = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
 /** `s` refused when it holds a CR, LF or NUL (it would end its header line), and where it goes
  * between quotes, a `"` or `\`: RFC 7578 and WHATWG's FormData escape them differently, so a
  * receiver could read another name. */
-function $safe(s: string, part: string, quoted: boolean): string {
+function $safe(s: string, part: string | null, quoted: boolean): string {
   if ($breaks.test(s)) throw new FlowapiRequestError("body", part, "control-character");
   if (quoted && $quotes.test(s)) throw new FlowapiRequestError("body", part, "quote");
   return s;
@@ -587,53 +692,67 @@ function $filename(name: string, part: string): string {
   return $safe(base, part, true);
 }
 
-/** A member's parts: an array's items one part each in order, `undefined` none. */
-function $member(parts: $Part[], name: string, v: unknown, e: $One): void {
+/** A member's parts: by its Encoding Object's style where it has one (`$styleParts`), else an
+ * array's items one part each in order; `undefined` none. */
+function $member(parts: $Part[], name: string, v: unknown, e: FlowapiPart | undefined, depth: number): void {
   if (v === undefined) return;
   $safe(name, name, true);
-  if (!Array.isArray(v)) return $part(parts, name, v, e);
-  for (let i = 0; i < v.length; i++) if (v[i] !== undefined) $part(parts, name, v[i], e);
+  if (e !== undefined && $styled(e) && v !== null && !$unread(v) && !(v instanceof FlowapiFile) && !ArrayBuffer.isView(v)) {
+    if ($bad(v)) throw new FlowapiRequestError("body", name, "non-finite");
+    for (const [n, s] of $styleParts(v, name, e)) {
+      $safe(n, name, true);
+      parts.push({ head: `Content-Disposition: form-data; name="${n}"\r\n`, data: $bytes(s) });
+    }
+    return;
+  }
+  if (!Array.isArray(v)) return $part(parts, name, v, e, depth);
+  for (let i = 0; i < v.length; i++) if (v[i] !== undefined) $part(parts, name, v[i], e, depth);
 }
 
 /** One part, by the Encoding Object's defaults for the value: bytes and files as files (WHATWG's
  * `blob` for a name not given, `application/octet-stream` for a type not given), strings,
  * numbers and booleans as text (`text/plain`, the part's default, so not written), objects and
- * arrays as JSON. `encoding.contentType` replaces the default; a file's own type replaces it. */
-function $part(parts: $Part[], name: string, v: unknown, e: $One): void {
-  if (v === null) throw new FlowapiRequestError("body", name, "null");
+ * arrays as JSON. `e.contentType` replaces the default; a file's own type replaces it. A part of
+ * a `multipart` type is written as its own body, by `e`'s nested Encoding Objects. A part with no
+ * `name` (not `multipart/form-data`) has no `Content-Disposition`. */
+function $part(parts: $Part[], name: string | undefined, v: unknown, e: FlowapiPart | undefined, depth: number): void {
+  const at = name ?? null;
+  if (v === null) throw new FlowapiRequestError("body", at, "null");
   // Bytes in any other view are the same bytes.
   if (v instanceof ArrayBuffer) v = new Uint8Array(v);
   else if (ArrayBuffer.isView(v) && !(v instanceof Uint8Array)) v = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
-  let head = `Content-Disposition: form-data; name="${name}"`;
+  const lines: string[] = name === undefined ? [] : [`Content-Disposition: form-data; name="${name}"`];
   let type = e?.contentType;
   let data: Uint8Array;
   if (v instanceof FlowapiFile || v instanceof Uint8Array) {
     const file = v instanceof FlowapiFile ? v : undefined;
-    head += `; filename="${$filename(file?.name ?? "blob", name)}"`;
+    if (name !== undefined) lines[0] += `; filename="${$filename(file?.name ?? "blob", name)}"`;
     type = file?.type ?? type ?? "application/octet-stream";
     data = file?.data ?? (v as Uint8Array);
   } else if ($unread(v)) {
-    throw new FlowapiRequestError("body", name, "unread-blob");
+    throw new FlowapiRequestError("body", at, "unread-blob");
+  } else if (type !== undefined && $bare(type).startsWith("multipart/") && typeof v === "object" && depth < $nesting) {
+    [type, data] = $multipart(type, $parts($bare(type), v as object, e ?? {}, depth + 1));
   } else {
-    if ($bad(v)) throw new FlowapiRequestError("body", name, "non-finite");
+    if ($bad(v)) throw new FlowapiRequestError("body", at, "non-finite");
     type ??= typeof v === "object" ? "application/json" : undefined;
     // An object in its type (JSON, or a form), a scalar as its text unless the type is JSON.
-    const s = typeof v === "object" || (type !== undefined && $json(type)) ? $body(type ?? "application/json", v) : $str(v);
+    const s = typeof v === "object" || (type !== undefined && $json(type)) ? $body(type ?? "application/json", v, e?.encoding) : $str(v);
     data = typeof s === "string" ? $bytes(s) : s;
   }
   if (type !== undefined) {
-    if (type.indexOf(",") >= 0 || $bare(type).indexOf("*") >= 0) throw new FlowapiRequestError("body", name, "media-range");
-    head += `\r\nContent-Type: ${$safe(type, name, false)}`;
+    if (type.indexOf(",") >= 0 || $bare(type).indexOf("*") >= 0) throw new FlowapiRequestError("body", at, "media-range");
+    lines.push(`Content-Type: ${$safe(type, at, false)}`);
   }
   const headers = e?.headers ?? {};
   for (const key of Object.keys(headers)) {
     const value = headers[key];
     const lower = key.toLowerCase();
     if (value === undefined || lower === "content-type") continue;
-    if (!$token.test(key) || lower === "content-disposition") throw new FlowapiRequestError("body", name, "header-name");
-    head += `\r\n${key}: ${$safe(value, name, false)}`;
+    if (!$token.test(key) || lower === "content-disposition") throw new FlowapiRequestError("body", at, "header-name");
+    lines.push(`${key}: ${$safe(value, at, false)}`);
   }
-  parts.push({ head: head + "\r\n", data });
+  parts.push({ head: lines.map((l) => l + "\r\n").join(""), data });
 }
 
 /** A `Blob`, a `File` or a `Response` given unread: its bytes come only by waiting
@@ -1037,9 +1156,10 @@ export const flowapiSecuritySchemes = {
  * instead of `flowapiServers`, where it has its own; its security, alternatives of which any one
  * is enough, each naming the schemes it needs with their scopes (`[]`: none); how each response's
  * body is read, by media type (`json`, `text`, `bytes`, or `sent`: by the `Content-Type` the
- * answer sends, as `flowapiReadsBytes` says); by `multipart/form-data` media type, the type
- * each part is sent as (`encoding`, the description's Encoding Objects: give it as
- * `body.encoding`); and its `<name>Request` and `<name>Response`.
+ * answer sends, as `flowapiReadsBytes` says); by form and `multipart` media type, how the body's
+ * values are written (`encoding`: the description's Encoding Objects by name and by position,
+ * given as the body's `encoding`, `prefixEncoding` and `itemEncoding`); and its `<name>Request`
+ * and `<name>Response`.
  */
 export const flowapiOperations = {
   byQuery: {

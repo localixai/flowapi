@@ -3,7 +3,7 @@
 // The calls a resource's methods make: one operation's data (`call`), a list's pages (`page`), a
 // stream (`stream`), and a request by method and path that no operation describes (`request`).
 // Each writes its request with the operation's `<op>Request`, passing the description's encoding
-// of a `multipart/form-data` body when the input gives none, and sends it through `Core.send`.
+// of a form or `multipart` body when the input gives none, and sends it through `Core.send`.
 
 import { ApiCall, type Outcome } from "./call.js";
 import { type Core, type Operation, type RequestOptions, type Sent } from "./core.js";
@@ -24,14 +24,16 @@ function bare(type: string): string {
   return (type.split(";")[0] ?? "").trim().toLowerCase();
 }
 
-/** The input with the description's encoding of its body's media type, where it gives none. */
+/** The input with the description's encoding of its body's media type (its Encoding Objects by
+ * name and by position), where the input gives none of its own. */
 function encoded(op: Operation, input: unknown): unknown {
-  const body = (input as { body?: { contentType?: unknown; encoding?: unknown } } | null | undefined)?.body;
-  if (op.encoding === undefined || typeof body?.contentType !== "string" || body.encoding !== undefined) return input;
+  const body = (input as { body?: { contentType?: unknown; encoding?: unknown; prefixEncoding?: unknown; itemEncoding?: unknown } } | null | undefined)?.body;
+  if (op.encoding === undefined || typeof body?.contentType !== "string") return input;
+  if (body.encoding !== undefined || body.prefixEncoding !== undefined || body.itemEncoding !== undefined) return input;
   const type = bare(body.contentType);
   const key = Object.keys(op.encoding).find((k) => bare(k) === type);
   if (key === undefined) return input;
-  return { ...(input as object), body: { ...body, encoding: op.encoding[key] } };
+  return { ...(input as object), body: { ...body, ...op.encoding[key] } };
 }
 
 /** The request an operation's input makes. */

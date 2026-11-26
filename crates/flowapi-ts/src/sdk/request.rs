@@ -51,18 +51,18 @@ pub(super) fn write(out: &mut String, e: &Endpoint, decl: &str, base: &str) {
                 };
                 let typed = format!("NonNullable<{decl}[\"requestBody\"]>[{}]", lit(t));
                 let kind = bare(t);
-                // `multipart/form-data` is written from its parts, by the Encoding Object's
-                // defaults and the `encoding` given; another multipart type is the caller's to
-                // write (its boundary goes in the content type); a type neither JSON, text nor a
-                // form, or a range, may be given as bytes.
+                // `multipart/form-data` is written from its parts, by the Encoding Objects
+                // given by name or position; another multipart type from an array, a part per
+                // item by position, or as the caller wrote it (its boundary goes in the content
+                // type); a form by the Encoding Objects given by name; a type neither JSON, text
+                // nor a form, or a range, may be given as bytes.
                 let (value, more) = if kind == "multipart/form-data" {
-                    (format!("$Form<{typed}>"), "; encoding?: FlowapiEncoding")
+                    (format!("$Form<{typed}>"), "; encoding?: FlowapiEncoding; prefixEncoding?: readonly (FlowapiPart | undefined)[]; itemEncoding?: FlowapiPart")
                 } else if kind.starts_with("multipart/") {
-                    (String::from("string | Uint8Array"), "")
-                } else if ReadAs::of(t) == ReadAs::Json
-                    || ReadAs::of(t) == ReadAs::Text
-                    || kind == "application/x-www-form-urlencoded"
-                {
+                    (format!("$Mixed<{typed}> | string | Uint8Array"), "; prefixEncoding?: readonly (FlowapiPart | undefined)[]; itemEncoding?: FlowapiPart")
+                } else if kind == "application/x-www-form-urlencoded" {
+                    (typed, "; encoding?: FlowapiEncoding")
+                } else if ReadAs::of(t) == ReadAs::Json || ReadAs::of(t) == ReadAs::Text {
                     (typed, "")
                 } else {
                     (format!("{typed} | Uint8Array"), "")

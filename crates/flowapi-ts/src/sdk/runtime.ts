@@ -242,30 +242,15 @@ function $json(type: string): boolean {
   return bare === "application/json" || bare.endsWith("+json");
 }
 
-/** An object as `application/x-www-form-urlencoded`: each member a pair, an array's items
- * pairs of the same name, an object member as JSON (the Encoding Object's defaults). */
-function $form(v: unknown): string {
-  if (v === null || typeof v !== "object") return v === undefined ? "" : $enc($str(v));
-  let out = "";
-  for (const key of Object.keys(v)) {
-    const item = (v as Record<string, unknown>)[key];
-    if (item === undefined) continue;
-    for (const one of Array.isArray(item) ? item : [item]) {
-      out += (out === "" ? "" : "&") + $enc(key) + "=" + $enc(one === null ? "" : $str(one));
-    }
-  }
-  return out;
-}
-
-/** A body in its media type: bytes as given, JSON, a form, or text as given (anything else as
- * JSON). NaN or an infinity in a JSON or form body is refused: `JSON.stringify` would write
- * `null`. */
-function $body(type: string, v: unknown): string | Uint8Array {
+/** A body in its media type: bytes as given, JSON, a form (by the Encoding Objects `enc`), or
+ * text as given (anything else as JSON). NaN or an infinity in a JSON or form body is refused:
+ * `JSON.stringify` would write `null`. */
+function $body(type: string, v: unknown, enc?: FlowapiEncoding): string | Uint8Array {
   if (v instanceof Uint8Array) return v;
   if (!$json(type)) {
     if ($bare(type) === "application/x-www-form-urlencoded") {
       if ($bad(v)) throw new FlowapiRequestError("body", null, "non-finite");
-      return $form(v);
+      return $form(v, enc);
     }
     if (typeof v === "string") return v;
   }

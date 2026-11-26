@@ -3,7 +3,10 @@
 // TypeScript compiler the oracles use checks the whole under strict and exactOptionalPropertyTypes
 // and emits JavaScript, and Node imports it: every operation's `request` and `response` is the
 // SDK's function, its method a string, and every scheme a requirement names is in
-// `flowapiSecuritySchemes` unless the kept diagnostics say why not.
+// `flowapiSecuritySchemes` unless the kept diagnostics say why not. A case's `x-flowapi-calls`
+// write requests through the table as the client does: an operation's `request` given the input,
+// its body with the table's encoding of its media type where the input gives none (calls.ts),
+// and the body and headers compared exactly: the description's encoding read, then written.
 // Run from the repository root after `cargo build --release -p flowapi-cli`:
 //   node crates/flowapi-sdk/tests/tsc.mjs [path/to/flowapi]
 // Exits 1 when anything fails.
@@ -58,8 +61,40 @@ for (const name of names) {
     }
   }
 }
+// The table's encoding of a body's media type put in the input as the client's `encoded` does.
+const bare = (t) => (t.split(';')[0] ?? '').trim().toLowerCase()
+function encoded(entry, input) {
+  const body = input.body
+  if (entry.encoding === undefined || body === undefined || 'encoding' in body || 'prefixEncoding' in body || 'itemEncoding' in body) return input
+  const key = Object.keys(entry.encoding).find((k) => bare(k) === bare(body.contentType))
+  return key === undefined ? input : { ...input, body: { ...body, ...entry.encoding[key] } }
+}
+let calls = 0
+for (const name of names) {
+  const described = JSON.parse(readFileSync(join(cases, `${name}.json`), 'utf8'))
+  const m = await import(pathToFileURL(resolve(out, 'js', `${name}.js`)).href)
+  for (const call of described['x-flowapi-calls'] ?? []) {
+    calls++
+    const entry = m.flowapiOperations[call.operation]
+    // A call's `randoms` (hex, 16 bytes each) are what `crypto.getRandomValues` gives, in turn.
+    const real = Object.getOwnPropertyDescriptor(globalThis, 'crypto')
+    const queue = (call.randoms ?? []).map((h) => Uint8Array.from(h.match(/../g), (b) => parseInt(b, 16)))
+    if (call.randoms) Object.defineProperty(globalThis, 'crypto', { configurable: true, value: { getRandomValues: (b) => { b.set(queue.shift()); return b } } })
+    let r
+    try {
+      r = entry.request(encoded(entry, call.input))
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', real)
+    }
+    const body = r.body instanceof Uint8Array ? new TextDecoder().decode(r.body) : r.body
+    if (body !== call.expect.body) failures.push(`${name}.${call.operation}: body ${JSON.stringify(body)}, want ${JSON.stringify(call.expect.body)}`)
+    for (const [k, v] of Object.entries(call.expect.headers ?? {})) {
+      if (r.headers[k] !== v) failures.push(`${name}.${call.operation}: header ${k} ${JSON.stringify(r.headers[k])}, want ${JSON.stringify(v)}`)
+    }
+  }
+}
 if (failures.length > 0) {
   console.error(failures.join('\n'))
   process.exit(1)
 }
-console.log(`${names.length} tables type-checked and imported`)
+console.log(`${names.length} tables type-checked and imported, ${calls} requests written through them`)

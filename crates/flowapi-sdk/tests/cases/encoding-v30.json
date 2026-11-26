@@ -1,0 +1,50 @@
+{
+ "openapi": "3.0.4",
+ "info": { "title": "encoding in 3.0", "version": "1" },
+ "paths": {
+  "/forms": {
+   "post": {
+    "operationId": "postForm",
+    "requestBody": {
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "file": { "type": "string", "format": "binary" },
+         "b64": { "type": "string", "format": "byte" },
+         "files": { "type": "array", "items": { "type": "string", "format": "binary" } },
+         "id": { "type": "string", "format": "uuid" }
+        }
+       },
+       "encoding": {
+        "id": { "style": "form", "explode": false, "allowReserved": true, "contentType": "text/plain", "x-internal": true },
+        "file": { "headers": { "X-Size": { "schema": { "type": "integer" } } } }
+       }
+      },
+      "application/x-www-form-urlencoded": {
+       "schema": { "type": "object" },
+       "encoding": { "tags": { "style": "spaceDelimited", "explode": false }, "meta": { "contentType": "application/json" } }
+      },
+      "text/plain": { "schema": { "type": "string" }, "encoding": { "a": { "contentType": "text/csv" } } }
+     }
+    },
+    "responses": {
+     "200": { "description": "ok", "content": { "multipart/form-data": { "schema": { "type": "object" }, "encoding": { "a": { "contentType": "text/csv" } } } } }
+    }
+   }
+  }
+ },
+ "x-flowapi-covers": [
+  "req: oas-3.0.media-type-object.encoding — multipart/form-data and the form: each Encoding Object by its property's name",
+  "req: oas-3.0.media-type-object.encoding.shall-encoding-field-only-apply-request-body — the 200's multipart encoding and text/plain's read nowhere",
+  "req: oas-3.0.encoding-object.style.shall-field-ignored-request-body-media-type — multipart/form-data's id: style not read in 3.0; the form's tags: read",
+  "req: oas-3.0.encoding-object.explode.shall-field-ignored-request-body-media-type — id: explode not read for multipart/form-data in 3.0",
+  "req: oas-3.0.encoding-object.allowReserved.shall-field-ignored-request-body-media-type — id: allowReserved not read for multipart/form-data in 3.0",
+  "req: oas-3.0.encoding-object.common-fixed-fields.may-object-extended-specification-extensions — id: x-internal read as nothing"
+ ],
+ "x-flowapi-calls": [
+  {"operation": "postForm", "input": {"body": {"contentType": "multipart/form-data; boundary=XyZ", "value": {"id": "a/b", "b64": "QUJD"}}}, "expect": {"body": "--XyZ\r\nContent-Disposition: form-data; name=\"id\"\r\nContent-Type: text/plain\r\n\r\na/b\r\n--XyZ\r\nContent-Disposition: form-data; name=\"b64\"\r\nContent-Type: application/octet-stream\r\n\r\nQUJD\r\n--XyZ--\r\n"}},
+  {"operation": "postForm", "input": {"body": {"contentType": "application/x-www-form-urlencoded", "value": {"tags": ["a", "b"], "meta": {"k": "v w"}}}}, "expect": {"body": "tags=a%20b&meta=%7B%22k%22%3A%22v+w%22%7D"}}
+ ]
+}
