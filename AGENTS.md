@@ -57,6 +57,13 @@ work here.
   a first config, `summary.rs` the compact summary. `tests/config/*.yml` with the issues kept
   beside each (`--test config`), `tests/schema.json` (`--test schema`, the reader and the schema
   agree both ways), `tests/draft/` (`--test draft`), `tests/summary/` (`--test summary`).
+  `encoding.rs` a `multipart/form-data` body's encoding, put in the table. `client.rs` the whole
+  TypeScript client from a config (`client_files`): `client/resources.rs` a class per resource,
+  `client/entry.rs` the client class and `index.ts`, `client/core/*.ts` the runtime, kept as
+  TypeScript and printed as it is (each file held to 300 working lines by `tests/client.mjs`).
+  `tests/client/<case>/` a config and a description with the client kept beside them
+  (`--test client`); `tests/client.mjs` type-checks them and runs `tests/client/*.mjs` against a
+  stub `fetch`, each test naming the pitfall it holds.
 - `crates/flowapi-cli`: the `flowapi` command, all of flowapi's I/O. `src/sdk.rs` the subcommands
   put before the path (`summary`, `config draft|schema|check`; `tests/sdk_cli.rs`).
 - `crates/flowapi-yaml`: a description's text as the core reads it, shared by the command and the
@@ -103,6 +110,8 @@ cargo test -p flowapi-rust --test sdk                  # the Rust SDK kept for e
 cargo test -p flowapi-ts --test fuzz                   # O7, no input panics
 cargo test -p flowapi-sdk --test table                 # the SDK layer's tables (FLOWAPI_BLESS=1)
 cargo test -p flowapi-sdk --test config                # also --test schema, draft, summary (FLOWAPI_BLESS=1)
+cargo test -p flowapi-sdk --test client                # the clients kept in tests/client/ (FLOWAPI_BLESS=1)
+node crates/flowapi-sdk/tests/client.mjs               # them type-checked and run against a stub fetch
 cargo test -p flowapi-cli --test sdk_cli               # summary and config as the command runs them
 node crates/flowapi-sdk/tests/tsc.mjs                  # them type-checked after --sdk; after cargo build --release
 cargo run --release -p flowapi-cli -- <description.json> -o types.ts

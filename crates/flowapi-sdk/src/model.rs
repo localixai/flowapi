@@ -106,6 +106,16 @@ pub struct Requirement {
     pub schemes: Vec<(String, Vec<String>)>,
 }
 
+/// The types a `multipart/form-data` body's parts are sent as, by the description's Encoding
+/// Objects.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Encoding {
+    /// The media type, as written (`multipart/form-data`).
+    pub media_type: String,
+    /// Each part's name with its one `contentType`, in the order written.
+    pub parts: Vec<(String, String)>,
+}
+
 /// What one operation asks for.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Access {
@@ -115,6 +125,8 @@ pub struct Access {
     /// Its security: the alternatives, any one of which is enough; its own `security`, else the
     /// description's. Empty means no authentication.
     pub security: Vec<Requirement>,
+    /// Its request body's encodings, one per `multipart/form-data` media type that has one.
+    pub encodings: Vec<Encoding>,
 }
 
 /// What a description says about serving and securing its API.

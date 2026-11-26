@@ -17,7 +17,10 @@
 //! `schemes` (the description's own scheme). swagger-nohost.json: no host (a relative URL, an
 //! operation's `schemes` changing nothing) and a `basePath` without `/`. v32.json: a server's
 //! `name`, a deprecated scheme, a Path Item behind `$ref` with servers and an
-//! `additionalOperations` method, a requirement named by URI, the `query` method.
+//! `additionalOperations` method, a requirement named by URI, the `query` method. encoding.json:
+//! a multipart body's Encoding Objects (a part's type with parameters, a list of types left out
+//! with a warning, an object with no `contentType`), one behind a request body's `$ref`, a form's
+//! encoding not read, a multipart body with none.
 //!
 //! Each case names the requirements it covers in `x-flowapi-covers` (the ledger reads them).
 #![expect(

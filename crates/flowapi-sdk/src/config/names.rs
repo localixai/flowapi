@@ -24,6 +24,24 @@ pub(crate) const CLIENT_MEMBERS: &[&str] = &[
 /// The members a generated resource class has beside its methods and resources.
 pub(crate) const RESOURCE_MEMBERS: &[&str] = &["constructor"];
 
+/// The generated client's own options, as words: a credential's option, the words of its scheme's
+/// name, may not be one of them. The generator keeps to this list.
+pub(crate) const CLIENT_OPTIONS: &[&str] = &[
+    "base_url",
+    "environment",
+    "timeout",
+    "max_retries",
+    "max_retry_delay",
+    "max_pages",
+    "fetch",
+    "fetch_options",
+    "default_headers",
+    "default_query",
+    "log_level",
+    "logger",
+    "allow_cross_origin_redirects",
+];
+
 /// Whether `name` is one of `members`, as words.
 pub(crate) fn reserved(name: &str, members: &[&str]) -> bool {
     members.iter().any(|m| words::same(m, name))
@@ -95,6 +113,20 @@ pub(crate) fn check(c: &Config, schema_names: &[String], issues: &mut Issues) {
     let schemes: Vec<(&Named, &'static str)> =
         c.schemes.iter().map(|s| (&s.name, "scheme")).collect();
     siblings(&schemes, "`pagination`", issues);
+    let auth: Vec<(&Named, &'static str)> = c.auth.iter().map(|n| (n, "credential")).collect();
+    siblings(&auth, "`auth`", issues);
+    for a in &c.auth {
+        if words::words(&a.name).is_empty() {
+            let message = format!(
+                "the scheme `{}` has no letter or digit to name its option",
+                a.name
+            );
+            issues.error("config.name.option", &a.at, message);
+        } else if reserved(&a.name, CLIENT_OPTIONS) {
+            let message = format!("the scheme `{}` would be the client's own option", a.name);
+            issues.error("config.name.option", &a.at, message);
+        }
+    }
 }
 
 /// Names under one parent: the second of two equal as words is an error.

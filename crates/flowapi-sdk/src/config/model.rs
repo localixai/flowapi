@@ -40,6 +40,25 @@ pub(crate) struct Method {
     pub(crate) paging: PagingRef,
     /// Where `stream: true` is written, when it is.
     pub(crate) stream: Option<At>,
+    /// Its own `retries`.
+    pub(crate) retries: Option<i64>,
+}
+
+/// What the generated client is made with beside its resources: values no check is about.
+#[derive(Debug, Default)]
+pub(crate) struct Settings {
+    /// Each environment's URL, by its name as written.
+    pub(crate) urls: Vec<(String, String)>,
+    /// `environments.env_var`: the variable that overrides the base URL.
+    pub(crate) base_url_env: Option<String>,
+    /// Each security scheme's `env_var`, by its name.
+    pub(crate) auth_env: Vec<(String, String)>,
+    /// `defaults.retries`.
+    pub(crate) retries: Option<i64>,
+    /// `defaults.timeout`, in seconds.
+    pub(crate) timeout: Option<f64>,
+    /// `defaults.max_retry_delay`, in seconds.
+    pub(crate) max_retry_delay: Option<f64>,
 }
 
 /// A pagination scheme defined under `pagination`.
@@ -67,6 +86,7 @@ pub(crate) struct Config {
     pub(crate) readme: Vec<(&'static str, Named)>,
     /// Where `resources` is.
     pub(crate) resources_at: At,
+    pub(crate) settings: Settings,
 }
 
 impl Config {

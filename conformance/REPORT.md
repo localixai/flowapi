@@ -323,6 +323,7 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `crates/flowapi-cli/tests/documents_cli.rs` | 8 |
 | `crates/flowapi-cli/tests/openapi_cli.rs` | 30 |
 | `crates/flowapi-sdk/tests/cases/defaults.json` | 12 |
+| `crates/flowapi-sdk/tests/cases/encoding.json` | 1 |
 | `crates/flowapi-sdk/tests/cases/security.json` | 22 |
 | `crates/flowapi-sdk/tests/cases/servers.json` | 15 |
 | `crates/flowapi-sdk/tests/cases/v32.json` | 12 |
@@ -332,4 +333,4 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 
 ## Markers on out-of-scope requirements
 
-None.
+- `oas-3.1.encoding-object.contentType` in `crates/flowapi-sdk/tests/cases/encoding.json:61`

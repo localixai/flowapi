@@ -6,9 +6,9 @@
 //! [`Documents`]. No I/O (G5).
 
 mod build;
-mod check;
+pub(crate) mod check;
 pub(crate) mod issue;
-mod model;
+pub(crate) mod model;
 mod names;
 mod read;
 mod schema;
@@ -23,6 +23,7 @@ pub(crate) use strings::is_url;
 use crate::ops::Ops;
 use flowapi::Documents;
 use issue::{At, Issues};
+use model::Config;
 
 /// Every issue of a config (its JSON text) against a description: the format first (unknown
 /// members, types, required members), then what it names (operations, schemes, environments),
@@ -30,6 +31,20 @@ use issue::{At, Issues};
 /// members they are about.
 #[must_use]
 pub fn check(docs: &Documents<'_>, config: &str) -> Vec<Issue> {
+    checked(docs, config).issues
+}
+
+/// A config read and held to its description: what the generator prints by.
+pub(crate) struct Checked {
+    pub(crate) config: Config,
+    /// The operation each method calls, by index into `config.methods` (into [`Ops::read`]'s list).
+    pub(crate) resolved: Vec<Option<usize>>,
+    /// Every issue, in the order of the members they are about.
+    pub(crate) issues: Vec<Issue>,
+}
+
+/// [`check`], keeping what it read.
+pub(crate) fn checked(docs: &Documents<'_>, config: &str) -> Checked {
     let mut issues = Issues::default();
     let tree = match flowapi::json::parse(config) {
         Ok(tree) => tree,
@@ -43,15 +58,20 @@ pub fn check(docs: &Documents<'_>, config: &str) -> Vec<Issue> {
                 &at,
                 format!("the config is not JSON: {}", e.message),
             );
-            return issues.list;
+            return Checked {
+                config: Config::default(),
+                resolved: Vec::new(),
+                issues: issues.list,
+            };
         }
     };
     let declared = read::validate(&tree, &shape::CONFIG, &mut issues);
     let c = build::build(&tree, &declared, &mut issues);
     let (ops, _) = Ops::read(docs);
+    let mut resolved = Vec::new();
     match ops {
         Some(ops) => {
-            let resolved = check::references(&c, &ops, &mut issues);
+            resolved = check::references(&c, &ops, &mut issues);
             names::check(&c, &ops.schema_names, &mut issues);
             check::methods(&c, &ops, &resolved, &mut issues);
             check::rest(&c, &ops, &resolved, &mut issues);
@@ -63,7 +83,11 @@ pub fn check(docs: &Documents<'_>, config: &str) -> Vec<Issue> {
     }
     check::generator(&c, &mut issues);
     issues.list.sort_by_key(|i| i.offset);
-    issues.list
+    Checked {
+        config: c,
+        resolved,
+        issues: issues.list,
+    }
 }
 
 /// The description a config names (its `spec`, as written), for a host to read before

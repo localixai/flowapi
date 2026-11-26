@@ -1,0 +1,46 @@
+{
+ "openapi": "3.0.3",
+ "info": { "title": "Auth", "version": "1" },
+ "servers": [{ "url": "https://auth.example/{version}", "variables": { "version": { "default": "v2" } } }],
+ "paths": {
+  "/query": { "get": { "operationId": "byQuery", "security": [{ "QueryKey": [] }], "parameters": [{ "name": "q", "in": "query", "schema": { "type": "string" } }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/cookie": { "get": { "operationId": "byCookie", "security": [{ "CookieKey": [] }], "parameters": [{ "name": "theme", "in": "cookie", "schema": { "type": "string" } }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/basic": { "get": { "operationId": "byBasic", "security": [{ "Basic": [] }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/either": { "get": { "operationId": "byEither", "security": [{ "Token": [] }, { "Basic": [] }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/both": { "get": { "operationId": "byBoth", "security": [{ "QueryKey": [], "Token": [] }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/open": { "get": { "operationId": "open", "security": [], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/oauth": { "get": { "operationId": "byOauth", "security": [{ "Oauth": ["read"] }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/elsewhere": {
+   "get": {
+    "operationId": "elsewhere",
+    "security": [],
+    "servers": [{ "url": "https://other.example/api" }],
+    "responses": { "200": { "$ref": "#/components/responses/Ok" } }
+   }
+  },
+  "/lines": {
+   "get": {
+    "operationId": "lines",
+    "security": [],
+    "responses": { "200": { "description": "lines", "content": { "application/x-ndjson": { "schema": { "type": "object" } } } } }
+   }
+  },
+  "/things/{id}": {
+   "delete": { "operationId": "deleteThing", "security": [], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "204": { "description": "gone" } } },
+   "put": { "operationId": "newThing", "security": [], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } }
+  },
+  "/deep": { "get": { "operationId": "deep", "security": [], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } }
+ },
+ "components": {
+  "responses": {
+   "Ok": { "description": "ok", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } }
+  },
+  "securitySchemes": {
+   "QueryKey": { "type": "apiKey", "in": "query", "name": "api_key" },
+   "CookieKey": { "type": "apiKey", "in": "cookie", "name": "session" },
+   "Basic": { "type": "http", "scheme": "basic" },
+   "Token": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" },
+   "Oauth": { "type": "oauth2", "flows": { "clientCredentials": { "tokenUrl": "https://auth.example/token", "scopes": { "read": "read" } } } }
+  }
+ }
+}
