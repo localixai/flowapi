@@ -187,19 +187,32 @@ Parameters are written as their `style`, `explode` and `allowReserved` say (`sim
 `style: cookie`, which pass as given; a parameter with `content` as its media type's text; cookies
 into one `cookie` header. The body is `{ contentType, value }` of one of the operation's media
 types: JSON, a form, text as given, or bytes (a `Uint8Array`, for a type neither JSON, text nor a
-form, sent as they are). A `multipart/form-data` body is written from its members as the
+form, sent as they are). A form (`application/x-www-form-urlencoded`) is percent-encoded by the
+WHATWG rules 3.2 asks for, as a browser sends one: a space as `+`, all but letters, digits and
+`*-._` encoded (`a b!` is `a+b%21`); a member whose Encoding Object gives `style`, `explode` or
+`allowReserved` is written by that style as a query parameter is, with RFC 3986's encoding
+(`ids=1%7C2`, `point%5Bx%5D=1`). A `multipart/form-data` body is written from its members as the
 Encoding Object's defaults say: a `Uint8Array` or a file a file part (`filename` its last path
 segment, `blob` when it has none; `application/octet-stream` when it has no type), a string,
 number or boolean a text part, an object JSON, an array's items one part each under its name, in
 order (RFC 7578, 4.3); `undefined` is left out, `null` refused. A file is
 `flowapiFile(bytes or text, name, type)`, or `await flowapiBlob(blobOrFile)`, the one step that
-waits: `<op>Request` takes bytes and stays synchronous. The description's `encoding` is not read
-yet: give it as the body's `encoding` (`{ photo: { contentType, headers } }`); its `contentType`
-replaces the default (a file's own type replaces it, and a list or a range needs one) and its
-`headers` go into the part. The boundary is the content type's (`; boundary=`), else 128 random
-bits from `globalThis.crypto`, drawn again while a part holds them and added to the request's
-`content-type`; `body` is then bytes. 3.2's array of objects is written as its parts in order;
-another multipart type is yours to write, as a string or bytes. A response is picked
+waits: `<op>Request` takes bytes and stays synchronous. Any other multipart type
+(`multipart/mixed`, 3.2) takes an array, an unnamed part per item in order, or a string or bytes
+sent as they are. The description's Encoding Objects go in the body: `encoding` by name,
+3.2's `prefixEncoding` and `itemEncoding` by position (the SDK layer's table holds the
+description's, and the client passes them when the call gives none). A part's `contentType`
+replaces the default (a file's own type replaces it, and a list or a range needs one: nothing is
+sniffed), its `headers` go into the part as given, `style` and `explode` write a member of a
+`multipart/form-data` body (3.1, 3.2) as a form's, without percent-encoding, and a part whose type
+is `multipart` is a body of its own by its nested Encoding Objects (3.2). Where an Encoding Object
+gives no type, the table takes it from the schema, through `$ref` and `allOf`: a string with
+`contentEncoding` (3.0: `format: binary` or `byte`) is `application/octet-stream`, and a part of
+another multipart type also says `Content-Transfer-Encoding` (3.2). Swagger 2.0's `formData`
+arrays are written by their `collectionFormat` (`csv`, `ssv`, `pipes`, `multi`, and `tsv` joined
+by a tab), a `file` field making the body `multipart/form-data`. The boundary is the content
+type's (`; boundary=`), else 128 random bits from `globalThis.crypto`, drawn again while a part
+holds them and added to the request's `content-type`; `body` is then bytes. A response is picked
 by its status (the code, then `2XX`, then `default`) and its `Content-Type`, and its body, given as
 text or as bytes, read by the type sent as the Rust SDK reads it: JSON parsed (a leading byte
 order mark skipped), `text/*` a `string`, any other a `Uint8Array`, a media range any of those

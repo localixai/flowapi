@@ -12,22 +12,49 @@
       "multipart/form-data": {
        "schema": {
         "type": "object",
-        "properties": { "photo": { "type": "string", "contentMediaType": "image/png" }, "meta": { "type": "object" }, "thumb": { "type": "string" } }
+        "properties": {
+         "photo": { "type": "string", "contentMediaType": "image/png" },
+         "meta": { "type": "object" },
+         "thumb": { "type": "string" },
+         "tags": { "type": "array", "items": { "type": "string" } },
+         "scan": { "$ref": "#/components/schemas/Scan" },
+         "either": { "oneOf": [{ "type": "string", "contentEncoding": "base64" }, { "type": "integer" }] }
+        }
        },
        "encoding": {
-        "photo": { "contentType": "image/png" },
+        "photo": { "contentType": "image/jpeg", "x-note": "an extension changes nothing" },
         "meta": { "contentType": "application/json; charset=utf-8", "headers": { "X-Trace": { "schema": { "type": "string" } } } },
         "thumb": { "contentType": "image/png, image/jpeg" },
-        "none": { "style": "form" }
+        "tags": { "style": "form", "explode": false, "contentType": "application/json" },
+        "none": { "style": "matrix" }
        }
       },
       "application/x-www-form-urlencoded": {
        "schema": { "type": "object" },
-       "encoding": { "photo": { "contentType": "text/plain" } }
+       "encoding": {
+        "photo": { "contentType": "text/plain", "headers": { "X-Ignored": { "schema": { "type": "string" } } } },
+        "ids": { "style": "pipeDelimited" },
+        "path": { "allowReserved": true },
+        "point": { "style": "deepObject", "explode": true }
+       }
+      },
+      "multipart/mixed": {
+       "schema": { "type": "array", "prefixItems": [{ "type": "string", "contentEncoding": "base64" }] },
+       "prefixEncoding": [{ "contentType": "text/plain" }],
+       "itemEncoding": { "contentType": "text/plain" }
+      },
+      "application/json": {
+       "schema": { "type": "object" },
+       "encoding": { "photo": { "contentType": "image/png" } }
       }
      }
     },
-    "responses": { "201": { "description": "made" } }
+    "responses": {
+     "201": {
+      "description": "made",
+      "content": { "multipart/form-data": { "schema": { "type": "object" }, "encoding": { "photo": { "contentType": "image/png" } } } }
+     }
+    }
    }
   },
   "/docs": {
@@ -46,6 +73,10 @@
   }
  },
  "components": {
+  "schemas": {
+   "Scan": { "allOf": [{ "$ref": "#/components/schemas/Encoded" }, { "maxLength": 100 }] },
+   "Encoded": { "type": "string", "contentEncoding": "base64" }
+  },
   "requestBodies": {
    "Doc": {
     "content": {
@@ -58,6 +89,17 @@
   }
  },
  "x-flowapi-covers": [
-  "req: oas-3.1.encoding-object.contentType — a part's one type read; a list or a range of types is a warning and left out"
+  "req: oas-3.1.encoding-object.contentType — a part's type read as written, parameters kept; a list (thumb) kept for the caller to pick from",
+  "req: oas-3.1.media-type-object.encoding — the Encoding Objects of multipart/form-data and of a form, by property name",
+  "req: oas-3.1.media-type-object.encoding.shall-encoding-field-only-apply-request-body — uploadPhoto: its 201's encoding and its application/json's encoding read nowhere",
+  "req: oas-3.1.encoding-object.style.shall-field-ignored-request-body-media-type — multipart/mixed: no style read; a form's and multipart/form-data's are",
+  "req: oas-3.1.encoding-object.explode.shall-field-ignored-request-body-media-type — explode read only for the form and multipart/form-data",
+  "req: oas-3.1.encoding-object.allowReserved.shall-field-ignored-request-body-media-type — allowReserved read only for the form and multipart/form-data",
+  "req: oas-3.1.encoding-object.common-fixed-fields.may-object-extended-specification-extensions — photo: x-note read as nothing",
+  "req: oas-3.1.encoding-object.encoding-multipart-media-types.shall-note-stated-working-binary-data-encoding — photo: contentType image/jpeg, not the schema's contentMediaType image/png"
+ ],
+ "x-flowapi-calls": [
+  {"operation": "uploadPhoto", "input": {"body": {"contentType": "multipart/form-data; boundary=XyZ", "value": {"photo": "J", "meta": {"k": 1}, "tags": ["a", "b"], "scan": "QUJD"}}}, "expect": {"body": "--XyZ\r\nContent-Disposition: form-data; name=\"photo\"\r\nContent-Type: image/jpeg\r\n\r\nJ\r\n--XyZ\r\nContent-Disposition: form-data; name=\"meta\"\r\nContent-Type: application/json; charset=utf-8\r\n\r\n{\"k\":1}\r\n--XyZ\r\nContent-Disposition: form-data; name=\"tags\"\r\n\r\na,b\r\n--XyZ\r\nContent-Disposition: form-data; name=\"scan\"\r\nContent-Type: application/octet-stream\r\n\r\nQUJD\r\n--XyZ--\r\n"}},
+  {"operation": "uploadPhoto", "input": {"body": {"contentType": "application/x-www-form-urlencoded", "value": {"ids": [1, 2], "path": "/a b", "point": {"x": 1}, "photo": "p q"}}}, "expect": {"body": "ids=1%7C2&path=/a%20b&point%5Bx%5D=1&photo=p+q", "headers": {"content-type": "application/x-www-form-urlencoded"}}}
  ]
 }

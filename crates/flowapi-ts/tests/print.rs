@@ -372,6 +372,55 @@ fn generate(uri: &str, text: &str) -> String {
 // req: oas-2.0.schema-object.discriminator — swagger20-schema.json: Pet: discriminator read as a property's name, the type unchanged
 // req: oas-2.0.schema-object.readOnly — swagger20-schema.json: Pet: a required readOnly id optional
 // req: oas-2.0.schema-object.pattern-x — swagger20-schema.json: Ext: x-internal read and kept, never an error
+// lossy: oas-2.0.schema-object.readOnly.must-not-means-sent-part-response-but-sent — swagger20-schema.json: Pet: one type for requests and responses: a read-only property is optional there, not absent from requests
+// req: oas-2.0.path-item-object.$ref — swagger20-fields.json: PutAlias: /alias's operations read from the Path Item its $ref names
+// req: oas-2.0.path-item-object.options — swagger20-fields.json: OptionsBounds
+// req: oas-2.0.path-item-object.head — swagger20-fields.json: HeadBounds
+// req: oas-2.0.path-item-object.patch — swagger20-fields.json: PatchBounds
+// req: oas-2.0.operation-object.consumes.may-empty-value-used-clear-global-definition — swagger20-fields.json: PatchBounds: consumes [] clears the global application/xml (the body under application/json, the default)
+// req: oas-2.0.operation-object.produces.may-empty-value-used-clear-global-definition — swagger20-fields.json: PatchBounds: produces [] clears the global application/xml (the response under application/json); PutGlobal keeps the global ones
+// lossy: oas-2.0.parameter-object.format — swagger20-fields.json: no TS type checks a format; the type of `type` alone (n int64 -> number, s date -> string)
+// req: oas-2.0.parameter-object.default — swagger20-fields.json: X-Limit, n: a default leaves the parameter optional and its type unnarrowed (the server's value, not a literal)
+// lossy: oas-2.0.parameter-object.maximum — swagger20-fields.json: TypeScript's number has no bound (n stays number); read: an enum is narrowed by it (nAt 1 | 2)
+// lossy: oas-2.0.parameter-object.exclusiveMaximum — swagger20-fields.json: TypeScript's number has no bound (n stays number); read in 2.0's boolean form: nEnum (4) drops 6
+// lossy: oas-2.0.parameter-object.minimum — swagger20-fields.json: TypeScript's number has no bound (n stays number); read: an enum is narrowed by it (nAt 1 | 2)
+// lossy: oas-2.0.parameter-object.exclusiveMinimum — swagger20-fields.json: TypeScript's number has no bound (n stays number); read in 2.0's boolean form: nEnum (4) drops 2
+// lossy: oas-2.0.parameter-object.multipleOf — swagger20-fields.json: TypeScript's number has no step (n stays number); read: nEnum (4) drops 3 and 5
+// lossy: oas-2.0.parameter-object.maxLength — swagger20-fields.json: TypeScript's string has no length (s stays string); read: sEnum drops dddd
+// lossy: oas-2.0.parameter-object.minLength — swagger20-fields.json: TypeScript's string has no length (s stays string); read: sEnum drops a
+// lossy: oas-2.0.parameter-object.pattern — swagger20-fields.json: flowapi evaluates no regular expression for a plain string (s stays string); an enum is narrowed by it (sEnum "bb" | "bc")
+// lossy: oas-2.0.parameter-object.maxItems — swagger20-fields.json: a short bound is a tuple (a: one to three), a long one is not (big: two or more, maxItems 1000 not held)
+// req: oas-2.0.parameter-object.minItems — swagger20-fields.json: a and big: tuples of at least one and two items
+// lossy: oas-2.0.parameter-object.uniqueItems — swagger20-fields.json: no TS type checks uniqueness (a)
+// lossy: oas-2.0.items-object.format — swagger20-fields.json: no TS type checks a format (a's items byte -> string, m's float -> number)
+// req: oas-2.0.items-object.items — swagger20-fields.json: m: an array of arrays of numbers by the nested Items Object
+// req: oas-2.0.items-object.default — swagger20-fields.json: a's items: a default leaves them string, no literal
+// lossy: oas-2.0.items-object.maximum — swagger20-fields.json: TypeScript's number has no bound (m's items stay number); read: mEnum's items 3 | 6
+// lossy: oas-2.0.items-object.exclusiveMaximum — swagger20-fields.json: TypeScript's number has no bound; read in 2.0's boolean form: mEnum's items drop 9
+// lossy: oas-2.0.items-object.minimum — swagger20-fields.json: TypeScript's number has no bound; read: mEnum's items 3 | 6
+// lossy: oas-2.0.items-object.exclusiveMinimum — swagger20-fields.json: TypeScript's number has no bound; read in 2.0's boolean form: mEnum's items drop 0
+// lossy: oas-2.0.items-object.multipleOf — swagger20-fields.json: TypeScript's number has no step; read: mEnum's items drop 4
+// lossy: oas-2.0.items-object.maxLength — swagger20-fields.json: TypeScript's string has no length (a's items stay string); read: aEnum's items drop xyzw
+// lossy: oas-2.0.items-object.minLength — swagger20-fields.json: TypeScript's string has no length (a's items stay string); read: aEnum's items drop x
+// lossy: oas-2.0.items-object.pattern — swagger20-fields.json: no regular expression evaluated for a plain string (a's items); an enum is narrowed by it (aEnum's items "xy")
+// req: oas-2.0.items-object.maxItems — swagger20-fields.json: m's inner arrays: at most two, a tuple
+// req: oas-2.0.items-object.minItems — swagger20-fields.json: m's inner arrays: at least one
+// lossy: oas-2.0.items-object.uniqueItems — swagger20-fields.json: no TS type checks uniqueness (m's inner arrays)
+// lossy: oas-2.0.header-object.format — swagger20-fields.json: no TS type checks a format (X-Count int32 -> number, X-Grid int64 -> number)
+// req: oas-2.0.header-object.items — swagger20-fields.json: X-Grid: an array of arrays of numbers
+// req: oas-2.0.header-object.default — swagger20-fields.json: X-Count, X-Name: a default leaves the header's type unnarrowed
+// lossy: oas-2.0.header-object.maximum — swagger20-fields.json: TypeScript's number has no bound (X-Count stays number); read: X-Step 5 | 10
+// lossy: oas-2.0.header-object.exclusiveMaximum — swagger20-fields.json: TypeScript's number has no bound; read in 2.0's boolean form: X-Step drops 15
+// lossy: oas-2.0.header-object.minimum — swagger20-fields.json: TypeScript's number has no bound; read: X-Step 5 | 10
+// lossy: oas-2.0.header-object.exclusiveMinimum — swagger20-fields.json: TypeScript's number has no bound; read in 2.0's boolean form: X-Step drops 0
+// lossy: oas-2.0.header-object.multipleOf — swagger20-fields.json: TypeScript's number has no step; read: X-Step drops 7
+// lossy: oas-2.0.header-object.maxLength — swagger20-fields.json: TypeScript's string has no length (X-Name stays string); read: X-Code drops Bcdef
+// lossy: oas-2.0.header-object.minLength — swagger20-fields.json: TypeScript's string has no length (X-Name stays string); read: X-Code drops a
+// lossy: oas-2.0.header-object.pattern — swagger20-fields.json: no regular expression evaluated for a plain string (X-Name); an enum is narrowed by it (X-Code drops Cc)
+// req: oas-2.0.header-object.maxItems — swagger20-fields.json: X-Tags: at most four, a tuple
+// req: oas-2.0.header-object.minItems — swagger20-fields.json: X-Tags: at least one
+// lossy: oas-2.0.header-object.uniqueItems — swagger20-fields.json: no TS type checks uniqueness (X-Tags)
+// req: oas-2.0.header-object.enum — swagger20-fields.json: X-Mode: "fast" | "slow"
 // Petstore:
 // `definitions` as named types, `body` under each type of `consumes`, a response's `schema` under
 // each of `produces`, non-body parameters and headers as their own schemas, `#/parameters/…`
@@ -379,7 +428,12 @@ fn generate(uri: &str, text: &str) -> String {
 // the form types of `consumes`, the operation's fields winning over the Path Item's, `file` as
 // any value, a body beside a form warned about. Schema: `x-nullable`, `discriminator` as a name,
 // `$ref` overriding its siblings, 3.x-only keywords (`anyOf`, `nullable`, `writeOnly`, `const`)
-// meaning nothing, a required `readOnly` property optional.
+// meaning nothing, a required `readOnly` property optional. Fields: the Parameter, Items and
+// Header Objects' validation keywords (2.0's boolean `exclusiveMinimum` and `exclusiveMaximum`
+// too) narrowing an `enum` and leaving a plain value as wide as its type, `minItems` and
+// `maxItems` as tuples, `default` and `format` changing no type, nested Items Objects, `options`,
+// `head` and `patch`, a Path Item behind `$ref`, and empty `consumes` and `produces` clearing the
+// global ones.
 #[test]
 fn cases_print_as_kept() {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/cases");
@@ -432,6 +486,62 @@ fn deep_inputs_do_not_overflow() {
         "}".repeat(500)
     );
     assert!(generate("nested.json", &nested).contains("export type Root"));
+}
+
+// req: oas-2.0.swagger-object.pattern-x — swagger_extensions_change_nothing: an `x-` field of the Swagger Object changes neither the types nor the SDK
+// req: oas-2.0.paths-object.pattern-x — swagger_extensions_change_nothing: an `x-` key of the Paths Object is no path
+// req: oas-2.0.path-item-object.pattern-x — swagger_extensions_change_nothing: an `x-` key of a Path Item is no operation
+// req: oas-2.0.operation-object.pattern-x — swagger_extensions_change_nothing: an `x-` field of an Operation Object changes nothing
+// req: oas-2.0.parameter-object.pattern-x — swagger_extensions_change_nothing: an `x-` field of a query, header and body parameter changes nothing
+// req: oas-2.0.items-object.pattern-x — swagger_extensions_change_nothing: an `x-` field of an Items Object, nested too, changes nothing
+// req: oas-2.0.responses-object.pattern-x — swagger_extensions_change_nothing: an `x-` key of the Responses Object is no status
+// req: oas-2.0.response-object.pattern-x — swagger_extensions_change_nothing: an `x-` field of a Response Object changes nothing
+// req: oas-2.0.header-object.pattern-x — swagger_extensions_change_nothing: an `x-` field of a response's Header Object changes nothing
+/// A Swagger 2.0 description with an `x-` field on every object that takes one prints the same
+/// types and the same SDK as without them: a reader ignores extensions (2.0, "Vendor
+/// Extensions"). Their values are each kind 2.0 allows: `null`, a primitive, an array, an object.
+#[test]
+fn swagger_extensions_change_nothing() {
+    let doc = |x: &[&str; 9]| {
+        format!(
+            r#"{{"swagger":"2.0","info":{{"title":"x","version":"1"}}{},
+ "paths":{{{}"/p/{{id}}":{{{}"get":{{"operationId":"getP"{},
+   "parameters":[
+    {{"name":"id","in":"path","required":true,"type":"string"{}}},
+    {{"name":"q","in":"query","type":"array","items":{{"type":"array","items":{{"type":"integer"{}}}}}}},
+    {{"name":"body","in":"body","schema":{{"type":"object"}}}}],
+   "responses":{{{}"200":{{"description":"ok","schema":{{"type":"string"}}{},
+    "headers":{{"X-N":{{"type":"integer"{}}}}}}}}}}}}}}}}}"#,
+            x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8]
+        )
+    };
+    let with = doc(&[
+        r#","x-api":{"a":[1,null]}"#,
+        r#""x-paths":"not a path","#,
+        r#""x-item":{"get":{"responses":{}}},"#,
+        r#","x-op":true"#,
+        r#","x-param":null"#,
+        r#","x-items":[1,"two"]"#,
+        r#""x-status":{"description":"not a status"},"#,
+        r#","x-response":3.5"#,
+        r#","x-header":"h""#,
+    ]);
+    let without = doc(&[""; 9]);
+    assert_ne!(with, without);
+    for sdk in [false, true] {
+        let print = |text: &str| {
+            let mut docs = Documents::new();
+            docs.add("x.json", text).expect("JSON");
+            let target = flowapi_ts::TypeScript::new("out.ts");
+            let target = if sdk { target.with_sdk() } else { target };
+            let (output, diags) = flowapi::generate(&docs, &target);
+            let files = output.map(|o| o.files.into_iter().map(|f| f.text).collect::<String>());
+            (files.expect("output"), diags.all().len())
+        };
+        let (printed, warnings) = print(&with);
+        assert_eq!((printed.clone(), warnings), print(&without), "sdk {sdk}");
+        assert!(printed.contains("GetP"), "sdk {sdk}: {printed}");
+    }
 }
 
 /// G4: the same input prints the same bytes, every time.

@@ -384,12 +384,15 @@ pub enum Shape {
 
 /// What a value's text is written as: RFC 3986 percent-encoding of all but the unreserved
 /// characters; that with the reserved ones and percent-encoded triples kept (`allowReserved`);
-/// or as it is (headers and `style: cookie`, 3.2 Appendix D).
+/// as it is (headers and `style: cookie`, 3.2 Appendix D); or by WHATWG's
+/// `application/x-www-form-urlencoded` rules, all but the letters, digits and `*-._` encoded and
+/// a space as `+` (a form's content, 3.2 Appendix E).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Enc {
     Plain,
     Reserved,
     Raw,
+    Form,
 }
 
 impl Style {
@@ -461,15 +464,24 @@ pub fn encode(out: &mut String, t: &str, enc: Enc) {
             && b == b'%'
             && bytes.get(i + 1).is_some_and(u8::is_ascii_hexdigit)
             && bytes.get(i + 2).is_some_and(u8::is_ascii_hexdigit);
-        if unreserved(b) || (enc == Enc::Reserved && reserved(b)) || triple {
+        let kept = if enc == Enc::Form {
+            b.is_ascii_alphanumeric() || matches!(b, b'*' | b'-' | b'.' | b'_')
+        } else {
+            unreserved(b) || (enc == Enc::Reserved && reserved(b)) || triple
+        };
+        if kept {
             i += if triple { 3 } else { 1 };
             continue;
         }
         // `run..i` is ASCII up to a character's start: never cut inside one.
         out.push_str(t.get(run..i).unwrap_or(""));
-        out.push('%');
-        out.push(char::from(HEX[usize::from(b >> 4)]));
-        out.push(char::from(HEX[usize::from(b & 15)]));
+        if enc == Enc::Form && b == b' ' {
+            out.push('+');
+        } else {
+            out.push('%');
+            out.push(char::from(HEX[usize::from(b >> 4)]));
+            out.push(char::from(HEX[usize::from(b & 15)]));
+        }
         i += 1;
         run = i;
     }
@@ -559,10 +571,11 @@ fn after_dot(p: &str) -> Option<&str> {
 
 /// A value as `application/x-www-form-urlencoded`, after `sep` when `out` holds something:
 /// each member a pair, a list's items pairs of the same key, an object member as JSON, `null`
-/// an empty value (the Encoding Object's defaults). NaN or an infinity is refused.
+/// an empty value (the Encoding Object's defaults), encoded by WHATWG's rules. NaN or an infinity
+/// is refused.
 pub fn form<T: Serialize + ?Sized>(out: &mut String, sep: &str, v: &T) -> Result<(), Reason> {
     let lead = if out.is_empty() { "" } else { sep };
-    let s = Style::new(Shape::Form, true, Enc::Plain);
+    let s = Style::new(Shape::Form, true, Enc::Form);
     let mut w = write::W::new(out, lead, "", s);
     match v.serialize(expand::Ser {
         w: &mut w,

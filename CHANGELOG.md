@@ -23,6 +23,22 @@
   in it is refused (RFC 9110 4.2.4). The table's cases now hold OpenAPI 3.0 and 3.2's servers
   too, and two client cases (`hosts`, 3.2; `edge`, 3.1) hold the runtime to them: 56 ledger ids
   that had no test have one, every in-scope RFC 9110 id among them.
+- The SDK writes bodies by the description's Encoding Objects. The SDK layer reads them into the
+  operations table (`encoding` by name for a form and `multipart/form-data`, 3.2's
+  `prefixEncoding` and `itemEncoding` by position, nested ones to four levels, each field only
+  where its version and media type apply it, request bodies only), takes a part's missing type
+  from its schema (`contentEncoding`, 3.0's `format: binary` and `byte`, through `$ref` and
+  `allOf`), and reads Swagger 2.0's `formData` `collectionFormat` as a style; the client passes
+  them to `<op>Request` when a call gives none. A form member with `style`, `explode` or
+  `allowReserved` is written by that style; 3.1 and 3.2's `multipart/form-data` members too. Any
+  other multipart type takes an array, a part per item; a part of a `multipart` type is written as
+  a body of its own; outside `multipart/form-data` a part with `contentEncoding` says
+  `Content-Transfer-Encoding` (3.2). A list of types is kept for the caller to pick from.
+- A form body written from its content is percent-encoded by WHATWG's rules, as OpenAPI 3.2 asks
+  and browsers send (`a b!` was `a%20b!`, is `a+b%21`), in the TypeScript and the Rust SDKs, and a
+  3.2 `querystring` parameter with form content too. A member written by `style` keeps RFC 3986's.
+- `flowapi-sdk`'s `Encoding` holds `Parts` (`by_name`, `prefix`, `item`) of `Part`s with
+  `style`, `explode`, `allowReserved` and nested parts, in place of its list of names and types.
 - The requirements ledger (`conformance/ledger`, O1) reads Swagger 2.0 and five RFCs (6749, 6750,
   7578, 7617 and 9110, pinned in `conformance/specs/`) beside OpenAPI 3.x and JSON Schema, and its
   scope is decided for the SDK: servers, security, the Encoding Object and what the client sends

@@ -19,10 +19,15 @@
 //! `schemes` (the description's own scheme). swagger-nohost.json: no host (a relative URL, an
 //! operation's `schemes` changing nothing) and a `basePath` without `/`. v32.json: a server's
 //! `name`, a deprecated scheme, a Path Item behind `$ref` with servers and an
-//! `additionalOperations` method, a requirement named by URI, the `query` method. encoding.json:
-//! a multipart body's Encoding Objects (a part's type with parameters, a list of types left out
-//! with a warning, an object with no `contentType`), one behind a request body's `$ref`, a form's
-//! encoding not read, a multipart body with none.
+//! `additionalOperations` method, a requirement named by URI, the `query` method. encoding.json
+//! (3.1): `multipart/form-data`'s and a form's Encoding Objects by name (a part's type with
+//! parameters, a list of types kept, styles, a type inferred from `contentEncoding` through
+//! `$ref` and `allOf`, never `oneOf`), one behind a request body's `$ref`, responses' and JSON's
+//! encoding not read, a multipart body with none. encoding-v30.json: 3.0's fields (no style for
+//! `multipart/form-data`, `format: binary` and `byte`). encoding-v32.json: `prefixEncoding`,
+//! `itemEncoding`, nesting and its depth bound, `Content-Transfer-Encoding` from
+//! `contentEncoding`. swagger-forms.json: 2.0's `formData` `collectionFormat` as styles.
+//! A case's `x-flowapi-calls` are requests `tests/tsc.mjs` writes through its table.
 //!
 //! Each case names the requirements it covers in `x-flowapi-covers` (the ledger reads them).
 #![expect(

@@ -98,7 +98,7 @@ export type Operation = {
   readonly path: string;
   readonly servers?: readonly ServerEntry[];
   readonly security: readonly { readonly [scheme: string]: readonly string[] }[];
-  readonly encoding?: { readonly [mediaType: string]: unknown };
+  readonly encoding?: { readonly [mediaType: string]: { readonly encoding?: unknown; readonly prefixEncoding?: unknown; readonly itemEncoding?: unknown } };
   readonly request: (input: never) => { method: string; path: string; query: string; headers: Record<string, string>; body?: string | Uint8Array };
   readonly response: (status: number, headers: Record<string, string>, body: string | Uint8Array) => { response: string | null; body: unknown };
 };

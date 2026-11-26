@@ -63,6 +63,8 @@ Explicit `oas-2.0.` rules, so that a 3.x rule decides no 2.0 id by accident; eac
 | `info`, contact, license, tag, xml, external docs, example objects; `examples`; descriptions, summaries | out | Metadata, documentation and examples: no type or request depends on them |
 | `allowEmptyValue` | out | A permission the client does not take |
 | Each `x-` name, `swagger` being `"2.0"`, MIME types, path names, `type` values, `default` conforming, `operationId` unique, `readOnly` not required, `host` without a scheme | out | Rules for the author of a description |
+| A Header Object's `collectionFormat` (decided 2026-11-26, the encoding pass) | out | A 2.0 Header Object is a response header's: the client parses no response header by its schema, as for 3.x's Header `style` and `explode` |
+| A discriminator's value naming this schema or one that inherits it (same pass) | out | A rule for the author of a description |
 
 ### OpenAPI 3.x
 
@@ -106,9 +108,18 @@ Explicit `oas-2.0.` rules, so that a 3.x rule decides no 2.0 id by accident; eac
   a bearer token and requests none. They are the work list of the client's OAuth step (19 of RFC
   6749's 19 missing ids, 7 per 3.x version under `oauth-flow-object`).
 - **RFC 7578 4.8 against OpenAPI.** "Other header fields MUST NOT be included" in a part, while
-  the Encoding Object's `headers` describe exactly such fields and the writer sends them. The id
-  is in scope and missing; marking it covered would be false. A decision for the owner: keep the
-  OpenAPI behaviour and mark the id lossy with that reason, or drop the headers.
+  the Encoding Object's `headers` describe exactly such fields and the writer sends them. The
+  owner's decision (2026-11-26): flowapi follows OpenAPI, and the id is lossy with that reason
+  (the O8 case on a part's header values written as given).
+- **The encoding pass (2026-11-26).** The Encoding Object, `prefixEncoding`, `itemEncoding`,
+  nesting, 3.2's non-JSON data and Appendix E's browser interoperability are covered by O8 cases
+  and the table's cases (`encoding*.json`, `swagger-forms.json`). A form body written from its
+  content (no `style`) is percent-encoded by the WHATWG rules 3.2 asks for (space as `+`, `!'()~`
+  encoded); one written by `style` keeps RFC 3986's. Swagger 2.0's `formData` `collectionFormat`
+  is read into the table as a style (`tsv` as the SDK's own `tabDelimited`). Left missing: a
+  parameter's `collectionFormat` in query, path and header beyond csv, ssv, pipes and multi, and
+  the Items Object's, which need a tab-delimited style and 2.0's delimited styles outside the
+  query in the core's `spec/operations/style.rs`, at its line budget (G10).
 - **TLS and the mock.** RFC 6749 10.3, RFC 6750 5.3 and RFC 7617 4 ask that credentials go only
   over TLS. The client sends them to whatever base URL it is given, including the mock at
   `http://localhost`. A refusal of `http:` except for a loopback host would answer them; until a

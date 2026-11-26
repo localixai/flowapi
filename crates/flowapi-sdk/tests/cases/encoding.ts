@@ -23,17 +23,18 @@ export const flowapiSecuritySchemes = {
  * instead of `flowapiServers`, where it has its own; its security, alternatives of which any one
  * is enough, each naming the schemes it needs with their scopes (`[]`: none); how each response's
  * body is read, by media type (`json`, `text`, `bytes`, or `sent`: by the `Content-Type` the
- * answer sends, as `flowapiReadsBytes` says); by `multipart/form-data` media type, the type
- * each part is sent as (`encoding`, the description's Encoding Objects: give it as
- * `body.encoding`); and its `<name>Request` and `<name>Response`.
+ * answer sends, as `flowapiReadsBytes` says); by form and `multipart` media type, how the body's
+ * values are written (`encoding`: the description's Encoding Objects by name and by position,
+ * given as the body's `encoding`, `prefixEncoding` and `itemEncoding`); and its `<name>Request`
+ * and `<name>Response`.
  */
 export const flowapiOperations = {
   uploadPhoto: {
     method: "POST",
     path: "/photos",
     security: [],
-    responses: { "201": { content: {} } },
-    encoding: { "multipart/form-data": { "photo": { contentType: "image/png" }, "meta": { contentType: "application/json; charset=utf-8" } } },
+    responses: { "201": { content: { "multipart/form-data": "bytes" } } },
+    encoding: { "multipart/form-data": { encoding: { "photo": { contentType: "image/jpeg" }, "meta": { contentType: "application/json; charset=utf-8" }, "thumb": { contentType: "image/png, image/jpeg" }, "tags": { contentType: "application/json", style: "form", explode: false }, "none": {}, "scan": { contentType: "application/octet-stream" } } }, "application/x-www-form-urlencoded": { encoding: { "photo": { contentType: "text/plain" }, "ids": { style: "pipeDelimited" }, "path": { allowReserved: true }, "point": { style: "deepObject", explode: true } } } },
     request: uploadPhotoRequest,
     response: uploadPhotoResponse,
   },
@@ -42,7 +43,7 @@ export const flowapiOperations = {
     path: "/docs",
     security: [],
     responses: { "204": { content: {} } },
-    encoding: { "multipart/form-data; charset=utf-8": { "file": { contentType: "application/pdf" } } },
+    encoding: { "multipart/form-data; charset=utf-8": { encoding: { "file": { contentType: "application/pdf" } } } },
     request: putDocRequest,
     response: putDocResponse,
   },
@@ -55,4 +56,4 @@ export const flowapiOperations = {
     response: plainResponse,
   },
 } as const;
-// warning[oas-3.1.encoding-object.contentType]: the part `thumb` is encoded as `image/png, image/jpeg`, a list or a range of types: no one type to send it as, so it is sent as its value's default type
+// warning[oas-3.1.encoding-object.style]: `style` is not one a form member takes (form, spaceDelimited, pipeDelimited, deepObject): read as not written
