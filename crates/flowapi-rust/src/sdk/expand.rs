@@ -7,7 +7,7 @@
 //! joins (`Style::nest`). The `form` modes write `application/x-www-form-urlencoded`.
 
 use super::write::{At, Digits, W};
-use super::{Shape, encode};
+use super::{Part, Shape, encode};
 use serde::Serialize;
 use serde::ser;
 use std::fmt::{Display, Write as _};
@@ -138,6 +138,16 @@ impl Many<'_, '_> {
     }
 
     fn member<T: Serialize + ?Sized>(&mut self, v: &T) -> Result<(), Error> {
+        if self.at == At::FormMember {
+            match self.w.part() {
+                Some(Part::Style(s)) => return self.w.styled(s, v),
+                Some(Part::Json) => self.w.json = true,
+                None => {}
+            }
+            let r = self.one(v);
+            self.w.json = false;
+            return r;
+        }
         if self.at != At::Deep {
             return self.one(v);
         }
@@ -201,10 +211,10 @@ impl<'w, 'a> ser::Serializer for Ser<'w, 'a> {
         Ok(self.w.text(self.at, if v { "true" } else { "false" }))
     }
     fn serialize_char(self, v: char) -> Result<bool, Error> {
-        Ok(self.w.text(self.at, v.encode_utf8(&mut [0; 4])))
+        Ok(self.w.string(self.at, v.encode_utf8(&mut [0; 4])))
     }
     fn serialize_str(self, v: &str) -> Result<bool, Error> {
-        Ok(self.w.text(self.at, v))
+        Ok(self.w.string(self.at, v))
     }
     fn serialize_bytes(self, v: &[u8]) -> Result<bool, Error> {
         Ok(self.w.text(self.at, &String::from_utf8_lossy(v)))
@@ -227,7 +237,7 @@ impl<'w, 'a> ser::Serializer for Ser<'w, 'a> {
         _: u32,
         v: &'static str,
     ) -> Result<bool, Error> {
-        Ok(self.w.text(self.at, v))
+        Ok(self.w.string(self.at, v))
     }
     fn serialize_newtype_struct<T: Serialize + ?Sized>(
         self,

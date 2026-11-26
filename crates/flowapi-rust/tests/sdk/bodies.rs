@@ -6,6 +6,8 @@ use std::collections::BTreeMap;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Pet {
     pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tags: Option<Vec<String>>,
     /// Every other property.
     #[serde(flatten)]
     pub extra: BTreeMap<String, serde_json::Value>,
@@ -247,6 +249,16 @@ pub enum Enc {
     Form,
 }
 
+/// How a form member is written where its Encoding Object says (the description's, printed with
+/// each operation): by a style, as a query parameter of that style named by its key (any of
+/// `style`, `explode` and `allowReserved` written; 3.2, "Encoding Usage and Restrictions"), or as
+/// its JSON (a JSON `contentType` alone). A member not listed is written by the form's defaults.
+#[derive(Clone, Copy, Debug)]
+pub enum Part {
+    Style(Style),
+    Json,
+}
+
 impl Style {
     pub const fn new(shape: Shape, explode: bool, enc: Enc) -> Self {
         let (first, sep, named, ifemp, join) = match shape {
@@ -438,12 +450,18 @@ fn after_dot(p: &str) -> Option<&str> {
 
 /// A value as `application/x-www-form-urlencoded`, after `sep` when `out` holds something:
 /// each member a pair, a list's items pairs of the same key, an object member as JSON, `null`
-/// an empty value (the Encoding Object's defaults), encoded by WHATWG's rules. NaN or an infinity
-/// is refused.
-pub fn form<T: Serialize + ?Sized>(out: &mut String, sep: &str, v: &T) -> Result<(), Reason> {
+/// an empty value (the Encoding Object's defaults), encoded by WHATWG's rules; a member `parts`
+/// names by its [`Part`]. NaN or an infinity is refused.
+pub fn form<T: Serialize + ?Sized>(
+    out: &mut String,
+    sep: &str,
+    v: &T,
+    parts: &[(&str, Part)],
+) -> Result<(), Reason> {
     let lead = if out.is_empty() { "" } else { sep };
     let s = Style::new(Shape::Form, true, Enc::Form);
     let mut w = write::W::new(out, lead, "", s);
+    w.parts = parts;
     match v.serialize(expand::Ser {
         w: &mut w,
         at: write::At::Form,
@@ -453,10 +471,10 @@ pub fn form<T: Serialize + ?Sized>(out: &mut String, sep: &str, v: &T) -> Result
     }
 }
 
-/// A form body's bytes.
-pub fn form_body<T: Serialize + ?Sized>(v: &T) -> Result<Vec<u8>, Reason> {
+/// A form body's bytes, its members by `parts` where named.
+pub fn form_body<T: Serialize + ?Sized>(v: &T, parts: &[(&str, Part)]) -> Result<Vec<u8>, Reason> {
     let mut out = String::new();
-    form(&mut out, "&", v)?;
+    form(&mut out, "&", v, parts)?;
     Ok(out.into_bytes())
 }
 
@@ -689,9 +707,12 @@ impl Error {
 mod write {
 //! What one parameter's expansion writes, piece by piece: the places a value can sit
 //! ([`At`]) and the state of one expansion ([`W`]), RFC 6570's rules for each (§3.2.1, 3.2
-//! Appendix C). Printed inside the generated `sdk` module beside `expand`, its serde half.
+//! Appendix C); a form member its Encoding Object names, by its [`Part`]. Printed inside the
+//! generated `sdk` module beside `expand`, its serde half.
 
-use super::{Shape, Style, encode};
+use super::expand::{Error, Ser};
+use super::{Enc, Part, Shape, Style, encode};
+use serde::Serialize;
 
 /// Where a value sits, which says what each of its kinds writes.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -735,6 +756,10 @@ pub(super) struct W<'a> {
     pub(super) path: String,
     /// Whether the list inside a list being written has no item yet.
     pub(super) fresh: bool,
+    /// A form's members its Encoding Objects say how to write, by key.
+    pub(super) parts: &'a [(&'a str, Part)],
+    /// Whether the form member being written is JSON: a string is then its JSON text.
+    pub(super) json: bool,
 }
 
 impl<'a> W<'a> {
@@ -748,7 +773,43 @@ impl<'a> W<'a> {
             key: String::new(),
             path: String::new(),
             fresh: false,
+            parts: &[],
+            json: false,
         }
+    }
+
+    /// The [`Part`] of the form member whose key is in `key`, where its Encoding Object says.
+    pub(super) fn part(&self) -> Option<Part> {
+        let key = self.key.as_str();
+        self.parts.iter().find(|(k, _)| *k == key).map(|&(_, p)| p)
+    }
+
+    /// A form member written by style `s`, as a query parameter of that style named by its key
+    /// percent-encoded (RFC 3986, as a query's): after `&` unless it is the form's first piece.
+    pub(super) fn styled<T: Serialize + ?Sized>(&mut self, s: Style, v: &T) -> Result<(), Error> {
+        let mut name = String::new();
+        encode(&mut name, &self.key, Enc::Plain);
+        let lead = if self.n == 0 { self.lead } else { "&" };
+        let mut w = W::new(&mut *self.out, lead, &name, s);
+        match v.serialize(Ser {
+            w: &mut w,
+            at: At::Top,
+        }) {
+            Ok(wrote) => {
+                self.n += usize::from(wrote);
+                Ok(())
+            }
+            Err(Error::NonFinite) => Err(Error::NonFinite),
+            Err(Error::Compound | Error::Custom(_)) => Ok(()),
+        }
+    }
+
+    /// A string's text; in a form member written as JSON, its JSON text.
+    pub(super) fn string(&mut self, at: At, t: &str) -> bool {
+        if self.json && matches!(at, At::FormMember | At::FormItem) {
+            return self.text(at, &serde_json::to_string(t).unwrap_or_default());
+        }
+        self.text(at, t)
     }
 
     fn enc(&mut self, t: &str) {
@@ -959,7 +1020,7 @@ mod expand {
 //! joins (`Style::nest`). The `form` modes write `application/x-www-form-urlencoded`.
 
 use super::write::{At, Digits, W};
-use super::{Shape, encode};
+use super::{Part, Shape, encode};
 use serde::Serialize;
 use serde::ser;
 use std::fmt::{Display, Write as _};
@@ -1090,6 +1151,16 @@ impl Many<'_, '_> {
     }
 
     fn member<T: Serialize + ?Sized>(&mut self, v: &T) -> Result<(), Error> {
+        if self.at == At::FormMember {
+            match self.w.part() {
+                Some(Part::Style(s)) => return self.w.styled(s, v),
+                Some(Part::Json) => self.w.json = true,
+                None => {}
+            }
+            let r = self.one(v);
+            self.w.json = false;
+            return r;
+        }
         if self.at != At::Deep {
             return self.one(v);
         }
@@ -1153,10 +1224,10 @@ impl<'w, 'a> ser::Serializer for Ser<'w, 'a> {
         Ok(self.w.text(self.at, if v { "true" } else { "false" }))
     }
     fn serialize_char(self, v: char) -> Result<bool, Error> {
-        Ok(self.w.text(self.at, v.encode_utf8(&mut [0; 4])))
+        Ok(self.w.string(self.at, v.encode_utf8(&mut [0; 4])))
     }
     fn serialize_str(self, v: &str) -> Result<bool, Error> {
-        Ok(self.w.text(self.at, v))
+        Ok(self.w.string(self.at, v))
     }
     fn serialize_bytes(self, v: &[u8]) -> Result<bool, Error> {
         Ok(self.w.text(self.at, &String::from_utf8_lossy(v)))
@@ -1179,7 +1250,7 @@ impl<'w, 'a> ser::Serializer for Ser<'w, 'a> {
         _: u32,
         v: &'static str,
     ) -> Result<bool, Error> {
-        Ok(self.w.text(self.at, v))
+        Ok(self.w.string(self.at, v))
     }
     fn serialize_newtype_struct<T: Serialize + ?Sized>(
         self,
@@ -1554,7 +1625,7 @@ pub enum AddPetBody {
 pub fn add_pet_request(input: &AddPetInput) -> Result<sdk::Request, sdk::RequestError> {
     let body = Some(match &input.body {
         AddPetBody::ApplicationJson(v) => (String::from("application/json"), sdk::json_body(v).map_err(sdk::in_body)?),
-        AddPetBody::ApplicationXWwwFormUrlencoded(v) => (String::from("application/x-www-form-urlencoded"), sdk::form_body(v).map_err(sdk::in_body)?),
+        AddPetBody::ApplicationXWwwFormUrlencoded(v) => (String::from("application/x-www-form-urlencoded"), sdk::form_body(v, &[("name", sdk::Part::Json), ("tags", sdk::Part::Style(const { sdk::Style::new(sdk::Shape::PipeDelimited, false, sdk::Enc::Plain) }))]).map_err(sdk::in_body)?),
         AddPetBody::MultipartFormData(t, v) => (t.clone(), v.clone()),
         AddPetBody::Text(t, v) => (t.clone(), v.clone()),
     });

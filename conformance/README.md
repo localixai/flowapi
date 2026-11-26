@@ -94,7 +94,11 @@ the flowapi crates into one generated crate with the SDKs kept by
 `crates/flowapi-rust/tests/sdk.rs`, builds it once (`-j 1`; a warning about it is a difference),
 and runs every call, comparing as `run.mjs` does. An object with no named properties is a
 `BTreeMap` in Rust, its members in key order: the calls that changes are held to
-[`sdk-rust/order.json`](sdk-rust/order.json). Its `corpus` binary times generating the SDK of
+[`sdk-rust/order.json`](sdk-rust/order.json). The TypeScript SDK takes a form body's Encoding
+Objects with the body (its client passes the description's); the Rust SDK prints them from the
+description, so a call whose `encoding` differs from its case's runs against an operation of its
+own, `c<i>e<j>`, with the call's Encoding Objects written in. Swagger 2.0's `formData` parameters
+are given as the form body they are lifted into. Its `corpus` binary times generating the SDK of
 GitHub's, Stripe's and Cloudflare's descriptions (never compiled: rustc needs more than 16 GB for GitHub's types)
 and, with `--build`, builds Slack's under `/usr/bin/time -v`.
 

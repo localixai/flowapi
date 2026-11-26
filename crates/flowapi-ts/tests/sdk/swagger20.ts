@@ -38,6 +38,7 @@ export type AddPet = {
   requestBody: {
     "application/x-www-form-urlencoded": {
       name: string;
+      tags?: string[];
     };
   };
   responses: {

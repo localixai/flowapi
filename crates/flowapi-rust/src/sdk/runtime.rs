@@ -70,6 +70,16 @@ pub enum Enc {
     Form,
 }
 
+/// How a form member is written where its Encoding Object says (the description's, printed with
+/// each operation): by a style, as a query parameter of that style named by its key (any of
+/// `style`, `explode` and `allowReserved` written; 3.2, "Encoding Usage and Restrictions"), or as
+/// its JSON (a JSON `contentType` alone). A member not listed is written by the form's defaults.
+#[derive(Clone, Copy, Debug)]
+pub enum Part {
+    Style(Style),
+    Json,
+}
+
 impl Style {
     pub const fn new(shape: Shape, explode: bool, enc: Enc) -> Self {
         let (first, sep, named, ifemp, join) = match shape {
@@ -261,12 +271,18 @@ fn after_dot(p: &str) -> Option<&str> {
 
 /// A value as `application/x-www-form-urlencoded`, after `sep` when `out` holds something:
 /// each member a pair, a list's items pairs of the same key, an object member as JSON, `null`
-/// an empty value (the Encoding Object's defaults), encoded by WHATWG's rules. NaN or an infinity
-/// is refused.
-pub fn form<T: Serialize + ?Sized>(out: &mut String, sep: &str, v: &T) -> Result<(), Reason> {
+/// an empty value (the Encoding Object's defaults), encoded by WHATWG's rules; a member `parts`
+/// names by its [`Part`]. NaN or an infinity is refused.
+pub fn form<T: Serialize + ?Sized>(
+    out: &mut String,
+    sep: &str,
+    v: &T,
+    parts: &[(&str, Part)],
+) -> Result<(), Reason> {
     let lead = if out.is_empty() { "" } else { sep };
     let s = Style::new(Shape::Form, true, Enc::Form);
     let mut w = write::W::new(out, lead, "", s);
+    w.parts = parts;
     match v.serialize(expand::Ser {
         w: &mut w,
         at: write::At::Form,
@@ -276,10 +292,10 @@ pub fn form<T: Serialize + ?Sized>(out: &mut String, sep: &str, v: &T) -> Result
     }
 }
 
-/// A form body's bytes.
-pub fn form_body<T: Serialize + ?Sized>(v: &T) -> Result<Vec<u8>, Reason> {
+/// A form body's bytes, its members by `parts` where named.
+pub fn form_body<T: Serialize + ?Sized>(v: &T, parts: &[(&str, Part)]) -> Result<Vec<u8>, Reason> {
     let mut out = String::new();
-    form(&mut out, "&", v)?;
+    form(&mut out, "&", v, parts)?;
     Ok(out.into_bytes())
 }
 

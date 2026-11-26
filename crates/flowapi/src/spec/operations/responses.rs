@@ -82,7 +82,7 @@ impl Reader<'_, '_> {
             let headers = self.headers(rd, r, diags);
             let content = match self.version {
                 Version::V20 => self.produced(rd, r, produces),
-                Version::V30 | Version::V31 | Version::V32 => self.content(rd, r, diags),
+                Version::V30 | Version::V31 | Version::V32 => self.content(rd, r, false, diags),
             };
             out.push(Response {
                 status: status.into_owned(),

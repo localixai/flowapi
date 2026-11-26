@@ -9,7 +9,27 @@
   {
    "case": "in: querystring as a form",
    "call": 0,
-   "expect": { "query": "n=1&n=2&text=a%20b%26c", "pairs": [["n", "1"], ["n", "2"], ["text", "a b&c"]] }
+   "expect": { "query": "n=1&n=2&text=a+b%26c", "pairs": [["n", "1"], ["n", "2"], ["text", "a b&c"]] }
+  },
+  {
+   "case": "a form body by WHATWG's rules: 3.2's own examples (JSON values, a JSON id, base64url with padding)",
+   "call": 0,
+   "expect": { "body": "id=f81d4fae-7dec-11d0-a765-00a0c91e6bf6&address=%7B%22city%22%3A%22Somewhere%22%2C%22state%22%3A%22CA%22%2C%22streetAddress%22%3A%22123+Example+Dr.%22%2C%22zip%22%3A%2299999%2B1234%22%7D" }
+  },
+  {
+   "case": "a form body's members by their Encoding Objects' style, explode and allowReserved, as query parameters of that style; contentType then unused, headers ignored",
+   "call": 0,
+   "expect": { "body": "filter%5Bcolor%5D=red&filter%5Bsize%5D=L&n=x&path=/a/b:c@d&x=1&y=2&tags=a,b%20c" }
+  },
+  {
+   "case": "a form body's members by their Encoding Objects' style, explode and allowReserved, as query parameters of that style; contentType then unused, headers ignored",
+   "call": 1,
+   "expect": { "body": "p=a%7Cb&path=%2Fa%2Fb%3Ac%40d&point=x,1,y,2&s=a%20b" }
+  },
+  {
+   "case": "a form body's members by their Encoding Objects' style, explode and allowReserved, as query parameters of that style; contentType then unused, headers ignored",
+   "call": 2,
+   "expect": { "body": "a=1&id=%22x%22" }
   }
  ]
 }

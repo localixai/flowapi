@@ -5,10 +5,10 @@ Written by `cargo run --release -j 1 --bin sdk-rust` in `conformance/sdk-rust`; 
 | Oracle | Checked | Differ |
 | --- | ---: | ---: |
 | OpenAPI 3.2.1 "Style Examples" (conformance/specs/openapi/3.2.1.md:902), each cell not _n/a_ | 51 | 0 |
-| conformance/sdk/cases.json: 51 cases, each in its versions | 234 | 0 |
+| conformance/sdk/cases.json: 64 cases, each in its versions | 261 | 0 |
 | conformance/sdk-rust/cases.json, the Rust types' own: 5 cases | 39 | 0 |
 
-4 calls are held to `conformance/sdk-rust/order.json`: an object with no named properties is a `BTreeMap` in Rust, so its members are written in key order.
+16 calls are held to `conformance/sdk-rust/order.json`: an object with no named properties is a `BTreeMap` in Rust, so its members are written in key order.
 
 ## Differences
 

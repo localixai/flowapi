@@ -453,6 +453,7 @@ Scope: decided 2026-11-24, the SDK stage 2026-11-26 (triage-3.md), by the mainta
 | `crates/flowapi-ts/tests/print.rs` | 368 |
 | `crates/flowapi/tests/collection_format.rs` | 2 |
 | `crates/flowapi/tests/documents.rs` | 14 |
+| `crates/flowapi/tests/form_encoding.rs` | 2 |
 | `crates/flowapi/tests/repo.rs` | 2 |
 
 ## Markers on out-of-scope requirements

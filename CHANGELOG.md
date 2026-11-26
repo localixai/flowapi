@@ -44,6 +44,14 @@
   other multipart type takes an array, a part per item; a part of a `multipart` type is written as
   a body of its own; outside `multipart/form-data` a part with `contentEncoding` says
   `Content-Transfer-Encoding` (3.2). A list of types is kept for the caller to pick from.
+- The Rust SDK writes a form body's members by the description's Encoding Objects, printed into
+  each operation's `<name>_request` (`sdk::form_body(v, &[...])`, `sdk::Part`): a member with
+  `style`, `explode` or `allowReserved` as a query parameter of that style (`a,b`, `a%20b`,
+  `filter%5Bcolor%5D=red`, `/a/b:c@d` with `allowReserved`), one whose `contentType` alone is
+  JSON as its JSON (`id=%22x%22`), and Swagger 2.0's array `formData` fields by their
+  `collectionFormat`, the arrays inside by their Items Objects'. Before, every member was written
+  by the form's defaults, and a 2.0 `formData` form not at all in O8. The core reads them into
+  `spec::Media::encoding` (request bodies only), from which the Rust target prints them.
 - A form body written from its content is percent-encoded by WHATWG's rules, as OpenAPI 3.2 asks
   and browsers send (`a b!` was `a%20b!`, is `a+b%21`), in the TypeScript and the Rust SDKs, and a
   3.2 `querystring` parameter with form content too. A member written by `style` keeps RFC 3986's.

@@ -2,6 +2,7 @@
 
 export type Pet = {
   name: string;
+  tags?: string[];
   [key: string]: unknown;
 };
 

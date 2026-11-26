@@ -14,5 +14,5 @@
    {"name":"X-Many","in":"header","type":"array","items":{"type":"string"},"collectionFormat":"multi"}],
   "responses":{"200":{"description":"ok","schema":{"type":"array","items":{"type":"string"}}}}},
   "post":{"operationId":"addPet","consumes":["application/x-www-form-urlencoded"],
-   "parameters":[{"name":"ids","in":"path","required":true,"type":"string"},{"name":"name","in":"formData","required":true,"type":"string"}],
+   "parameters":[{"name":"ids","in":"path","required":true,"type":"string"},{"name":"name","in":"formData","required":true,"type":"string"},{"name":"tags","in":"formData","type":"array","items":{"type":"string"},"collectionFormat":"pipes"}],
    "responses":{"201":{"description":"made"}}}}}}

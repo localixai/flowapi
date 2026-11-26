@@ -176,8 +176,11 @@ For Rust, `--target rust --sdk` prints the same after the serde types: per opera
 struct, `<op>_request(&input)`, which returns an `sdk::Request` (method, path, query, headers, and
 the body's content type and bytes) or an `sdk::RequestError` for what the TypeScript SDK refuses,
 with the same `reason` codes (`Reason::code()`), and `<op>_response(status, headers, body)`, which returns an
-enum of the operation's responses or an `sdk::Error` holding the answer. No I/O, no async; the
-runtime is a module printed once (`pub mod sdk`) and needs serde and serde_json, as the types do.
+enum of the operation's responses or an `sdk::Error` holding the answer. A form body's members
+are written by the description's Encoding Objects (and Swagger 2.0's `collectionFormat`), printed
+into each `<op>_request`: there is no table to pass. A multipart body is given as its content type
+and bytes. No I/O, no async; the runtime is a module printed once (`pub mod sdk`) and needs serde
+and serde_json, as the types do.
 
 ```sh
 cargo run --release -p flowapi-cli -- openapi.json --target rust --sdk -o src/api.rs

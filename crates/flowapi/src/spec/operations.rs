@@ -135,6 +135,13 @@ pub struct Media {
     pub media_type: String,
     /// What it holds.
     pub payload: Payload,
+    /// How a request's form members are written, by name in the order written; empty for any
+    /// other media type: `application/x-www-form-urlencoded`'s Encoding Objects (3.x), or Swagger
+    /// 2.0's array `formData` fields by their `collectionFormat` (under each form type). A
+    /// member written by style, as a `query` parameter of that style, has no `media_type`; one
+    /// written by its Encoding Object's `contentType` alone has it. A member not here is written
+    /// by the form's defaults.
+    pub encoding: Vec<(String, Serialization)>,
 }
 
 impl Media {

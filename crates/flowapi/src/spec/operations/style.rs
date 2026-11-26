@@ -5,8 +5,7 @@
 //! style is, is `tabDelimited`), in each location 2.0 allows it, and an Items Object's own for
 //! the arrays inside the value.
 
-use super::reader::Reader;
-use super::{Location, Serialization, Style};
+use super::{Location, Serialization, Style, reader::Reader, swagger::FORM_TYPES};
 use crate::diag::Diagnostics;
 use crate::id::{DocId, NodeId};
 use crate::source::Version;
@@ -22,7 +21,7 @@ impl Reader<'_, '_> {
     ) -> Serialization {
         let default = default_style(location);
         if self.version == Version::V20 {
-            return self.collection_format(doc, node, location, diags);
+            return self.collection_format((doc, node), location, diags);
         }
         let Some(t) = self.tree(doc) else {
             return plain(default);
@@ -58,20 +57,52 @@ impl Reader<'_, '_> {
             .and_then(|n| t.as_bool(n))
             .unwrap_or(matches!(style, Style::Form | Style::Cookie));
         Serialization {
-            style,
             explode,
             allow_reserved: self.flag(doc, node, "allowReserved"),
             media_type,
-            nested: Vec::new(),
+            ..plain(style)
         }
+    }
+
+    /// A request body's form (`application/x-www-form-urlencoded`) members by their Encoding
+    /// Objects, in the order written: one with `style`, `explode` or `allowReserved` as a query
+    /// parameter of that style is written (its `contentType` then unused); any other by its
+    /// `contentType` alone, left out when it has none. Empty for another media type and for a
+    /// response's (`request` false), which no Encoding Object applies to.
+    pub(super) fn form_encoding(
+        &self,
+        (doc, media): (DocId, NodeId),
+        media_type: &str,
+        request: bool,
+        diags: &mut Diagnostics,
+    ) -> Vec<(String, Serialization)> {
+        let bare = media_type.split(';').next().unwrap_or("").trim();
+        let mut out = Vec::new();
+        let form = request && bare.eq_ignore_ascii_case(FORM_TYPES[0]);
+        let Some(t) = self.tree(doc).filter(|_| form) else {
+            return out;
+        };
+        for m in t.get(media, "encoding").map_or(&[][..], |e| t.members(e)) {
+            let styled = STYLED.iter().any(|k| t.get(m.value, k).is_some());
+            let given = t.get(m.value, "contentType").and_then(|n| t.as_str(n));
+            let s = match given.filter(|c| !c.trim().is_empty()) {
+                _ if styled => self.serialization(doc, m.value, Location::Query, diags),
+                Some(c) => Serialization {
+                    media_type: Some(c.trim().to_owned()),
+                    ..plain(Style::Form)
+                },
+                None => continue,
+            };
+            out.extend(t.string(m.key).map(|name| (name.into_owned(), s)));
+        }
+        out
     }
 
     /// Swagger 2.0: `collectionFormat` (default `csv`) as a 3.x style, and the formats of the
     /// arrays inside the value: each `items` that is an array, by its own `collectionFormat`.
-    fn collection_format(
+    pub(super) fn collection_format(
         &self,
-        doc: DocId,
-        node: NodeId,
+        (doc, node): (DocId, NodeId),
         location: Location,
         diags: &mut Diagnostics,
     ) -> Serialization {
@@ -87,11 +118,9 @@ impl Reader<'_, '_> {
             at = items;
         }
         Serialization {
-            style,
             explode,
-            allow_reserved: false,
-            media_type: None,
             nested,
+            ..plain(style)
         }
     }
 
@@ -141,6 +170,9 @@ impl Reader<'_, '_> {
         }
     }
 }
+
+/// The Encoding Object's fields any of which makes its member written by style.
+const STYLED: [&str; 3] = ["style", "explode", "allowReserved"];
 
 /// The spec's default style for a location: `form` for a query or a cookie, `simple` for a path
 /// or a header (and for `querystring`, which `content` serializes).

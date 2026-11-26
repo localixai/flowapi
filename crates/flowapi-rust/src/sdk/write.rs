@@ -1,8 +1,11 @@
 //! What one parameter's expansion writes, piece by piece: the places a value can sit
 //! ([`At`]) and the state of one expansion ([`W`]), RFC 6570's rules for each (§3.2.1, 3.2
-//! Appendix C). Printed inside the generated `sdk` module beside `expand`, its serde half.
+//! Appendix C); a form member its Encoding Object names, by its [`Part`]. Printed inside the
+//! generated `sdk` module beside `expand`, its serde half.
 
-use super::{Shape, Style, encode};
+use super::expand::{Error, Ser};
+use super::{Enc, Part, Shape, Style, encode};
+use serde::Serialize;
 
 /// Where a value sits, which says what each of its kinds writes.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -46,6 +49,10 @@ pub(super) struct W<'a> {
     pub(super) path: String,
     /// Whether the list inside a list being written has no item yet.
     pub(super) fresh: bool,
+    /// A form's members its Encoding Objects say how to write, by key.
+    pub(super) parts: &'a [(&'a str, Part)],
+    /// Whether the form member being written is JSON: a string is then its JSON text.
+    pub(super) json: bool,
 }
 
 impl<'a> W<'a> {
@@ -59,7 +66,43 @@ impl<'a> W<'a> {
             key: String::new(),
             path: String::new(),
             fresh: false,
+            parts: &[],
+            json: false,
         }
+    }
+
+    /// The [`Part`] of the form member whose key is in `key`, where its Encoding Object says.
+    pub(super) fn part(&self) -> Option<Part> {
+        let key = self.key.as_str();
+        self.parts.iter().find(|(k, _)| *k == key).map(|&(_, p)| p)
+    }
+
+    /// A form member written by style `s`, as a query parameter of that style named by its key
+    /// percent-encoded (RFC 3986, as a query's): after `&` unless it is the form's first piece.
+    pub(super) fn styled<T: Serialize + ?Sized>(&mut self, s: Style, v: &T) -> Result<(), Error> {
+        let mut name = String::new();
+        encode(&mut name, &self.key, Enc::Plain);
+        let lead = if self.n == 0 { self.lead } else { "&" };
+        let mut w = W::new(&mut *self.out, lead, &name, s);
+        match v.serialize(Ser {
+            w: &mut w,
+            at: At::Top,
+        }) {
+            Ok(wrote) => {
+                self.n += usize::from(wrote);
+                Ok(())
+            }
+            Err(Error::NonFinite) => Err(Error::NonFinite),
+            Err(Error::Compound | Error::Custom(_)) => Ok(()),
+        }
+    }
+
+    /// A string's text; in a form member written as JSON, its JSON text.
+    pub(super) fn string(&mut self, at: At, t: &str) -> bool {
+        if self.json && matches!(at, At::FormMember | At::FormItem) {
+            return self.text(at, &serde_json::to_string(t).unwrap_or_default());
+        }
+        self.text(at, t)
     }
 
     fn enc(&mut self, t: &str) {

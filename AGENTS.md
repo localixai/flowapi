@@ -19,8 +19,9 @@ work here.
   - `schema`: [`Keyword`](crates/flowapi/src/schema/keyword.rs), every keyword of every dialect;
     where a schema holds schemas (`sub.rs`); the index of `$id`, `$anchor` and big objects.
   - `spec`: what a description names: components, a JSON Schema's root, operations
-    (`operations/reader.rs`, `responses.rs`, `style.rs` how a parameter is serialized; Swagger
-    2.0's bodies, forms and media types lifted into the 3.x model in `swagger.rs`).
+    (`operations/reader.rs`, `responses.rs`, `style.rs` how a parameter is serialized, and a
+    request's form members by their Encoding Objects; Swagger 2.0's bodies, forms (an array
+    field by its `collectionFormat`) and media types lifted into the 3.x model in `swagger.rs`).
   - `graph`: schemas into types. `build.rs` (a queue, no recursion), `read.rs` (one keyword),
     `own.rs` (a schema's own values), `narrow.rs` and `literal.rs` (`enum`, `const`), `ops.rs`
     (operations as types).
@@ -34,8 +35,9 @@ work here.
   Encoding Objects, `sdk/multipart.ts` their `multipart` bodies, `sdk/read.ts` reads responses);
   `tests/sdk/*.json` kept like the cases.
 - `crates/flowapi-rust`: the Rust target (serde types). `tests/cases/*.rs`, kept like the TypeScript ones.
-  `src/sdk.rs` the opt-in SDK (`--target rust --sdk`): `sdk/request.rs`, `sdk/param.rs`,
-  `sdk/response.rs`, and the runtime printed once as `pub mod sdk` (`sdk/runtime.rs` and
+  `src/sdk.rs` the opt-in SDK (`--target rust --sdk`): `sdk/request.rs`, `sdk/param.rs` (a
+  parameter's style, and a form's members by the description's Encoding Objects, printed into each
+  call), `sdk/response.rs`, and the runtime printed once as `pub mod sdk` (`sdk/runtime.rs` and
   `sdk/errors.rs`, its modules `sdk/write.rs`, `sdk/expand.rs` and `sdk/finite.rs`, never compiled
   here: this crate has no serde); `src/print/integer.rs` the `Integer` type printed with the types;
   `tests/sdk/*.rs` kept for the TypeScript SDK's cases and `tests/sdk/names.json`.

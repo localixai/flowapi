@@ -4,7 +4,7 @@
 
 use super::{Field, bare, field, is_json, percent};
 use crate::ident::literal;
-use flowapi::spec::{Location, Param, Style};
+use flowapi::spec::{Location, Param, Serialization, Style};
 use std::fmt::Write;
 
 /// The statements that write the path template filled, each `{name}` its parameter's value;
@@ -125,16 +125,74 @@ pub(super) fn access(locs: &[(Field<'_>, Vec<Field<'_>>)], p: &Param) -> Option<
     })
 }
 
+/// A form's members written by their Encoding Objects, as the runtime takes them: by a style
+/// as a query parameter of that style, or as JSON for a JSON `contentType` alone; a member whose
+/// `contentType` is another is written by the form's defaults, as one not listed.
+pub(super) fn parts(encoding: &[(String, Serialization)]) -> String {
+    let mut out = String::from("&[");
+    for (name, s) in encoding {
+        let part = match &s.media_type {
+            Some(t) if is_json(t) => String::from("sdk::Part::Json"),
+            Some(_) => continue,
+            None => format!("sdk::Part::Style({})", style(s, Location::Query)),
+        };
+        let _ = write!(out, "({}, {part}), ", literal(name));
+    }
+    out.truncate(out.trim_end_matches(", ").len());
+    out.push(']');
+    out
+}
+
 /// The runtime call that writes one parameter's value `v`.
 pub(super) fn call(p: &Param, v: &str) -> String {
     let s = &p.serialization;
     let raw = p.location == Location::Header || s.style == Style::Cookie;
-    let query = p.location == Location::Query;
-    // A delimited style outside a query (Swagger 2.0's path and header) is `simple` joined by
-    // its delimiter; the arrays inside a 2.0 value are joined by their own, outermost first.
+    let name = literal(&if raw {
+        p.name.clone()
+    } else {
+        percent(&p.name)
+    });
+    let style = style(s, p.location);
+    let at = format!(
+        ".map_err(sdk::at({}, {}))?",
+        literal(p.location.name()),
+        literal(&p.name)
+    );
+    let value = match &s.media_type {
+        Some(t) => format!("sdk::content({v}, {}){at}.as_str()", is_json(t)),
+        None => v.to_owned(),
+    };
+    match p.location {
+        Location::Path => format!("sdk::put(&mut path, \"\", {name}, {style}, {value}){at};"),
+        Location::Query => format!("sdk::put(&mut query, \"&\", {name}, {style}, {value}){at};"),
+        Location::Header => format!("sdk::header(&mut headers, {name}, {style}, {value}){at};"),
+        Location::Cookie => {
+            format!("sdk::put(&mut cookie, \"; \", {name}, {style}, {value}){at};")
+        }
+        Location::QueryString => {
+            let t = s.media_type.as_deref().unwrap_or("text/plain");
+            if bare(t) == "application/x-www-form-urlencoded" {
+                format!("sdk::form(&mut query, \"&\", {v}, &[]){at};")
+            } else {
+                format!(
+                    "sdk::query_string(&mut query, &sdk::content({v}, {}){at});",
+                    is_json(t)
+                )
+            }
+        }
+    }
+}
+
+/// The constant of a value's style in `location`: its shape, `explode` and encoder (none for a
+/// header and `style: cookie`, reserved expansion for `allowReserved`). A delimited style outside
+/// a query (Swagger 2.0's path and header) is `simple` joined by its delimiter; the arrays inside
+/// a 2.0 value are joined by their own, outermost first.
+fn style(s: &Serialization, location: Location) -> String {
+    let raw = location == Location::Header || s.style == Style::Cookie;
+    let query = location == Location::Query;
     let mut more = String::new();
     let shape = if s.media_type.is_some() {
-        match p.location {
+        match location {
             Location::Query | Location::Cookie => "Form",
             Location::Path | Location::Header | Location::QueryString => "Simple",
         }
@@ -170,43 +228,10 @@ pub(super) fn call(p: &Param, v: &str) -> String {
     } else {
         "Plain"
     };
-    let name = literal(&if raw {
-        p.name.clone()
-    } else {
-        percent(&p.name)
-    });
-    let style = format!(
+    format!(
         "const {{ sdk::Style::new(sdk::Shape::{shape}, {}, sdk::Enc::{enc}){more} }}",
         s.explode
-    );
-    let at = format!(
-        ".map_err(sdk::at({}, {}))?",
-        literal(p.location.name()),
-        literal(&p.name)
-    );
-    let value = match &s.media_type {
-        Some(t) => format!("sdk::content({v}, {}){at}.as_str()", is_json(t)),
-        None => v.to_owned(),
-    };
-    match p.location {
-        Location::Path => format!("sdk::put(&mut path, \"\", {name}, {style}, {value}){at};"),
-        Location::Query => format!("sdk::put(&mut query, \"&\", {name}, {style}, {value}){at};"),
-        Location::Header => format!("sdk::header(&mut headers, {name}, {style}, {value}){at};"),
-        Location::Cookie => {
-            format!("sdk::put(&mut cookie, \"; \", {name}, {style}, {value}){at};")
-        }
-        Location::QueryString => {
-            let t = s.media_type.as_deref().unwrap_or("text/plain");
-            if bare(t) == "application/x-www-form-urlencoded" {
-                format!("sdk::form(&mut query, \"&\", {v}){at};")
-            } else {
-                format!(
-                    "sdk::query_string(&mut query, &sdk::content({v}, {}){at});",
-                    is_json(t)
-                )
-            }
-        }
-    }
+    )
 }
 
 /// What joins an unexploded array's items in a style: a comma, or a delimited style's
