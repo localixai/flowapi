@@ -143,10 +143,11 @@ function $str(v: unknown): string {
 /**
  * One variable expanded by RFC 6570 (§3.2, Appendix A): `first` and `sep` are the operator's,
  * `named` and `ifemp` too; `join` is what separates the members of an unexploded array or
- * object (`,`, or `%20` and `%7C` for the space and pipe styles). `undefined` is nothing to
- * write: an absent value, an empty array or object (§2.3). `null` writes the "undefined" column
- * of the spec's Style Examples: `name=` for form and cookie, nothing else. NaN or an infinity
- * anywhere in the value is refused, as the parameter `pname` in `at`.
+ * object (`,`, or `%20`, `%7C` and `%09` for the space, pipe and tab styles). `undefined` is
+ * nothing to write: an absent value, an empty array or object (§2.3). `null` writes the
+ * "undefined" column of the spec's Style Examples: `name=` for form and cookie, nothing else.
+ * NaN or an infinity anywhere in the value is refused, as the parameter `pname` in `at`.
+ * `nest`, Swagger 2.0's, joins the arrays inside an array value, outermost first.
  */
 function $x(
   v: unknown,
@@ -160,6 +161,7 @@ function $x(
   enc: (s: string) => string,
   at: string,
   pname: string,
+  nest?: readonly string[],
 ): string | undefined {
   if (v === undefined) return undefined;
   if (v === null) return ifemp === "=" ? name + "=" : "";
@@ -172,7 +174,7 @@ function $x(
       if (typeof item === "number" ? item - item !== 0 : typeof item === "object" && $bad(item)) {
         throw new FlowapiRequestError(at, pname, "non-finite");
       }
-      const s = enc($str(item));
+      const s = nest !== undefined && Array.isArray(item) ? $nest(item, nest, 0, enc) : enc($str(item));
       if (explode && named) out += (n++ ? sep : "") + name + (s === "" ? ifemp : "=" + s);
       else out += (n++ ? (explode ? sep : join) : "") + s;
     }
@@ -195,6 +197,19 @@ function $x(
   }
   if (n === 0) return undefined;
   return first + (named && !explode ? name + "=" + out : out);
+}
+
+/** An array inside an array value (Swagger 2.0's Items Object), its items joined by `nest[d]`
+ * and an array among them a level deeper; past the last level, or an object, its JSON text. */
+function $nest(v: readonly unknown[], nest: readonly string[], d: number, enc: (s: string) => string): string {
+  let out = "";
+  let n = 0;
+  for (const item of v) {
+    if (item === null || item === undefined) continue;
+    const s = Array.isArray(item) && d + 1 < nest.length ? $nest(item, nest, d + 1, enc) : enc($str(item));
+    out += (n++ ? (nest[d] ?? ",") : "") + s;
+  }
+  return out;
 }
 
 /** `deepObject`: `name[key]=value` for each member; a nested object goes a level deeper, an
@@ -242,30 +257,15 @@ function $json(type: string): boolean {
   return bare === "application/json" || bare.endsWith("+json");
 }
 
-/** An object as `application/x-www-form-urlencoded`: each member a pair, an array's items
- * pairs of the same name, an object member as JSON (the Encoding Object's defaults). */
-function $form(v: unknown): string {
-  if (v === null || typeof v !== "object") return v === undefined ? "" : $enc($str(v));
-  let out = "";
-  for (const key of Object.keys(v)) {
-    const item = (v as Record<string, unknown>)[key];
-    if (item === undefined) continue;
-    for (const one of Array.isArray(item) ? item : [item]) {
-      out += (out === "" ? "" : "&") + $enc(key) + "=" + $enc(one === null ? "" : $str(one));
-    }
-  }
-  return out;
-}
-
-/** A body in its media type: bytes as given, JSON, a form, or text as given (anything else as
- * JSON). NaN or an infinity in a JSON or form body is refused: `JSON.stringify` would write
- * `null`. */
-function $body(type: string, v: unknown): string | Uint8Array {
+/** A body in its media type: bytes as given, JSON, a form (by the Encoding Objects `enc`), or
+ * text as given (anything else as JSON). NaN or an infinity in a JSON or form body is refused:
+ * `JSON.stringify` would write `null`. */
+function $body(type: string, v: unknown, enc?: FlowapiEncoding): string | Uint8Array {
   if (v instanceof Uint8Array) return v;
   if (!$json(type)) {
     if ($bare(type) === "application/x-www-form-urlencoded") {
       if ($bad(v)) throw new FlowapiRequestError("body", null, "non-finite");
-      return $form(v);
+      return $form(v, enc);
     }
     if (typeof v === "string") return v;
   }

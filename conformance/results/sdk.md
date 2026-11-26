@@ -5,7 +5,13 @@ Written by `node conformance/sdk/run.mjs --corpus`; do not edit. Every request a
 | Oracle | Checked | Differ |
 | --- | ---: | ---: |
 | OpenAPI 3.2.1 "Style Examples" (conformance/specs/openapi/3.2.1.md:902), each cell not _n/a_ | 51 | 0 |
-| conformance/sdk/cases.json: 51 cases, each in its versions | 438 | 0 |
+| conformance/sdk/cases.json: 64 cases, each in its versions | 489 | 0 |
+
+| Description | Operations | Type errors |
+| --- | ---: | ---: |
+| github | 1281 | 0 |
+| stripe | 612 | 0 |
+| cloudflare | 3935 | 0 |
 
 ## Differences
 

@@ -1,0 +1,12 @@
+# OpenAPI 3.1's servers as the client uses them: variables, one with an `enum`, and relative URLs
+# resolved against where the description is served. No retries are set: the default, one. The
+# description declares no security on purpose, and `security: []` says the API takes none.
+version: 1
+spec: spec.json
+package: { name: edge-sdk, client: Edge, license: MIT }
+security: []
+resources:
+  zones:
+    methods:
+      status: status
+      near: near

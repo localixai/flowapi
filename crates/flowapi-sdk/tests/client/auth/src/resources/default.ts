@@ -3,7 +3,7 @@
 import * as $api from "../api.js";
 import * as $core from "../core/index.js";
 
-/** The resource `default`. */
+/** The methods of `client.default`. */
 export class Default {
   readonly #core: $core.Core;
 

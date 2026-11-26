@@ -2,9 +2,12 @@
 //! resource is its first tag, else its path's first static segment (a version such as `v1`
 //! passed over); a resource's own collection and item (its noun the path's one static
 //! segment) get the verbs `list`, `create`,
-//! `retrieve`, `update`, `delete`; any other operation is named by its `operationId`'s words,
-//! the resource's words taken off the front, else by its method and path. Names equal as words
-//! are told apart by the longer name, then by a number, in the order of path and method.
+//! `retrieve`, `update`, `delete`; any other operation is named by its `operationId`'s words
+//! without the words its resource already says (`naming/trim.rs`), else by its method and path.
+//! Names equal as words both take their longer names, then a number, in the order of path and
+//! method.
+
+mod trim;
 
 use crate::config::{CLIENT_MEMBERS, RESOURCE_MEMBERS, reserved};
 use crate::ops::Op;
@@ -81,8 +84,27 @@ pub(crate) fn group(op: &Op) -> Vec<String> {
     out
 }
 
+/// The English plural of a name's last word, or `None` when it is plural already: a consonant and
+/// `y` is `ies` (`activity`, `policy`; `key` is `keys`), a word ending in `s` after another `s`,
+/// or in `x`, `z`, `ch` or `sh`, takes `es` (`address`, `box`, `branch`), a word ending in any
+/// other `s` is plural already (`issues`, `repos`), else an `s`.
+fn plural(name: &str) -> Option<String> {
+    let consonant_y = name.strip_suffix('y').filter(|stem| {
+        stem.chars()
+            .last()
+            .is_some_and(|c| c.is_ascii_alphabetic() && !"aeiou".contains(c))
+    });
+    if let Some(stem) = consonant_y {
+        return Some(format!("{stem}ies"));
+    }
+    if name.ends_with("ss") || ["x", "z", "ch", "sh"].iter().any(|e| name.ends_with(e)) {
+        return Some(format!("{name}es"));
+    }
+    (!name.ends_with('s')).then(|| format!("{name}s"))
+}
+
 /// A resource's name that no schema, client member or the client itself has: its words, else
-/// with an `s`, else with `api` and a number.
+/// its plural (`plural`), else with `api` and a number.
 pub(crate) fn resource(
     w: &[String],
     models: &BTreeSet<String>,
@@ -99,8 +121,10 @@ pub(crate) fn resource(
     if free(&name) {
         return name;
     }
-    if !name.ends_with('s') && free(&format!("{name}s")) {
-        return format!("{name}s");
+    if let Some(plural) = plural(&name)
+        && free(&plural)
+    {
+        return plural;
     }
     (1..)
         .map(|n| {
@@ -131,18 +155,23 @@ fn same_noun(a: &[String], b: &[String]) -> bool {
 
 /// The verb of a resource's own collection or item: an operation whose path has one static
 /// segment, the resource's noun (`/pets`, `/pets/{id}` in `pets`; not `/admin.apps.approve` in
-/// `admin_apps`, which is a call of its own).
-fn verb(op: &Op, group: &[String]) -> Option<&'static str> {
+/// `admin_apps`, which is a call of its own). A `POST` to an item of one parameter is its
+/// `update` where the item has no `PUT` or `PATCH` (`edited`), as APIs that update by `POST`
+/// write it (`/v1/prices/{price}`; not `/orgs/{org}/{product}/{action}`, which is an action).
+fn verb(op: &Op, group: &[String], edited: bool) -> Option<&'static str> {
     match statics(&op.operation.path).as_slice() {
         [one] if same_noun(&words(one), group) => {}
         _ => return None,
     }
-    let item = op.operation.path.trim_end_matches('/').ends_with('}');
+    let path = op.operation.path.trim_end_matches('/');
+    let item = path.ends_with('}');
+    let one_param = path.matches('{').count() == 1;
     match (op.operation.method.as_str(), item) {
         ("get", false) => Some("list"),
         ("post", false) => Some("create"),
         ("get", true) => Some("retrieve"),
         ("put" | "patch", true) => Some("update"),
+        ("post", true) if one_param && !edited => Some("update"),
         ("delete", true) => Some("delete"),
         _ => None,
     }
@@ -157,52 +186,81 @@ fn route_words(op: &Op, skip: usize) -> Vec<String> {
     w
 }
 
-/// The short name of an operation in a resource, and its long one for when two short ones meet.
-pub(crate) fn method(op: &Op, group: &[String]) -> (Vec<String>, Vec<String>) {
+/// An operation's names in a resource, the shortest first, each longer one for when the one
+/// before meets another's: the CRUD verb where one applies; the `operationId`'s words without the
+/// resource's (`trim.rs`); those words without the resource's at their front alone; all of them
+/// (else the method and the path's segments). `edited` says whether the operation's path has a
+/// `PUT` or `PATCH`.
+pub(crate) fn method(op: &Op, group: &[String], edited: bool) -> Vec<Vec<String>> {
     let id = op
         .operation_id
         .as_deref()
         .map(words)
         .filter(|w| !w.is_empty());
-    let long = id
-        .clone()
-        .filter(|w| usable(w))
-        .unwrap_or_else(|| route_words(op, 0));
-    let short = if let Some(v) = verb(op, group) {
-        vec![String::from(v)]
-    } else if let Some(w) = id {
-        let rest: Vec<String> = if w.starts_with(group) {
-            w.get(group.len()..).unwrap_or(&[]).to_vec()
+    let method = op.operation.method.to_ascii_lowercase();
+    // A name that opens with a digit is given its method in front.
+    let lettered = |w: Vec<String>| {
+        if usable(&w) {
+            w
         } else {
-            w.clone()
-        };
-        let rest = if rest.is_empty() { w } else { rest };
-        if usable(&rest) {
-            rest
-        } else {
-            [vec![op.operation.method.to_ascii_lowercase()], rest].concat()
+            [vec![method.clone()], w].concat()
         }
-    } else {
-        route_words(op, 1)
     };
-    (short, long)
+    let mut out: Vec<Vec<String>> = Vec::new();
+    if let Some(v) = verb(op, group, edited) {
+        out.push(vec![String::from(v)]);
+    }
+    if let Some(w) = &id {
+        out.push(trim::trim(w, group));
+        out.push(w.strip_prefix(group).unwrap_or(w).to_vec());
+    } else {
+        out.push(route_words(op, 1));
+    }
+    out.push(
+        id.filter(|w| usable(w))
+            .unwrap_or_else(|| route_words(op, 0)),
+    );
+    // Kept when equal: the names of two operations are raised a kind at a time, so that one whose
+    // shorter names are one text is never raised past the others' kind (`list` by `GET /users`
+    // meets `GET /user`'s; the first keeps `list` as its trimmed name, the second takes
+    // `get_authenticated`).
+    out.into_iter()
+        .filter(|w| !w.is_empty())
+        .map(lettered)
+        .collect()
 }
 
-/// Each operation's name in one resource, `ops` in the order of path and method: the short name
-/// where no other has it, else the long one, else the long one and a number.
-pub(crate) fn methods(names: &[(Vec<String>, Vec<String>)]) -> Vec<String> {
+/// Each operation's name in one resource, `ops` in the order of path and method: its shortest
+/// name where no other has it and no member of a resource is named so; where two meet, both take
+/// their next longer name, until none meets or a name has no longer one; a name still shared is
+/// told apart by a number, in the order of path and method.
+pub(crate) fn methods(names: &[Vec<Vec<String>>]) -> Vec<String> {
     let count = |w: &Vec<String>, all: &[Vec<String>]| all.iter().filter(|x| *x == w).count();
-    let shorts: Vec<Vec<String>> = names.iter().map(|(s, _)| s.clone()).collect();
-    let chosen: Vec<Vec<String>> = names
-        .iter()
-        .map(|(s, l)| {
-            if count(s, &shorts) == 1 && !reserved(&join(s, "_"), RESOURCE_MEMBERS) {
-                s.clone()
-            } else {
-                l.clone()
+    let mut level = vec![0usize; names.len()];
+    let pick = |level: &[usize]| -> Vec<Vec<String>> {
+        names
+            .iter()
+            .zip(level)
+            .map(|(n, &l)| n.get(l).or_else(|| n.last()).cloned().unwrap_or_default())
+            .collect()
+    };
+    // Each pass raises at least one name, so the passes are as many as the names' levels at most.
+    let passes: usize = names.iter().map(Vec::len).sum();
+    for _ in 0..passes {
+        let chosen = pick(&level);
+        let mut raised = false;
+        for ((l, n), w) in level.iter_mut().zip(names).zip(&chosen) {
+            let meets = count(w, &chosen) > 1 || reserved(&join(w, "_"), RESOURCE_MEMBERS);
+            if meets && *l + 1 < n.len() {
+                *l += 1;
+                raised = true;
             }
-        })
-        .collect();
+        }
+        if !raised {
+            break;
+        }
+    }
+    let chosen = pick(&level);
     let unique =
         |w: &Vec<String>| count(w, &chosen) == 1 && !reserved(&join(w, "_"), RESOURCE_MEMBERS);
     let mut taken: BTreeSet<String> = chosen

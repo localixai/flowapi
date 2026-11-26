@@ -2,7 +2,7 @@
 # resources and methods, page what pages, then `flowapi config check` it.
 version: 1
 generator:
-  flowapi: "0.2.0"
+  flowapi: "0.3.0"
 spec: rpc.json
 package:
   name: chat
@@ -15,8 +15,14 @@ environments:
 auth:
   token:
     env_var: CHAT_TOKEN
+# The description declares no security scheme that an operation uses. Most APIs take a
+# credential: find it in the API's documentation, declare it under `auth` and name it in
+# `security`, as in the example below, or write `security: []` when the API truly takes
+# none. Until then `config check` warns `config.auth.none`.
+# security:
+#   - token: []
 defaults:
-  retries: 2
+  retries: 1
   timeout: 60
   max_retry_delay: 60
 pagination:

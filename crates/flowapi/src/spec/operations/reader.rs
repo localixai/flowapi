@@ -115,12 +115,10 @@ impl<'t> Reader<'_, 't> {
             .iter()
             .filter(|m| (v32 || **m != "query") && !(v20 && **m == "trace"));
         for method in fields {
-            if let Some(found) = items
+            let found = items
                 .iter()
-                .find_map(|&(doc, item)| Some((doc, self.tree(doc)?.get(item, method)?)))
-            {
-                out.push(((*method).to_owned(), found));
-            }
+                .find_map(|&(d, i)| Some((d, self.tree(d)?.get(i, method)?)));
+            out.extend(found.map(|f| ((*method).to_owned(), f)));
         }
         for &(doc, item) in items.iter().filter(|_| v32) {
             let Some(t) = self.tree(doc) else { continue };
@@ -228,21 +226,37 @@ impl<'t> Reader<'_, 't> {
                 diags.warn("parameter.token", self.docs.loc(pd, p), message);
                 continue;
             }
-            let required = location == Location::Path || self.flag(pd, p, "required");
-            let deprecated = self.flag(pd, p, "deprecated");
-            out.push(Param {
-                name: name.into_owned(),
-                location,
-                required,
-                deprecated,
-                schema: self.value_schema(pd, p, diags),
-                serialization: self.serialization(pd, p, location, diags),
-            });
+            out.push(self.param(name.into_owned(), location, (pd, p), diags));
         }
         Some(out)
     }
 
-    pub(super) fn content(&self, doc: DocId, owner: NodeId, diags: &mut Diagnostics) -> Vec<Media> {
+    /// The parameter or the header at `(doc, node)`, named `name` and sent in `location`.
+    pub(super) fn param(
+        &self,
+        name: String,
+        location: Location,
+        (doc, node): (DocId, NodeId),
+        diags: &mut Diagnostics,
+    ) -> Param {
+        Param {
+            required: location == Location::Path || self.flag(doc, node, "required"),
+            deprecated: self.flag(doc, node, "deprecated"),
+            schema: self.value_schema(doc, node, diags),
+            serialization: self.serialization(doc, node, location, diags),
+            name,
+            location,
+        }
+    }
+
+    /// The media types of a request body (`request`) or a response, in the order written.
+    pub(super) fn content(
+        &self,
+        doc: DocId,
+        owner: NodeId,
+        request: bool,
+        diags: &mut Diagnostics,
+    ) -> Vec<Media> {
         let Some(t) = self.tree(doc) else {
             return Vec::new();
         };
@@ -264,6 +278,7 @@ impl<'t> Reader<'_, 't> {
                 .and_then(|mt| mt.get(media, "schema"))
                 .map(|s| self.schema(md, s));
             out.push(Media {
+                encoding: self.form_encoding((md, media), &media_type, request, diags),
                 media_type: media_type.into_owned(),
                 payload: Payload::Schema(schema),
             });
@@ -275,7 +290,7 @@ impl<'t> Reader<'_, 't> {
         let (bd, b) = self.follow_or_report(doc, node, "a request body", diags)?;
         Some(Body {
             required: self.flag(bd, b, "required"),
-            content: self.content(bd, b, diags),
+            content: self.content(bd, b, true, diags),
         })
     }
 

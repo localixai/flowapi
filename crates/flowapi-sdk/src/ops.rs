@@ -1,5 +1,6 @@
 //! The description's operations as a config names them: each by its `operationId`, or by its
-//! route `"METHOD /path"`, with what an agent reads of it (tags, summary) and the core's reading
+//! route `"METHOD /path"`, with what an agent and a doc comment read of it (tags, summary,
+//! description, `deprecated`, `externalDocs`) and the core's reading
 //! of its parameters, body and responses (`flowapi::spec::read`; no type graph is built, so a
 //! description of thousands of operations is read in the time its JSON takes).
 
@@ -18,8 +19,13 @@ pub(crate) struct Op {
     pub(crate) route: String,
     /// Its tags, in the order written.
     pub(crate) tags: Vec<String>,
-    /// Its `summary`.
+    /// Its `summary` and `description`, as written (CommonMark).
     pub(crate) summary: Option<String>,
+    pub(crate) description: Option<String>,
+    /// Whether it is `deprecated: true`.
+    pub(crate) deprecated: bool,
+    /// Its `externalDocs`: the URL, and what it says of it.
+    pub(crate) external_docs: Option<(String, Option<String>)>,
 }
 
 impl Op {
@@ -58,9 +64,19 @@ impl<'d, 't> Ops<'d, 't> {
                 .into_iter()
                 .filter_map(|t| doc.tree(t.0)?.as_str(t.1).map(|s| s.into_owned()))
                 .collect();
+            let external = raw.and_then(|o| doc.get(o, "externalDocs"));
             list.push(Op {
                 operation_id: raw.and_then(|o| doc.str(o, "operationId")),
                 summary: raw.and_then(|o| doc.str(o, "summary")),
+                description: raw.and_then(|o| doc.str(o, "description")),
+                deprecated: raw
+                    .and_then(|o| doc.get(o, "deprecated"))
+                    .and_then(|(d, n)| doc.tree(d)?.as_bool(n))
+                    .unwrap_or(false),
+                external_docs: external.and_then(|e| {
+                    let url = doc.str(e, "url")?;
+                    Some((url, doc.str(e, "description")))
+                }),
                 route: format!(
                     "{} {}",
                     operation.method.to_ascii_uppercase(),

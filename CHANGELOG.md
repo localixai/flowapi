@@ -2,6 +2,105 @@
 
 ## Unreleased
 
+## 0.3.0 — 2026-11-26
+
+- `flowapi generate` prints the description's warnings as `flowapi <description>` does, not only
+  its errors. A Swagger 2.0 form field's `collectionFormat` is read once, by the core, and the
+  SDK's table takes the form's encoding from it: a format 2.0 does not have is reported once, as
+  `` `collectionFormat` commas is not one a parameter in `formData` takes ``, where it named a
+  `query` parameter; the table is written as before.
+- Swagger 2.0's `collectionFormat` is written in every location 2.0 allows it: `ssv`, `tsv` and
+  `pipes` in a path and a header too (the delimiter percent-encoded in a URI, as written in a
+  header), and `tsv` in a query (`a%09b`), which was written as `csv` with a warning. An Items
+  Object's own `collectionFormat` joins the arrays inside an array, level by level
+  (`spec::Serialization::nested`, `spec::Style::TabDelimited`), in both SDKs, and in a `formData`
+  body of the TypeScript SDK (a form, or a `multipart/form-data` part): the table's Encoding
+  Object has `nested`, the styles of the inner arrays. `multi` outside a query, or a format 2.0
+  does not have, is still `csv` with a warning.
+- The SDK's client retries and redirects as RFC 9110 says. A request whose method is
+  not idempotent (POST, PATCH, QUERY; 9.2.2) is not retried on its own unless the server answers
+  `x-should-retry: true` or it carries an idempotency key; `defaults.idempotency_key` in
+  `flowapi-sdk.yml` names the header (`Idempotency-Key`), and each such call then sends a random
+  key in it, the same on all its attempts. The default `retries` is now 1 (it was 2), as a failed
+  retry is not retried again; more is the config's or the caller's choice. A 403 is never retried
+  (15.5.4). A status that is no status code is read as a 5xx, one no class is known for by its
+  class (15). Every 3xx with a `Location` is followed but 304, 305 and 306 (15.4): 303 as a GET,
+  301 and 302 turn a POST into a GET, the rest keep the method and the content; a redirect loop is
+  refused at once, 20 redirects at most, and a `Location` without a fragment keeps the
+  request's (10.2.2). A GET or HEAD with content, and an OPTIONS with content but no
+  `Content-Type`, are refused before they are sent.
+- Servers, as the client uses them: `serverVariables` gives values to the servers' variables over
+  their defaults, each checked against its `enum` (typed in the client's options by the
+  description's servers and the operations' own); `descriptionURL` says where the description is
+  served, and a relative server URL is resolved against it (OpenAPI 3.1 and 3.2, "Relative
+  References in API URLs"); a Server Object of another document is printed relative to the
+  first; a base URL, a `descriptionURL` or a redirect's `Location` with a user name or password
+  in it is refused (RFC 9110 4.2.4). Swagger 2.0's `schemes`, the description's and an
+  operation's, warn of a value that is not `http`, `https`, `ws` or `wss` under the requirement's
+  id and do not use it; an operation whose own list has none left is served by the description's. The table's cases now hold OpenAPI 3.0 and 3.2's servers
+  too, and two client cases (`hosts`, 3.2; `edge`, 3.1) hold the runtime to them: 56 ledger ids
+  that had no test have one, every in-scope RFC 9110 id among them.
+- The SDK writes bodies by the description's Encoding Objects. The SDK layer reads them into the
+  operations table (`encoding` by name for a form and `multipart/form-data`, 3.2's
+  `prefixEncoding` and `itemEncoding` by position, nested ones to four levels, each field only
+  where its version and media type apply it, request bodies only), takes a part's missing type
+  from its schema (`contentEncoding`, 3.0's `format: binary` and `byte`, through `$ref` and
+  `allOf`), and reads Swagger 2.0's `formData` `collectionFormat` as a style; the client passes
+  them to `<op>Request` when a call gives none. A form member with `style`, `explode` or
+  `allowReserved` is written by that style; 3.1 and 3.2's `multipart/form-data` members too. Any
+  other multipart type takes an array, a part per item; a part of a `multipart` type is written as
+  a body of its own; outside `multipart/form-data` a part with `contentEncoding` says
+  `Content-Transfer-Encoding` (3.2). A list of types is kept for the caller to pick from.
+- The Rust SDK writes a form body's members by the description's Encoding Objects, printed into
+  each operation's `<name>_request` (`sdk::form_body(v, &[...])`, `sdk::Part`): a member with
+  `style`, `explode` or `allowReserved` as a query parameter of that style (`a,b`, `a%20b`,
+  `filter%5Bcolor%5D=red`, `/a/b:c@d` with `allowReserved`), one whose `contentType` alone is
+  JSON as its JSON (`id=%22x%22`), and Swagger 2.0's array `formData` fields by their
+  `collectionFormat`, the arrays inside by their Items Objects'. Before, every member was written
+  by the form's defaults, and a 2.0 `formData` form not at all in O8. The core reads them into
+  `spec::Media::encoding` (request bodies only), from which the Rust target prints them.
+- A form body written from its content is percent-encoded by WHATWG's rules, as OpenAPI 3.2 asks
+  and browsers send (`a b!` was `a%20b!`, is `a+b%21`), in the TypeScript and the Rust SDKs, and a
+  3.2 `querystring` parameter with form content too. A member written by `style` keeps RFC 3986's.
+- `flowapi-sdk`'s `Encoding` holds `Parts` (`by_name`, `prefix`, `item`) of `Part`s with
+  `style`, `explode`, `allowReserved` and nested parts, in place of its list of names and types.
+- SDK authentication. The client sends each kind of security scheme: an API key in a header, a
+  query parameter or a cookie; HTTP bearer (RFC 6750 2.1's syntax) and basic (RFC 7617: UTF-8, no
+  `:` in the user-id, no control character); another HTTP scheme as `<scheme> <credential>`,
+  while one that answers a challenge (`digest`, ...) is refused with a diagnostic; OAuth 2.0 and
+  OpenID Connect tokens given as a string or a function; and OAuth 2.0's client credentials grant
+  run by the client (RFC 6749 4.4: a POST of the form, the client by HTTP basic, the token URL
+  relative to the server, `TokenError` for 5.2's errors, a cache with a margin, one request in
+  flight, a 401 that asks for another token once: the call made again with its idempotency key
+  and the retries it has left, a POST too, as a 401 says nothing was applied; the token request
+  itself is never retried nor followed to another origin). `mutualTLS` is the option `true` beside a
+  `fetch` that presents the certificate. `security` is read as written: alternatives in order,
+  the schemes of one together, `{}` and `[]`, an operation's own over the description's, and a
+  name in a referenced document read from the entry document (Appendix F). Credentials go only
+  over TLS or to a loopback host unless `allowInsecureCredentials: true`
+  (`InsecureCredentialError`, held to the call's base URL before a credential is read or a token
+  requested, so a refused call costs no token request); a call that cannot be met throws `CredentialError` before
+  sending, naming the options and variables.
+- `flowapi-sdk.yml`: `auth.<name>` declares a scheme the description lacks (`type`, `scheme`,
+  `in`, `name`, `token_url`, `description`) and takes `username_env_var`/`password_env_var`,
+  `client_id_env_var`/`client_secret_env_var` and `scopes`; a top-level `security` and a
+  method's `security` override the description's. `config check` errs with `config.auth.declared`,
+  `config.auth.unknown`, `config.auth.field`, `config.auth.type`, `config.auth.in`,
+  `config.auth.option` and `config.security.unknown`, and warns with `config.auth.none`,
+  `config.auth.unlisted`, `config.auth.env`, `config.auth.refused`, `config.auth.mutual_tls` and
+  `config.auth.deprecated`. `config draft` names a variable for every scheme and, for a
+  description without security, writes a commented example and leaves `security` unset, so that
+  `config check` warns `config.auth.none` until the person declares the API's credential, or
+  writes `security: []` for an API that takes none. The summary shows
+  the description's and each operation's own security and an OAuth 2.0 token URL.
+- The generated repository: the mock answers 401 with JSON naming what is missing and serves a
+  token endpoint held to RFC 6749; `tests/auth.test.mjs` sends made-up credentials of each kind
+  and calls an operation that needs none without any; the README has a row for every scheme.
+- The requirements ledger (`conformance/ledger`, O1) reads Swagger 2.0 and five RFCs (6749, 6750,
+  7578, 7617 and 9110, pinned in `conformance/specs/`) beside OpenAPI 3.x and JSON Schema, and its
+  scope is decided for the SDK: servers, security, the Encoding Object and what the client sends
+  (`conformance/triage-3.md`). `report` also writes `conformance/MISSING.md`, every requirement
+  in scope that no test names yet.
 - The agent plugin `flowapi` (`plugins/flowapi`), installed from this repository as a
   marketplace (`claude plugin marketplace add localixai/flowapi`, then
   `claude plugin install flowapi@flowapi`). It is a Claude Code plugin and an Agent Plugins 1.1.0
@@ -11,6 +110,31 @@
   build, the built types, the package, the tests). `/flowapi:refine`, `update` and `release`
   take it further, and a guard hook refuses hand edits of the files `.flowapi/lock.json` lists.
   Its version is flowapi's.
+- `flowapi-sdk.yml` has `readme.title` (the README's heading), `package.description`
+  (`package.json`'s description, and the README's first paragraph unless `readme.intro` is given)
+  and `package.keywords`. Unless given, the heading is the description's `info.title` without a
+  last `API`, then `TypeScript SDK`, and the description is `TypeScript SDK for the <title> API.`
+  with the first short sentence of `info.summary` or `info.description`, as plain text.
+- `config draft` names a method without the words its resource already says
+  (`actions.get_cache_retention_limit_for_enterprise`, `repos.list_for_org`), keeps a run of them
+  that a word qualifies, maps a `POST` to an item that has no `PUT` or `PATCH` to `update`, and
+  where two names meet gives both their next longer name; a resource that meets a schema's name
+  takes its English plural (`activity` is `activities`, `address` `addresses`; it was `activitys`).
+- The generated texts, rewritten: the README has a resources table linked to `api.md`, what a
+  method takes and gives, `withResponse()`, a table of error classes, the retry rule as the
+  runtime keeps it (with `retries: 0`, that nothing is retried by default, the rule said for a
+  caller who sets `maxRetries`), pagination with the input its method needs, logging, `client.request`, and no
+  example with a placeholder for its arguments; `api.md` writes every signature in types the
+  package exports (`Data`, `Input`, `ItemOf`, now exported, and `Stream<ServerSentEvent>`); each
+  method's doc comment is its operation's summary and description as plain text, with
+  `@see` for `externalDocs` and `@deprecated`; `AGENTS.md` says where things are and which key of
+  the config changes what; `CHANGELOG.md` is seeded with a line on how it is written. The
+  runtime's errors say what to do: a timeout names `timeout`, an unknown environment names the
+  config's, too many pages name `maxPages`, a cross-origin redirect names
+  `allowCrossOriginRedirects`.
+- `crates/flowapi-sdk/tests/texts.mjs` compiles every README example and every `api.md`
+  signature of the kept repositories against their clients, and fails on a placeholder (`TODO`,
+  `"string"`, `/* … */`) or an empty section.
 
 ## 0.2.0 — 2026-11-26
 

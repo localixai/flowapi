@@ -1,4 +1,5 @@
-//! The package: `package.json`, the TypeScript configs and the license.
+//! The package: `package.json`, the TypeScript configs and the license; and the names the
+//! package and its README go by (`heading`, `description`), from the config or the description.
 //!
 //! One package from the repository's root, built twice by `tsc` alone (no bundler, no tool of
 //! someone else's): ES modules into `dist/esm`, CommonJS into `dist/cjs` (with a
@@ -14,6 +15,8 @@ use super::{Ctx, RepoFile, generated_file};
 use crate::config::issue::Issues;
 use crate::doc::ROOT;
 use crate::out::json_str;
+use crate::prose;
+use crate::words::words;
 
 /// The TypeScript the package builds and checks with: `conformance/ts`'s.
 pub(crate) const TYPESCRIPT: &str = "7.0.2";
@@ -70,23 +73,120 @@ fn tsconfig() -> String {
     )
 }
 
-/// The description's title, for the package's description.
-pub(crate) fn title(ctx: &Ctx<'_>) -> Option<String> {
+/// A member of the description's `info` as plain text, when it has some.
+fn info(ctx: &Ctx<'_>, key: &str) -> Option<String> {
     let doc = &ctx.ops.doc;
-    doc.get(ROOT, "info").and_then(|i| doc.str(i, "title"))
+    let text = doc.get(ROOT, "info").and_then(|i| doc.str(i, key))?;
+    let plain = prose::inline(&text);
+    (!plain.is_empty()).then_some(plain)
+}
+
+/// The API's name: `info.title` without a last `API` (and a `REST` before it), the name the
+/// heading and the description put `TypeScript SDK` beside (`GitHub v3 REST API` is `GitHub v3`,
+/// `Twilio - Studio` is `Twilio Studio`).
+pub(crate) fn api_name(ctx: &Ctx<'_>) -> Option<String> {
+    let title = info(ctx, "title")?;
+    // A piece of punctuation alone between words (`Twilio - Studio`) is no part of the name.
+    let mut words: Vec<&str> = title
+        .split(' ')
+        .filter(|w| w.chars().any(char::is_alphanumeric))
+        .collect();
+    for last in ["api", "rest"] {
+        if words.len() > 1 && words.last().is_some_and(|w| w.eq_ignore_ascii_case(last)) {
+            words.pop();
+        }
+    }
+    let name = words.join(" ");
+    let name = name.trim_end_matches(['-', ':', ',', ' ']);
+    (!name.is_empty()).then(|| name.to_owned())
+}
+
+/// The README's heading: `readme.title`, else the API's name and `TypeScript SDK`, else the
+/// package's name.
+pub(crate) fn heading(ctx: &Ctx<'_>) -> String {
+    let s = &ctx.config.settings;
+    s.title.clone().unwrap_or_else(|| {
+        api_name(ctx).map_or_else(
+            || ctx.package().to_owned(),
+            |n| format!("{n} TypeScript SDK"),
+        )
+    })
+}
+
+/// Words a description's first sentence may hold and still say nothing of the API.
+const FILLER: &[&str] = &[
+    "the",
+    "this",
+    "that",
+    "our",
+    "its",
+    "public",
+    "official",
+    "rest",
+    "restful",
+    "http",
+    "https",
+    "web",
+    "api",
+    "apis",
+    "version",
+    "welcome",
+    "documentation",
+    "docs",
+    "site",
+    "reference",
+    "for",
+    "and",
+    "you",
+    "your",
+];
+
+/// The package's description: `package.description`, else `TypeScript SDK for the <name> API.`
+/// and the first sentence of `info.summary`, else of `info.description`, where it is short and
+/// says more than the title.
+pub(crate) fn description(ctx: &Ctx<'_>) -> String {
+    if let Some(d) = &ctx.config.settings.description {
+        return d.clone();
+    }
+    let mut out = api_name(ctx).map_or_else(
+        || String::from("TypeScript SDK for an HTTP API."),
+        |n| format!("TypeScript SDK for the {n} API."),
+    );
+    let doc = &ctx.ops.doc;
+    let about = ["summary", "description"].into_iter().find_map(|key| {
+        let text = doc.get(ROOT, "info").and_then(|i| doc.str(i, key))?;
+        prose::sentence(&text)
+    });
+    // A sentence of the title's words and words that say nothing of an API alone (`GitHub's v3
+    // REST API`, `This is the public Twilio REST API`, `Welcome to the API documentation`) is
+    // left out: the first sentence would repeat the title.
+    let title: Vec<String> = info(ctx, "title").map(|t| words(&t)).unwrap_or_default();
+    let news = |s: &String| {
+        words(s)
+            .iter()
+            .any(|w| w.len() > 2 && !title.contains(w) && !FILLER.contains(&w.as_str()))
+    };
+    if let Some(mut s) = about.filter(news) {
+        if !s.ends_with(['.', '!', '?']) {
+            s.push('.');
+        }
+        out.push(' ');
+        out.push_str(&s);
+    }
+    out
 }
 
 fn package_json(ctx: &Ctx<'_>) -> String {
-    let description = title(ctx).map_or_else(
-        || String::from("A TypeScript client of the API"),
-        |t| format!("A TypeScript client of the {t} API"),
-    );
     let s = &ctx.config.settings;
     let mut fields = vec![
         format!("\"name\": {}", json_str(ctx.package())),
         format!("\"version\": {}", json_str(ctx.version())),
-        format!("\"description\": {}", json_str(&description)),
+        format!("\"description\": {}", json_str(&description(ctx))),
     ];
+    if !s.keywords.is_empty() {
+        let keywords: Vec<String> = s.keywords.iter().map(|k| json_str(k)).collect();
+        fields.push(format!("\"keywords\": [{}]", keywords.join(", ")));
+    }
     if let Some(l) = &ctx.config.license {
         fields.push(format!("\"license\": {}", json_str(&l.name)));
     }

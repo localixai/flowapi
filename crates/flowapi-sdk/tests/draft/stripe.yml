@@ -2,7 +2,7 @@
 # resources and methods, page what pages, then `flowapi config check` it.
 version: 1
 generator:
-  flowapi: "0.2.0"
+  flowapi: "0.3.0"
 spec: stripe.json
 package:
   name: payhub-v1-rest-api
@@ -14,9 +14,15 @@ environments:
   env_var: PAYHUB_V1_REST_API_BASE_URL
 auth:
   basicAuth:
-    env_var: PAYHUB_V1_REST_API_BASIC_AUTH
+    env_var: PAYHUB_V1_REST_API_BASIC_AUTH  # username:password
+# The description declares no security scheme that an operation uses. Most APIs take a
+# credential: find it in the API's documentation, declare it under `auth` and name it in
+# `security`, as in the example below, or write `security: []` when the API truly takes
+# none. Until then `config check` warns `config.auth.none`.
+# security:
+#   - basicAuth: []
 defaults:
-  retries: 2
+  retries: 1
   timeout: 60
   max_retry_delay: 60
 pagination:
@@ -37,8 +43,8 @@ resources:
       create: PostCustomers  # POST /v1/customers
       delete: DeleteCustomersCustomer  # DELETE /v1/customers/{customer}
       retrieve: GetCustomersCustomer  # GET /v1/customers/{customer}
-      post_customers_customer: PostCustomersCustomer  # POST /v1/customers/{customer}
-      get_customers_customer_sources: GetCustomersCustomerSources  # GET /v1/customers/{customer}/sources
+      update: PostCustomersCustomer  # POST /v1/customers/{customer}
+      get_sources: GetCustomersCustomerSources  # GET /v1/customers/{customer}/sources
   request_api:
     methods:
       list: GetRequest  # GET /v1/request

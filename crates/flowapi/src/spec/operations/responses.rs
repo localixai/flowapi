@@ -23,18 +23,7 @@ impl Reader<'_, '_> {
             let Some((hd, h)) = self.follow_or_report(doc, m.value, "a header", diags) else {
                 continue;
             };
-            let (required, deprecated) =
-                (self.flag(hd, h, "required"), self.flag(hd, h, "deprecated"));
-            let schema = self.value_schema(hd, h, diags);
-            let serialization = self.serialization(hd, h, Location::Header, diags);
-            out.push(Param {
-                name: name.into_owned(),
-                location: Location::Header,
-                required,
-                deprecated,
-                schema,
-                serialization,
-            });
+            out.push(self.param(name.into_owned(), Location::Header, (hd, h), diags));
         }
         out
     }
@@ -79,16 +68,11 @@ impl Reader<'_, '_> {
             let Some(status) = t.string(m.key) else {
                 continue;
             };
-            if status.starts_with("x-")
-                || !Self::status(
-                    &status,
-                    Loc {
-                        doc,
-                        offset: m.key.start,
-                    },
-                    diags,
-                )
-            {
+            let at = Loc {
+                doc,
+                offset: m.key.start,
+            };
+            if status.starts_with("x-") || !Self::status(&status, at, diags) {
                 continue;
             }
             let what = format!("the response {status}");
@@ -98,7 +82,7 @@ impl Reader<'_, '_> {
             let headers = self.headers(rd, r, diags);
             let content = match self.version {
                 Version::V20 => self.produced(rd, r, produces),
-                Version::V30 | Version::V31 | Version::V32 => self.content(rd, r, diags),
+                Version::V30 | Version::V31 | Version::V32 => self.content(rd, r, false, diags),
             };
             out.push(Response {
                 status: status.into_owned(),

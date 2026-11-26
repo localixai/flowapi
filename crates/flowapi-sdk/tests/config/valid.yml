@@ -1,12 +1,14 @@
 # Every member of the format, each naming what the description has: no issue.
 version: 1
-generator: { flowapi: "0.2.x" }
+generator: { flowapi: "0.3.x" }
 spec: spec.json
 package:
   name: "@petshop/sdk"
   client: PetShop
   license: MIT
   repository: https://github.com/petshop/sdk
+  description: The TypeScript SDK of the Pet Shop API, unofficial.
+  keywords: [pets, shop]
 environments:
   production: https://api.petshop.example/v1
   sandbox: https://sandbox.petshop.example/v1
@@ -14,6 +16,18 @@ environments:
   env_var: PET_SHOP_BASE_URL
 auth:
   ApiKeyAuth: { env_var: PET_SHOP_API_KEY }
+  bearer: { env_var: PET_SHOP_TOKEN }
+  Session: { type: apiKey, in: cookie, name: sid, env_var: PET_SHOP_SESSION, description: A session }
+  Admin: { type: http, scheme: basic, username_env_var: PET_SHOP_USER, password_env_var: PET_SHOP_PASSWORD }
+  Client:
+    type: oauth2
+    token_url: https://login.petshop.example/token
+    client_id_env_var: PET_SHOP_CLIENT_ID
+    client_secret_env_var: PET_SHOP_CLIENT_SECRET
+    scopes: [pets.read]
+security:
+  - ApiKeyAuth: []
+  - bearer: []
 defaults: { retries: 2, timeout: 60, max_retry_delay: 30, pagination: cursor }
 pagination:
   cursor:
@@ -46,7 +60,7 @@ resources:
       create: createPet
       get: { op: getPet, retries: 0 }
       update: "PATCH /pets/{pet_id}"
-      delete: delete /pets/{pet_id}
+      delete: { op: "delete /pets/{pet_id}", security: [{ Admin: [] }, { Client: [pets.write], Session: [] }] }
     resources:
       photos:
         methods:
@@ -59,10 +73,10 @@ resources:
       stream: { op: streamEvents, stream: true }
   collisions:
     methods:
-      get: getCollision
+      get: { op: getCollision, security: [] }
   users:
     methods:
       list: { op: listUsers, pagination: one }
 skip:
   - { op: "GET /internal/health", reason: not public }
-readme: { headline_method: pets.list, pagination_method: pets.photos.list, intro: "The Pet Shop API." }
+readme: { title: Pet Shop SDK, headline_method: pets.list, pagination_method: pets.photos.list, intro: "The Pet Shop API." }

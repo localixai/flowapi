@@ -174,7 +174,7 @@ pub fn repo_files(
     ) else {
         return repo;
     };
-    let (service, _) = crate::read(docs, program);
+    let (service, _) = client::service(docs, program, &check);
     let ctx = Ctx {
         config: &check.config,
         ops: &ops,
@@ -249,17 +249,11 @@ fn calls(
             .get(&client::route(&o.operation))
             .and_then(|&i| bases.get(i).cloned().flatten());
         let Some(base) = base else { continue };
-        let mut members = Vec::new();
-        let mut next = Some(m.resource);
-        while let Some(r) = next {
-            members.push(resources::member_of(c, r));
-            next = c.resources.get(r).and_then(|x| x.parent);
-            if members.len() > c.resources.len() {
-                break;
-            }
-        }
-        members.reverse();
-        members.push(client::camel(&words::words(&m.name.name)));
+        let access = format!(
+            "{}.{}",
+            resources::access_of(c, m.resource),
+            client::camel(&words::words(&m.name.name))
+        );
         let kind = if m.stream.is_some() {
             Kind::Stream
         } else if effective(c, m).and_then(|n| find(c, &n.name)).is_some() {
@@ -270,7 +264,7 @@ fn calls(
         out.push(Call {
             method: k,
             name: format!("{}.{}", c.path(m.resource), m.name.name),
-            access: members.join("."),
+            access,
             op,
             base,
             kind,

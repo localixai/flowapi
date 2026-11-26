@@ -3,8 +3,13 @@
 //! (`build.rs`), and `flowapi config schema` prints them as JSON Schema (`schema.rs`), so the
 //! three cannot drift apart. A member they do not name is an error.
 
+mod auth;
+mod package;
 mod schemes;
 
+pub(crate) use auth::AUTH;
+use auth::{AUTH_SCHEME, SECURITY};
+pub(crate) use package::{PACKAGE, README};
 use schemes::SCHEME;
 pub(crate) use schemes::SCHEMES;
 
@@ -19,6 +24,8 @@ pub(crate) enum Str {
     Name,
     /// An environment variable's name.
     EnvVar,
+    /// An HTTP header field's name, a token (RFC 9110, 5.1).
+    Header,
     /// An absolute `http` or `https` URL.
     Url,
     /// An npm package name.
@@ -29,6 +36,8 @@ pub(crate) enum Str {
     Version,
     /// A package's own version: `0.1.0`, `1.0.0-beta.1`, never `x`.
     Release,
+    /// One of these words, else the issue of this code.
+    OneOf(&'static str, &'static [&'static str]),
 }
 
 /// What a value must be.
@@ -116,6 +125,7 @@ static ANY: Shape = Shape::Str(Str::Any);
 static TEXT: Shape = Shape::Str(Str::Text);
 static NAME: Shape = Shape::Str(Str::Name);
 static ENV_VAR: Shape = Shape::Str(Str::EnvVar);
+static HEADER: Shape = Shape::Str(Str::Header);
 static URL: Shape = Shape::Str(Str::Url);
 static SECONDS: Shape = Shape::Seconds;
 static RETRIES: Shape = Shape::Int(0, 10);
@@ -131,26 +141,6 @@ pub(crate) const GENERATOR: &[Field] = &[req(
     "The flowapi version the SDK is generated with",
 )];
 
-pub(crate) const PACKAGE: &[Field] = &[
-    req("name", &Shape::Str(Str::Package), "The npm package's name"),
-    f(
-        "version",
-        &Shape::Str(Str::Release),
-        "The package's version (0.1.0 unless given); the release tool raises it",
-    ),
-    req(
-        "client",
-        &Shape::Str(Str::Client),
-        "The client class's name, in PascalCase",
-    ),
-    f(
-        "license",
-        &TEXT,
-        "The package's license, an SPDX expression",
-    ),
-    f("repository", &TEXT, "The package's repository URL"),
-];
-
 pub(crate) const ENVIRONMENTS_FIXED: &[Field] = &[
     f(
         "default",
@@ -164,19 +154,17 @@ pub(crate) const ENVIRONMENTS_FIXED: &[Field] = &[
     ),
 ];
 
-static AUTH_SCHEME: Shape = Shape::Named("auth", &Shape::Obj(AUTH));
-pub(crate) const AUTH: &[Field] = &[f(
-    "env_var",
-    &ENV_VAR,
-    "The environment variable the credential is read from",
-)];
-
 pub(crate) const DEFAULTS: &[Field] = &[
     def(
         "retries",
         &RETRIES,
-        "2",
-        "How many times a failed request is retried",
+        "1",
+        "How many times a failed request is retried: a POST or a PATCH only with an idempotency key",
+    ),
+    f(
+        "idempotency_key",
+        &HEADER,
+        "The header each call of a POST, a PATCH or another method that is not idempotent sends a key in, the same on its retries",
     ),
     def(
         "timeout",
@@ -217,6 +205,11 @@ pub(crate) const METHOD: &[Field] = &[
         "stream",
         &BOOL,
         "Whether the response is read as a stream of events",
+    ),
+    f(
+        "security",
+        &SECURITY,
+        "The method's security, over the description's and the config's: alternatives, each the schemes it needs with their scopes; `[]` for none",
     ),
 ];
 static METHOD_VALUE: Shape = Shape::Named("method", &Shape::Either(&[&OP, &Shape::Obj(METHOD)]));
@@ -284,20 +277,6 @@ pub(crate) const SKIP: &[Field] = &[
     req("reason", &TEXT, "Why the SDK leaves it out"),
 ];
 
-pub(crate) const README: &[Field] = &[
-    f(
-        "headline_method",
-        &TEXT,
-        "The method the README shows first, as `resource.method`",
-    ),
-    f(
-        "pagination_method",
-        &TEXT,
-        "The method the README shows pagination with",
-    ),
-    f("intro", &TEXT, "The README's opening paragraph"),
-];
-
 /// The config's root.
 pub(crate) const ROOT: &[Field] = &[
     req("version", &Shape::One, "The format's version: 1"),
@@ -320,7 +299,12 @@ pub(crate) const ROOT: &[Field] = &[
     f(
         "auth",
         &AUTHS,
-        "The security schemes the client sends, by their names in the description",
+        "The security schemes the client sends, by their names in the description, and those it lacks",
+    ),
+    f(
+        "security",
+        &SECURITY,
+        "The security of every operation with none of its own, over the description's: alternatives, any one of which is enough, each the schemes it needs with their scopes; `{}` makes a credential optional, `[]` is none",
     ),
     f(
         "defaults",

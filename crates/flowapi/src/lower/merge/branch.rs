@@ -103,15 +103,10 @@ pub(super) fn narrows(b: &Branches<'_>, allowed: Kinds) -> bool {
 
 fn numbers<'t>(a: Numbers<'t>, b: &Numbers<'t>) -> Option<Numbers<'t>> {
     let integer = a.integer || b.integer;
-    let lits = match (a.lits, &b.lits) {
-        (Some(x), Some(y)) => Some(common(x, y)),
-        (Some(x), None) => Some(x),
-        (None, Some(y)) => Some(y.clone()),
-        (None, None) => None,
-    };
+    let lits = Lit::common(a.lits, b.lits.as_deref());
     let lits = lits.map(|l| {
         if integer {
-            l.into_iter().filter(|v| is_integer(v.raw)).collect()
+            l.into_iter().filter(Lit::is_integer).collect()
         } else {
             l
         }
@@ -123,12 +118,7 @@ fn numbers<'t>(a: Numbers<'t>, b: &Numbers<'t>) -> Option<Numbers<'t>> {
 }
 
 fn strings<'t>(a: Strings<'t>, b: &Strings<'t>) -> Option<Strings<'t>> {
-    let lits = match (a.lits, &b.lits) {
-        (Some(x), Some(y)) => Some(common(x, y)),
-        (Some(x), None) => Some(x),
-        (None, Some(y)) => Some(y.clone()),
-        (None, None) => None,
-    };
+    let lits = Lit::common(a.lits, b.lits.as_deref());
     match &lits {
         Some(l) if l.is_empty() => None,
         Some(_) | None => Some(Strings {
@@ -136,15 +126,4 @@ fn strings<'t>(a: Strings<'t>, b: &Strings<'t>) -> Option<Strings<'t>> {
             lits,
         }),
     }
-}
-
-fn common<'t>(a: Vec<Lit<'t>>, b: &[Lit<'t>]) -> Vec<Lit<'t>> {
-    a.into_iter()
-        .filter(|x| b.iter().any(|y| y.norm == x.norm))
-        .collect()
-}
-
-fn is_integer(raw: &str) -> bool {
-    raw.parse::<f64>()
-        .is_ok_and(|v| v.is_finite() && v.fract() == 0.0)
 }

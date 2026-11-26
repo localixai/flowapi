@@ -3,10 +3,11 @@
 //! crate has no serde). A value is one of RFC 6570's four (§2.3): `null`, a string (a number or
 //! boolean as its text), a list (a sequence), or an associative array (a map or a struct, its
 //! members in the order they are serialized). An item or member that is itself a list or an
-//! associative array is its JSON text. The `form` modes write `application/x-www-form-urlencoded`.
+//! associative array is its JSON text, but for a list in a list that Swagger 2.0's Items Object
+//! joins (`Style::nest`). The `form` modes write `application/x-www-form-urlencoded`.
 
 use super::write::{At, Digits, W};
-use super::{Shape, encode};
+use super::{Part, Shape, encode};
 use serde::Serialize;
 use serde::ser;
 use std::fmt::{Display, Write as _};
@@ -89,6 +90,8 @@ impl<'w, 'a> Ser<'w, 'a> {
             (At::Deep, true) => At::Deep,
             (At::Form, true) => At::FormMember,
             (At::FormMember, false) => At::FormItem,
+            (At::Item, false) if !self.w.s.nest.is_empty() => self.w.nest(None),
+            (At::Nest(d), false) if d + 1 < self.w.s.nest.len() => self.w.nest(Some(d)),
             (At::Ignore, _) => At::Ignore,
             (At::Key, _) => return Err(Error::Custom(String::from("a key that is not a string"))),
             _ => return Err(Error::Compound),
@@ -135,6 +138,16 @@ impl Many<'_, '_> {
     }
 
     fn member<T: Serialize + ?Sized>(&mut self, v: &T) -> Result<(), Error> {
+        if self.at == At::FormMember {
+            match self.w.part() {
+                Some(Part::Style(s)) => return self.w.styled(s, v),
+                Some(Part::Json) => self.w.json = true,
+                None => {}
+            }
+            let r = self.one(v);
+            self.w.json = false;
+            return r;
+        }
         if self.at != At::Deep {
             return self.one(v);
         }
@@ -157,6 +170,10 @@ impl Many<'_, '_> {
     }
 
     fn end(self) -> bool {
+        // A list inside a list ended: the next item of the list around it is joined to it.
+        if matches!(self.at, At::Nest(_)) {
+            self.w.fresh = false;
+        }
         self.w.path.truncate(self.base);
         self.w.n > 0
     }
@@ -194,10 +211,10 @@ impl<'w, 'a> ser::Serializer for Ser<'w, 'a> {
         Ok(self.w.text(self.at, if v { "true" } else { "false" }))
     }
     fn serialize_char(self, v: char) -> Result<bool, Error> {
-        Ok(self.w.text(self.at, v.encode_utf8(&mut [0; 4])))
+        Ok(self.w.string(self.at, v.encode_utf8(&mut [0; 4])))
     }
     fn serialize_str(self, v: &str) -> Result<bool, Error> {
-        Ok(self.w.text(self.at, v))
+        Ok(self.w.string(self.at, v))
     }
     fn serialize_bytes(self, v: &[u8]) -> Result<bool, Error> {
         Ok(self.w.text(self.at, &String::from_utf8_lossy(v)))
@@ -220,7 +237,7 @@ impl<'w, 'a> ser::Serializer for Ser<'w, 'a> {
         _: u32,
         v: &'static str,
     ) -> Result<bool, Error> {
-        Ok(self.w.text(self.at, v))
+        Ok(self.w.string(self.at, v))
     }
     fn serialize_newtype_struct<T: Serialize + ?Sized>(
         self,

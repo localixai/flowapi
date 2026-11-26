@@ -1,0 +1,21 @@
+# Swagger 2.0's securityDefinitions: basic, API keys in a header and in the query (alternatives),
+# and an OAuth 2.0 `application` flow (client credentials) whose scopes hold an extension; a
+# scheme's extension; an operation that needs none.
+version: 1
+spec: spec.json
+package: { name: swagger-sdk, client: Swagger, license: MIT }
+auth:
+  basic: { env_var: SWAGGER_BASIC }
+  header: { env_var: SWAGGER_HEADER_KEY }
+  query: { env_var: SWAGGER_QUERY_KEY }
+  app: { client_id_env_var: SWAGGER_CLIENT_ID, client_secret_env_var: SWAGGER_CLIENT_SECRET }
+defaults: { retries: 0 }
+resources:
+  pets:
+    methods:
+      list: listPets
+      add: addPet
+      mine: myPets
+  health:
+    methods:
+      get: health

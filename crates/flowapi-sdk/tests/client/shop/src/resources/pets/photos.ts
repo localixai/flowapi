@@ -3,7 +3,7 @@
 import * as $api from "../../api.js";
 import * as $core from "../../core/index.js";
 
-/** The resource `pets.photos`. */
+/** The methods of `client.pets.photos`. */
 export class Photos {
   readonly #core: $core.Core;
 

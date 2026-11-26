@@ -2,17 +2,20 @@
 //
 // The API's mock server, on node:http with no dependency, answering by the routes printed from
 // the description beside it (routes.mjs). It is strict where a client goes wrong: a path no
-// operation has is a 404, a method the path has not a 405, a required query parameter, header,
-// cookie or body that is missing a 400, a body of a media type the operation does not take a
-// 415. Otherwise it answers with the operation's first success status and an example value of
-// its schema (the schema's example, else its default, its first enum value, else one made from
-// its type and format). Each request answered is recorded, with the route it matched.
+// operation has is a 404, a method the path has not a 405, a request that meets none of the
+// operation's security alternatives a 401 naming what each lacks, a required query parameter,
+// header, cookie or body that is missing a 400, a body of a media type the operation does not
+// take a 415. Otherwise it answers with the operation's first success status and an example value
+// of its schema (the schema's example, else its default, its first enum value, else one made from
+// its type and format). A token endpoint of a client credentials flow answers a token to a POST
+// that asks for it as RFC 6749 4.4 says, else an RFC 6749 5.2 error. Each request answered is
+// recorded, with the route it matched (`token` for a token endpoint's).
 //
 // `mock()` starts it on a free port for a test file (and starts nothing when TEST_API_BASE_URL
 // names a server to test against instead); `node mock/server.mjs [port]` runs it by hand.
 import { createServer } from 'node:http'
 import { pathToFileURL } from 'node:url'
-import routes from './routes.mjs'
+import routes, { tokens } from './routes.mjs'
 
 /** A route's path as a regular expression: each `{name}` is one segment. */
 function pattern(path) {
@@ -69,6 +72,67 @@ function hasQuery(url, name) {
   return false
 }
 
+/** The token the token endpoints give. */
+const MOCK_TOKEN = 'mock-token'
+
+/** HTTP basic's pair, decoded, when `Authorization` holds one. */
+function basicPair(header) {
+  const m = /^Basic ([A-Za-z0-9+/]+=*)$/i.exec(header ?? '')
+  const pair = m === null ? '' : Buffer.from(m[1], 'base64').toString('utf8')
+  return pair.includes(':') ? pair : null
+}
+
+/** Whether a request carries one scheme's credential, as its route names it. */
+function carries(check, url, req) {
+  const auth = req.headers.authorization ?? ''
+  switch (check.kind) {
+    case 'apiKey':
+      if (check.in === 'query') return (url.searchParams.get(check.name) ?? '') !== ''
+      if (check.in === 'cookie') return cookieNames(req.headers.cookie).has(check.name)
+      return (req.headers[check.name] ?? '') !== ''
+    case 'basic':
+      return basicPair(auth) !== null
+    case 'bearer':
+      return /^Bearer [A-Za-z0-9\-._~+/]+=*$/i.test(auth)
+    case 'http':
+      return auth.toLowerCase().startsWith(`${check.scheme.toLowerCase()} `)
+    case 'mutualTLS':
+      // The mock serves no TLS, so no certificate can be seen: one is taken as presented.
+      return true
+    default:
+      return false
+  }
+}
+
+/** What each of a route's security alternatives lacks, by scheme; null when one is met. */
+function unauthorized(route, url, req) {
+  if (route.security.length === 0) return null
+  const missing = route.security.map((alt) => alt.filter((c) => !carries(c, url, req)).map((c) => c.scheme))
+  return missing.some((m) => m.length === 0) ? null : missing
+}
+
+function tokenError(res, status, error, description) {
+  res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' })
+  res.end(JSON.stringify({ error, error_description: description }))
+}
+
+/** A token endpoint's answer to a client credentials grant. */
+function token(req, res, body, requests) {
+  if (req.method !== 'POST') return tokenError(res, 405, 'invalid_request', 'a token is requested with POST')
+  if (bare(req.headers['content-type']) !== 'application/x-www-form-urlencoded') {
+    return tokenError(res, 400, 'invalid_request', 'the body is not application/x-www-form-urlencoded')
+  }
+  const form = new URLSearchParams(body.toString('utf8'))
+  if ([...new Set(form.keys())].some((k) => form.getAll(k).length > 1)) return tokenError(res, 400, 'invalid_request', 'a parameter is given twice')
+  if (form.get('grant_type') !== 'client_credentials') return tokenError(res, 400, 'unsupported_grant_type', 'the grant is not client_credentials')
+  if (form.has('client_secret') || basicPair(req.headers.authorization) === null) {
+    return tokenError(res, 401, 'invalid_client', 'the client authenticates by HTTP basic alone')
+  }
+  requests.push({ route: 'token', method: req.method, url: req.url, headers: req.headers, body })
+  res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' })
+  res.end(JSON.stringify({ access_token: MOCK_TOKEN, token_type: 'Bearer', expires_in: 3600, scope: form.get('scope') ?? '' }))
+}
+
 /** What is wrong with a request for its route, with the status that says so; null for nothing. */
 function problem(route, url, req, body) {
   for (const name of route.query) if (!hasQuery(url, name)) return [400, `the query parameter ${name} is required`]
@@ -123,12 +187,19 @@ function handle(req, res, requests) {
   req.on('end', () => {
     const body = Buffer.concat(chunks)
     const url = new URL(req.url ?? '/', 'http://mock.invalid')
+    if (tokens.includes(url.pathname)) return token(req, res, body, requests)
     const matches = table.filter((r) => r.regex.test(url.pathname))
     if (matches.length === 0) return fail(res, 404, `no operation has the path ${url.pathname}`)
     const route = matches.find((r) => r.method === req.method)
     if (route === undefined) {
       const methods = matches.map((r) => r.method).join(', ')
       return fail(res, 405, `${url.pathname} takes ${methods}, not ${req.method}`)
+    }
+    const lacking = unauthorized(route, url, req)
+    if (lacking !== null) {
+      res.writeHead(401, { 'content-type': 'application/json' })
+      const ways = lacking.map((m) => m.join(' and ')).join(', or ')
+      return res.end(JSON.stringify({ error: `${route.route}: no alternative of its security is met: send ${ways}`, missing: lacking }))
     }
     const wrong = problem(route, url, req, body)
     if (wrong !== null) return fail(res, wrong[0], `${route.route}: ${wrong[1]}`)

@@ -1,0 +1,6 @@
+warning[config.auth.deprecated]: `Legacy` is deprecated by the description: its consumers should refrain from it
+  at flowapi-sdk.yml:11:3 (/auth/Legacy)
+warning[config.auth.refused]: `Digest` is HTTP `digest`, which answers a challenge or signs each request: the client cannot send it; give `Authorization` in a call's `headers`
+  at flowapi-sdk.yml:13:3 (/auth/Digest)
+warning[config.auth.mutual_tls]: `Cert` is a client certificate, which no request carries: give the client a `fetch` (or `fetchOptions`) that presents it, and the option `true` to say so
+  at flowapi-sdk.yml:14:3 (/auth/Cert)

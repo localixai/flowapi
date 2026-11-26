@@ -51,18 +51,18 @@ pub(super) fn write(out: &mut String, e: &Endpoint, decl: &str, base: &str) {
                 };
                 let typed = format!("NonNullable<{decl}[\"requestBody\"]>[{}]", lit(t));
                 let kind = bare(t);
-                // `multipart/form-data` is written from its parts, by the Encoding Object's
-                // defaults and the `encoding` given; another multipart type is the caller's to
-                // write (its boundary goes in the content type); a type neither JSON, text nor a
-                // form, or a range, may be given as bytes.
+                // `multipart/form-data` is written from its parts, by the Encoding Objects
+                // given by name or position; another multipart type from an array, a part per
+                // item by position, or as the caller wrote it (its boundary goes in the content
+                // type); a form by the Encoding Objects given by name; a type neither JSON, text
+                // nor a form, or a range, may be given as bytes.
                 let (value, more) = if kind == "multipart/form-data" {
-                    (format!("$Form<{typed}>"), "; encoding?: FlowapiEncoding")
+                    (format!("$Form<{typed}>"), "; encoding?: FlowapiEncoding; prefixEncoding?: readonly (FlowapiPart | undefined)[]; itemEncoding?: FlowapiPart")
                 } else if kind.starts_with("multipart/") {
-                    (String::from("string | Uint8Array"), "")
-                } else if ReadAs::of(t) == ReadAs::Json
-                    || ReadAs::of(t) == ReadAs::Text
-                    || kind == "application/x-www-form-urlencoded"
-                {
+                    (format!("$Mixed<{typed}> | string | Uint8Array"), "; prefixEncoding?: readonly (FlowapiPart | undefined)[]; itemEncoding?: FlowapiPart")
+                } else if kind == "application/x-www-form-urlencoded" {
+                    (typed, "; encoding?: FlowapiEncoding")
+                } else if ReadAs::of(t) == ReadAs::Json || ReadAs::of(t) == ReadAs::Text {
                     (typed, "")
                 } else {
                     (format!("{typed} | Uint8Array"), "")
@@ -160,18 +160,34 @@ fn expand(p: &Param) -> String {
     } else {
         lit(&percent(&p.name))
     };
+    // A delimited style is `form` in a query and `simple` elsewhere (Swagger 2.0's path and
+    // header) but for what joins an unexploded array: its delimiter, encoded in a URI.
+    let delimited = |join| match p.location {
+        Location::Query => ("", "&", true, "=", join),
+        Location::Path | Location::Header | Location::QueryString | Location::Cookie => {
+            ("", ",", false, "", join)
+        }
+    };
     let (first, sep, named, ifemp, join) = match style {
         Style::Simple => ("", ",", false, "", ","),
         Style::Label => (".", ".", false, "", ","),
         Style::Matrix => (";", ";", true, "", ","),
         Style::Form => ("", "&", true, "=", ","),
-        Style::SpaceDelimited => ("", "&", true, "=", "%20"),
-        Style::PipeDelimited => ("", "&", true, "=", "%7C"),
+        Style::SpaceDelimited | Style::PipeDelimited | Style::TabDelimited => {
+            delimited(delimiter(style, raw))
+        }
         Style::Cookie => ("", "; ", true, "=", ","),
         Style::DeepObject => return format!("$deep({}, {name}, {enc})", finite(p)),
     };
+    // Swagger 2.0: the joins of the arrays inside the value, outermost first.
+    let nested = if s.nested.is_empty() {
+        String::new()
+    } else {
+        let joins: Vec<String> = s.nested.iter().map(|&n| lit(delimiter(n, raw))).collect();
+        format!(", [{}]", joins.join(", "))
+    };
     format!(
-        "$x({value}, {name}, {}, {}, {named}, {}, {}, {}, {enc}, {}, {})",
+        "$x({value}, {name}, {}, {}, {named}, {}, {}, {}, {enc}, {}, {}{nested})",
         lit(first),
         lit(sep),
         lit(ifemp),
@@ -180,6 +196,28 @@ fn expand(p: &Param) -> String {
         lit(p.location.name()),
         lit(&p.name)
     )
+}
+
+/// What joins an unexploded array's items in a style: a comma, or a delimited style's
+/// delimiter, percent-encoded unless the value is written raw (a header).
+fn delimiter(style: Style, raw: bool) -> &'static str {
+    match (style, raw) {
+        (Style::SpaceDelimited, true) => " ",
+        (Style::SpaceDelimited, false) => "%20",
+        (Style::PipeDelimited, true) => "|",
+        (Style::PipeDelimited, false) => "%7C",
+        (Style::TabDelimited, true) => "\t",
+        (Style::TabDelimited, false) => "%09",
+        (
+            Style::Simple
+            | Style::Label
+            | Style::Matrix
+            | Style::Form
+            | Style::DeepObject
+            | Style::Cookie,
+            _,
+        ) => ",",
+    }
 }
 
 /// One parameter's statement: added to the query, the cookie header or the headers. A path

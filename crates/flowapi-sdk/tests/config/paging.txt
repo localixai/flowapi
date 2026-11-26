@@ -1,9 +1,10 @@
-warning[config.generator.version]: the config pins flowapi 9.9.9, and this is flowapi 0.2.0
+warning[config.generator.version]: the config pins flowapi 9.9.9, and this is flowapi 0.3.0
   at paging.yml:9:23 (/generator/flowapi)
 error[config.env.default]: no environment is named `prod`
   at paging.yml:14:12 (/environments/default)
 error[config.auth.unknown]: `ApiKey` names no security scheme of the description
   at paging.yml:16:3 (/auth/ApiKey)
+  hint: give `type` (and the members of its kind) to declare a scheme the description lacks
 error[config.coverage]: `deletePet` is in no resource and not in `skip`
   at paging.yml:34:3 (/resources)
   hint: name it under a resource's `methods`, or add it to `skip` with a reason
@@ -28,6 +29,8 @@ error[config.pagination.missing]: `pets.list` (GET /pets) pages by `wrong`: `req
 error[config.pagination.mismatch]: `pets.list` (GET /pets) pages by `wrong`: `response.items`: `has_more` is of type boolean; `items` needs array
   at paging.yml:36:7 (/resources/pets/methods/list)
 error[config.pagination.missing]: `pets.list` (GET /pets) pages by `wrong`: `response.next`: the response has no `next_token` (it has `data`, `next_page_token`, `has_more`)
+  at paging.yml:36:7 (/resources/pets/methods/list)
+warning[config.auth.unlisted]: `pets.list` needs `ApiKeyAuth`, which `auth` does not list: the client sends no credential for it
   at paging.yml:36:7 (/resources/pets/methods/list)
 error[config.stream.media]: `GET /pets` answers no 2xx response as a stream (`text/event-stream`, JSON lines)
   at paging.yml:36:56 (/resources/pets/methods/list/stream)

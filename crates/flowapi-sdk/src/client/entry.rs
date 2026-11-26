@@ -7,7 +7,8 @@
 
 use super::camel;
 use super::resources::{class_of, member_of, path_of};
-use crate::config::model::Config;
+use crate::config::auth::{has_token_flow, is_basic};
+use crate::config::model::{Config, Credential};
 use crate::model::{Auth, Service};
 use crate::words::{self, pascal};
 use flowapi_ts::string_literal as lit;
@@ -26,6 +27,11 @@ fn names(c: &Config) -> (String, String) {
         .map_or_else(|| String::from("Client"), |n| n.name.clone());
     let options = format!("{}Options", pascal(&words::words(&client)));
     (client, options)
+}
+
+/// The environment variable the client reads its log level from: `SHOP_LOG` for `Shop`.
+pub(crate) fn log_env(client: &str) -> String {
+    format!("{}_LOG", words::upper(&words::words(client)))
 }
 
 /// `src/client.ts`.
@@ -71,30 +77,15 @@ pub(crate) fn client(c: &Config, service: &Service) -> String {
     if let Some(v) = &s.base_url_env {
         let _ = writeln!(out, "  baseURLEnv: {},", lit(v));
     }
-    let log = format!("{}_LOG", words::upper(&words::words(&client)));
-    let _ = writeln!(out, "  logEnv: {},", lit(&log));
-    let auth: Vec<String> = c
-        .auth
-        .iter()
-        .map(|a| {
-            let option = camel(&words::words(&a.name));
-            let env = s
-                .auth_env
-                .iter()
-                .find(|(n, _)| *n == a.name)
-                .map(|(_, v)| format!(", env: {}", lit(v)));
-            format!(
-                "{}: {{ option: {}{} }}",
-                lit(&a.name),
-                lit(&option),
-                env.unwrap_or_default()
-            )
-        })
-        .collect();
+    let _ = writeln!(out, "  logEnv: {},", lit(&log_env(&client)));
+    let auth: Vec<String> = c.auth.iter().map(setting).collect();
     let _ = writeln!(out, "  auth: {{ {} }},", auth.join(", "));
     let _ = writeln!(out, "  timeout: {},", ms(s.timeout, 60.0));
-    let _ = writeln!(out, "  maxRetries: {},", s.retries.unwrap_or(2));
+    let _ = writeln!(out, "  maxRetries: {},", s.retries.unwrap_or(1));
     let _ = writeln!(out, "  maxRetryDelay: {},", ms(s.max_retry_delay, 60.0));
+    if let Some(h) = &s.idempotency_key {
+        let _ = writeln!(out, "  idempotencyHeader: {},", lit(h));
+    }
     out.push_str("  servers: $api.flowapiServers,\n  schemes: $api.flowapiSecuritySchemes,\n  readsBytes: $api.flowapiReadsBytes,\n};\n");
     options_type(c, service, &client, &options, &mut out);
     class(c, &client, &options, &top, &mut out);
@@ -119,41 +110,146 @@ fn options_type(c: &Config, service: &Service, client: &str, options: &str, out:
         "export type {options} = $core.ClientOptions<{env_type}> & {{"
     );
     for a in &c.auth {
-        let scheme = service.schemes.iter().find(|x| x.name == a.name);
-        let basic = scheme
-            .is_some_and(|x| matches!(&x.auth, Auth::Http { scheme, .. } if scheme == "basic"));
-        let env = s
-            .auth_env
-            .iter()
-            .find(|(n, _)| *n == a.name)
-            .map(|(_, v)| format!(", else `{v}`"))
-            .unwrap_or_default();
+        let Some(scheme) = service.schemes.iter().find(|x| x.name == a.name.name) else {
+            continue;
+        };
+        let (kind, what) = match &scheme.auth {
+            auth if is_basic(auth) => (
+                "$core.BasicCredential",
+                "an HTTP basic user-id and password",
+            ),
+            auth if has_token_flow(auth) => (
+                "$core.Credential | $core.ClientCredentials",
+                "a token, or the client's id and secret to request one with",
+            ),
+            Auth::MutualTls => (
+                "true",
+                "`true` when `fetch` presents the client certificate",
+            ),
+            Auth::ApiKey { .. } => ("$core.Credential", "the key"),
+            Auth::Http { .. } | Auth::OAuth2 { .. } | Auth::OpenIdConnect { .. } => {
+                ("$core.Credential", "the token")
+            }
+        };
+        let vars: Vec<String> = a.env.iter().map(|(_, v)| format!("`{}`", v.name)).collect();
+        let env = if vars.is_empty() {
+            String::new()
+        } else {
+            format!(", else {}", vars.join(", "))
+        };
+        let deprecated = if scheme.deprecated {
+            " @deprecated The description deprecates this scheme."
+        } else {
+            ""
+        };
         let _ = writeln!(
             out,
-            "  /** The credential of the security scheme `{}`{env}; `null` reads no variable. */",
-            super::doc(&a.name)
+            "  /** The credential of the security scheme `{}`: {what}{env}; `null` reads no variable.{deprecated} */",
+            super::doc(&a.name.name)
         );
-        let kind = if basic {
-            "BasicCredential"
-        } else {
-            "Credential"
-        };
-        let option = camel(&words::words(&a.name));
-        let key = if option.starts_with(|c: char| c.is_ascii_alphabetic()) {
-            option
-        } else {
-            lit(&option)
-        };
-        let _ = writeln!(out, "  {key}?: $core.{kind} | null | undefined;");
+        let _ = writeln!(out, "  {}?: {kind} | null | undefined;", key(&a.name.name));
+    }
+    let variables = server_variables(service);
+    if !variables.is_empty() {
+        out.push_str("  /** Values of the servers' variables, over their defaults. */\n");
+        let members: Vec<String> = variables
+            .iter()
+            .map(|(name, _, values)| {
+                let ty = if values.is_empty() {
+                    String::from("string")
+                } else {
+                    values
+                        .iter()
+                        .map(|v| lit(v))
+                        .collect::<Vec<_>>()
+                        .join(" | ")
+                };
+                format!("{}?: {ty} | undefined", lit(name))
+            })
+            .collect();
+        let _ = writeln!(
+            out,
+            "  serverVariables?: {{ {} }} | undefined;",
+            members.join("; ")
+        );
     }
     out.push_str("};\n");
 }
 
+/// Every variable of the description's servers and the operations' own, by name, with the first
+/// server's default of it and the values it may take: those of its `enum` where each server that
+/// has it gives one, else none (any).
+pub(crate) fn server_variables(service: &Service) -> Vec<(String, String, Vec<String>)> {
+    let mut out: Vec<(String, String, Option<Vec<String>>)> = Vec::new();
+    let servers = service
+        .servers
+        .iter()
+        .chain(service.operations.iter().flat_map(|a| a.servers.iter()));
+    for v in servers.flat_map(|s| s.variables.iter()) {
+        let values = (!v.values.is_empty()).then(|| v.values.clone());
+        match out.iter_mut().find(|(n, ..)| *n == v.name) {
+            None => out.push((v.name.clone(), v.default.clone(), values)),
+            Some((_, _, seen)) => {
+                *seen = match (seen.take(), values) {
+                    (Some(mut a), Some(b)) => {
+                        for x in b {
+                            if !a.contains(&x) {
+                                a.push(x);
+                            }
+                        }
+                        Some(a)
+                    }
+                    (None, _) | (_, None) => None,
+                }
+            }
+        }
+    }
+    out.into_iter()
+        .map(|(n, d, v)| (n, d, v.unwrap_or_default()))
+        .collect()
+}
+
+/// A credential's option as a member's key: its scheme's name in camel case, quoted where it
+/// does not open with a letter.
+fn key(scheme: &str) -> String {
+    let option = camel(&words::words(scheme));
+    if option.starts_with(|c: char| c.is_ascii_alphabetic()) {
+        option
+    } else {
+        lit(&option)
+    }
+}
+
+/// A credential's setting: its option and the variables it is read from, and the scopes its
+/// tokens are requested with.
+fn setting(a: &Credential) -> String {
+    let mut fields = format!("option: {}", lit(&camel(&words::words(&a.name.name))));
+    for (member, var) in &a.env {
+        let name = match *member {
+            "username_env_var" => "usernameEnv",
+            "password_env_var" => "passwordEnv",
+            "client_id_env_var" => "clientIdEnv",
+            "client_secret_env_var" => "clientSecretEnv",
+            _ => "env",
+        };
+        let _ = write!(fields, ", {name}: {}", lit(&var.name));
+    }
+    if let Some((scopes, _)) = &a.scopes {
+        let scopes: Vec<String> = scopes.iter().map(|s| lit(s)).collect();
+        let _ = write!(fields, ", scopes: [{}]", scopes.join(", "));
+    }
+    format!("{}: {{ {fields} }}", lit(&a.name.name))
+}
+
 /// The client class.
 fn class(c: &Config, client: &str, options: &str, top: &[usize], out: &mut String) {
+    let example = top
+        .first()
+        .map(|&i| format!(" (`client.{}`)", member_of(c, i)))
+        .unwrap_or_default();
     let _ = writeln!(
         out,
-        "\n/** The API's client: a member for each resource of the config. */"
+        "\n/** The API's client: a member for each resource{example}, and `request` for a call no\n * operation describes. */"
     );
     let _ = writeln!(out, "export class {client} {{");
     out.push_str("  readonly #core: $core.Core;\n");
@@ -198,7 +294,8 @@ fn class(c: &Config, client: &str, options: &str, top: &[usize], out: &mut Strin
     ));
 }
 
-/// `src/index.ts`: the client, its options, the runtime's errors and types, and the API module.
+/// `src/index.ts`: the client, its options, the runtime's errors and types (those `api.md` writes
+/// a method's signature with among them: `Input`, `Data`, `ItemOf`), and the API module.
 pub(crate) fn index(c: &Config) -> String {
     let (client, options) = names(c);
     let mut out = String::from(
@@ -210,12 +307,13 @@ pub(crate) fn index(c: &Config) -> String {
     );
     out.push_str(concat!(
         "export {\n  APIConnectionError,\n  APIConnectionTimeoutError,\n  APIError,\n  APIUserAbortError,\n",
-        "  ApiCall,\n  AuthenticationError,\n  BadRequestError,\n  type BasicCredential,\n  ConflictError,\n",
-        "  type Credential,\n  CrossOriginRedirectError,\n  type Fetch,\n  type FetchResponse,\n",
-        "  type HeadersInput,\n  InternalServerError,\n  type LogLevel,\n  type Logger,\n  NotFoundError,\n",
-        "  Page,\n  PagePromise,\n  PermissionDeniedError,\n  type QueryInput,\n  RateLimitError,\n",
-        "  type RequestOptions,\n  RequestTimeoutError,\n  SdkError,\n  type ServerSentEvent,\n  Stream,\n",
-        "  UnprocessableEntityError,\n} from \"./core/index.js\";\nexport * from \"./api.js\";\n",
+        "  ApiCall,\n  AuthenticationError,\n  BadRequestError,\n  type BasicCredential,\n  type BasicPair,\n",
+        "  type ClientCredentials,\n  ConflictError,\n  type Credential,\n  CredentialError,\n",
+        "  CrossOriginRedirectError,\n  type Data,\n  type Fetch,\n  type FetchResponse,\n",
+        "  type HeadersInput,\n  type Input,\n  InsecureCredentialError,\n  InternalServerError,\n  type ItemOf,\n  type LogLevel,\n",
+        "  type Logger,\n  NotFoundError,\n  type Outcome,\n  Page,\n  PagePromise,\n  PermissionDeniedError,\n",
+        "  type QueryInput,\n  RateLimitError,\n  type RawRequest,\n  type RequestOptions,\n  RequestTimeoutError,\n  SdkError,\n  type ServerSentEvent,\n  Stream,\n",
+        "  TokenError,\n  UnprocessableEntityError,\n} from \"./core/index.js\";\nexport * from \"./api.js\";\n",
     ));
     out
 }

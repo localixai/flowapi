@@ -28,7 +28,8 @@ pub trait Response {
 }
 
 /// How a style writes a value: RFC 6570's operator (`first`, `sep`, `named`, `ifemp`; 3.2,
-/// Appendix C), `explode`, what joins an unexploded list (`,`, `%20`, `%7C`) and the encoder.
+/// Appendix C), `explode`, what joins an unexploded list (`,`, `%20`, `%7C`, `%09`) and the
+/// encoder; `nest`, Swagger 2.0's, what joins the lists inside a list, outermost first.
 #[derive(Clone, Copy, Debug)]
 pub struct Style {
     pub first: &'static str,
@@ -39,6 +40,7 @@ pub struct Style {
     pub join: &'static str,
     pub enc: Enc,
     pub shape: Shape,
+    pub nest: &'static [&'static str],
 }
 
 /// The styles, by what they write.
@@ -50,18 +52,32 @@ pub enum Shape {
     Form,
     SpaceDelimited,
     PipeDelimited,
+    TabDelimited,
     Cookie,
     Deep,
 }
 
 /// What a value's text is written as: RFC 3986 percent-encoding of all but the unreserved
 /// characters; that with the reserved ones and percent-encoded triples kept (`allowReserved`);
-/// or as it is (headers and `style: cookie`, 3.2 Appendix D).
+/// as it is (headers and `style: cookie`, 3.2 Appendix D); or by WHATWG's
+/// `application/x-www-form-urlencoded` rules, all but the letters, digits and `*-._` encoded and
+/// a space as `+` (a form's content, 3.2 Appendix E).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Enc {
     Plain,
     Reserved,
     Raw,
+    Form,
+}
+
+/// How a form member is written where its Encoding Object says (the description's, printed with
+/// each operation): by a style, as a query parameter of that style named by its key (any of
+/// `style`, `explode` and `allowReserved` written; 3.2, "Encoding Usage and Restrictions"), or as
+/// its JSON (a JSON `contentType` alone). A member not listed is written by the form's defaults.
+#[derive(Clone, Copy, Debug)]
+pub enum Part {
+    Style(Style),
+    Json,
 }
 
 impl Style {
@@ -73,6 +89,7 @@ impl Style {
             Shape::Form | Shape::Deep => ("", "&", true, true, ","),
             Shape::SpaceDelimited => ("", "&", true, true, "%20"),
             Shape::PipeDelimited => ("", "&", true, true, "%7C"),
+            Shape::TabDelimited => ("", "&", true, true, "%09"),
             Shape::Cookie => ("", "; ", true, true, ","),
         };
         Self {
@@ -84,7 +101,21 @@ impl Style {
             join,
             enc,
             shape,
+            nest: &[],
         }
+    }
+
+    /// The style with an unexploded list joined by `join` (Swagger 2.0's delimited formats in
+    /// a path or a header).
+    pub const fn joined(mut self, join: &'static str) -> Self {
+        self.join = join;
+        self
+    }
+
+    /// The style with the lists inside a list joined by `nest`, outermost first.
+    pub const fn nested(mut self, nest: &'static [&'static str]) -> Self {
+        self.nest = nest;
+        self
     }
 }
 
@@ -133,15 +164,24 @@ pub fn encode(out: &mut String, t: &str, enc: Enc) {
             && b == b'%'
             && bytes.get(i + 1).is_some_and(u8::is_ascii_hexdigit)
             && bytes.get(i + 2).is_some_and(u8::is_ascii_hexdigit);
-        if unreserved(b) || (enc == Enc::Reserved && reserved(b)) || triple {
+        let kept = if enc == Enc::Form {
+            b.is_ascii_alphanumeric() || matches!(b, b'*' | b'-' | b'.' | b'_')
+        } else {
+            unreserved(b) || (enc == Enc::Reserved && reserved(b)) || triple
+        };
+        if kept {
             i += if triple { 3 } else { 1 };
             continue;
         }
         // `run..i` is ASCII up to a character's start: never cut inside one.
         out.push_str(t.get(run..i).unwrap_or(""));
-        out.push('%');
-        out.push(char::from(HEX[usize::from(b >> 4)]));
-        out.push(char::from(HEX[usize::from(b & 15)]));
+        if enc == Enc::Form && b == b' ' {
+            out.push('+');
+        } else {
+            out.push('%');
+            out.push(char::from(HEX[usize::from(b >> 4)]));
+            out.push(char::from(HEX[usize::from(b & 15)]));
+        }
         i += 1;
         run = i;
     }
@@ -231,11 +271,18 @@ fn after_dot(p: &str) -> Option<&str> {
 
 /// A value as `application/x-www-form-urlencoded`, after `sep` when `out` holds something:
 /// each member a pair, a list's items pairs of the same key, an object member as JSON, `null`
-/// an empty value (the Encoding Object's defaults). NaN or an infinity is refused.
-pub fn form<T: Serialize + ?Sized>(out: &mut String, sep: &str, v: &T) -> Result<(), Reason> {
+/// an empty value (the Encoding Object's defaults), encoded by WHATWG's rules; a member `parts`
+/// names by its [`Part`]. NaN or an infinity is refused.
+pub fn form<T: Serialize + ?Sized>(
+    out: &mut String,
+    sep: &str,
+    v: &T,
+    parts: &[(&str, Part)],
+) -> Result<(), Reason> {
     let lead = if out.is_empty() { "" } else { sep };
-    let s = Style::new(Shape::Form, true, Enc::Plain);
+    let s = Style::new(Shape::Form, true, Enc::Form);
     let mut w = write::W::new(out, lead, "", s);
+    w.parts = parts;
     match v.serialize(expand::Ser {
         w: &mut w,
         at: write::At::Form,
@@ -245,10 +292,10 @@ pub fn form<T: Serialize + ?Sized>(out: &mut String, sep: &str, v: &T) -> Result
     }
 }
 
-/// A form body's bytes.
-pub fn form_body<T: Serialize + ?Sized>(v: &T) -> Result<Vec<u8>, Reason> {
+/// A form body's bytes, its members by `parts` where named.
+pub fn form_body<T: Serialize + ?Sized>(v: &T, parts: &[(&str, Part)]) -> Result<Vec<u8>, Reason> {
     let mut out = String::new();
-    form(&mut out, "&", v)?;
+    form(&mut out, "&", v, parts)?;
     Ok(out.into_bytes())
 }
 

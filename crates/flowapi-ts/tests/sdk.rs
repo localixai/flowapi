@@ -15,7 +15,8 @@
 //! multipart.json: a `multipart/form-data` body as its parts (`$Form`: a string member may be a
 //! file, an array's items one part each) with its `encoding` given, 3.2's array of objects,
 //! another multipart type and a binary type or a range given as bytes.
-//! swagger20.json: `collectionFormat` as 3.x styles, `tsv` warned about. reserved.json: schemas
+//! swagger20.json: `collectionFormat` as 3.x styles in a path, a query and a header, nested
+//! arrays joined by their Items Objects' own, `multi` in a header warned about. reserved.json: schemas
 //! named as the global types the output names (`Record`, `Object`, and the SDK's `NonNullable`,
 //! `ReturnType`, `RegExpExecArray`, `Uint8Array`, `ArrayBuffer`, `Promise`, and its exports
 //! `FlowapiRequestError`, `FlowapiFile`, `FlowapiEncoding`) are declared under other names, with a

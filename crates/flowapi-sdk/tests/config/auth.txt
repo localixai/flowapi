@@ -1,0 +1,43 @@
+error[config.auth.declared]: `ApiKeyAuth` is a security scheme of the description: the config may give it options (its environment variables, `scopes`), not say again what it is
+  at auth.yml:11:23 (/auth/ApiKeyAuth/type)
+error[config.auth.unknown]: `bearr` names no security scheme of the description
+  at auth.yml:12:3 (/auth/bearr)
+  hint: did you mean `bearer`?
+error[config.auth.unknown]: `Nothing` names no security scheme of the description
+  at auth.yml:13:3 (/auth/Nothing)
+  hint: give `type` (and the members of its kind) to declare a scheme the description lacks
+error[config.auth.field]: `NoName`, of type `apiKey`, needs `name`
+  at auth.yml:14:19 (/auth/NoName/type)
+error[config.auth.field]: `in` is no member of a scheme of type `http`
+  at auth.yml:15:44 (/auth/Extra/in)
+error[config.auth.field]: `token_url` is no member of a scheme of type `http`
+  at auth.yml:15:63 (/auth/Extra/token_url)
+error[config.auth.type]: `/auth/Wrong/type`: `openIdConnect` is not one of `apiKey`, `http`, `oauth2`, `mutualTLS`
+  at auth.yml:16:12 (/auth/Wrong/type)
+error[config.auth.in]: `/auth/BadIn/in`: `body` is not one of `header`, `query`, `cookie`
+  at auth.yml:17:26 (/auth/BadIn/in)
+error[config.auth.option]: `username_env_var` is given without `password_env_var`
+  at auth.yml:18:56 (/auth/Half/username_env_var)
+error[config.auth.option]: `password_env_var` is for HTTP basic only
+  at auth.yml:19:61 (/auth/NotBasic/password_env_var)
+error[config.auth.option]: `scopes` is for OAuth 2.0 with a client credentials flow only: other tokens are the caller's
+  at auth.yml:19:88 (/auth/NotBasic/scopes)
+error[config.auth.option]: `client_id_env_var` is for OAuth 2.0 with a client credentials flow only
+  at auth.yml:20:46 (/auth/NoFlow/client_id_env_var)
+error[config.auth.option]: `client_secret_env_var` is for OAuth 2.0 with a client credentials flow only
+  at auth.yml:20:82 (/auth/NoFlow/client_secret_env_var)
+warning[config.auth.refused]: `Digest` is HTTP `digest`, which answers a challenge or signs each request: the client cannot send it; give `Authorization` in a call's `headers`
+  at auth.yml:21:3 (/auth/Digest)
+warning[config.auth.mutual_tls]: `Cert` is a client certificate, which no request carries: give the client a `fetch` (or `fetchOptions`) that presents it, and the option `true` to say so
+  at auth.yml:22:3 (/auth/Cert)
+error[config.auth.option]: a client certificate is read from no environment variable
+  at auth.yml:22:37 (/auth/Cert/env_var)
+warning[config.auth.env]: `Plain` names no environment variable: the client sends it only when given its option
+  at auth.yml:23:3 (/auth/Plain)
+error[config.security.unknown]: `Nowhere` names no security scheme of the description or of `auth`
+  at auth.yml:26:5 (/security/1/Nowhere)
+warning[config.auth.unlisted]: `pets.get` needs `bearer`, which `auth` does not list: the client sends no credential for it
+  at auth.yml:32:7 (/resources/pets/methods/get)
+error[config.security.unknown]: `Bearer` names no security scheme of the description or of `auth`
+  at auth.yml:34:45 (/resources/pets/methods/delete/security/0/Bearer)
+  hint: did you mean `bearer`?

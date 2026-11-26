@@ -22,10 +22,13 @@ const GENERATOR = { raw: 580_000, gzip: 224_000 }
  * checker and its draft are most of the difference, with a copy of the core, the TypeScript target
  * and the YAML reader), then the `generate` command for whole SDK repositories on 2026-11-26
  * (1,177 KB, 424 KB: the repository's texts it prints, the client's runtime, scripts, mock server
- * and licenses held as text, and the plan of its writes), and about 5% room. It is a module of
- * its own so that a user of the types alone (the API's `generate`, the command without a
- * subcommand) never loads it: only the SDK commands do. */
-const SDK = { raw: 1_236_000, gzip: 445_000 }
+ * and licenses held as text, and the plan of its writes), then the SDK layer made to the
+ * requirements ledger on 2026-11-26 (1,370 KB, 490 KB: every security scheme kind, client
+ * credentials, servers and their variables, the Encoding Object, the RFC 9110 retries and
+ * redirects, and the README's texts; 32 KB of it is the client runtime every SDK carries), and
+ * about 5% room. It is a module of its own so that a user of the types alone (the API's
+ * `generate`, the command without a subcommand) never loads it: only the SDK commands do. */
+const SDK = { raw: 1_439_000, gzip: 514_000 }
 
 const modules = [
   ['flowapi.wasm', GENERATOR],

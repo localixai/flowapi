@@ -106,36 +106,18 @@ impl<'t> Builder<'_, 't> {
 fn applied(tree: &crate::json::Tree<'_>, r: &Resource, stack: &mut Vec<(Resource, bool)>) {
     for key in ["allOf", "anyOf", "oneOf"] {
         for &n in tree.get(r.node, key).map_or(&[][..], |a| tree.items(a)) {
-            stack.push((
-                Resource {
-                    node: n,
-                    ..r.clone()
-                },
-                false,
-            ));
+            stack.push((r.at(n), false));
         }
     }
     for key in ["if", "then", "else"] {
         if let Some(n) = tree.get(r.node, key) {
-            stack.push((
-                Resource {
-                    node: n,
-                    ..r.clone()
-                },
-                false,
-            ));
+            stack.push((r.at(n), false));
         }
     }
     for m in tree
         .get(r.node, "dependentSchemas")
         .map_or(&[][..], |n| tree.members(n))
     {
-        stack.push((
-            Resource {
-                node: m.value,
-                ..r.clone()
-            },
-            false,
-        ));
+        stack.push((r.at(m.value), false));
     }
 }

@@ -70,6 +70,7 @@ export function tests(built) {
         assert.equal(fetch.calls.length, 7)
       })
     }],
+    // req: rfc9110.15.5.9.may-client-outstanding-request-transit-repeat-request — a 408 retried
     ['R5: which statuses are retried; x-should-retry decides alone', async () => {
       const cases = [[408, {}, 2], [409, {}, 2], [429, {}, 2], [500, {}, 2], [503, {}, 2], [400, {}, 1], [404, {}, 1], [503, { 'x-should-retry': 'false' }, 1], [400, { 'x-should-retry': 'true' }, 2]]
       for (const [status, headers, calls] of cases) {

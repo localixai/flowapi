@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- The plugin, on flowapi 0.2.0, as a Claude Code plugin and an Agent Plugins 1.1.0 core package
+## 0.3.0 — 2026-11-26
+
+- The plugin, on flowapi 0.3.0, as a Claude Code plugin and an Agent Plugins 1.1.0 core package
   in one folder, installed from flowapi's repository (`flowapi@flowapi`).
 - The `flowapi` skill: how to use flowapi, with flowapi's own docs as its references, copied by
   `scripts/docs.mjs` and held to their sources by a test.

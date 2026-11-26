@@ -171,8 +171,14 @@ pub(crate) fn cases(
                     .collect()
             },
         );
-        let has_params = c["parameters"].as_array().is_some_and(|p| !p.is_empty());
-        let body = c.get("requestBody");
+        // Swagger 2.0's `formData` parameters are a form body, given as one.
+        let params = c["parameters"].as_array().map_or(&[][..], Vec::as_slice);
+        let has_params = params
+            .iter()
+            .any(|p| p["in"] != "formData" && p["in"] != "body");
+        let lifted = json!({ "content": { FORM: {} } });
+        let form_data = params.iter().any(|p| p["in"] == "formData");
+        let body = c.get("requestBody").or(form_data.then_some(&lifted));
         for version in &versions {
             let mut op = Map::new();
             for k in ["parameters", "requestBody", "responses"] {
@@ -183,7 +189,7 @@ pub(crate) fn cases(
             let id = format!("{prefix}{i}");
             let path = format!("/{id}{}", c["path"].as_str().unwrap_or(""));
             let method = c["method"].as_str().unwrap_or("get");
-            let at = docs.add(version, &id, &path, method, Value::Object(op));
+            let at = docs.add(version, &id, &path, method, Value::Object(op.clone()));
             let name = c["name"].as_str().unwrap_or("");
             for (j, call) in c["calls"].as_array().into_iter().flatten().enumerate() {
                 let what = format!("{name} ({version})");
@@ -212,6 +218,14 @@ pub(crate) fn cases(
                     continue;
                 }
                 let (data, content_type) = input(&call["input"], has_params, body);
+                let (at, id) = match encoded(&op, &call["input"]["body"]) {
+                    Some(op) => {
+                        let id = format!("{id}e{j}");
+                        let path = format!("/{id}{}", c["path"].as_str().unwrap_or(""));
+                        (docs.add(version, &id, &path, method, op), id)
+                    }
+                    None => (at, id.clone()),
+                };
                 calls.push(Call {
                     version: version.clone(),
                     op: at,
@@ -220,7 +234,7 @@ pub(crate) fn cases(
                     data,
                     what,
                     check: Check::Request {
-                        id: id.clone(),
+                        id,
                         want,
                         content_type,
                     },
@@ -229,6 +243,27 @@ pub(crate) fn cases(
         }
     }
     merged
+}
+
+/// `application/x-www-form-urlencoded`.
+const FORM: &str = "application/x-www-form-urlencoded";
+
+/// The operation with its form body's Encoding Objects as a call gives them, where they differ
+/// from the description's: the TypeScript SDK takes them with the body (its client passes the
+/// description's), the Rust SDK prints them from the description, so the call gets an operation
+/// of its own, `c<i>e<j>`.
+fn encoded(op: &Map<String, Value>, body: &Value) -> Option<Value> {
+    let written = op.get("requestBody")?["content"].get(FORM)?;
+    if body["contentType"] != FORM || written.get("encoding") == body.get("encoding") {
+        return None;
+    }
+    let mut op = Value::Object(op.clone());
+    let media = op["requestBody"]["content"][FORM].as_object_mut()?;
+    match body.get("encoding") {
+        Some(e) => media.insert("encoding".into(), e.clone()),
+        None => media.remove("encoding"),
+    };
+    Some(op)
 }
 
 /// A case's input as the Rust SDK takes it: `parameters` by location, and `body` an enum

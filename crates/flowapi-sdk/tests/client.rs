@@ -9,6 +9,9 @@
 //! encoding, a download as bytes, two alternatives of security and an operation that needs none.
 //! auth: each kind of credential, alternatives and schemes needed together, an operation's own
 //! servers, a server variable, JSON lines, reserved words as names, resources three levels deep.
+//! hosts (3.2): servers with variables and an `enum`, relative ones, a Path Item's and an
+//! operation's own, every idempotent method but TRACE and two that are not, content with DELETE
+//! and OPTIONS, an idempotency key. edge (3.1): variables and relative servers, the default retries.
 //!
 //! `generate`, ignored, writes the files for any description and config: `FLOWAPI_CLIENT_SPEC`,
 //! `FLOWAPI_CLIENT_CONFIG` and `FLOWAPI_CLIENT_OUT` name them (`-- --ignored generate`).

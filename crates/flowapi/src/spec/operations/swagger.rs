@@ -4,12 +4,14 @@
 //! operation's own lists win over the description's; with neither, `application/json`.
 
 use super::reader::Reader;
-use super::{Body, Field, Media, Payload};
+use super::{Body, Field, Location, Media, Payload};
 use crate::diag::Diagnostics;
 use crate::id::{DocId, NodeId};
 
-/// The media types a form is sent as (2.0, "Parameter Object", `formData`).
-const FORM_TYPES: [&str; 2] = ["application/x-www-form-urlencoded", "multipart/form-data"];
+/// The media types a form is sent as (2.0, "Parameter Object", `formData`): with no file, then
+/// with one.
+pub(super) const FORM_TYPES: [&str; 2] =
+    ["application/x-www-form-urlencoded", "multipart/form-data"];
 
 /// A `body` or `formData` parameter: whether it is the body, its name, and where it is.
 type Part = (bool, String, (DocId, NodeId));
@@ -47,6 +49,7 @@ impl Reader<'_, '_> {
             .map(|media_type| Media {
                 media_type: media_type.clone(),
                 payload: Payload::Schema(Some(self.schema(doc, schema))),
+                encoding: Vec::new(),
             })
             .collect()
     }
@@ -109,6 +112,7 @@ impl Reader<'_, '_> {
                 .map(|media_type| Media {
                     media_type,
                     payload: Payload::Schema(schema.map(|s| self.schema(*bd, s))),
+                    encoding: Vec::new(),
                 })
                 .collect();
             return Some(Body {
@@ -127,12 +131,19 @@ impl Reader<'_, '_> {
                 schema: Some(self.schema(*fd, *f)),
             })
             .collect();
+        // An array field is written by its `collectionFormat`, as a query parameter would be.
+        let mut encoding = Vec::new();
+        for (_, name, at) in parts.iter().filter(|(_, _, at)| self.typed(*at, "array")) {
+            let s = self.collection_format(*at, Location::Query, diags);
+            encoding.push((name.clone(), s));
+        }
         let content = self
             .form_types(doc, op, &parts)
             .into_iter()
             .map(|media_type| Media {
                 media_type,
                 payload: Payload::Form(fields.clone()),
+                encoding: encoding.clone(),
             })
             .collect();
         Some(Body {
@@ -155,17 +166,16 @@ impl Reader<'_, '_> {
             .filter(form)
             .collect();
         if types.is_empty() {
-            let file = parts.iter().any(|(_, _, (fd, f))| {
-                self.tree(*fd)
-                    .and_then(|t| t.get(*f, "type").and_then(|n| t.as_str(n)))
-                    .is_some_and(|ty| ty == "file")
-            });
-            types.push(String::from(if file {
-                FORM_TYPES[1]
-            } else {
-                FORM_TYPES[0]
-            }));
+            let file = parts.iter().any(|(_, _, at)| self.typed(*at, "file"));
+            types.push(String::from(FORM_TYPES[usize::from(file)]));
         }
         types
+    }
+
+    /// Whether the parameter at `(doc, node)` has `type` `ty`.
+    fn typed(&self, (doc, node): (DocId, NodeId), ty: &str) -> bool {
+        self.tree(doc)
+            .and_then(|t| t.get(node, "type").and_then(|n| t.as_str(n)))
+            .is_some_and(|t| t == ty)
     }
 }

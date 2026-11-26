@@ -12,8 +12,10 @@ export const flowapiServers = [
 /**
  * The security schemes, by name: `apiKey` a key sent `in` a header, a query parameter or a
  * cookie under `name`; `http` as `Authorization: <scheme> <credentials>`; `oauth2` and
- * `openIdConnect` a token the caller obtained, sent as a bearer token. `mutualTLS` is a client
- * certificate, which no request carries: a client cannot send it, only its transport can.
+ * `openIdConnect` a token sent as a bearer token, which the caller obtained or, for OAuth 2.0's
+ * `clientCredentials` flow, the client requests at its `tokenUrl` (relative to the server's URL
+ * where it is relative) for the scopes it needs. `mutualTLS` is a client certificate, which no
+ * request carries: a client cannot send it, only its transport can.
  */
 export const flowapiSecuritySchemes = {
   "headerKey": { type: "apiKey", in: "header", name: "X-API-Key", description: "your key" },
@@ -21,7 +23,7 @@ export const flowapiSecuritySchemes = {
   "cookieKey": { type: "apiKey", in: "cookie", name: "session" },
   "bearer": { type: "http", scheme: "bearer", bearerFormat: "JWT" },
   "basic": { type: "http", scheme: "basic" },
-  "oauth": { type: "oauth2", flows: ["authorizationCode", "clientCredentials"] },
+  "oauth": { type: "oauth2", flows: ["authorizationCode", "clientCredentials"], clientCredentials: { tokenUrl: "https://example.com/token", scopes: [] } },
   "oidc": { type: "openIdConnect", openIdConnectUrl: "https://example.com/.well-known/openid-configuration" },
   "cert": { type: "mutualTLS" },
   "alias": { type: "http", scheme: "bearer", bearerFormat: "JWT" },
@@ -32,9 +34,10 @@ export const flowapiSecuritySchemes = {
  * instead of `flowapiServers`, where it has its own; its security, alternatives of which any one
  * is enough, each naming the schemes it needs with their scopes (`[]`: none); how each response's
  * body is read, by media type (`json`, `text`, `bytes`, or `sent`: by the `Content-Type` the
- * answer sends, as `flowapiReadsBytes` says); by `multipart/form-data` media type, the type
- * each part is sent as (`encoding`, the description's Encoding Objects: give it as
- * `body.encoding`); and its `<name>Request` and `<name>Response`.
+ * answer sends, as `flowapiReadsBytes` says); by form and `multipart` media type, how the body's
+ * values are written (`encoding`: the description's Encoding Objects by name and by position,
+ * given as the body's `encoding`, `prefixEncoding` and `itemEncoding`); and its `<name>Request`
+ * and `<name>Response`.
  */
 export const flowapiOperations = {
   inherits: {

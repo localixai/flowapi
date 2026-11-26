@@ -114,10 +114,10 @@ export function tests(built) {
     ['R28: fetch is called with no this', async () => {
       assert.equal(await shop(built, stub(() => reply(200, 'up', { 'content-type': 'text/plain' }))).system.health(), 'up')
     }],
-    ['R29: the logs mask credentials, secret query parameters, a URL\'s user and fragment', async () => {
+    ['R29: the logs mask credentials, secret query parameters, a URL\'s fragment (a URL with a user is never sent: R43)', async () => {
       const log = recorder()
       const fetch = stub(() => reply(200, { ok: true }))
-      const shopClient = shop(built, fetch, { logLevel: 'debug', logger: log.logger, baseURL: 'https://me:pw@h.example/v1#frag', bearerAuth: 'tok-secret' })
+      const shopClient = shop(built, fetch, { logLevel: 'debug', logger: log.logger, baseURL: 'https://h.example/v1#frag', bearerAuth: 'tok-secret' })
       await shopClient.pets.retrieve({ path: { pet_id: 'p1' } }, { headers: { cookie: 'sid=cookie-secret' } })
       const auth = new built.auth.AuthClient({ fetch, queryKey: 'query-secret', token: 'tok-secret', logLevel: 'debug', logger: log.logger })
       await auth.checks.both()
@@ -148,6 +148,8 @@ export function tests(built) {
       await b.pets.retrieve({ path: { pet_id: 'p1' } })
       assert.equal(fetch.calls[0].headers['x-api-key'], 'k')
     }],
+    // req: rfc9110.15.4.should-automatically-following-redirected-request-user-agent — a 303 followed as GET with no body or Content-Type, the other headers sent again
+    // req: rfc6750.5.3.must-safeguard-bearer-tokens-client-implementations-ensure — a redirect to another origin refused, and allowed only without the credentials (the logs mask them: R29)
     ['R34: a redirect to another origin is refused; allowed, it loses the credentials', async () => {
       const away = (url) => (url.startsWith('https://api.') ? reply(307, null, { location: 'https://evil.example/steal' }) : reply(200, pet))
       const refused = stub(away)

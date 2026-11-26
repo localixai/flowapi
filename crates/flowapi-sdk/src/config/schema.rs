@@ -73,6 +73,9 @@ fn shape(sh: &'static Shape, defs: &mut Vec<(&'static str, J)>) -> J {
             if *kind == Str::Url {
                 m.push(("format", s("uri")));
             }
+            if let Str::OneOf(_, words) = kind {
+                m.push(("enum", J::List(words.iter().map(|w| s(w)).collect())));
+            }
             J::Obj(m)
         }
         Shape::Int(min, max) => J::Obj(vec![

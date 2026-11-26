@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.1.0/plugin.schema.json",
   "name": "flowapi",
   "displayName": "flowapi",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Types and SDKs from API descriptions with flowapi: the library's documentation for any agent, and a pipeline that writes a TypeScript SDK repository from an OpenAPI description, checked by a deterministic judge.",
   "author": {
     "name": "Localix Lab"

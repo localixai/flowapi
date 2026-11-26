@@ -1,4 +1,21 @@
 {"swagger":"2.0","info":{"title":"swagger","version":"1"},
+ "x-flowapi-covers":[
+  "req: oas-2.0.swagger-object.host — host api.example.com:8443 in each server's URL",
+  "req: oas-2.0.swagger-object.host.may-include-port — the port 8443 kept",
+  "req: oas-2.0.swagger-object.basePath — /v2 after the host",
+  "req: oas-2.0.swagger-object.schemes — one server per scheme, https then http, in order",
+  "req: oas-2.0.swagger-object.schemes.must-values-list-http-https-ws-wss — gopher and 7 left out with a warning",
+  "req: oas-2.0.swagger-object.securityDefinitions — flowapiSecuritySchemes from securityDefinitions",
+  "req: oas-2.0.security-definitions-object.pattern-name — each scheme under its name",
+  "req: oas-2.0.swagger-object.security — putPets: the description's security, basic",
+  "req: oas-2.0.operation-object.security — listPets: its own security over the description's; watchPets: [] sends none",
+  "req: oas-2.0.operation-object.schemes — watchPets: wss, a server of its own",
+  "req: oas-2.0.operation-object.schemes.must-values-list-http-https-ws-wss — watchPets: ftp left out with a warning, wss kept; dropPets: only ftp and true, a warning each and the description's servers",
+  "req: oas-2.0.security-scheme-object.type — basic as http basic, apiKey, oauth2",
+  "req: oas-2.0.security-scheme-object.name — key and X-Key",
+  "req: oas-2.0.security-scheme-object.in — key in the query, X-Key in a header; cookie, which 2.0 does not define, left out",
+  "req: oas-2.0.security-scheme-object.flow — accessCode as authorizationCode, application as clientCredentials; noFlow left out",
+  "req: oas-2.0.security-requirement-object.pattern-name — listPets: code with its scope pets, key and headerKey together"],
  "host":"api.example.com:8443","basePath":"/v2","schemes":["https","http","gopher",7],
  "securityDefinitions":{
   "basic":{"type":"basic"},
@@ -13,5 +30,6 @@
  "paths":{"/pets":{
   "get":{"operationId":"listPets","security":[{"code":["pets"]},{"key":[],"headerKey":[]}],"produces":["application/json","application/octet-stream"],
    "responses":{"200":{"description":"ok","schema":{"type":"array","items":{}}}}},
-  "post":{"operationId":"watchPets","schemes":["wss"],"security":[],"responses":{"101":{"description":"switching"}}},
-  "put":{"operationId":"putPets","responses":{"204":{"description":"done"}}}}}}
+  "post":{"operationId":"watchPets","schemes":["ftp","wss"],"security":[],"responses":{"101":{"description":"switching"}}},
+  "put":{"operationId":"putPets","responses":{"204":{"description":"done"}}},
+  "delete":{"operationId":"dropPets","schemes":["ftp",true],"responses":{"204":{"description":"done"}}}}}}

@@ -28,13 +28,14 @@ const $settings: $core.Settings = {
 
 /** The options of a `Shop`: the runtime's, and a credential for each security scheme it sends. */
 export type ShopOptions = $core.ClientOptions<"production" | "sandbox"> & {
-  /** The credential of the security scheme `ApiKeyAuth`, else `SHOP_API_KEY`; `null` reads no variable. */
+  /** The credential of the security scheme `ApiKeyAuth`: the key, else `SHOP_API_KEY`; `null` reads no variable. */
   apiKeyAuth?: $core.Credential | null | undefined;
-  /** The credential of the security scheme `BearerAuth`, else `SHOP_TOKEN`; `null` reads no variable. */
+  /** The credential of the security scheme `BearerAuth`: the token, else `SHOP_TOKEN`; `null` reads no variable. */
   bearerAuth?: $core.Credential | null | undefined;
 };
 
-/** The API's client: a member for each resource of the config. */
+/** The API's client: a member for each resource (`client.pets`), and `request` for a call no
+ * operation describes. */
 export class Shop {
   readonly #core: $core.Core;
   readonly #options: ShopOptions;

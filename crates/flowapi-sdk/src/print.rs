@@ -3,7 +3,7 @@
 //! reading decided by that target (`sdk_bases`, `sdk_method`, `ReadAs`), so the table and the
 //! functions it points at cannot disagree. The same service prints the same bytes (G4).
 
-use crate::model::{Auth, Requirement, Server, Service};
+use crate::model::{Auth, Requirement, Scheme, Server, Service};
 use flowapi::Program;
 use flowapi_ts::{ReadAs, sdk_bases, sdk_method, string_literal as lit};
 use std::fmt::Write;
@@ -22,8 +22,10 @@ const SCHEMES: &str = "
 /**
  * The security schemes, by name: `apiKey` a key sent `in` a header, a query parameter or a
  * cookie under `name`; `http` as `Authorization: <scheme> <credentials>`; `oauth2` and
- * `openIdConnect` a token the caller obtained, sent as a bearer token. `mutualTLS` is a client
- * certificate, which no request carries: a client cannot send it, only its transport can.
+ * `openIdConnect` a token sent as a bearer token, which the caller obtained or, for OAuth 2.0's
+ * `clientCredentials` flow, the client requests at its `tokenUrl` (relative to the server's URL
+ * where it is relative) for the scopes it needs. `mutualTLS` is a client certificate, which no
+ * request carries: a client cannot send it, only its transport can.
  */
 export const flowapiSecuritySchemes = {
 ";
@@ -34,9 +36,10 @@ const OPERATIONS: &str = "
  * instead of `flowapiServers`, where it has its own; its security, alternatives of which any one
  * is enough, each naming the schemes it needs with their scopes (`[]`: none); how each response's
  * body is read, by media type (`json`, `text`, `bytes`, or `sent`: by the `Content-Type` the
- * answer sends, as `flowapiReadsBytes` says); by `multipart/form-data` media type, the type
- * each part is sent as (`encoding`, the description's Encoding Objects: give it as
- * `body.encoding`); and its `<name>Request` and `<name>Response`.
+ * answer sends, as `flowapiReadsBytes` says); by form and `multipart` media type, how the body's
+ * values are written (`encoding`: the description's Encoding Objects by name and by position,
+ * given as the body's `encoding`, `prefixEncoding` and `itemEncoding`); and its `<name>Request`
+ * and `<name>Response`.
  */
 export const flowapiOperations = {
 ";
@@ -49,32 +52,7 @@ pub(crate) fn table(program: &Program<'_>, service: &Service) -> String {
     out.push_str("] as const;\n");
     out.push_str(SCHEMES);
     for s in &service.schemes {
-        let mut fields = match &s.auth {
-            Auth::ApiKey { location, name } => format!(
-                "type: \"apiKey\", in: {}, name: {}",
-                lit(location.name()),
-                lit(name)
-            ),
-            Auth::Http { scheme, format } => {
-                let format = format
-                    .as_ref()
-                    .map(|f| format!(", bearerFormat: {}", lit(f)))
-                    .unwrap_or_default();
-                format!("type: \"http\", scheme: {}{format}", lit(scheme))
-            }
-            Auth::OAuth2 { flows } => format!("type: \"oauth2\", flows: {}", list(flows)),
-            Auth::OpenIdConnect { url } => {
-                format!("type: \"openIdConnect\", openIdConnectUrl: {}", lit(url))
-            }
-            Auth::MutualTls => String::from("type: \"mutualTLS\""),
-        };
-        if let Some(d) = &s.description {
-            let _ = write!(fields, ", description: {}", lit(d));
-        }
-        if s.deprecated {
-            fields.push_str(", deprecated: true");
-        }
-        let _ = writeln!(out, "  {}: {{ {fields} }},", lit(&s.name));
+        let _ = writeln!(out, "  {}: {{ {} }},", lit(&s.name), scheme(s));
     }
     out.push_str("} as const;\n");
     out.push_str(OPERATIONS);
@@ -113,19 +91,8 @@ pub(crate) fn table(program: &Program<'_>, service: &Service) -> String {
             .collect();
         let _ = writeln!(out, "    responses: {},", object(&responses));
         if !access.encodings.is_empty() {
-            let bodies: Vec<String> = access
-                .encodings
-                .iter()
-                .map(|e| {
-                    let parts: Vec<String> = e
-                        .parts
-                        .iter()
-                        .map(|(name, t)| format!("{}: {{ contentType: {} }}", lit(name), lit(t)))
-                        .collect();
-                    format!("{}: {}", lit(&e.media_type), object(&parts))
-                })
-                .collect();
-            let _ = writeln!(out, "    encoding: {},", object(&bodies));
+            let encodings = crate::encoding::literal(&access.encodings);
+            let _ = writeln!(out, "    encoding: {encodings},");
         }
         let _ = writeln!(out, "    request: {base}Request,");
         let _ = writeln!(out, "    response: {base}Response,");
@@ -133,6 +100,50 @@ pub(crate) fn table(program: &Program<'_>, service: &Service) -> String {
     }
     out.push_str("} as const;\n");
     out
+}
+
+/// A scheme's members on one line.
+fn scheme(s: &Scheme) -> String {
+    let mut fields = match &s.auth {
+        Auth::ApiKey { location, name } => format!(
+            "type: \"apiKey\", in: {}, name: {}",
+            lit(location.name()),
+            lit(name)
+        ),
+        Auth::Http { scheme, format } => {
+            let format = format
+                .as_ref()
+                .map(|f| format!(", bearerFormat: {}", lit(f)))
+                .unwrap_or_default();
+            format!("type: \"http\", scheme: {}{format}", lit(scheme))
+        }
+        Auth::OAuth2 {
+            flows,
+            client_credentials,
+        } => {
+            let mut out = format!("type: \"oauth2\", flows: {}", list(flows));
+            if let Some(f) = client_credentials {
+                let _ = write!(
+                    out,
+                    ", clientCredentials: {{ tokenUrl: {}, scopes: {} }}",
+                    lit(&f.token_url),
+                    list(&f.scopes)
+                );
+            }
+            out
+        }
+        Auth::OpenIdConnect { url } => {
+            format!("type: \"openIdConnect\", openIdConnectUrl: {}", lit(url))
+        }
+        Auth::MutualTls => String::from("type: \"mutualTLS\""),
+    };
+    if let Some(d) = &s.description {
+        let _ = write!(fields, ", description: {}", lit(d));
+    }
+    if s.deprecated {
+        fields.push_str(", deprecated: true");
+    }
+    fields
 }
 
 /// A server as an object literal on one line.
@@ -176,7 +187,7 @@ fn requirement(r: &Requirement) -> String {
 }
 
 /// Members as an object literal: `{}` for none.
-fn object(members: &[String]) -> String {
+pub(crate) fn object(members: &[String]) -> String {
     if members.is_empty() {
         return String::from("{}");
     }

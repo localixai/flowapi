@@ -1,0 +1,28 @@
+{
+ "swagger": "2.0",
+ "info": { "title": "Swagger", "version": "1" },
+ "host": "api.swagger.example",
+ "basePath": "/v1",
+ "schemes": ["https"],
+ "produces": ["application/json"],
+ "security": [{ "basic": [] }],
+ "securityDefinitions": {
+  "basic": { "type": "basic", "description": "A user and password", "x-vendor": "kept out" },
+  "header": { "type": "apiKey", "in": "header", "name": "X-Key" },
+  "query": { "type": "apiKey", "in": "query", "name": "key" },
+  "app": {
+   "type": "oauth2",
+   "flow": "application",
+   "tokenUrl": "https://swagger.example/oauth/token",
+   "scopes": { "pets:read": "Read pets", "x-note": "an extension, no scope" }
+  }
+ },
+ "paths": {
+  "/pets": {
+   "get": { "operationId": "listPets", "responses": { "200": { "description": "ok", "schema": { "type": "object" } } } },
+   "post": { "operationId": "addPet", "security": [{ "header": [] }, { "query": [] }], "responses": { "200": { "description": "ok", "schema": { "type": "object" } } } }
+  },
+  "/pets/mine": { "get": { "operationId": "myPets", "security": [{ "app": ["pets:read"] }], "responses": { "200": { "description": "ok", "schema": { "type": "object" } } } } },
+  "/health": { "get": { "operationId": "health", "security": [], "responses": { "200": { "description": "ok", "schema": { "type": "object" } } } } }
+ }
+}

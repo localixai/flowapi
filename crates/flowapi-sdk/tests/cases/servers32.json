@@ -1,0 +1,155 @@
+{
+ "openapi": "3.2.0",
+ "info": {
+  "title": "servers 3.2",
+  "version": "1"
+ },
+ "servers": [
+  {
+   "url": "https://{region}.api.example.com/{version}",
+   "description": "production",
+   "variables": {
+    "region": {
+     "default": "eu",
+     "enum": [
+      "eu",
+      "us"
+     ],
+     "description": "where the data lives",
+     "x-owner": "ops"
+    },
+    "version": {
+     "default": "v1"
+    }
+   },
+   "x-region-note": "an extension, read by no one",
+   "name": "prod"
+  },
+  {
+   "url": ".",
+   "description": "where the description is served"
+  },
+  {
+   "url": "./test",
+   "description": "beside it"
+  },
+  {
+   "url": "https://{missing}.example.com"
+  },
+  {
+   "description": "no url"
+  },
+  {
+   "url": "https://{host}",
+   "variables": {
+    "host": {
+     "enum": [
+      "a"
+     ]
+    }
+   }
+  },
+  {
+   "url": "https://{x}.example.com",
+   "variables": {
+    "x": {
+     "default": "z",
+     "enum": [
+      "a",
+      "b"
+     ]
+    }
+   }
+  },
+  {
+   "url": "https://{y}.example.com",
+   "variables": {
+    "y": {
+     "default": "y",
+     "enum": []
+    }
+   }
+  },
+  {
+   "url": "https://example.com/?debug=1"
+  }
+ ],
+ "paths": {
+  "/pets": {
+   "servers": [
+    {
+     "url": "https://pets.example.com"
+    }
+   ],
+   "get": {
+    "operationId": "listPets",
+    "responses": {
+     "200": {
+      "description": "ok",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array"
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "operationId": "createPet",
+    "servers": [
+     {
+      "url": "https://write.example.com",
+      "description": "writes"
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "made"
+     }
+    }
+   }
+  },
+  "/health": {
+   "servers": [],
+   "get": {
+    "operationId": "health",
+    "servers": [],
+    "responses": {
+     "204": {
+      "description": "fine"
+     }
+    }
+   }
+  }
+ },
+ "x-flowapi-covers": [
+  "req: oas-3.2.path-item-object.servers — a Path Item's servers serve its operations instead of the description's",
+  "req: oas-3.2.operation-object.servers — an operation's servers win over its Path Item's; an empty list overrides nothing",
+  "req: oas-3.2.server-object.url — the URL kept as written, variables in it",
+  "req: oas-3.2.server-object.url.required — a server with no url is left out, with a warning",
+  "req: oas-3.2.server-object.url.may-url-supports-server-variables-relative-indicate — relative URLs (`.`, `./test`, `/relative`) kept for the client to resolve against where the description is served, variables in another",
+  "req: oas-3.2.server-object.description — a server's description printed",
+  "req: oas-3.2.server-object.variables — each variable with its default, enum and description",
+  "req: oas-3.2.server-object.fixed-fields.may-object-extended-specification-extensions — an `x-` member of a server read by no one, no warning",
+  "req: oas-3.2.server-variable-object.default — the default printed",
+  "req: oas-3.2.server-variable-object.default.required — a variable with no default leaves its server out, with a warning",
+  "req: oas-3.2.server-variable-object.default.must-enum-defined-value-exist-enum-s — a default outside enum is a warning",
+  "req: oas-3.2.server-variable-object.enum — the enum printed",
+  "req: oas-3.2.server-variable-object.enum.must-not-array-empty — an empty enum is a warning and allows any value",
+  "req: oas-3.2.server-variable-object.description — a variable's description printed",
+  "req: oas-3.2.server-variable-object.fixed-fields.may-object-extended-specification-extensions — an `x-` member of a variable read by no one, no warning",
+  "req: oas-3.2.server-object.url.must-not-query-fragment-part-url — a URL with a query is a warning",
+  "req: oas-3.2.server-object.name — a server's name printed"
+ ]
+}

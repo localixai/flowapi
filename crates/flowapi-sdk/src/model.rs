@@ -70,10 +70,13 @@ pub enum Auth {
         /// How a bearer token is formatted, a hint only (`JWT`).
         format: Option<String>,
     },
-    /// OAuth 2.0: a token the caller obtained, sent as a bearer token; the flows are named only.
+    /// OAuth 2.0: a token sent as a bearer token, which the caller obtained, or which the client
+    /// requests itself by the client credentials flow, the one flow no person takes part in.
     OAuth2 {
         /// The flows' names, as written (2.0's lifted to 3.x names).
         flows: Vec<String>,
+        /// The client credentials flow (2.0's `application`), where it has a token URL.
+        client_credentials: Option<TokenFlow>,
     },
     /// OpenID Connect: a token the caller obtained, sent as a bearer token.
     OpenIdConnect {
@@ -83,6 +86,15 @@ pub enum Auth {
     /// A client certificate (3.1): named so a requirement can say so; a client sends it through
     /// its transport, not in a request.
     MutualTls,
+}
+
+/// Where the client credentials flow asks for a token, and the scopes it may ask for.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TokenFlow {
+    /// The token endpoint as written: a URL, or a reference relative to the server's.
+    pub token_url: String,
+    /// The scopes the scheme defines, in the order written.
+    pub scopes: Vec<String>,
 }
 
 /// A security scheme, by its name in the description.
@@ -106,14 +118,56 @@ pub struct Requirement {
     pub schemes: Vec<(String, Vec<String>)>,
 }
 
-/// The types a `multipart/form-data` body's parts are sent as, by the description's Encoding
-/// Objects.
+/// How a request body of a form or `multipart` media type is written, by the description's
+/// Encoding Objects (and, where they say nothing, by its schemas): what the Media Type Object's
+/// `encoding`, `prefixEncoding` and `itemEncoding` say, each field read only for the media types
+/// it applies to.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Encoding {
     /// The media type, as written (`multipart/form-data`).
     pub media_type: String,
-    /// Each part's name with its one `contentType`, in the order written.
-    pub parts: Vec<(String, String)>,
+    /// What each value is written as.
+    pub parts: Parts,
+}
+
+/// Encoding Objects mapped to values: by a property's name, or by an item's position.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Parts {
+    /// By name (`encoding`): each property's, in the order written.
+    pub by_name: Vec<(String, Part)>,
+    /// By position (`prefixEncoding`, 3.2): the first items', in order.
+    pub prefix: Vec<Part>,
+    /// The other items' (`itemEncoding`, 3.2).
+    pub item: Option<Box<Part>>,
+}
+
+impl Parts {
+    /// Whether it says nothing.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.by_name.is_empty() && self.prefix.is_empty() && self.item.is_none()
+    }
+}
+
+/// One Encoding Object as it applies to its value: only the fields its media type takes.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Part {
+    /// The `Content-Type` it is sent as (a list or a range as written).
+    pub content_type: Option<String>,
+    /// Header fields with a value the description fixes (a `multipart` part's
+    /// `Content-Transfer-Encoding`, from a schema's `contentEncoding`).
+    pub headers: Vec<(String, String)>,
+    /// `style`, where written (2.0's `tsv` as `tabDelimited`).
+    pub style: Option<String>,
+    /// `explode`, where written.
+    pub explode: Option<bool>,
+    /// `allowReserved`, where written.
+    pub allow_reserved: Option<bool>,
+    /// Swagger 2.0: the styles that join the arrays inside an array value, outermost first, each
+    /// Items Object's `collectionFormat` (`csv` as `form`); empty for any other.
+    pub nested: Vec<String>,
+    /// Nested Encoding Objects (3.2), for a part that is itself `multipart`.
+    pub parts: Parts,
 }
 
 /// What one operation asks for.
@@ -125,7 +179,10 @@ pub struct Access {
     /// Its security: the alternatives, any one of which is enough; its own `security`, else the
     /// description's. Empty means no authentication.
     pub security: Vec<Requirement>,
-    /// Its request body's encodings, one per `multipart/form-data` media type that has one.
+    /// Whether `security` is the description's, the operation having none of its own: what a
+    /// config's `security` replaces.
+    pub inherits: bool,
+    /// Its request body's encodings, one per form or `multipart` media type that has one.
     pub encodings: Vec<Encoding>,
 }
 

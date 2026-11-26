@@ -3,9 +3,10 @@
 //! `body`, an enum of its media types. Each parameter is one call of the runtime with its style
 //! a constant: RFC 6570's operator (3.2, Appendix C), the encoder (none for headers and `style:
 //! cookie`, reserved expansion for `allowReserved`) and its name percent-encoded where it goes
-//! into a URI.
+//! into a URI. A form body is written with its members' Encoding Objects (`spec::Media::encoding`)
+//! printed beside it, as the runtime's `sdk::Part`s.
 
-use super::param::{access, call, path};
+use super::param::{access, call, parts, path};
 use super::{Field, Op, bare, field, fields, is_json, type_of};
 use crate::emit::Emitter;
 use crate::ident::{Taken, literal, pascal};
@@ -117,9 +118,10 @@ pub(super) fn write(e: &mut Emitter<'_, '_>, out: &mut String, op: &Op<'_>) {
                 Kind::Json => {
                     format!("(String::from({ct}), sdk::json_body(v).map_err(sdk::in_body)?)")
                 }
-                Kind::Form => {
-                    format!("(String::from({ct}), sdk::form_body(v).map_err(sdk::in_body)?)")
-                }
+                Kind::Form => format!(
+                    "(String::from({ct}), sdk::form_body(v, {}).map_err(sdk::in_body)?)",
+                    parts(&m.encoding)
+                ),
                 Kind::Bytes => format!("(String::from({ct}), v.clone())"),
                 Kind::Typed => String::from("(t.clone(), v.clone())"),
             };

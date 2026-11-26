@@ -31,8 +31,9 @@ the person's own goes in `src/lib/` and `examples/`, which flowapi never touches
    how sure). Over 60 KB it prints the tags alone: read on with `--tag <tag>` or
    `--path <prefix>`, one at a time.
 3. **Draft.** `F config draft <spec> -o flowapi-sdk.yml`. Every operation lands in a resource,
-   with the default verbs and the pagination the responses look like. It already passes
-   `config check`; it is a start, not an answer.
+   with the default verbs and the pagination the responses look like, and every security scheme
+   with the variables it is read from. It already passes `config check` but for the warnings of
+   schemes the client cannot send itself; it is a start, not an answer.
 4. **Decide.** What the draft cannot know ([references/config.md](references/config.md) lists
    every key):
    - Resource names: plural nouns from the domain (`pets`, `invoices`), nested where the paths
@@ -45,7 +46,20 @@ the person's own goes in `src/lib/` and `examples/`, which flowapi never touches
      method turns a default off.
    - `skip`: internal, deprecated or admin operations the SDK should not have, each with its
      reason. Never skip an operation only because its name is hard.
-   - `package.name`, `package.client`, `package.license`, `auth.<scheme>.env_var`, `readme`.
+   - `package.name`, `package.client`, `package.license`.
+   - Credentials, before generating: every `config.auth.*` issue resolved. Keep the draft's
+     `auth.<scheme>.env_var` names or set the person's. For `config.auth.none` (the description
+     declares no scheme; the draft leaves `security` unset on purpose): ask the person how the API
+     authenticates, or take it from the documentation they named, then declare it under `auth`
+     with `type` and name it in `security`. When you cannot ask (a non-interactive run), you may
+     declare the scheme the API's public documentation gives, and must say in your report that it
+     is not in the description and not verified. Write `security: []` only when the API takes no
+     credentials. Never invent a scheme, and never write `security: []` to silence the warning
+     for an API that takes a credential.
+   - What the package says of itself: `readme.title` (the README's heading), `readme.intro` or
+     `package.description` (its first paragraph; the description also goes into `package.json`),
+     `package.keywords`, `readme.headline_method`. Their defaults come from the description's
+     `info`; set them when the person names a title or says the SDK is unofficial.
 5. **Check.** `F config check flowapi-sdk.yml --json`. Each issue has a `code`, a `pointer` into
    the config, a `line` and a `hint`. Fix every error, read every warning, and check again until
    `"errors":0`.
@@ -75,5 +89,9 @@ way further; the `sdk-reviewer` agent reads its API from a user's side.
 | `config.op.unknown` | `op` names no operation: the hint says the closest one |
 | `config.schema.unknown` | A key the format does not have: the message lists the keys there |
 | `config.generator.version` | The config pins another flowapi: set `generator.flowapi` to the version `F --version` prints |
+| `config.auth.none` | No operation needs a credential: declare the API's under `auth` and `security`, or set `security: []` when it takes none |
+| `config.auth.unknown` | `auth` names no scheme of the description: correct the name, or give `type` to declare one it lacks |
+| `config.auth.unlisted`, `config.auth.env` | A scheme an operation needs has no entry, or no variable: add `env_var` (or the pair of its kind) |
+| `config.auth.refused`, `config.auth.mutual_tls`, `config.auth.deprecated` | The description's own: say in the report that callers give `Authorization`, a `fetch` with the certificate, or should move off the scheme |
 
 The text output names the same issues, one per paragraph, with `at <file>:<line>:<column>`.

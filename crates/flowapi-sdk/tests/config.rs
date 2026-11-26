@@ -64,6 +64,23 @@ const EXPECTED: &[(&str, &[&str])] = &[
         ],
     ),
     (
+        "auth",
+        &[
+            "config.auth.declared",
+            "config.auth.unknown",
+            "config.auth.field",
+            "config.auth.type",
+            "config.auth.in",
+            "config.auth.option",
+            "config.auth.refused",
+            "config.auth.mutual_tls",
+            "config.security.unknown",
+            "config.auth.env",
+            "config.auth.unlisted",
+        ],
+    ),
+    ("auth-none", &["config.auth.none"]),
+    (
         "names",
         &[
             "config.name.duplicate",

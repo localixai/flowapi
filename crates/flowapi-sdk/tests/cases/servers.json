@@ -15,12 +15,14 @@
       "eu",
       "us"
      ],
-     "description": "where the data lives"
+     "description": "where the data lives",
+     "x-owner": "ops"
     },
     "version": {
      "default": "v1"
     }
-   }
+   },
+   "x-region-note": "an extension, read by no one"
   },
   {
    "url": "/relative"
@@ -140,6 +142,8 @@
   "req: oas-3.1.server-variable-object.enum — the enum printed",
   "req: oas-3.1.server-variable-object.enum.must-not-array-empty — an empty enum is a warning and allows any value",
   "req: oas-3.1.server-variable-object.description — a variable's description printed",
-  "req: oas-3.1.server-object.url.may-url-supports-server-variables-relative-indicate — a relative URL kept, variables in another"
+  "req: oas-3.1.server-object.url.may-url-supports-server-variables-relative-indicate — a relative URL kept, variables in another",
+  "req: oas-3.1.server-object.fixed-fields.may-object-extended-specification-extensions — an `x-` member of a server read by no one, no warning",
+  "req: oas-3.1.server-variable-object.fixed-fields.may-object-extended-specification-extensions — an `x-` member of a variable read by no one, no warning"
  ]
 }

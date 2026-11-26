@@ -189,7 +189,8 @@ fn generate(r: RepoRequest<'_>, text: &mut String) -> Result<(Repo, Option<Lock>
     }
     let target = flowapi_ts::TypeScript::new("src/api.ts").with_sdk();
     let (program, diags) = flowapi::program(&docs, &target);
-    for d in diags.all().iter().filter(|d| d.severity == Severity::Error) {
+    // The core's warnings too, as the command prints them.
+    for d in diags.all() {
         let _ = writeln!(text, "{}", line(&found(&sources, d)));
     }
     let uri = sources.first().map_or("", |s| s.uri.as_ref());

@@ -15,7 +15,7 @@ the Rust command's output byte for byte, and `generate` (below) the same files, 
 The Rust command, built from a release tag:
 
 ```sh
-cargo install --locked --git https://github.com/localixai/flowapi --tag v0.2.0 flowapi-cli
+cargo install --locked --git https://github.com/localixai/flowapi --tag v0.3.0 flowapi-cli
 flowapi openapi.json -o types.ts
 ```
 
@@ -23,8 +23,8 @@ The crates are not on crates.io. A program takes them from the repository at a t
 
 ```toml
 [dependencies]
-flowapi = { git = "https://github.com/localixai/flowapi", tag = "v0.2.0" }
-flowapi-ts = { git = "https://github.com/localixai/flowapi", tag = "v0.2.0" }
+flowapi = { git = "https://github.com/localixai/flowapi", tag = "v0.3.0" }
+flowapi-ts = { git = "https://github.com/localixai/flowapi", tag = "v0.3.0" }
 ```
 
 In a checkout, `cargo run --release -p flowapi-cli -- openapi.json -o types.ts` does the same.
@@ -104,24 +104,41 @@ const up = uploadPhotoRequest({
 ```
 
 Parameters are written as their `style`, `explode` and `allowReserved` say (`simple`, `label`,
-`matrix`, `form`, `spaceDelimited`, `pipeDelimited`, `deepObject` and 3.2's `cookie`; Swagger
-2.0's `collectionFormat` read as those), percent-encoded per RFC 3986 everywhere but headers and
-`style: cookie`, which pass as given; a parameter with `content` as its media type's text; cookies
+`matrix`, `form`, `spaceDelimited`, `pipeDelimited`, `deepObject` and 3.2's `cookie`), percent-encoded
+per RFC 3986 everywhere but headers and `style: cookie`, which pass as given. Swagger 2.0's
+`collectionFormat` is read as those in a path, a query and a header (`csv` `a,b`, `ssv` `a b`,
+`tsv` `a<tab>b`, `pipes` `a|b`, the delimiter percent-encoded in a URI; `multi` a pair per item, in
+a query), and an Items Object's own joins the arrays inside an array, level by level (`multi` and
+`pipes` over `csv`: `grid=1,2%7C3&grid=4`); a parameter with `content` as its media type's text; cookies
 into one `cookie` header. The body is `{ contentType, value }` of one of the operation's media
 types: JSON, a form, text as given, or bytes (a `Uint8Array`, for a type neither JSON, text nor a
-form, sent as they are). A `multipart/form-data` body is written from its members as the
+form, sent as they are). A form (`application/x-www-form-urlencoded`) is percent-encoded by the
+WHATWG rules 3.2 asks for, as a browser sends one: a space as `+`, all but letters, digits and
+`*-._` encoded (`a b!` is `a+b%21`); a member whose Encoding Object gives `style`, `explode` or
+`allowReserved` is written by that style as a query parameter is, with RFC 3986's encoding
+(`ids=1%7C2`, `point%5Bx%5D=1`). A `multipart/form-data` body is written from its members as the
 Encoding Object's defaults say: a `Uint8Array` or a file a file part (`filename` its last path
 segment, `blob` when it has none; `application/octet-stream` when it has no type), a string,
 number or boolean a text part, an object JSON, an array's items one part each under its name, in
 order (RFC 7578, 4.3); `undefined` is left out, `null` refused. A file is
 `flowapiFile(bytes or text, name, type)`, or `await flowapiBlob(blobOrFile)`, the one step that
-waits: `<op>Request` takes bytes and stays synchronous. The description's `encoding` is not read
-yet: give it as the body's `encoding` (`{ photo: { contentType, headers } }`); its `contentType`
-replaces the default (a file's own type replaces it, and a list or a range needs one) and its
-`headers` go into the part. The boundary is the content type's (`; boundary=`), else 128 random
-bits from `globalThis.crypto`, drawn again while a part holds them and added to the request's
-`content-type`; `body` is then bytes. 3.2's array of objects is written as its parts in order;
-another multipart type is yours to write, as a string or bytes. A response is picked
+waits: `<op>Request` takes bytes and stays synchronous. Any other multipart type
+(`multipart/mixed`, 3.2) takes an array, an unnamed part per item in order, or a string or bytes
+sent as they are. The description's Encoding Objects go in the body: `encoding` by name,
+3.2's `prefixEncoding` and `itemEncoding` by position (the SDK layer's table holds the
+description's, and the client passes them when the call gives none). A part's `contentType`
+replaces the default (a file's own type replaces it, and a list or a range needs one: nothing is
+sniffed), its `headers` go into the part as given, `style` and `explode` write a member of a
+`multipart/form-data` body (3.1, 3.2) as a form's, without percent-encoding, and a part whose type
+is `multipart` is a body of its own by its nested Encoding Objects (3.2). Where an Encoding Object
+gives no type, the table takes it from the schema, through `$ref` and `allOf`: a string with
+`contentEncoding` (3.0: `format: binary` or `byte`) is `application/octet-stream`, and a part of
+another multipart type also says `Content-Transfer-Encoding` (3.2). Swagger 2.0's `formData`
+arrays are written by their `collectionFormat` (`csv`, `ssv`, `pipes`, `multi`, and `tsv` joined
+by a tab), the arrays inside one by their Items Objects' (the Encoding Object's `nested`), a
+`file` field making the body `multipart/form-data`. The boundary is the content
+type's (`; boundary=`), else 128 random bits from `globalThis.crypto`, drawn again while a part
+holds them and added to the request's `content-type`; `body` is then bytes. A response is picked
 by its status (the code, then `2XX`, then `default`) and its `Content-Type`, and its body, given as
 text or as bytes, read by the type sent as the Rust SDK reads it: JSON parsed (a leading byte
 order mark skipped), `text/*` a `string`, any other a `Uint8Array`, a media range any of those
@@ -146,7 +163,8 @@ operation, with a warning. The output imports nothing: the runtime is a few func
 printed once. With `--sdk` the base URL and any authentication are still yours to add: the
 command does not print `servers`, `securitySchemes` or `security`. The SDK layer
 (`crates/flowapi-sdk`, the one `generate` writes a client with) reads them, Swagger 2.0's `host`, `basePath` and
-`schemes` included, and prints a table to put after this output: the servers with their
+`schemes` included (an operation's own its own servers; a scheme not `http`, `https`, `ws` or
+`wss` warned of and not used), and prints a table to put after this output: the servers with their
 variables, the security schemes, and each operation's method, path, own servers, security and
 how each response body is read. Every row of the specification's
 Style Examples table, the pitfalls other generators fixed, and the SDKs of GitHub's, Stripe's and
@@ -158,8 +176,11 @@ For Rust, `--target rust --sdk` prints the same after the serde types: per opera
 struct, `<op>_request(&input)`, which returns an `sdk::Request` (method, path, query, headers, and
 the body's content type and bytes) or an `sdk::RequestError` for what the TypeScript SDK refuses,
 with the same `reason` codes (`Reason::code()`), and `<op>_response(status, headers, body)`, which returns an
-enum of the operation's responses or an `sdk::Error` holding the answer. No I/O, no async; the
-runtime is a module printed once (`pub mod sdk`) and needs serde and serde_json, as the types do.
+enum of the operation's responses or an `sdk::Error` holding the answer. A form body's members
+are written by the description's Encoding Objects (and Swagger 2.0's `collectionFormat`), printed
+into each `<op>_request`: there is no table to pass. A multipart body is given as its content type
+and bytes. No I/O, no async; the runtime is a module printed once (`pub mod sdk`) and needs serde
+and serde_json, as the types do.
 
 ```sh
 cargo run --release -p flowapi-cli -- openapi.json --target rust --sdk -o src/api.rs
@@ -209,21 +230,98 @@ read one at a time with `--tag` or `--path`. `config check` holds the config to 
 member it does not name is an error) and to the description: every operation is in a resource
 or in `skip` with a reason, every reference names an operation (a typo names the closest), names
 are compared as words (`list_all` and `listAll` are one name), a method's pagination fits its
-operation's parameters and response schema, `auth` names the description's security schemes.
-A draft passes the check, and the same description written in another order gives the same
-draft. A description named `summary` or `config` is read by its path: `flowapi ./summary`.
+operation's parameters and response schema, `auth` and `security` name schemes that exist
+(below). A draft passes the check, but for the warnings of a scheme the client cannot send itself, and the same description written in another order gives the same
+draft. A drafted method's name leaves out the words its resource already says
+(`actions/get-actions-cache-retention-limit-for-enterprise` in `actions` is
+`get_cache_retention_limit_for_enterprise`), keeps a word that qualifies it (`users`'
+`list_followers_for_authenticated_user`), and where two names meet, both take a longer one. A description named `summary` or `config` is read by its path: `flowapi ./summary`.
 
 From a config that passes the check, the SDK layer prints the client itself in TypeScript
 (`flowapi_sdk::client_files`): `src/api.ts` (the `--sdk` output and the
 operations table), a class for each resource (`client.pets.photos.list(params, options)`), the
 client class with its options, and the runtime in `src/core/`, which needs no dependency and
-type-checks with `lib: ["es2022"]` alone. The runtime retries by status and `x-should-retry`,
-waits what `retry-after-ms` or `Retry-After` ask (and refuses a wait past `maxRetryDelay`), times
-each attempt out with its body read, removes its listener from the caller's `AbortSignal`, sends
-the credentials of the first security alternative it can meet, masks them in its logs, refuses a
-redirect to another origin unless allowed, reads lists by each pagination scheme with a guard
-against a server that loops, and reads server-sent events and JSON lines whatever the chunks. A
-call is awaited for its data; `asResponse()` and `withResponse()` give the raw response.
+type-checks with `lib: ["es2022"]` alone. A call goes to the call's `baseURL`, else the
+client's, else the operation's own servers (an operation's over its Path Item's), else the
+config's environment, else the description's first server: each `{name}` of a server's URL is the
+caller's `serverVariables` value, checked against the variable's `enum`, or else its `default`,
+and a relative server URL (`.`, `./v2`, `/v1`, one of another document written relative to the
+first) is resolved against `descriptionURL`, where the description is served (OpenAPI 3.1 and
+3.2, "Relative References in API URLs"); a URL with a user name or password in it is never sent.
+
+The runtime retries by RFC 9110 9.2.2: a failed connection, or a 408, 409, 429 or 5xx, is retried
+when the request is idempotent (GET, HEAD, OPTIONS, TRACE, PUT, DELETE), when the server answers
+`x-should-retry: true` (`false` stops any retry), or when it carries an idempotency key: with
+`defaults.idempotency_key: Idempotency-Key` in `flowapi-sdk.yml`, every call of another method
+(POST, PATCH) sends a random key in that header, the same on each of its attempts, so that the
+server can apply it once. A POST without one is never sent twice on the client's own. A 403 is
+not retried; a status that is no status code is read as a 5xx. `retries` is 1 unless the config
+says more, as a retry that failed is not retried again; a larger `maxRetries` is the caller's
+choice. The wait is what `retry-after-ms` or `Retry-After` ask (a wait past `maxRetryDelay` is
+refused), else a backoff. Redirects are followed by the runtime, not by `fetch`: every 3xx with a
+`Location` but 304, 305 and 306; a 303 as a GET with no content, a POST redirected by 301 or 302
+as a GET as browsers do, any other method and status with its method and content kept; a
+`Location` with no fragment keeps the request's; a loop is refused at once and a chain after 20; a
+redirect to another origin is refused unless `allowCrossOriginRedirects`, and then goes without
+the credentials. A GET or HEAD with content, and an OPTIONS with content but no `Content-Type`,
+are refused before anything is sent.
+
+It also times each attempt out with its body read, removes its listener from the caller's
+`AbortSignal`, sends the credentials of the first security alternative it can meet, masks them in
+its logs, reads lists by each pagination scheme with a guard against a server that loops, and
+reads server-sent events and JSON lines whatever the chunks. A call is awaited for its data;
+`asResponse()` and `withResponse()` give the raw response.
+
+#### Authentication
+
+The client sends what an operation's security says, as OpenAPI writes it: the alternatives in
+order, the first it holds every credential of; the schemes of one alternative together; `{}` a
+credential that is optional, `security: []` none; an operation's own over the description's,
+and a name in a referenced document read from the entry document (Appendix F). Each scheme is an
+option of the client, else read from the environment variables `auth` names:
+
+| Scheme | Sent as |
+| --- | --- |
+| `apiKey` | The key in its header, query parameter or cookie |
+| `http` `bearer` | `Authorization: Bearer <token>`, the token held to RFC 6750's syntax |
+| `http` `basic` | `Authorization: Basic <base64>` of the UTF-8 `user:password` (RFC 7617: no `:` in the user-id, no control character) |
+| another `http` scheme | `Authorization: <scheme> <credential>`; one that answers a challenge (`digest`, `negotiate`, `hoba`, ...) is refused, and a call gives `Authorization` itself |
+| `oauth2`, `openIdConnect` | `Authorization: Bearer <token>`, a token or a function that gives one |
+| `oauth2` with a client credentials flow | The same, the token requested by the client (RFC 6749 4.4): a POST of the form to `tokenUrl` (relative to the server's URL where it is relative, its query kept), the client's id and secret by HTTP basic and never in the body, the scopes the operation needs; held until shortly before it expires, one request for the calls that wait on it, requested again once on a 401; an error answer is a `TokenError` |
+| `mutualTLS` | Nothing a request carries: the option `true`, and a `fetch` that presents the certificate |
+
+A call none of whose alternatives can be met throws `CredentialError` before sending, naming the
+options and variables that would meet each. Credentials go only over `https:` or to `localhost`,
+`127.0.0.1` and `[::1]`; elsewhere `InsecureCredentialError`, unless `allowInsecureCredentials:
+true`, thrown on the call's base URL before any credential is read or token requested. A deprecated scheme still works, its option marked `@deprecated`.
+
+The config declares what the description lacks, as the Security Scheme Object names it, and a
+`security` over the operations' (the top level for those with none of their own, a method's over
+everything):
+
+```yaml
+auth:
+  Token: { type: http, scheme: bearer, env_var: GITHUB_TOKEN }           # a scheme the description lacks
+  ApiKey: { env_var: ACME_KEY }                                          # one it declares: options only
+  Admin: { type: http, scheme: basic, username_env_var: ACME_USER, password_env_var: ACME_PASSWORD }
+  Service: { type: oauth2, token_url: https://login.acme.com/token, client_id_env_var: ACME_ID, client_secret_env_var: ACME_SECRET, scopes: [read] }
+security: [{ Token: [] }, {}]                                            # a token, optional
+```
+
+`config check` errs on a scheme of the description given a `type` again (`config.auth.declared`),
+a name no scheme has (`config.auth.unknown`, `config.security.unknown`), a missing or foreign
+member (`config.auth.field`), a `type` or `in` no scheme has (`config.auth.type`,
+`config.auth.in`) and an option of another kind or without its pair (`config.auth.option`). It
+warns when no operation needs a credential (`config.auth.none`; `security: []` says so on
+purpose), of a scheme an operation needs that `auth` does not list (`config.auth.unlisted`) or
+that names no variable (`config.auth.env`), and of the description's own: a scheme that answers a
+challenge (`config.auth.refused`), a client certificate (`config.auth.mutual_tls`), a deprecated
+scheme (`config.auth.deprecated`). The draft lists every scheme with a variable named after the
+API and the scheme, and, for a description without security, a commented example and no
+`security`, so `config check` warns `config.auth.none` until it is declared or `security: []` is
+written. The generated repository's mock answers 401 with what is missing, its token
+endpoint holds the client to RFC 6749, its tests send made-up credentials of each kind, and its
+README has a row for every scheme.
 
 `flowapi generate` writes the SDK's whole repository around that client:
 
@@ -238,9 +336,15 @@ dependency: built by `tsc` twice, ES modules and CommonJS, each with its types (
 `mock`); a mock server on `node:http` printed from the description, strict where a client goes
 wrong (a path, a method, a required parameter, a body's media type) and answering each operation
 with an example of its schema; a `node --test` file per resource calling every method against
-it; `README.md` (its counts and examples written from the config, never typed), `api.md`, the
-repository's `AGENTS.md`, the license (MIT or Apache-2.0), CI on Node 20, 22 and 24, and
-release-please's config. `.flowapi/lock.json` holds the hash of every file written, of the
+it; `README.md` (its counts and examples written from the config, never typed, and each example
+compiled against the client by flowapi's tests), `api.md` (every method's signature in the
+package's types), the repository's `AGENTS.md`, the license (MIT or Apache-2.0), CI on Node 20, 22
+and 24, and release-please's config. The README's heading is `readme.title`, else the
+description's `info.title` with `TypeScript SDK` (`Twilio Studio API` is `Twilio Studio TypeScript
+SDK`); its first paragraph is `readme.intro`, else `package.description`, which is also
+`package.json`'s description and defaults to a sentence of `info`; `package.keywords` go to
+`package.json`. Each method's doc comment is its operation's summary and description as plain
+text, with a link to its `externalDocs` and `@deprecated` where the description says so. `.flowapi/lock.json` holds the hash of every file written, of the
 description and of the config. A generated file changed by hand since is a conflict: nothing is
 written and it exits 1; `src/lib/` and `examples/` are the user's, `CHANGELOG.md` is written once,
 and a file the lock does not list is never touched. A file no longer generated is deleted unless

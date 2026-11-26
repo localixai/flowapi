@@ -1,14 +1,16 @@
 //! `flowapi config draft`: a first config for a description, made without an agent, for an agent
 //! to edit. Every operation is in a resource (`naming.rs`), each `GET` of a collection that
 //! looks paged pages by the likeliest scheme that fits it (`paging::suggest`), the environments
-//! are the description's absolute servers, `auth` its security schemes, `skip: []`. The same
+//! are the description's absolute servers, `auth` its security schemes (`draft/auth.rs`), `skip: []`. The same
 //! description gives the same text in whatever order its paths are written, and the text passes
-//! `config check` (a draft that does not is a bug of this module).
+//! `config check` (a draft that does not is a bug of this module), but for the warnings of a
+//! scheme no config can answer (`draft/auth.rs`).
 
+mod auth;
 mod naming;
 
 use crate::doc::Doc;
-use crate::model::{Auth, Server};
+use crate::model::Server;
 use crate::ops::Ops;
 use crate::out::yaml_str;
 use crate::paging::{Paging, suggest};
@@ -51,6 +53,13 @@ pub fn draft(docs: &Documents<'_>, spec: &str) -> Option<String> {
         .filter(|g| own(g))
         .map(|g| join(g, "_"))
         .collect();
+    // The paths with a `PUT` or `PATCH`: a `POST` to an item is its `update` only without one.
+    let edited: BTreeSet<&str> = ops
+        .list
+        .iter()
+        .filter(|op| matches!(op.operation.method.as_str(), "put" | "patch"))
+        .map(|op| op.operation.path.as_str())
+        .collect();
     let mut schemes: Vec<Paging> = Vec::new();
     let mut resources: Vec<(String, Vec<Method>)> = Vec::new();
     for (group, mut members) in groups {
@@ -61,10 +70,10 @@ pub fn draft(docs: &Documents<'_>, spec: &str) -> Option<String> {
             naming::resource(&group, &models, &title, &taken)
         };
         taken.insert(name.clone());
-        let names: Vec<(Vec<String>, Vec<String>)> = members
+        let names: Vec<Vec<Vec<String>>> = members
             .iter()
             .filter_map(|&i| ops.list.get(i))
-            .map(|op| naming::method(op, &group))
+            .map(|op| naming::method(op, &group, edited.contains(op.operation.path.as_str())))
             .collect();
         let mut methods = Vec::new();
         for (&i, method) in members.iter().zip(naming::methods(&names)) {
@@ -92,8 +101,8 @@ pub fn draft(docs: &Documents<'_>, spec: &str) -> Option<String> {
     let client = pascal(&title);
     head(&mut out, spec, &prose, &client);
     environments(&mut out, &ops.doc, &prose);
-    auth(&mut out, &ops.doc, &prose);
-    out.push_str("defaults:\n  retries: 2\n  timeout: 60\n  max_retry_delay: 60\n");
+    auth::auth(&mut out, &ops, &prose);
+    out.push_str("defaults:\n  retries: 1\n  timeout: 60\n  max_retry_delay: 60\n");
     if !schemes.is_empty() {
         out.push_str("pagination:\n");
         for (s, name) in schemes.iter().zip(&names) {
@@ -268,24 +277,5 @@ fn env_name(own: Option<Vec<String>>, n: usize, before: &[(String, String)]) -> 
     {
         Some(w) if free(&w) => w,
         Some(_) | None => format!("server_{n}"),
-    }
-}
-
-/// The description's security schemes by name, each read from an environment variable; a client
-/// certificate is its transport's, and left out.
-fn auth(out: &mut String, doc: &Doc<'_, '_>, title: &[String]) {
-    let mut schemes: Vec<_> = doc
-        .schemes(&mut Diagnostics::default())
-        .into_iter()
-        .filter(|s| s.auth != Auth::MutualTls)
-        .collect();
-    schemes.sort_by(|a, b| a.name.cmp(&b.name));
-    if schemes.is_empty() {
-        return;
-    }
-    out.push_str("auth:\n");
-    for s in schemes {
-        let env = upper(&[title.to_vec(), words(&s.name)].concat());
-        let _ = writeln!(out, "  {}:\n    env_var: {env}", yaml_str(&s.name));
     }
 }

@@ -1,0 +1,55 @@
+{
+ "swagger": "2.0",
+ "info": { "title": "forms", "version": "1" },
+ "host": "forms.example",
+ "paths": {
+  "/tags": {
+   "parameters": [{ "name": "shared", "in": "formData", "type": "array", "items": { "type": "string" }, "collectionFormat": "pipes" }],
+   "post": {
+    "operationId": "postTags",
+    "consumes": ["application/x-www-form-urlencoded"],
+    "parameters": [
+     { "name": "csv", "in": "formData", "type": "array", "items": { "type": "string" } },
+     { "name": "multi", "in": "formData", "type": "array", "items": { "type": "string" }, "collectionFormat": "multi" },
+     { "name": "ssv", "in": "formData", "type": "array", "items": { "type": "string" }, "collectionFormat": "ssv" },
+     { "name": "tsv", "in": "formData", "type": "array", "items": { "type": "string" }, "collectionFormat": "tsv" },
+     { "name": "odd", "in": "formData", "type": "array", "items": { "type": "string" }, "collectionFormat": "commas" },
+     { "name": "plain", "in": "formData", "type": "string" },
+     { "name": "grid", "in": "formData", "type": "array", "collectionFormat": "multi", "items": { "type": "array", "collectionFormat": "pipes", "items": { "type": "array", "items": { "type": "integer" } } } },
+     { "name": "bad", "in": "formData", "type": "array", "items": { "type": "array", "collectionFormat": "multi", "items": { "type": "string" } } }
+    ],
+    "responses": { "204": { "description": "done" } }
+   }
+  },
+  "/upload": {
+   "post": {
+    "operationId": "upload",
+    "parameters": [
+     { "name": "file", "in": "formData", "type": "file", "required": true },
+     { "name": "sizes", "in": "formData", "type": "array", "items": { "type": "integer" }, "collectionFormat": "csv" },
+     { "name": "rows", "in": "formData", "type": "array", "items": { "type": "array", "collectionFormat": "tsv", "items": { "type": "string" } } }
+    ],
+    "responses": { "204": { "description": "done" } }
+   }
+  },
+  "/plain": {
+   "post": {
+    "operationId": "plainForm",
+    "parameters": [{ "name": "name", "in": "formData", "type": "string" }],
+    "responses": { "204": { "description": "done" } }
+   }
+  }
+ },
+ "x-flowapi-covers": [
+  "req: oas-2.0.parameter-object.in — formData fields written as the form body's members, a Path Item's shared one too (tsc.mjs's calls)",
+  "req: oas-2.0.parameter-object.type — upload: a `file` field makes the body multipart/form-data, its array field a part of its own",
+  "req: oas-2.0.operation-object.consumes — postTags: the form written as the one media type it consumes",
+  "req: oas-2.0.items-object.collectionFormat — postTags: grid's arrays inside arrays by each level's format, bad's multi (a parameter's alone) warned and read as csv; upload: rows's inner arrays tab-joined in one part"
+ ],
+ "x-flowapi-calls": [
+  {"operation": "postTags", "input": {"body": {"contentType": "application/x-www-form-urlencoded", "value": {"shared": ["a", "b"], "csv": ["a", "b"], "multi": ["a", "b"], "ssv": ["a", "b"], "tsv": ["a", "b"], "odd": ["a", "b"], "plain": "p q"}}}, "expect": {"body": "shared=a%7Cb&csv=a,b&multi=a&multi=b&ssv=a%20b&tsv=a%09b&odd=a,b&plain=p+q"}},
+  {"operation": "postTags", "input": {"body": {"contentType": "application/x-www-form-urlencoded", "value": {"grid": [[[1, 2], [3]], [[4]]], "bad": [["a", "b"], ["c"]]}}}, "expect": {"body": "grid=1,2%7C3&grid=4&bad=a,b,c"}},
+  {"operation": "upload", "input": {"body": {"contentType": "multipart/form-data; boundary=XyZ", "value": {"sizes": [1, 2]}}}, "expect": {"body": "--XyZ\r\nContent-Disposition: form-data; name=\"sizes\"\r\n\r\n1,2\r\n--XyZ--\r\n"}},
+  {"operation": "upload", "input": {"body": {"contentType": "multipart/form-data; boundary=XyZ", "value": {"rows": [["a", "b"], ["c"]]}}}, "expect": {"body": "--XyZ\r\nContent-Disposition: form-data; name=\"rows\"\r\n\r\na\tb,c\r\n--XyZ--\r\n"}}
+ ]
+}

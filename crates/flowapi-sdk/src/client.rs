@@ -4,12 +4,16 @@
 //! `src/core/*.ts` the runtime, the same for every API (`client/core/`, printed as written);
 //! `src/client.ts` the client class the config names, its settings and its options; and
 //! `src/resources/**.ts` a class per resource of the config's tree, each method calling its
-//! operation through the runtime (`client/resources.rs`). No I/O (G5): the files are returned.
+//! operation through the runtime (`client/resources.rs`). The operations table and the client
+//! are printed from the description's service with the config's credentials over it
+//! ([`service`]). No I/O (G5): the files are returned.
 
-mod entry;
+mod comment;
+pub(crate) mod entry;
 pub(crate) mod resources;
 
 use crate::config::{Checked, Issue, checked, issue::Issues};
+use crate::model::Service;
 use crate::ops::Ops;
 use crate::words;
 use flowapi::{Diagnostics, Documents, File, Program, Severity, Target};
@@ -29,7 +33,9 @@ const CORE: &[(&str, &str)] = &[
     ("request.ts", include_str!("client/core/request.ts")),
     ("retry.ts", include_str!("client/core/retry.ts")),
     ("send.ts", include_str!("client/core/send.ts")),
+    ("servers.ts", include_str!("client/core/servers.ts")),
     ("streaming.ts", include_str!("client/core/streaming.ts")),
+    ("token.ts", include_str!("client/core/token.ts")),
 ];
 
 /// What [`client_files`] made.
@@ -62,7 +68,7 @@ pub(crate) fn print(
     issues: Vec<Issue>,
     checked: &Checked,
 ) -> Generated {
-    let (service, diagnostics) = crate::read(docs, program);
+    let (service, diagnostics) = service(docs, program, checked);
     let mut out = Generated {
         files: Vec::new(),
         diagnostics,
@@ -84,21 +90,7 @@ pub(crate) fn print(
         out.files
             .push(file(&format!("src/core/{name}"), (*text).to_owned()));
     }
-    // Each method's endpoint in the program, by its route.
-    let endpoints: BTreeMap<String, usize> = program
-        .endpoints()
-        .iter()
-        .enumerate()
-        .map(|(i, e)| (route(&e.operation), i))
-        .collect();
-    let methods: Vec<Option<usize>> = checked
-        .resolved
-        .iter()
-        .map(|r| {
-            r.and_then(|i| ops.list.get(i))
-                .and_then(|op| endpoints.get(&route(&op.operation)).copied())
-        })
-        .collect();
+    let methods = endpoints(program, &ops, checked);
     let mut issues = Issues::default();
     let ctx = resources::Context {
         config: c,
@@ -114,6 +106,39 @@ pub(crate) fn print(
     out.files.push(file("src/index.ts", entry::index(c)));
     out.issues.extend(issues.list);
     out
+}
+
+/// Each method's endpoint in the program, by its operation's route.
+fn endpoints(program: &Program<'_>, ops: &Ops<'_, '_>, checked: &Checked) -> Vec<Option<usize>> {
+    let endpoints: BTreeMap<String, usize> = program
+        .endpoints()
+        .iter()
+        .enumerate()
+        .map(|(i, e)| (route(&e.operation), i))
+        .collect();
+    checked
+        .resolved
+        .iter()
+        .map(|r| {
+            r.and_then(|i| ops.list.get(i))
+                .and_then(|op| endpoints.get(&route(&op.operation)).copied())
+        })
+        .collect()
+}
+
+/// The service a config's client is printed from: the description's, with the schemes the
+/// config declares and its `security` over the operations' (`config/auth.rs`).
+pub(crate) fn service(
+    docs: &Documents<'_>,
+    program: &Program<'_>,
+    checked: &Checked,
+) -> (Service, Diagnostics) {
+    let (mut service, diagnostics) = crate::read(docs, program);
+    if let Some(ops) = Ops::read(docs).0 {
+        let methods = endpoints(program, &ops, checked);
+        crate::config::auth::apply(&checked.config, &mut service, &methods);
+    }
+    (service, diagnostics)
 }
 
 fn file(path: &str, text: String) -> File {

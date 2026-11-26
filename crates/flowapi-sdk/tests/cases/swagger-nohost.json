@@ -1,4 +1,6 @@
 {"swagger":"2.0","info":{"title":"no host","version":"1"},
+ "x-flowapi-covers":[
+  "req: oas-2.0.swagger-object.basePath.must-value-start-leading-slash — v3 read as /v3, with a warning"],
  "basePath":"v3","schemes":["https"],
  "paths":{"/y":{
   "get":{"operationId":"getY","schemes":["http"],"responses":{"200":{"description":"ok"}}}}}}

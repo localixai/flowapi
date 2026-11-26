@@ -1,5 +1,30 @@
 # @localix-ai/flowapi
 
+## 0.3.0
+
+### Minor Changes
+
+- f3f940c: The SDK writes request bodies by the description's Encoding Objects: by name, by position
+  (3.2's `prefixEncoding` and `itemEncoding`) and nested, with `style`, `explode` and
+  `allowReserved` for form members, and Swagger 2.0's `formData` `collectionFormat`. A form body
+  written from its content is percent-encoded by WHATWG's rules (a space as `+`), as OpenAPI 3.2
+  asks.
+- 2301860: SDK authentication: the generated client sends every kind of security scheme as OpenAPI and RFC 6749, 6750 and 7617 say (API keys, HTTP bearer and basic, other HTTP schemes, OAuth 2.0 and OpenID Connect tokens, and OAuth 2.0's client credentials grant run by the client itself), follows `security` exactly (alternatives in order, `{}`, `[]`, an operation's own over the description's, Appendix F), sends credentials only over TLS or to a loopback host unless `allowInsecureCredentials` is set, and throws `CredentialError`, `InsecureCredentialError` or `TokenError` before sending what it cannot. `flowapi-sdk.yml` declares the schemes and `security` a description lacks (`auth.<name>.type`, `security`, a method's `security`); `config check` has the `config.auth.*` and `config.security.unknown` codes, `config draft` names a variable for every scheme, and the generated repository's mock, tests and README cover each.
+- 32637b7: The generated client follows RFC 9110 on retries and redirects and the OpenAPI text on servers. A
+  POST, a PATCH or another method that is not idempotent is retried only when the server answers
+  `x-should-retry: true`, or when `defaults.idempotency_key` in `flowapi-sdk.yml` names a header:
+  then each call sends a random key in it, the same on its retries. A 403 is never retried, and the
+  default `retries` is 1. Every 3xx with a `Location` is followed except 304, 305 and 306; a
+  redirect loop is refused at once, and a `Location` with no fragment keeps the request's. Server
+  variables take the caller's `serverVariables` (checked against each `enum`), a relative server URL
+  is resolved against `descriptionURL`, and a URL with a user name or password is never sent.
+
+### Patch Changes
+
+- fb3337f: The SDK writes Swagger 2.0's `collectionFormat` in a path, a query and a header: `csv`, `ssv`,
+  `tsv` and `pipes` in each (`tsv` was written as `csv`), `multi` in a query, and an Items Object's
+  own `collectionFormat` for the arrays inside an array.
+
 ## 0.2.0
 
 ### Minor Changes

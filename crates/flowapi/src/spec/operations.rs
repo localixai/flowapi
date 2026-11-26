@@ -48,7 +48,8 @@ impl Location {
 }
 
 /// How a parameter's value is written (3.2, "Style Values"): RFC 6570's operators and the three
-/// query styles it has no operator for, and 3.2's `cookie`.
+/// query styles it has no operator for, 3.2's `cookie`, and Swagger 2.0's `tsv`. In 2.0 the
+/// delimited styles go in a path and a header too: a `collectionFormat` is allowed in each.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Style {
     /// `;name=value` (RFC 6570 `{;x}`), in a path.
@@ -63,6 +64,8 @@ pub enum Style {
     SpaceDelimited,
     /// Values joined by `|`, in a query (2.0's `pipes`).
     PipeDelimited,
+    /// Values joined by a tab: 2.0's `tsv`, which no 3.x style is.
+    TabDelimited,
     /// `name[key]=value` for each member of an object, in a query.
     DeepObject,
     /// `name=value; name=value` with no percent-encoding, in a cookie (3.2).
@@ -80,6 +83,7 @@ impl Style {
             Self::Form => "form",
             Self::SpaceDelimited => "spaceDelimited",
             Self::PipeDelimited => "pipeDelimited",
+            Self::TabDelimited => "tabDelimited",
             Self::DeepObject => "deepObject",
             Self::Cookie => "cookie",
         }
@@ -100,6 +104,11 @@ pub struct Serialization {
     pub allow_reserved: bool,
     /// The media type of `content`, when the value is serialized by it rather than by style.
     pub media_type: Option<String>,
+    /// Swagger 2.0: how the arrays inside an array value are joined, one style per level of
+    /// `items` that is an array, outermost first (an Items Object's `collectionFormat`):
+    /// `Simple` for `csv` (`,`), else a delimited style. Empty in 3.x, where an array inside a
+    /// value is its JSON text.
+    pub nested: Vec<Style>,
 }
 
 /// A parameter, or a response's header.
@@ -126,6 +135,13 @@ pub struct Media {
     pub media_type: String,
     /// What it holds.
     pub payload: Payload,
+    /// How a request's form members are written, by name in the order written; empty for any
+    /// other media type: `application/x-www-form-urlencoded`'s Encoding Objects (3.x), or Swagger
+    /// 2.0's array `formData` fields by their `collectionFormat` (under each form type). A
+    /// member written by style, as a `query` parameter of that style, has no `media_type`; one
+    /// written by its Encoding Object's `contentType` alone has it. A member not here is written
+    /// by the form's defaults.
+    pub encoding: Vec<(String, Serialization)>,
 }
 
 impl Media {

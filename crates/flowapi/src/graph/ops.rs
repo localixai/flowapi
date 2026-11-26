@@ -58,19 +58,16 @@ impl<'t> Builder<'_, 't> {
             Location::Header,
             Location::Cookie,
         ] {
-            let params: Vec<_> = op
+            let props: Vec<_> = op
                 .params
                 .iter()
                 .filter(|p| p.location == location)
-                .collect();
-            if params.is_empty() {
-                continue;
-            }
-            let required = params.iter().any(|p| p.required);
-            let props = params
-                .iter()
                 .map(|p| (p.name.clone(), self.param(p), p.required))
                 .collect();
+            if props.is_empty() {
+                continue;
+            }
+            let required = props.iter().any(|p| p.2);
             let ty = self.closed(props);
             locations.push((location.name().to_owned(), ty, required));
         }

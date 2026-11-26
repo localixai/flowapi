@@ -7,14 +7,19 @@ pub enum Format {
     Markdown,
     /// An xml2rfc v2 source.
     Rfc,
+    /// An RFCXML v3 source, as the RFC Editor publishes it (`rfcNNNN.xml`).
+    RfcXml,
+    /// An RFC's plain text, as the RFC Editor publishes it (`rfcNNNN.txt`), for the RFCs that
+    /// have no XML there.
+    RfcText,
 }
 
 /// One pinned text.
 #[derive(Debug, Clone, Copy)]
 pub struct Source {
-    /// `openapi` or `json-schema`.
+    /// `openapi`, `json-schema` or `rfc`.
     pub spec: &'static str,
-    /// The release: `3.1.2`, `2020-12`.
+    /// The release: `3.1.2`, `2020-12`; an RFC's number.
     pub version: &'static str,
     /// The path under `conformance/specs/`.
     pub file: &'static str,
@@ -25,7 +30,14 @@ pub struct Source {
 }
 
 /// Every text, in the order the report lists them.
-pub const SOURCES: [Source; 5] = [
+pub const SOURCES: [Source; 11] = [
+    Source {
+        spec: "openapi",
+        version: "2.0",
+        file: "openapi/2.0.md",
+        prefix: "oas-2.0",
+        format: Format::Markdown,
+    },
     Source {
         spec: "openapi",
         version: "3.0.4",
@@ -60,6 +72,41 @@ pub const SOURCES: [Source; 5] = [
         file: "json-schema-2020-12/jsonschema-validation.xml",
         prefix: "jsonschema-2020-12.validation",
         format: Format::Rfc,
+    },
+    Source {
+        spec: "rfc",
+        version: "6749",
+        file: "rfc/rfc6749.txt",
+        prefix: "rfc6749",
+        format: Format::RfcText,
+    },
+    Source {
+        spec: "rfc",
+        version: "6750",
+        file: "rfc/rfc6750.txt",
+        prefix: "rfc6750",
+        format: Format::RfcText,
+    },
+    Source {
+        spec: "rfc",
+        version: "7578",
+        file: "rfc/rfc7578.txt",
+        prefix: "rfc7578",
+        format: Format::RfcText,
+    },
+    Source {
+        spec: "rfc",
+        version: "7617",
+        file: "rfc/rfc7617.txt",
+        prefix: "rfc7617",
+        format: Format::RfcText,
+    },
+    Source {
+        spec: "rfc",
+        version: "9110",
+        file: "rfc/rfc9110.xml",
+        prefix: "rfc9110",
+        format: Format::RfcXml,
     },
 ];
 

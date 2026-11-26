@@ -1,0 +1,17 @@
+{
+ "openapi": "3.0.3",
+ "info": { "title": "GitHub-like", "version": "1" },
+ "servers": [{ "url": "https://api.github.example" }],
+ "paths": {
+  "/user": { "get": { "operationId": "users/get-authenticated", "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/repos/{owner}/{repo}": { "get": { "operationId": "repos/get", "parameters": [{ "name": "owner", "in": "path", "required": true, "schema": { "type": "string" } }, { "name": "repo", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/meta": { "get": { "operationId": "meta/get", "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/app/hook": { "get": { "operationId": "apps/get-webhook", "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+  "/enterprise/settings": { "get": { "operationId": "enterprise/get-settings", "responses": { "200": { "$ref": "#/components/responses/Ok" } } } }
+ },
+ "components": {
+  "responses": {
+   "Ok": { "description": "ok", "content": { "application/json": { "schema": { "type": "object", "properties": { "login": { "type": "string" } } } } } }
+  }
+ }
+}

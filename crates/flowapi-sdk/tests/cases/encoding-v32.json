@@ -1,0 +1,83 @@
+{
+ "openapi": "3.2.0",
+ "info": { "title": "encoding in 3.2", "version": "1" },
+ "paths": {
+  "/batch": {
+   "post": {
+    "operationId": "postBatch",
+    "requestBody": {
+     "content": {
+      "multipart/mixed": {
+       "schema": {
+        "type": "array",
+        "prefixItems": [{ "type": "array" }, { "type": "array", "prefixItems": [{ "type": "object" }, { "type": "string" }, {}] }, { "$ref": "#/components/schemas/Encoded" }],
+        "items": { "allOf": [{ "type": "string" }, { "contentEncoding": "base64url" }] }
+       },
+       "prefixEncoding": [
+        {},
+        { "contentType": "multipart/mixed", "prefixEncoding": [{ "contentType": "application/xml" }, {}, { "contentType": "image/png" }], "x-note": "nothing" },
+        { "headers": { "Content-Transfer-Encoding": { "schema": { "const": "base64" } } } }
+       ],
+       "encoding": { "ignored": { "contentType": "text/csv" } }
+      },
+      "multipart/form-data": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "scan": { "$ref": "#/components/schemas/Scan" },
+         "either": { "oneOf": [{ "type": "string", "contentEncoding": "base64" }, { "type": "integer" }] },
+         "shot": { "type": "string", "contentMediaType": "image/png" }
+        }
+       },
+       "encoding": {
+        "meta": { "contentType": "multipart/form-data", "encoding": { "a": { "contentType": "application/json" } }, "headers": { "X-A": { "schema": { "type": "string" } } } },
+        "shot": { "contentType": "image/jpeg" },
+        "deep": { "contentType": "multipart/mixed", "itemEncoding": { "contentType": "multipart/mixed", "itemEncoding": { "contentType": "multipart/mixed", "itemEncoding": { "contentType": "multipart/mixed", "itemEncoding": { "contentType": "text/plain" } } } } }
+       },
+       "itemEncoding": { "contentType": "text/plain" }
+      },
+      "application/x-www-form-urlencoded": {
+       "schema": { "type": "object" },
+       "prefixEncoding": [{ "contentType": "text/plain" }],
+       "encoding": { "n": { "explode": true, "headers": { "X-N": { "schema": { "type": "string" } } } } }
+      },
+      "application/json": { "schema": {}, "itemEncoding": { "contentType": "text/plain" } }
+     }
+    },
+    "responses": { "204": { "description": "done" } }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "Scan": { "allOf": [{ "$ref": "#/components/schemas/Encoded" }, { "maxLength": 100 }] },
+   "Encoded": { "type": "string", "contentEncoding": "base64" }
+  }
+ },
+ "x-flowapi-covers": [
+  "req: oas-3.2.media-type-object.prefixEncoding — multipart/mixed: its three Encoding Objects by position",
+  "req: oas-3.2.media-type-object.itemEncoding — multipart/mixed: the items after them by items' schema; multipart/form-data's itemEncoding kept for its array form",
+  "req: oas-3.2.media-type-object.prefixEncoding.shall-prefixencoding-field-only-apply-media-type — the form's prefixEncoding read nowhere",
+  "req: oas-3.2.media-type-object.itemEncoding.shall-itemencoding-field-only-apply-media-type — application/json's itemEncoding read nowhere",
+  "req: oas-3.2.media-type-object.encoding.shall-encoding-field-only-apply-media-type — multipart/mixed's encoding (by name, for no named type) read nowhere",
+  "req: oas-3.2.media-type-object.encoding-usage-and-restrictions.shall-each-field-own-set-media-types — encoding for the form and multipart/form-data, prefixEncoding and itemEncoding for multipart, none for JSON",
+  "req: oas-3.2.encoding-object.headers.shall-field-ignored-media-type-not-multipart — n: the form's headers give nothing",
+  "req: oas-3.2.encoding-object.style.shall-field-ignored-media-type-not-application — multipart/mixed's Encoding Objects: no style read; the form's n: explode read",
+  "req: oas-3.2.encoding-object.explode.shall-field-ignored-media-type-not-application — explode read for the form only here",
+  "req: oas-3.2.encoding-object.allowReserved.shall-field-ignored-media-type-not-application — allowReserved read for no multipart/mixed part",
+  "req: oas-3.2.encoding-object.encoding — meta: its nested encoding by name, read for its multipart/form-data",
+  "req: oas-3.2.encoding-object.prefixEncoding — the second part: its nested prefixEncoding, as 3.2's own example",
+  "req: oas-3.2.encoding-object.itemEncoding — deep: nested itemEncoding read",
+  "req: oas-3.2.encoding-object.nested-encoding.must-implementations-support-one-level-nesting-support — the second part and meta nested one level; deep read to four levels, the fifth a warning",
+  "req: oas-3.2.encoding-object.common-fixed-fields.may-object-extended-specification-extensions — the second part's x-note read as nothing",
+  "req: oas-3.2.encoding-object.content-transfer-encoding-and-contentencoding.shall-note-stated-working-binary-data-encoding — shot: image/jpeg, not contentMediaType image/png",
+  "req: oas-3.2.schema-object.non-json-data.must-inspecting-schemas-given-starting-point-schema — scan: contentEncoding behind $ref then allOf then $ref makes it application/octet-stream; the third part and the items likewise, with Content-Transfer-Encoding",
+  "req: oas-3.2.schema-object.non-json-data.must-not-implementations-inspect-subschemas-possible-reference-targets — either: a contentEncoding inside oneOf is not looked into, no type is guessed",
+  "req: oas-3.2.schema-object.non-json-data.must-due-limited-requirements-searching-schemas-serializers — a code generator falls back to the schemas: what the data cannot tell (a string's text encoded) the table says"
+ ],
+ "x-flowapi-calls": [
+  {"operation": "postBatch", "randoms": ["22222222222222222222222222222222"], "input": {"body": {"contentType": "multipart/mixed; boundary=XyZ", "value": [[1, 2], ["<a/>", "t", "P"], "QUJD", "eHk"]}}, "expect": {"body": "--XyZ\r\nContent-Type: application/json\r\n\r\n[1,2]\r\n--XyZ\r\nContent-Type: multipart/mixed; boundary=flowapi-22222222222222222222222222222222\r\n\r\n--flowapi-22222222222222222222222222222222\r\nContent-Type: application/xml\r\n\r\n<a/>\r\n--flowapi-22222222222222222222222222222222\r\n\r\nt\r\n--flowapi-22222222222222222222222222222222\r\nContent-Type: image/png\r\n\r\nP\r\n--flowapi-22222222222222222222222222222222--\r\n\r\n--XyZ\r\nContent-Type: application/octet-stream\r\nContent-Transfer-Encoding: base64\r\n\r\nQUJD\r\n--XyZ\r\nContent-Type: application/octet-stream\r\nContent-Transfer-Encoding: base64url\r\n\r\neHk\r\n--XyZ--\r\n"}},
+  {"operation": "postBatch", "input": {"body": {"contentType": "multipart/form-data; boundary=XyZ", "value": {"shot": "J", "scan": "QUJD", "either": "QUJD"}}}, "expect": {"body": "--XyZ\r\nContent-Disposition: form-data; name=\"shot\"\r\nContent-Type: image/jpeg\r\n\r\nJ\r\n--XyZ\r\nContent-Disposition: form-data; name=\"scan\"\r\nContent-Type: application/octet-stream\r\n\r\nQUJD\r\n--XyZ\r\nContent-Disposition: form-data; name=\"either\"\r\n\r\nQUJD\r\n--XyZ--\r\n"}},
+  {"operation": "postBatch", "input": {"body": {"contentType": "application/x-www-form-urlencoded", "value": {"n": {"a": 1, "b": 2}}}}, "expect": {"body": "a=1&b=2"}}
+ ]
+}

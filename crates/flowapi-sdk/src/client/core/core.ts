@@ -2,22 +2,27 @@
 //
 // The client's runtime: its options resolved once, then every call made the same way. The
 // operation's `<op>Request` writes the request (no I/O, the description's styles); its
-// credentials are attached by its security; the base URL, the caller's headers and query are
-// added; the attempts are made and retried (`retry.ts`); a success's body is read back by
-// `<op>Response`, as bytes or as text by its `Content-Type`, and any other status thrown as an
-// `APIError` with the body read the same way. No middleware: `fetch` and `fetchOptions` are
-// where a caller changes how a request goes.
+// credentials are attached by its security; the base URL (`servers.ts`), the caller's headers
+// and query are added; a call of a method that is not idempotent gets one idempotency key for all
+// its attempts, where the config names its header; the attempts are made and retried
+// (`retry.ts`); a success's body is read back by `<op>Response`, as bytes or as text by its
+// `Content-Type`, and any other status thrown as an `APIError` with the body read the same way.
+// A 401 to a call that sent a token the client requested itself forgets that token and makes the
+// call once more with a new one (RFC 6750 3.1): the auth layer's one renewal, not a retry of
+// RFC 9110's, so it spends none of `maxRetries` and is made for a POST too, as a 401 says the
+// request was not applied (15.5.2). No middleware: `fetch` and `fetchOptions` are where a caller
+// changes how a request goes.
 
-import { type Applied, type AuthSetting, type SchemeEntry, authorize, authorizeEvery } from "./auth.js";
-import { APIConnectionError, APIError, APIUserAbortError, SdkError } from "./errors.js";
+import { type Applied, type AuthSetting, type Context, type SchemeEntry, authorize, authorizeEvery, guard } from "./auth.js";
+import { APIConnectionError, APIError, APIUserAbortError, SdkError, handledAs } from "./errors.js";
 import { type LogLevel, type Secrets, makeLogger, maskHeaders, redactURL, secretsOf } from "./log.js";
-import { type Fetch, type FetchResponse, type Logger, type Signal, platform, readEnv } from "./platform.js";
+import { type Fetch, type FetchResponse, type Logger, type Signal, platform, randomKey, readEnv } from "./platform.js";
 import { type HeadersInput, type QueryInput, addPairs, joinURL, mergeHeaders, namedHeaders, setQuery } from "./request.js";
-import { MAX_TIMER, backoff, retryable, serverDelay, sleep } from "./retry.js";
+import { MAX_TIMER, backoff, idempotent, retryable, serverDelay, sleep } from "./retry.js";
 import { type Answer, type Wire, attempt, discard, readBody } from "./send.js";
+import { type ServerEntry, type ServerVariables, checkDescriptionURL, isAbsolute, refuseUserinfo, resolved, serverURL } from "./servers.js";
+import { Tokens } from "./token.js";
 
-/** A server of the description, as the operations table gives it. */
-export type ServerEntry = { readonly url: string; readonly variables?: { readonly [name: string]: { readonly default: string } } };
 
 /** What the generator decided from the config: printed in the client's module. */
 export type Settings = {
@@ -30,6 +35,8 @@ export type Settings = {
   readonly timeout: number;
   readonly maxRetries: number;
   readonly maxRetryDelay: number;
+  /** The header a call of a method that is not idempotent sends its idempotency key in. */
+  readonly idempotencyHeader?: string;
   readonly servers: readonly ServerEntry[];
   readonly schemes: { readonly [name: string]: SchemeEntry };
   readonly readsBytes: (contentType: string | null | undefined) => boolean;
@@ -41,34 +48,54 @@ export type ClientOptions<Environment extends string = string> = {
   baseURL?: string | null | undefined;
   /** One of the config's environments, by name. */
   environment?: Environment | undefined;
+  /** Values of the servers' variables, by name, over their defaults; each one of its `enum`. */
+  serverVariables?: ServerVariables | undefined;
+  /** Where the description is served: a relative server URL is resolved against it. */
+  descriptionURL?: string | undefined;
   /** Milliseconds an attempt may take, its body read; `null` for no limit. */
   timeout?: number | null | undefined;
-  /** How many times a failed attempt is tried again. */
+  /** How many times a failed attempt is tried again; a request that may not be sent twice (a
+   * POST or a PATCH with no idempotency key) is not, unless the server says so. */
   maxRetries?: number | undefined;
   /** The longest wait in milliseconds a server may ask for before a retry; `null` for any. */
   maxRetryDelay?: number | null | undefined;
   /** The most pages a list is read to before it is refused as endless. */
   maxPages?: number | undefined;
+  /** The `fetch` requests are sent with: the platform's unless given. */
   fetch?: Fetch | undefined;
   /** What every `fetch` is given beside the client's own members (`dispatcher`, `credentials`). */
   fetchOptions?: { readonly [option: string]: unknown } | undefined;
+  /** Headers every request sends; the operation's own headers and a call's `headers` win over them. */
   defaultHeaders?: HeadersInput | undefined;
+  /** Query parameters every request sends, where the operation sets none of that name; a call's `query` wins over them. */
   defaultQuery?: QueryInput | undefined;
+  /** The least level logged (`off`, `error`, `warn`, `info`, `debug`): the log environment variable's unless given, else `warn`. */
   logLevel?: LogLevel | undefined;
+  /** Where the log goes: `console` unless given. */
   logger?: Logger | undefined;
   /** Follow a redirect to another origin, with the headers that carry credentials removed. */
   allowCrossOriginRedirects?: boolean | undefined;
+  /** Send credentials over plain `http:` to a host that is not loopback (never by default). */
+  allowInsecureCredentials?: boolean | undefined;
 };
 
 /** What one call may change. */
 export type RequestOptions = {
+  /** Headers of this call, over the client's and the operation's; `null` removes one. */
   headers?: HeadersInput | undefined;
+  /** Query parameters of this call, over the client's and the operation's. */
   query?: QueryInput | undefined;
+  /** The base URL of this call, over the client's. */
   baseURL?: string | undefined;
+  /** Milliseconds each attempt of this call may take, its body read; `null` for no limit. */
   timeout?: number | null | undefined;
+  /** How many times this call is tried again when it fails. */
   maxRetries?: number | undefined;
+  /** The most pages this list is read to. */
   maxPages?: number | undefined;
+  /** Aborts the call: it then throws `APIUserAbortError`. */
   signal?: Signal | undefined;
+  /** What this call's `fetch` is given beside the client's `fetchOptions`. */
   fetchOptions?: { readonly [option: string]: unknown } | undefined;
 };
 
@@ -78,7 +105,7 @@ export type Operation = {
   readonly path: string;
   readonly servers?: readonly ServerEntry[];
   readonly security: readonly { readonly [scheme: string]: readonly string[] }[];
-  readonly encoding?: { readonly [mediaType: string]: unknown };
+  readonly encoding?: { readonly [mediaType: string]: { readonly encoding?: unknown; readonly prefixEncoding?: unknown; readonly itemEncoding?: unknown } };
   readonly request: (input: never) => { method: string; path: string; query: string; headers: Record<string, string>; body?: string | Uint8Array };
   readonly response: (status: number, headers: Record<string, string>, body: string | Uint8Array) => { response: string | null; body: unknown };
 };
@@ -97,13 +124,6 @@ function check(name: string, value: number, integer: boolean, min: number): numb
   return value;
 }
 
-/** A server's URL with each variable's default. */
-function serverURL(s: ServerEntry): string {
-  return s.url.replace(/\{([^}]*)\}/g, (all, name: string) => s.variables?.[name]?.default ?? all);
-}
-
-const ABSOLUTE = /^[a-z][a-z0-9+.-]*:/i;
-
 export class Core {
   readonly settings: Settings;
   readonly options: Readonly<ClientOptions> & { readonly [credential: string]: unknown };
@@ -114,7 +134,9 @@ export class Core {
   readonly maxPages: number;
   readonly log: Logger;
   readonly secrets: Secrets;
+  readonly tokens: Tokens;
   readonly #explicit: boolean;
+  readonly #descriptionURL: string | undefined;
   #calls = 0;
 
   constructor(settings: Settings, options: ClientOptions & { readonly [credential: string]: unknown }) {
@@ -130,53 +152,103 @@ export class Core {
     const env = settings.baseURLEnv === undefined || options.baseURL === null ? undefined : readEnv(settings.baseURLEnv);
     const named = options.environment ?? settings.defaultEnvironment ?? Object.keys(settings.environments)[0];
     const environment = named === undefined ? undefined : settings.environments[named];
-    if (options.environment !== undefined && environment === undefined) throw new RangeError(`no environment is named \`${options.environment}\``);
+    if (options.environment !== undefined && environment === undefined) throw new RangeError(`no environment is named \`${options.environment}\`: give one of ${Object.keys(settings.environments).map((n) => `\`${n}\``).join(", ") || "none (the config names no environment)"}`);
     const first = settings.servers[0];
     this.#explicit = options.baseURL != null || env !== undefined;
-    this.baseURL = options.baseURL ?? env ?? environment ?? (first === undefined ? null : serverURL(first));
+    this.#descriptionURL = checkDescriptionURL(options.descriptionURL);
+    this.baseURL = options.baseURL ?? env ?? environment ?? (first === undefined ? null : this.#server(first));
     this.log = makeLogger(options.logLevel, settings.logEnv, options.logger);
     this.secrets = secretsOf(settings.schemes);
+    this.tokens = new Tokens((url, headers, body) => this.#post(url, headers, body), options.allowInsecureCredentials === true);
+  }
+
+  /** A token endpoint asked: one attempt with the client's `fetch` and timeout, its body text. */
+  async #post(url: string, headers: Record<string, string>, body: string): Promise<{ status: number; text: string }> {
+    const g = platform();
+    const how = { fetch: this.options.fetch ?? g.fetch ?? missingFetch, fetchOptions: { ...this.options.fetchOptions }, timeout: this.timeout, signal: undefined, crossOrigin: false, secretHeaders: this.secrets.headers };
+    this.log.info(`token POST ${redactURL(url, this.secrets)}`);
+    const answer = await attempt({ method: "POST", url, headers, body }, how);
+    const text = await readBody(answer, false, undefined);
+    this.log.info(`token ${answer.response.status}`);
+    return { status: answer.response.status, text: typeof text === "string" ? text : "" };
+  }
+
+  /** A server's URL: its variables' values, resolved against where the description is served. */
+  #server(s: ServerEntry): string {
+    return resolved(serverURL(s, this.options.serverVariables), this.#descriptionURL);
   }
 
   /** The base URL of an operation: the call's, the client's own, the operation's servers', the
    * client's environment. A relative one cannot be sent to. */
   #base(op: Operation | undefined, options: RequestOptions): string {
     const own = op?.servers?.[0];
-    const base = options.baseURL ?? (this.#explicit || own === undefined ? this.baseURL : serverURL(own));
-    if (base === null || !ABSOLUTE.test(base)) {
-      throw new SdkError(`the base URL ${JSON.stringify(base)} is not absolute: give \`baseURL\` to ${this.settings.client}`);
+    const base = options.baseURL ?? (this.#explicit || own === undefined ? this.baseURL : this.#server(own));
+    if (base === null || !isAbsolute(base)) {
+      throw new SdkError(`the base URL ${JSON.stringify(base)} is not absolute: give \`baseURL\` to ${this.settings.client}, or \`descriptionURL\`, where the description is served`);
     }
-    return base;
+    return refuseUserinfo(base);
   }
 
-  /** The request a call sends, before its attempts. */
-  async #wire(op: Operation | undefined, wrote: ReturnType<Operation["request"]>, options: RequestOptions, url?: string): Promise<Wire> {
+  /** The request a call sends, before its attempts, and how to forget the tokens it carries;
+   * `key` the idempotency key of the call's first wire, kept when it is written again. */
+  async #wire(op: Operation | undefined, wrote: ReturnType<Operation["request"]>, options: RequestOptions, url?: string, key?: string): Promise<{ wire: Wire; renew: (() => void)[] }> {
     const given = {
       headers: namedHeaders(this.options.defaultHeaders, options.headers),
       query: new Set([...Object.keys(this.options.defaultQuery ?? {}), ...Object.keys(options.query ?? {})]),
     };
     const what = op === undefined ? `${wrote.method} ${wrote.path}` : `\`${wrote.method} ${op.path}\``;
     const { schemes, auth: settings } = this.settings;
-    const auth: Applied = op === undefined ? await authorizeEvery(schemes, settings, this.options, given) : await authorize(what, op.security, schemes, settings, this.options, given);
+    const base = url ?? this.#base(op, options);
+    const allow = this.options.allowInsecureCredentials === true;
+    const ctx: Context = { options: this.options, given, tokens: this.tokens, base, guard: () => guard(base, allow) };
+    const auth: Applied = op === undefined ? await authorizeEvery(schemes, settings, ctx) : await authorize(what, op.security, schemes, settings, ctx);
     const headers = mergeHeaders(auth.headers, this.options.defaultHeaders, wrote.headers, options.headers);
     if (auth.cookies.length > 0) headers["cookie"] = [headers["cookie"], ...auth.cookies].filter((c) => c !== undefined && c !== "").join("; ");
     let full: string;
     if (url === undefined) {
       const query = setQuery(setQuery(wrote.query, this.options.defaultQuery, true), options.query, false);
-      full = joinURL(this.#base(op, options), wrote.path, addPairs(query, auth.query));
+      full = joinURL(base, wrote.path, addPairs(query, auth.query));
     } else {
       const q = url.indexOf("?");
       full = q < 0 ? joinURL(url, "", addPairs("", auth.query)) : url.slice(0, q + 1) + addPairs(url.slice(q + 1), auth.query);
     }
-    return { method: wrote.method.toUpperCase(), url: full, headers, body: wrote.body };
+    const method = wrote.method.toUpperCase();
+    // Fetch sends no content with GET or HEAD (RFC 9110 9.3.1, 9.3.2); content with OPTIONS
+    // says what it is (9.3.7).
+    if (wrote.body !== undefined && (method === "GET" || method === "HEAD")) throw new SdkError(`${what}: a ${method} request carries no content`);
+    if (wrote.body !== undefined && method === "OPTIONS" && headers["content-type"] === undefined) throw new SdkError(`${what}: an OPTIONS request with content needs a Content-Type`);
+    const header = this.settings.idempotencyHeader?.toLowerCase();
+    if (header !== undefined && !idempotent(method) && headers[header] === undefined) headers[header] = key ?? randomKey();
+    return { wire: { method, url: full, headers, body: wrote.body }, renew: auth.renew };
   }
 
-  /** A call made: its attempts, retried, and its body read by `mode`. `url` replaces the URL the
-   * operation's input makes (a page's `next` link). */
+  /** A call made: its attempts (`#attempts`); a 401 to a token the client requested makes it once
+   * more with a new one, the same idempotency key and what is left of `maxRetries`. `url`
+   * replaces the URL the operation's input makes (a page's `next`). */
   async send(op: Operation | undefined, wrote: ReturnType<Operation["request"]>, options: RequestOptions = {}, mode: Mode = "data", url?: string): Promise<Sent> {
+    const first = await this.#wire(op, wrote, options, url);
+    const spent = { retries: 0 };
+    try {
+      return await this.#attempts(op, first.wire, options, mode, spent);
+    } catch (error) {
+      if (!(error instanceof APIError) || error.status !== 401 || first.renew.length === 0) throw error;
+      for (const forget of first.renew) forget();
+      this.log.info(`401 to a requested token: requesting another, once`);
+      const header = this.settings.idempotencyHeader?.toLowerCase();
+      const again = await this.#wire(op, wrote, options, url, header === undefined ? undefined : first.wire.headers[header]);
+      return await this.#attempts(op, again.wire, options, mode, spent);
+    }
+  }
+
+  /** A call's attempts, retried, and its body read by `mode`; `spent` the retries the call made
+   * so far, shared by the wires of one call. */
+  async #attempts(op: Operation | undefined, wire: Wire, options: RequestOptions, mode: Mode, spent: { retries: number }): Promise<Sent> {
     const maxRetries = options.maxRetries === undefined ? this.maxRetries : check("maxRetries", options.maxRetries, true, 0);
     const timeout = options.timeout === undefined ? this.timeout : options.timeout === null ? null : check("timeout", options.timeout, true, 1);
-    const wire = await this.#wire(op, wrote, options, url);
+    // Sent twice, a request that is not idempotent may be applied twice (RFC 9110 9.2.2): it is
+    // retried only with an idempotency key, or when the server asks.
+    const key = this.settings.idempotencyHeader?.toLowerCase();
+    const safe = idempotent(wire.method) || (key !== undefined && wire.headers[key] !== undefined);
     const id = `log_${++this.#calls}`;
     const g = platform();
     const how = {
@@ -187,14 +259,14 @@ export class Core {
       crossOrigin: this.options.allowCrossOriginRedirects === true,
       secretHeaders: this.secrets.headers,
     };
-    for (let retries = 0; ; retries++) {
+    for (let retries = spent.retries; ; spent.retries = ++retries) {
       const can = retries < maxRetries;
       this.log.info(`${id} ${wire.method} ${redactURL(wire.url, this.secrets)}${retries > 0 ? ` (retry ${retries})` : ""}`);
       this.log.debug(`${id} headers`, maskHeaders(wire.headers, this.secrets));
       // A connection that failed or timed out, before the headers or while the body was read, is
       // tried again; the caller's abort and errors of ours are not.
       const failed = async (error: unknown): Promise<void> => {
-        const again = can && error instanceof APIConnectionError && !(error instanceof APIUserAbortError);
+        const again = can && safe && error instanceof APIConnectionError && !(error instanceof APIUserAbortError);
         this.log.info(`${id} failed: ${error instanceof Error ? error.message : String(error)}${again ? "; retrying" : ""}`);
         if (!again) throw error;
         await sleep(backoff(retries), options.signal);
@@ -210,8 +282,9 @@ export class Core {
       const header = (name: string): string | null => answer.headers[name] ?? null;
       const requestId = header("x-request-id") ?? header("request-id");
       this.log.info(`${id} ${r.status}`);
-      const ok = r.status >= 200 && r.status < 300;
-      if (!ok && can && retryable(r.status, header)) {
+      const status = handledAs(r.status);
+      const ok = status >= 200 && status < 300;
+      if (!ok && can && retryable(status, header, safe)) {
         const asked = serverDelay(header, Date.now());
         if (asked === undefined || this.maxRetryDelay === null || asked <= this.maxRetryDelay) {
           discard(r);

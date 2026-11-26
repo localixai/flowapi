@@ -22,19 +22,22 @@ const $settings: $core.Settings = {
 
 /** The options of a `AuthClient`: the runtime's, and a credential for each security scheme it sends. */
 export type AuthClientOptions = $core.ClientOptions<never> & {
-  /** The credential of the security scheme `QueryKey`, else `AUTH_QUERY_KEY`; `null` reads no variable. */
+  /** The credential of the security scheme `QueryKey`: the key, else `AUTH_QUERY_KEY`; `null` reads no variable. */
   queryKey?: $core.Credential | null | undefined;
-  /** The credential of the security scheme `CookieKey`; `null` reads no variable. */
+  /** The credential of the security scheme `CookieKey`: the key; `null` reads no variable. */
   cookieKey?: $core.Credential | null | undefined;
-  /** The credential of the security scheme `Basic`, else `AUTH_BASIC`; `null` reads no variable. */
+  /** The credential of the security scheme `Basic`: an HTTP basic user-id and password, else `AUTH_BASIC`; `null` reads no variable. */
   basic?: $core.BasicCredential | null | undefined;
-  /** The credential of the security scheme `Token`, else `AUTH_TOKEN`; `null` reads no variable. */
+  /** The credential of the security scheme `Token`: the token, else `AUTH_TOKEN`; `null` reads no variable. */
   token?: $core.Credential | null | undefined;
-  /** The credential of the security scheme `Oauth`; `null` reads no variable. */
-  oauth?: $core.Credential | null | undefined;
+  /** The credential of the security scheme `Oauth`: a token, or the client's id and secret to request one with; `null` reads no variable. */
+  oauth?: $core.Credential | $core.ClientCredentials | null | undefined;
+  /** Values of the servers' variables, over their defaults. */
+  serverVariables?: { "version"?: string | undefined } | undefined;
 };
 
-/** The API's client: a member for each resource of the config. */
+/** The API's client: a member for each resource (`client.checks`), and `request` for a call no
+ * operation describes. */
 export class AuthClient {
   readonly #core: $core.Core;
   readonly #options: AuthClientOptions;

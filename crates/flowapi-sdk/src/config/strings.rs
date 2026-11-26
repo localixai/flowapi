@@ -11,11 +11,13 @@ pub(crate) fn problem(kind: Str, s: &str) -> Option<(&'static str, String)> {
         Str::Text => !s.trim().is_empty(),
         Str::Name => words::is_name(s),
         Str::EnvVar => is_env_var(s),
+        Str::Header => is_token(s),
         Str::Url => is_url(s),
         Str::Package => is_package(s),
         Str::Client => is_client(s),
         Str::Version => is_version(s),
         Str::Release => is_version(s) && !s.split('-').next().unwrap_or("").ends_with(".x"),
+        Str::OneOf(_, words) => words.contains(&s),
     };
     if fits {
         return None;
@@ -27,6 +29,12 @@ pub(crate) fn problem(kind: Str, s: &str) -> Option<(&'static str, String)> {
             "config.env_var",
             format!(
                 "`{s}` is not an environment variable's name: A-Z, 0-9 and `_`, not opening with a digit"
+            ),
+        ),
+        Str::Header => (
+            "config.header",
+            format!(
+                "`{s}` is not a header's name: ASCII letters, digits and any of !#$%&'*+-.^_`|~, no space"
             ),
         ),
         Str::Url => (
@@ -49,6 +57,10 @@ pub(crate) fn problem(kind: Str, s: &str) -> Option<(&'static str, String)> {
             "config.package.version",
             format!("`{s}` is not a package's version: `0.1.0`, or `1.0.0-beta.1`"),
         ),
+        Str::OneOf(code, words) => (
+            code,
+            format!("`{s}` is not one of `{}`", words.join("`, `")),
+        ),
     })
 }
 
@@ -59,11 +71,13 @@ pub(crate) fn pattern(kind: Str) -> Option<&'static str> {
         Str::Text => Some("\\S"),
         Str::Name => Some(words::NAME_PATTERN),
         Str::EnvVar => Some("^[A-Z_][A-Z0-9_]*$"),
+        Str::Header => Some("^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"),
         Str::Url => Some("^https?://[^\\s/?#]+[^\\s]*$"),
         Str::Package => Some("^(@[a-z0-9-~][a-z0-9-._~]*/)?[a-z0-9-~][a-z0-9-._~]*$"),
         Str::Client => Some("^[A-Z][A-Za-z0-9]*$"),
         Str::Version => Some("^[0-9]+\\.[0-9]+\\.([0-9]+|x)(-[0-9A-Za-z.-]+)?$"),
         Str::Release => Some("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"),
+        Str::OneOf(..) => None,
     }
 }
 
@@ -73,6 +87,13 @@ fn is_env_var(s: &str) -> bool {
         .next()
         .is_some_and(|c| c.is_ascii_uppercase() || c == '_')
         && chars.all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
+}
+
+/// A token (RFC 9110, 5.6.2), as a field's name is.
+fn is_token(s: &str) -> bool {
+    !s.is_empty()
+        && s.chars()
+            .all(|c| c.is_ascii_alphanumeric() || "!#$%&'*+-.^_`|~".contains(c))
 }
 
 pub(crate) fn is_url(s: &str) -> bool {

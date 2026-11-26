@@ -95,6 +95,9 @@ impl Reader<'_> {
     fn value(&mut self, parent: Option<NodeId>, depth: u32) -> Result<NodeId, ParseError> {
         let id = self.node(parent)?;
         let value = match self.peek() {
+            Some(b'{' | b'[') if depth >= MAX_DEPTH => {
+                return Err(self.error("nesting deeper than 512 levels"));
+            }
             Some(b'{') => self.object(id, depth)?,
             Some(b'[') => self.array(id, depth)?,
             Some(b'"') => Value::String(self.string()?),
@@ -118,9 +121,6 @@ impl Reader<'_> {
     }
 
     fn array(&mut self, id: NodeId, depth: u32) -> Result<Value, ParseError> {
-        if depth >= MAX_DEPTH {
-            return Err(self.error("nesting deeper than 512 levels"));
-        }
         self.at += 1;
         let mark = self.scratch_items.len();
         self.space();
@@ -151,9 +151,6 @@ impl Reader<'_> {
     }
 
     fn object(&mut self, id: NodeId, depth: u32) -> Result<Value, ParseError> {
-        if depth >= MAX_DEPTH {
-            return Err(self.error("nesting deeper than 512 levels"));
-        }
         self.at += 1;
         let mark = self.scratch_members.len();
         self.space();

@@ -1,0 +1,41 @@
+# `auth` and `security` wrong in every way the checker knows: a scheme of the description said
+# again, a name no scheme has (with and without a hint), a declared scheme missing a member of
+# its kind or given another kind's, a type and an `in` no scheme has, options of another kind or
+# without their pair, `scopes` and a variable where they cannot be, a scheme that answers a
+# challenge, a client certificate, a name `security` uses that nothing declares, a used scheme
+# with no variable, and one used that `auth` does not list.
+version: 1
+spec: spec.json
+package: { name: petshop, client: PetShop }
+auth:
+  ApiKeyAuth: { type: apiKey, in: header, name: X-Other, env_var: PET_SHOP_API_KEY }
+  bearr: { env_var: PET_SHOP_TOKEN }
+  Nothing: {}
+  NoName: { type: apiKey, in: query }
+  Extra: { type: http, scheme: bearer, in: header, token_url: https://login.example/token }
+  Wrong: { type: openIdConnect }
+  BadIn: { type: apiKey, in: body, name: k }
+  Half: { type: http, scheme: basic, username_env_var: PET_SHOP_USER }
+  NotBasic: { type: http, scheme: bearer, password_env_var: PET_SHOP_PASSWORD, scopes: [a] }
+  NoFlow: { type: oauth2, client_id_env_var: PET_SHOP_ID, client_secret_env_var: PET_SHOP_SECRET }
+  Digest: { type: http, scheme: Digest }
+  Cert: { type: mutualTLS, env_var: PET_SHOP_CERT }
+  Plain: { type: http, scheme: gnap }
+security:
+  - Plain: []
+  - Nowhere: []
+resources:
+  pets:
+    methods:
+      list: listPets
+      create: { op: createPet, security: [{ Digest: [] }, { Cert: [] }] }
+      get: { op: getPet, security: [{ bearer: [] }] }
+      update: { op: updatePet, security: [{ ApiKeyAuth: [] }] }
+      delete: { op: deletePet, security: [{ Bearer: [] }] }
+skip:
+  - { op: listPhotos, reason: elsewhere }
+  - { op: listOwners, reason: elsewhere }
+  - { op: streamEvents, reason: elsewhere }
+  - { op: getCollision, reason: elsewhere }
+  - { op: listUsers, reason: elsewhere }
+  - { op: "GET /internal/health", reason: not public }
