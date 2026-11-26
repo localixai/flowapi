@@ -6,6 +6,6 @@ Written by `node bench/competitors/sdk.mjs`; do not edit. 2026-11-26, Node.js v2
 
 | Shape | flowapi | per request | openapi-fetch | per request | flowapi faster by |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| path and a flag | 43.2 ms | 432 ns | 136.5 ms | 1365 ns | 3.2x |
-| arrays and an object in the query | 82.1 ms | 821 ns | 128.5 ms | 1285 ns | 1.6x |
-| path, query, header and a JSON body | 51.0 ms | 510 ns | 110.8 ms | 1108 ns | 2.2x |
+| path and a flag | 43.3 ms | 433 ns | 137.2 ms | 1372 ns | 3.2x |
+| arrays and an object in the query | 82.3 ms | 823 ns | 122.4 ms | 1224 ns | 1.5x |
+| path, query, header and a JSON body | 54.4 ms | 544 ns | 122.2 ms | 1222 ns | 2.2x |
