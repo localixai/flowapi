@@ -93,11 +93,12 @@ describe('generate writes what the Rust command writes', () => {
     const pair = new Pair(fixture(name))
     expect(pair.generate().stderr).toContain(' written, 0 deleted, 0 unchanged\n')
     expect(pair.generate().stderr).toContain(': 0 written, 0 deleted, ')
-    expect(pair.generate(['--check'])).toEqual({
-      status: 0,
-      stdout: '',
-      stderr: 'flowapi: sdk is as generated\n',
-    })
+    // The same bytes as Rust are held by `generate`; here what `--check` says. A config's own
+    // warnings (the `auth` case's schemes without an env var) come before it on both.
+    const check = pair.generate(['--check'])
+    expect(check.status).toBe(0)
+    expect(check.stdout).toBe('')
+    expect(check.stderr.endsWith('flowapi: sdk is as generated\n')).toBe(true)
   })
 
   test('the lock holds the SHA-256 node:crypto gives of each generated file', () => {
