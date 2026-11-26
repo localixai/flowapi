@@ -3,7 +3,7 @@
 ---
 
 The command runs the Rust command's commands for an agent that writes an SDK's config,
-`sdk-anything.yml`: `flowapi summary <description> [--tag T] [--path P] [--max-bytes N]`,
+`flowapi-sdk.yml`: `flowapi summary <description> [--tag T] [--path P] [--max-bytes N]`,
 `flowapi config draft <description> [-o file]`, `flowapi config schema` and
 `flowapi config check <config> [--spec D] [--json]`, with the same arguments, output and exit
 codes, byte for byte. The API gives them as `summary`, `configDraft`, `configSchema` and

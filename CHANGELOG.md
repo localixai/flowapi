@@ -25,7 +25,7 @@
 - With the TypeScript SDK a schema named `Promise`, `ArrayBuffer`, `FlowapiRequestError`,
   `FlowapiFile` or `FlowapiEncoding` is declared under another name, with a warning: the SDK names
   them.
-- Commands for an agent that writes an SDK's config, `sdk-anything.yml` (version 1), before the
+- Commands for an agent that writes an SDK's config, `flowapi-sdk.yml` (version 1), before the
   description's path: `flowapi summary <description> [--tag T] [--path P] [--max-bytes N]`, the
   description in compact JSON (servers, security schemes, counts, tags, each operation with its
   parameters, the media types of its body and responses, and the pagination it looks like it has,

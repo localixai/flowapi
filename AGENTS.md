@@ -48,7 +48,7 @@ work here.
   `flowapiSecuritySchemes`, `flowapiOperations`), naming the functions as `flowapi-ts` does. No
   I/O (G5). `tests/cases/*.json` and the `.ts` kept beside each (`--test table`, each case's
   `x-flowapi-covers` the ledger's markers); `tests/tsc.mjs` type-checks and imports them after the
-  `--sdk` output. The `sdk-anything.yml` config, also no I/O: `config/shape.rs` (and
+  `--sdk` output. The `flowapi-sdk.yml` config, also no I/O: `config/shape.rs` (and
   `shape/schemes.rs`) its format once, as tables that `config/read.rs` validates by,
   `config/build.rs` reads into `config/model.rs` and `config/schema.rs` prints as JSON Schema;
   `config/check.rs` and `config/names.rs` hold it to the description, `config/issue.rs` the

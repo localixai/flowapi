@@ -1,4 +1,4 @@
-//! `sdk-anything.yml`, version 1: the config an agent writes and flowapi generates an SDK by. Its
+//! `flowapi-sdk.yml`, version 1: the config an agent writes and flowapi generates an SDK by. Its
 //! format is written once (`shape.rs`); a config is held to it (`read.rs`), read into a model
 //! (`build.rs`, `model.rs`), then to its description (`check.rs`, `names.rs`), every issue found
 //! in one pass. The config comes as JSON (a host reads YAML into JSON with `flowapi-yaml`, and

@@ -164,7 +164,7 @@ describe('the commands about an SDK\'s config', () => {
 
   test('a draft names its spec, passes its check, and the schema is the kept one', async () => {
     const draft = await configDraft(description, '../openapi.json')
-    expect(draft.text).toStartWith('# A first sdk-anything.yml')
+    expect(draft.text).toStartWith('# A first flowapi-sdk.yml')
     expect(draft.text).toContain('spec: "../openapi.json"')
     expect((await configDraft(description)).text).toContain('spec: openapi.json')
     const checked = await configCheck({ uri: 'sdk.yml', text: draft.text ?? '' }, description)

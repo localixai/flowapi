@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://flowapi.localix.ai/schemas/sdk-anything-1.json",
-  "title": "sdk-anything.yml",
+  "$id": "https://flowapi.localix.ai/schemas/flowapi-sdk-1.json",
+  "title": "flowapi-sdk.yml",
   "description": "The config flowapi generates a TypeScript SDK by: its resources and methods, each naming an operation of the description, its pagination, environments and authentication. Version 1.",
   "type": "object",
   "properties": {

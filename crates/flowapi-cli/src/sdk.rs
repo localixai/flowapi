@@ -1,4 +1,4 @@
-//! The commands about an SDK's config, `sdk-anything.yml`: `summary`, `config draft`, `config
+//! The commands about an SDK's config, `flowapi-sdk.yml`: `summary`, `config draft`, `config
 //! schema` and `config check`. Each reads its files here and hands their text to `flowapi-sdk`,
 //! which does no I/O; an issue's offset into the config's JSON is printed as the YAML's line.
 

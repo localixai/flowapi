@@ -11,8 +11,8 @@
 //!   "filter": { "tag": "pets", "path": "/pets", "maxBytes": 60000 } }
 //! { "command": "draft", "documents": […], "spec": "../openapi.yaml" }
 //! { "command": "schema" }
-//! { "command": "spec", "config": { "uri": "sdk-anything.yml", "text": "…" } }
-//! { "command": "check", "documents": […], "config": { "uri": "sdk-anything.yml", "text": "…" } }
+//! { "command": "spec", "config": { "uri": "flowapi-sdk.yml", "text": "…" } }
+//! { "command": "check", "documents": […], "config": { "uri": "flowapi-sdk.yml", "text": "…" } }
 //! ```
 //!
 //! The answer: `text` the command's output (`null` when the documents are not an OpenAPI or

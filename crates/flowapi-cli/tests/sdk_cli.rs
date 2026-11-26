@@ -43,17 +43,17 @@ fn a_draft_passes_check_beside_its_description() {
     let dir = scratch("draft");
     std::fs::copy(fixture("config/spec.json"), dir.join("openapi.json")).expect("copied");
     let out = flowapi(
-        &["config", "draft", "openapi.json", "-o", "sdk-anything.yml"],
+        &["config", "draft", "openapi.json", "-o", "flowapi-sdk.yml"],
         Some(&dir),
     );
     assert!(out.status.success(), "{}", text(&out.stderr));
-    let yaml = std::fs::read_to_string(dir.join("sdk-anything.yml")).expect("written");
+    let yaml = std::fs::read_to_string(dir.join("flowapi-sdk.yml")).expect("written");
     assert!(yaml.contains("spec: openapi.json"), "{yaml}");
-    let check = flowapi(&["config", "check", "sdk-anything.yml"], Some(&dir));
+    let check = flowapi(&["config", "check", "flowapi-sdk.yml"], Some(&dir));
     assert!(check.status.success(), "{}", text(&check.stdout));
-    assert_eq!(text(&check.stdout), "sdk-anything.yml: no issues\n");
+    assert_eq!(text(&check.stdout), "flowapi-sdk.yml: no issues\n");
     let printed = flowapi(&["config", "draft", "openapi.json"], Some(&dir));
-    assert!(text(&printed.stdout).starts_with("# A first sdk-anything.yml"));
+    assert!(text(&printed.stdout).starts_with("# A first flowapi-sdk.yml"));
 }
 
 #[test]
@@ -188,7 +188,7 @@ fn wrong_use_is_explained() {
     }
     let help = text(&flowapi(&["--help"], None).stdout);
     assert!(
-        help.contains("flowapi config check <sdk-anything.yml>"),
+        help.contains("flowapi config check <flowapi-sdk.yml>"),
         "{help}"
     );
 }

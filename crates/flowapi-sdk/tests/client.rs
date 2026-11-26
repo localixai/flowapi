@@ -1,5 +1,5 @@
 //! The client printed for each case of `tests/client/` (`flowapi_sdk::client_files`): its
-//! `sdk-anything.yml` (YAML, read as the command reads it) and `spec.json`, the files printed kept
+//! `flowapi-sdk.yml` (YAML, read as the command reads it) and `spec.json`, the files printed kept
 //! beside them under `src/` (the runtime's, `src/core/`, are the crate's own `src/client/core/`
 //! and are not kept again), what was found in `issues.txt`. `FLOWAPI_BLESS=1 cargo test -p
 //! flowapi-sdk --test client` writes them anew; a change to one is read in review like code.
@@ -36,13 +36,13 @@ fn generate(spec_name: &str, spec: &str, config: &str) -> (Vec<flowapi::File>, S
     };
     let mut docs = Documents::new();
     docs.add(spec_name, &json).expect("JSON");
-    let yaml = flowapi_yaml::Text::read("sdk-anything.yml", Cow::Borrowed(config)).expect("YAML");
+    let yaml = flowapi_yaml::Text::read("flowapi-sdk.yml", Cow::Borrowed(config)).expect("YAML");
     let target = flowapi_ts::TypeScript::new("src/api.ts").with_sdk();
     let (program, _) = flowapi::program(&docs, &target);
     let program = program.expect("no error");
     let generated = flowapi_sdk::client_files(&docs, &program, yaml.json());
     let mut found =
-        flowapi_sdk::issues_text(&generated.issues, "sdk-anything.yml", &|o| yaml.place(o));
+        flowapi_sdk::issues_text(&generated.issues, "flowapi-sdk.yml", &|o| yaml.place(o));
     for d in generated.diagnostics.all() {
         let _ = writeln!(found, "{d}");
     }
@@ -76,7 +76,7 @@ fn clients_print_as_kept() {
     let mut changed = Vec::new();
     for case in names {
         let spec = std::fs::read_to_string(case.join("spec.json")).expect("the description");
-        let config = std::fs::read_to_string(case.join("sdk-anything.yml")).expect("the config");
+        let config = std::fs::read_to_string(case.join("flowapi-sdk.yml")).expect("the config");
         let (files, found) = generate("spec.json", &spec, &config);
         // G4: the same input prints the same bytes.
         assert_eq!(

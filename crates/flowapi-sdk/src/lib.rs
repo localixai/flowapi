@@ -8,7 +8,7 @@
 //! appended after that SDK's output, which a client reads to choose a base URL, attach
 //! authentication and read a body as text or bytes.
 //!
-//! For an agent that writes an SDK's config (`sdk-anything.yml`): [`check`] holds a config to
+//! For an agent that writes an SDK's config (`flowapi-sdk.yml`): [`check`] holds a config to
 //! its format and to the description, every issue at once; [`config_schema`] is the format as
 //! JSON Schema. Each takes the documents and JSON text and returns text, so the WebAssembly
 //! module can call them with JSON in and out as the command does.

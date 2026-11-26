@@ -1,4 +1,4 @@
-//! The format of `sdk-anything.yml`, version 1, written once: the checker reads a config by
+//! The format of `flowapi-sdk.yml`, version 1, written once: the checker reads a config by
 //! these definitions (`read.rs`), the typed reader asks for no member they do not name
 //! (`build.rs`), and `flowapi config schema` prints them as JSON Schema (`schema.rs`), so the
 //! three cannot drift apart. A member they do not name is an error.

@@ -269,15 +269,15 @@ request against progenitor's way: [bench/results/sdk-rust.md](bench/results/sdk-
 
 ### A config for a whole SDK
 
-For an agent that writes an SDK's config, `sdk-anything.yml` (its resources, a name for each
+For an agent that writes an SDK's config, `flowapi-sdk.yml` (its resources, a name for each
 operation, pagination, environments, authentication), four commands read the description so the
 agent does not have to:
 
 ```sh
 flowapi summary openapi.json --tag pets          # the operations in compact JSON, with the pagination each looks like it has
-flowapi config draft openapi.json -o sdk-anything.yml   # a first config: every operation in a resource
-flowapi config check sdk-anything.yml --json     # every issue at once: code, JSON Pointer, YAML line, hint
-flowapi config schema > sdk-anything.schema.json # the format as JSON Schema
+flowapi config draft openapi.json -o flowapi-sdk.yml   # a first config: every operation in a resource
+flowapi config check flowapi-sdk.yml --json     # every issue at once: code, JSON Pointer, YAML line, hint
+flowapi config schema > flowapi-sdk.schema.json # the format as JSON Schema
 ```
 
 `summary` stays under `--max-bytes` (60 KB): over it, it gives the tags with their counts, to be

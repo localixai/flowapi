@@ -24,7 +24,7 @@ fn raw(text: impl Into<String>) -> J {
     J::Raw(text.into())
 }
 
-/// The JSON Schema of `sdk-anything.yml`.
+/// The JSON Schema of `flowapi-sdk.yml`.
 pub(crate) fn schema() -> String {
     let mut defs: Vec<(&'static str, J)> = Vec::new();
     let J::Obj(root) = shape(&CONFIG, &mut defs) else {
@@ -34,9 +34,9 @@ pub(crate) fn schema() -> String {
         ("$schema", s("https://json-schema.org/draft/2020-12/schema")),
         (
             "$id",
-            s("https://flowapi.localix.ai/schemas/sdk-anything-1.json"),
+            s("https://flowapi.localix.ai/schemas/flowapi-sdk-1.json"),
         ),
-        ("title", s("sdk-anything.yml")),
+        ("title", s("flowapi-sdk.yml")),
         (
             "description",
             s(

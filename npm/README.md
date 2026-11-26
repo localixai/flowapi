@@ -41,13 +41,13 @@ README says how YAML maps to JSON.
 ## A config for a whole SDK
 
 The command has the Rust command's four commands for an agent that writes an SDK's config,
-`sdk-anything.yml`, with the same arguments, output and exit codes:
+`flowapi-sdk.yml`, with the same arguments, output and exit codes:
 
 ```sh
 npx -y @localix-ai/flowapi summary openapi.json --tag pets      # the operations in compact JSON
-npx -y @localix-ai/flowapi config draft openapi.json -o sdk-anything.yml   # a first config
-npx -y @localix-ai/flowapi config check sdk-anything.yml --json # every issue; 1 on an error
-npx -y @localix-ai/flowapi config schema > sdk-anything.schema.json
+npx -y @localix-ai/flowapi config draft openapi.json -o flowapi-sdk.yml   # a first config
+npx -y @localix-ai/flowapi config check flowapi-sdk.yml --json # every issue; 1 on an error
+npx -y @localix-ai/flowapi config schema > flowapi-sdk.schema.json
 ```
 
 `summary` stays under `--max-bytes` (60000): over it, it gives the tags with their counts, to be
@@ -61,7 +61,7 @@ import { configCheck, configDraft, configSchema, summary } from '@localix-ai/flo
 
 const { text } = await summary(documents, { tag: 'pets', maxBytes: 60_000 }) // null: not OpenAPI
 const draft = await configDraft(documents, '../openapi.json') // `spec` as the config will name it
-const found = await configCheck({ uri: 'sdk-anything.yml', text: yaml }, documents)
+const found = await configCheck({ uri: 'flowapi-sdk.yml', text: yaml }, documents)
 // found.ok, found.issues: [{ severity, code, pointer, line, column, message, hint? }],
 // found.text and found.json: the issues as `config check` and `config check --json` print them.
 const schema = await configSchema()

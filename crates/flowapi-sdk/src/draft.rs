@@ -125,7 +125,7 @@ pub fn draft(docs: &Documents<'_>, spec: &str) -> Option<String> {
 }
 
 const HEADER: &str =
-    "# A first sdk-anything.yml, drafted by `flowapi config draft` from the description: rename
+    "# A first flowapi-sdk.yml, drafted by `flowapi config draft` from the description: rename
 # resources and methods, page what pages, then `flowapi config check` it.
 version: 1
 ";

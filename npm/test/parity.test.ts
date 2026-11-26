@@ -199,7 +199,7 @@ describe('the commands about an SDK\'s config print what the Rust command prints
 
   withGithub('config draft of GitHub', () => {
     const { rust: expected, js: actual } = both(['config', 'draft', github as string])
-    expect(expected.stdout).toStartWith('# A first sdk-anything.yml')
+    expect(expected.stdout).toStartWith('# A first flowapi-sdk.yml')
     expect(actual).toEqual(expected)
   })
 

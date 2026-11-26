@@ -1,4 +1,4 @@
-//! The client of an SDK, printed from a config (`sdk-anything.yml`) and its description: the
+//! The client of an SDK, printed from a config (`flowapi-sdk.yml`) and its description: the
 //! `src/` of the generated package as TypeScript files. `src/api.ts` is the TypeScript target's
 //! SDK (`--sdk`: the types, `<op>Request` and `<op>Response`) with the operations table after it;
 //! `src/core/*.ts` the runtime, the same for every API (`client/core/`, printed as written);

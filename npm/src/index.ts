@@ -72,7 +72,7 @@ export interface FlowapiSdk {
    */
   summary(input: Input, filter?: SummaryFilter): Output
   /**
-   * A first `sdk-anything.yml`, every operation in a resource, as `flowapi config draft` prints
+   * A first `flowapi-sdk.yml`, every operation in a resource, as `flowapi config draft` prints
    * it. `spec` is the description's path as the config names it, relative to where the config
    * will be (the description's `uri` by default).
    */
