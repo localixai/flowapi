@@ -1,13 +1,16 @@
-//! Writes `conformance/REPORT.md` from `requirements.json`, `scope.json` and the `req:` and
-//! `lossy:` markers. Fails on a marker that names no requirement, a lossy marker without a reason,
+//! Writes `conformance/REPORT.md` and `conformance/MISSING.md` (the requirements in scope no
+//! marker names yet) from `requirements.json`, `scope.json` and the `req:` and `lossy:` markers. Fails on a marker that names no requirement, a lossy marker without a reason,
 //! a requirement no scope rule classifies, and a scope rule that fits no requirement.
 //!
-//!   cargo run --release --bin report             write REPORT.md
-//!   cargo run --release --bin report -- --check  also fail when REPORT.md is stale
+//!   cargo run --release --bin report             write REPORT.md and MISSING.md
+//!   cargo run --release --bin report -- --check  also fail when either is stale
+//!
+//! A missing requirement fails nothing: it is counted and listed. What fails is an unknown id,
+//! an unclassified one, a stale rule, a reason left out, or a file that does not match.
 
 use flowapi_ledger::markers::{Kind, Marker, scan};
 use flowapi_ledger::report::{Ledger, render};
-use flowapi_ledger::{paths, requirements, scope};
+use flowapi_ledger::{missing, paths, requirements, scope};
 use std::collections::BTreeSet;
 use std::process::ExitCode;
 
@@ -80,22 +83,29 @@ fn run() -> Result<ExitCode, String> {
     if failed {
         return Ok(ExitCode::FAILURE);
     }
-    let written = render(&Ledger {
+    let ledger = Ledger {
         requirements: &all,
         classes: &classes,
         scope: &scope,
         markers: &markers,
-    });
-    let target = paths::report();
-    if std::env::args().any(|arg| arg == "--check") {
-        if std::fs::read_to_string(&target).unwrap_or_default() != written {
+    };
+    let outputs = [
+        (paths::report(), "REPORT.md", render(&ledger)),
+        (paths::missing(), "MISSING.md", missing::render(&ledger)),
+    ];
+    let check = std::env::args().any(|arg| arg == "--check");
+    for (target, name, written) in &outputs {
+        if !check {
+            std::fs::write(target, written).map_err(|e| format!("{}: {e}", target.display()))?;
+        } else if std::fs::read_to_string(target).unwrap_or_default() != *written {
             eprintln!(
-                "report: conformance/REPORT.md is stale; run `cargo run --release --bin report`."
+                "report: conformance/{name} is stale; run `cargo run --release --bin report`."
             );
-            return Ok(ExitCode::FAILURE);
+            failed = true;
         }
-    } else {
-        std::fs::write(&target, &written).map_err(|e| format!("{}: {e}", target.display()))?;
+    }
+    if failed {
+        return Ok(ExitCode::FAILURE);
     }
     let named = |kind: Kind| {
         markers

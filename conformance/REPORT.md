@@ -3,27 +3,70 @@
 Written by `cargo run --release --bin report` in `conformance/ledger/` from `requirements.json`,
 `scope.json` and the `req:` and `lossy:` markers under `crates/` and `conformance/`. Do not edit by hand.
 
-**Answered: 555 of 555 requirements in scope (100.0%): 489 covered by a test, 66 lossy with a reason; 0 missing.** Out of scope: 1200. Total: 1755.
-Scope: decided 2026-11-24 by the maintainers, owner delegated.
+**Answered: 649 of 931 requirements in scope (69.7%): 583 covered by a test, 66 lossy with a reason; 282 missing.** Out of scope: 1786. Total: 2717.
+Scope: decided 2026-11-24, the SDK stage 2026-11-26 (triage-3.md), by the maintainers, owner delegated.
 
 | Text | Total | In scope | Out of scope | Covered | Lossy | Missing | Answered share |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| openapi 3.0.4 (`openapi/3.0.4.md`) | 429 | 131 | 298 | 114 | 17 | 0 | 100.0% |
-| openapi 3.1.2 (`openapi/3.1.2.md`) | 436 | 146 | 290 | 144 | 2 | 0 | 100.0% |
-| openapi 3.2.1 (`openapi/3.2.1.md`) | 522 | 141 | 381 | 135 | 6 | 0 | 100.0% |
+| openapi 2.0 (`openapi/2.0.md`) | 231 | 128 | 103 | 59 | 0 | 69 | 46.1% |
+| openapi 3.0.4 (`openapi/3.0.4.md`) | 429 | 186 | 243 | 120 | 17 | 49 | 73.7% |
+| openapi 3.1.2 (`openapi/3.1.2.md`) | 436 | 184 | 252 | 148 | 2 | 34 | 81.5% |
+| openapi 3.2.1 (`openapi/3.2.1.md`) | 522 | 225 | 297 | 141 | 6 | 78 | 65.3% |
 | json-schema 2020-12 (`json-schema-2020-12/jsonschema-core.xml`) | 241 | 90 | 151 | 66 | 24 | 0 | 100.0% |
 | json-schema 2020-12 (`json-schema-2020-12/jsonschema-validation.xml`) | 127 | 47 | 80 | 30 | 17 | 0 | 100.0% |
-| **All** | 1755 | 555 | 1200 | 489 | 66 | 0 | 100.0% |
+| rfc 6749 (`rfc/rfc6749.txt`) | 234 | 19 | 215 | 0 | 0 | 19 | 0.0% |
+| rfc 6750 (`rfc/rfc6750.txt`) | 56 | 12 | 44 | 2 | 0 | 10 | 16.7% |
+| rfc 7578 (`rfc/rfc7578.txt`) | 19 | 13 | 6 | 12 | 0 | 1 | 92.3% |
+| rfc 7617 (`rfc/rfc7617.txt`) | 10 | 3 | 7 | 1 | 0 | 2 | 33.3% |
+| rfc 9110 (`rfc/rfc9110.xml`) | 412 | 24 | 388 | 4 | 0 | 20 | 16.7% |
+| **All** | 2717 | 931 | 1786 | 583 | 66 | 282 | 69.7% |
 
 ## By level
 
 | Text | MUST | SHOULD | MAY | field | keyword |
 | --- | ---: | ---: | ---: | ---: | ---: |
+| openapi 2.0 (`openapi/2.0.md`) | 55 | 7 | 7 | 162 | 0 |
 | openapi 3.0.4 (`openapi/3.0.4.md`) | 115 | 53 | 84 | 150 | 27 |
 | openapi 3.1.2 (`openapi/3.1.2.md`) | 127 | 53 | 101 | 153 | 2 |
 | openapi 3.2.1 (`openapi/3.2.1.md`) | 185 | 54 | 105 | 176 | 2 |
 | json-schema 2020-12 (`json-schema-2020-12/jsonschema-core.xml`) | 108 | 67 | 40 | 0 | 26 |
 | json-schema 2020-12 (`json-schema-2020-12/jsonschema-validation.xml`) | 52 | 28 | 16 | 0 | 31 |
+| rfc 6749 (`rfc/rfc6749.txt`) | 153 | 46 | 35 | 0 | 0 |
+| rfc 6750 (`rfc/rfc6750.txt`) | 33 | 15 | 8 | 0 | 0 |
+| rfc 7578 (`rfc/rfc7578.txt`) | 8 | 7 | 4 | 0 | 0 |
+| rfc 7617 (`rfc/rfc7617.txt`) | 5 | 2 | 3 | 0 | 0 |
+| rfc 9110 (`rfc/rfc9110.xml`) | 200 | 116 | 96 | 0 | 0 |
+
+## openapi 2.0 — `openapi/2.0.md`
+
+| Section (id after `oas-2.0.`) | Total | In scope | Out of scope | Covered | Lossy | Missing | Answered share |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `contact-object` | 7 | 0 | 7 | 0 | 0 | 0 | — |
+| `definitions-object` | 1 | 1 | 0 | 1 | 0 | 0 | 100.0% |
+| `example-object` | 3 | 0 | 3 | 0 | 0 | 0 | — |
+| `external-documentation-object` | 5 | 0 | 5 | 0 | 0 | 0 | — |
+| `header-object` | 22 | 18 | 4 | 1 | 0 | 17 | 5.6% |
+| `headers-object` | 1 | 1 | 0 | 1 | 0 | 0 | 100.0% |
+| `info-object` | 8 | 0 | 8 | 0 | 0 | 0 | — |
+| `items-object` | 21 | 18 | 3 | 2 | 0 | 16 | 11.1% |
+| `license-object` | 5 | 0 | 5 | 0 | 0 | 0 | — |
+| `operation-object` | 23 | 13 | 10 | 9 | 0 | 4 | 69.2% |
+| `parameter-object` | 31 | 23 | 8 | 8 | 0 | 15 | 34.8% |
+| `parameters-definitions-object` | 1 | 1 | 0 | 1 | 0 | 0 | 100.0% |
+| `path-item-object` | 13 | 10 | 3 | 5 | 0 | 5 | 50.0% |
+| `paths-object` | 4 | 2 | 2 | 1 | 0 | 1 | 50.0% |
+| `reference-object` | 1 | 1 | 0 | 1 | 0 | 0 | 100.0% |
+| `response-object` | 7 | 3 | 4 | 2 | 0 | 1 | 66.7% |
+| `responses-definitions-object` | 1 | 1 | 0 | 1 | 0 | 0 | 100.0% |
+| `responses-object` | 5 | 3 | 2 | 2 | 0 | 1 | 66.7% |
+| `schema-object` | 14 | 5 | 9 | 3 | 0 | 2 | 60.0% |
+| `scopes-object` | 3 | 2 | 1 | 0 | 0 | 2 | 0.0% |
+| `security-definitions-object` | 1 | 1 | 0 | 1 | 0 | 0 | 100.0% |
+| `security-requirement-object` | 3 | 1 | 2 | 1 | 0 | 0 | 100.0% |
+| `security-scheme-object` | 12 | 8 | 4 | 4 | 0 | 4 | 50.0% |
+| `swagger-object` | 25 | 16 | 9 | 15 | 0 | 1 | 93.8% |
+| `tag-object` | 5 | 0 | 5 | 0 | 0 | 0 | — |
+| `xml-object` | 9 | 0 | 9 | 0 | 0 | 0 | — |
 
 ## openapi 3.0.4 — `openapi/3.0.4.md`
 
@@ -31,14 +74,14 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `appendix-c-using-rfc6570-based-serialization` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `appendix-d-serializing-headers-and-cookies` | 1 | 0 | 1 | 0 | 0 | 0 | — |
-| `appendix-f-resolving-security-requirements-in-a-referenced-document` | 1 | 0 | 1 | 0 | 0 | 0 | — |
+| `appendix-f-resolving-security-requirements-in-a-referenced-document` | 1 | 1 | 0 | 0 | 0 | 1 | 0.0% |
 | `callback-object` | 2 | 0 | 2 | 0 | 0 | 0 | — |
 | `components-object` | 11 | 7 | 4 | 7 | 0 | 0 | 100.0% |
 | `conditions-for-using-the-discriminator-object` | 3 | 0 | 3 | 0 | 0 | 0 | — |
 | `contact-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
 | `data-type-format` | 2 | 1 | 1 | 1 | 0 | 0 | 100.0% |
 | `discriminator-object` | 12 | 1 | 11 | 1 | 0 | 0 | 100.0% |
-| `encoding-object` | 18 | 1 | 17 | 1 | 0 | 0 | 100.0% |
+| `encoding-object` | 18 | 15 | 3 | 4 | 0 | 11 | 26.7% |
 | `example-object` | 10 | 0 | 10 | 0 | 0 | 0 | — |
 | `external-documentation-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
 | `format` | 4 | 0 | 4 | 0 | 0 | 0 | — |
@@ -46,19 +89,19 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `http-status-codes` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `info-object` | 12 | 0 | 12 | 0 | 0 | 0 | — |
 | `interoperability-with-historical-specifications` | 1 | 0 | 1 | 0 | 0 | 0 | — |
-| `interoperability-with-web-browser-environments` | 2 | 0 | 2 | 0 | 0 | 0 | — |
+| `interoperability-with-web-browser-environments` | 2 | 2 | 0 | 0 | 0 | 2 | 0.0% |
 | `license-object` | 5 | 0 | 5 | 0 | 0 | 0 | — |
 | `link-object` | 15 | 0 | 15 | 0 | 0 | 0 | — |
-| `media-type-object` | 11 | 2 | 9 | 2 | 0 | 0 | 100.0% |
+| `media-type-object` | 11 | 4 | 7 | 3 | 0 | 1 | 75.0% |
 | `media-types` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `non-rfc6570-field-values-and-combinations` | 3 | 2 | 1 | 2 | 0 | 0 | 100.0% |
-| `oauth-flow-object` | 12 | 0 | 12 | 0 | 0 | 0 | — |
-| `oauth-flows-object` | 5 | 0 | 5 | 0 | 0 | 0 | — |
+| `oauth-flow-object` | 12 | 7 | 5 | 0 | 0 | 7 | 0.0% |
+| `oauth-flows-object` | 5 | 2 | 3 | 0 | 0 | 2 | 0.0% |
 | `openapi-description-structure` | 2 | 1 | 1 | 1 | 0 | 0 | 100.0% |
-| `openapi-object` | 17 | 6 | 11 | 6 | 0 | 0 | 100.0% |
-| `operation-object` | 20 | 9 | 11 | 9 | 0 | 0 | 100.0% |
+| `openapi-object` | 17 | 7 | 10 | 6 | 0 | 1 | 85.7% |
+| `operation-object` | 20 | 10 | 10 | 9 | 0 | 1 | 90.0% |
 | `parameter-object` | 33 | 15 | 18 | 15 | 0 | 0 | 100.0% |
-| `path-item-object` | 18 | 12 | 6 | 12 | 0 | 0 | 100.0% |
+| `path-item-object` | 18 | 13 | 5 | 12 | 0 | 1 | 92.3% |
 | `path-templating` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `paths-object` | 5 | 3 | 2 | 3 | 0 | 0 | 100.0% |
 | `percent-encoding-and-illegal-or-reserved-delimiters` | 2 | 1 | 1 | 1 | 0 | 0 | 100.0% |
@@ -71,10 +114,10 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `rich-text-formatting` | 4 | 0 | 4 | 0 | 0 | 0 | — |
 | `schema-object` | 57 | 35 | 22 | 18 | 17 | 0 | 100.0% |
 | `security-filtering` | 4 | 0 | 4 | 0 | 0 | 0 | — |
-| `security-requirement-object` | 6 | 3 | 3 | 3 | 0 | 0 | 100.0% |
-| `security-scheme-object` | 17 | 6 | 11 | 6 | 0 | 0 | 100.0% |
-| `server-object` | 7 | 0 | 7 | 0 | 0 | 0 | — |
-| `server-variable-object` | 9 | 0 | 9 | 0 | 0 | 0 | — |
+| `security-requirement-object` | 6 | 4 | 2 | 3 | 0 | 1 | 75.0% |
+| `security-scheme-object` | 17 | 15 | 2 | 6 | 0 | 9 | 40.0% |
+| `server-object` | 7 | 6 | 1 | 0 | 0 | 6 | 0.0% |
+| `server-variable-object` | 9 | 8 | 1 | 2 | 0 | 6 | 25.0% |
 | `specification` | 2 | 0 | 2 | 0 | 0 | 0 | — |
 | `specification-extensions` | 4 | 2 | 2 | 2 | 0 | 0 | 100.0% |
 | `structural-interoperability` | 2 | 0 | 2 | 0 | 0 | 0 | — |
@@ -90,29 +133,29 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `appendix-c-using-rfc6570-based-serialization` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `appendix-e-percent-encoding-and-form-media-types` | 1 | 0 | 1 | 0 | 0 | 0 | — |
-| `appendix-f-resolving-security-requirements-in-a-referenced-document` | 1 | 0 | 1 | 0 | 0 | 0 | — |
+| `appendix-f-resolving-security-requirements-in-a-referenced-document` | 1 | 1 | 0 | 0 | 0 | 1 | 0.0% |
 | `callback-object` | 2 | 0 | 2 | 0 | 0 | 0 | — |
 | `components-object` | 12 | 8 | 4 | 8 | 0 | 0 | 100.0% |
 | `conditions-for-using-the-discriminator-object` | 2 | 0 | 2 | 0 | 0 | 0 | — |
 | `contact-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
 | `data-type-format` | 2 | 1 | 1 | 1 | 0 | 0 | 100.0% |
 | `discriminator-object` | 13 | 2 | 11 | 2 | 0 | 0 | 100.0% |
-| `encoding-object` | 22 | 1 | 21 | 1 | 0 | 0 | 100.0% |
+| `encoding-object` | 22 | 18 | 4 | 4 | 0 | 14 | 22.2% |
 | `example-object` | 10 | 0 | 10 | 0 | 0 | 0 | — |
 | `external-documentation-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
 | `format` | 4 | 0 | 4 | 0 | 0 | 0 | — |
-| `header-object` | 23 | 6 | 17 | 6 | 0 | 0 | 100.0% |
+| `header-object` | 23 | 7 | 16 | 6 | 0 | 1 | 85.7% |
 | `http-status-codes` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `info-object` | 13 | 0 | 13 | 0 | 0 | 0 | — |
 | `interoperability-with-historical-specifications` | 1 | 0 | 1 | 0 | 0 | 0 | — |
-| `interoperability-with-web-browser-environments` | 2 | 0 | 2 | 0 | 0 | 0 | — |
+| `interoperability-with-web-browser-environments` | 2 | 2 | 0 | 0 | 0 | 2 | 0.0% |
 | `license-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
 | `link-object` | 16 | 0 | 16 | 0 | 0 | 0 | — |
-| `media-type-object` | 12 | 2 | 10 | 2 | 0 | 0 | 100.0% |
+| `media-type-object` | 12 | 4 | 8 | 3 | 0 | 1 | 75.0% |
 | `media-types` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `non-rfc6570-field-values-and-combinations` | 3 | 2 | 1 | 2 | 0 | 0 | 100.0% |
-| `oauth-flow-object` | 12 | 0 | 12 | 0 | 0 | 0 | — |
-| `oauth-flows-object` | 5 | 0 | 5 | 0 | 0 | 0 | — |
+| `oauth-flow-object` | 12 | 7 | 5 | 0 | 0 | 7 | 0.0% |
+| `oauth-flows-object` | 5 | 2 | 3 | 0 | 0 | 2 | 0.0% |
 | `openapi-description` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `openapi-description-structure` | 2 | 1 | 1 | 1 | 0 | 0 | 100.0% |
 | `openapi-object` | 20 | 8 | 12 | 8 | 0 | 0 | 100.0% |
@@ -127,7 +170,7 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `percent-encoding-and-illegal-or-reserved-delimiters` | 2 | 1 | 1 | 1 | 0 | 0 | 100.0% |
 | `reference-object` | 9 | 2 | 7 | 2 | 0 | 0 | 100.0% |
 | `relative-references-in-api-description-uris` | 4 | 3 | 1 | 3 | 0 | 0 | 100.0% |
-| `relative-references-in-api-urls` | 2 | 0 | 2 | 0 | 0 | 0 | — |
+| `relative-references-in-api-urls` | 2 | 2 | 0 | 0 | 0 | 2 | 0.0% |
 | `request-body-object` | 7 | 3 | 4 | 3 | 0 | 0 | 100.0% |
 | `resolving-implicit-connections` | 3 | 0 | 3 | 0 | 0 | 0 | — |
 | `response-object` | 8 | 4 | 4 | 4 | 0 | 0 | 100.0% |
@@ -136,9 +179,9 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `schema-object` | 23 | 10 | 13 | 8 | 2 | 0 | 100.0% |
 | `security-filtering` | 4 | 0 | 4 | 0 | 0 | 0 | — |
 | `security-requirement-object` | 6 | 5 | 1 | 5 | 0 | 0 | 100.0% |
-| `security-scheme-object` | 17 | 14 | 3 | 14 | 0 | 0 | 100.0% |
-| `server-object` | 8 | 6 | 2 | 6 | 0 | 0 | 100.0% |
-| `server-variable-object` | 9 | 6 | 3 | 6 | 0 | 0 | 100.0% |
+| `security-scheme-object` | 17 | 15 | 2 | 14 | 0 | 1 | 93.3% |
+| `server-object` | 8 | 7 | 1 | 6 | 0 | 1 | 85.7% |
+| `server-variable-object` | 9 | 8 | 1 | 6 | 0 | 2 | 75.0% |
 | `specification` | 2 | 0 | 2 | 0 | 0 | 0 | — |
 | `specification-extensions` | 4 | 2 | 2 | 2 | 0 | 0 | 100.0% |
 | `structural-interoperability` | 2 | 0 | 2 | 0 | 0 | 0 | — |
@@ -157,28 +200,28 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `appendix-g-parsing-and-resolution-guidance` | 1 | 1 | 0 | 1 | 0 | 0 | 100.0% |
 | `base-uri-within-content` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `callback-object` | 2 | 0 | 2 | 0 | 0 | 0 | — |
-| `components-object` | 13 | 8 | 5 | 8 | 0 | 0 | 100.0% |
+| `components-object` | 13 | 9 | 4 | 8 | 0 | 1 | 88.9% |
 | `conditions-for-using-the-discriminator-object` | 2 | 0 | 2 | 0 | 0 | 0 | — |
 | `conflicts-between-field-types-and-reference-contexts` | 2 | 0 | 2 | 0 | 0 | 0 | — |
 | `contact-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
 | `discriminator-object` | 14 | 2 | 12 | 2 | 0 | 0 | 100.0% |
-| `encoding-object` | 26 | 1 | 25 | 1 | 0 | 0 | 100.0% |
+| `encoding-object` | 26 | 24 | 2 | 4 | 0 | 20 | 16.7% |
 | `example-object` | 23 | 0 | 23 | 0 | 0 | 0 | — |
 | `external-documentation-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
 | `format` | 1 | 0 | 1 | 0 | 0 | 0 | — |
 | `guidance-regarding-implicit-connections` | 1 | 0 | 1 | 0 | 0 | 0 | — |
-| `header-object` | 25 | 6 | 19 | 6 | 0 | 0 | 100.0% |
+| `header-object` | 25 | 7 | 18 | 6 | 0 | 1 | 85.7% |
 | `info-object` | 13 | 0 | 13 | 0 | 0 | 0 | — |
 | `json-and-yaml-compatibility` | 2 | 0 | 2 | 0 | 0 | 0 | — |
 | `license-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
 | `link-object` | 16 | 0 | 16 | 0 | 0 | 0 | — |
-| `media-type-object` | 38 | 8 | 30 | 4 | 4 | 0 | 100.0% |
+| `media-type-object` | 38 | 21 | 17 | 7 | 4 | 10 | 52.4% |
 | `non-rfc6570-field-values-and-combinations` | 3 | 2 | 1 | 2 | 0 | 0 | 100.0% |
-| `oauth-flow-object` | 15 | 0 | 15 | 0 | 0 | 0 | — |
-| `oauth-flows-object` | 6 | 0 | 6 | 0 | 0 | 0 | — |
+| `oauth-flow-object` | 15 | 7 | 8 | 0 | 0 | 7 | 0.0% |
+| `oauth-flows-object` | 6 | 2 | 4 | 0 | 0 | 2 | 0.0% |
 | `objects-and-fields` | 2 | 0 | 2 | 0 | 0 | 0 | — |
 | `openapi-object` | 41 | 18 | 23 | 18 | 0 | 0 | 100.0% |
-| `operation-object` | 19 | 8 | 11 | 8 | 0 | 0 | 100.0% |
+| `operation-object` | 19 | 9 | 10 | 8 | 0 | 1 | 88.9% |
 | `parameter-object` | 44 | 26 | 18 | 26 | 0 | 0 | 100.0% |
 | `path-item-object` | 21 | 15 | 6 | 15 | 0 | 0 | 100.0% |
 | `paths-object` | 8 | 4 | 4 | 4 | 0 | 0 | 100.0% |
@@ -190,13 +233,13 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `response-object` | 8 | 4 | 4 | 4 | 0 | 0 | 100.0% |
 | `responses-object` | 8 | 5 | 3 | 5 | 0 | 0 | 100.0% |
 | `rich-text-formatting` | 4 | 0 | 4 | 0 | 0 | 0 | — |
-| `schema-object` | 31 | 14 | 17 | 12 | 2 | 0 | 100.0% |
+| `schema-object` | 31 | 17 | 14 | 12 | 2 | 3 | 82.4% |
 | `security-filtering` | 4 | 0 | 4 | 0 | 0 | 0 | — |
-| `security-requirement-object` | 8 | 1 | 7 | 1 | 0 | 0 | 100.0% |
-| `security-scheme-object` | 20 | 5 | 15 | 5 | 0 | 0 | 100.0% |
-| `security-schemes` | 1 | 0 | 1 | 0 | 0 | 0 | — |
-| `server-object` | 11 | 2 | 9 | 2 | 0 | 0 | 100.0% |
-| `server-variable-object` | 10 | 0 | 10 | 0 | 0 | 0 | — |
+| `security-requirement-object` | 8 | 5 | 3 | 1 | 0 | 4 | 20.0% |
+| `security-scheme-object` | 20 | 17 | 3 | 5 | 0 | 12 | 29.4% |
+| `security-schemes` | 1 | 1 | 0 | 0 | 0 | 1 | 0.0% |
+| `server-object` | 11 | 10 | 1 | 2 | 0 | 8 | 20.0% |
+| `server-variable-object` | 10 | 8 | 2 | 0 | 0 | 8 | 0.0% |
 | `specification-extensions` | 4 | 2 | 2 | 2 | 0 | 0 | 100.0% |
 | `tag-object` | 10 | 0 | 10 | 0 | 0 | 0 | — |
 | `undefined-and-implementation-defined-behavior` | 3 | 0 | 3 | 0 | 0 | 0 | — |
@@ -314,23 +357,88 @@ Scope: decided 2026-11-24 by the maintainers, owner delegated.
 | `type` | 4 | 2 | 2 | 0 | 2 | 0 | 100.0% |
 | `uniqueItems` | 2 | 1 | 1 | 0 | 1 | 0 | 100.0% |
 
+## rfc 6749 — `rfc/rfc6749.txt`
+
+| Section (id after `rfc6749.`) | Total | In scope | Out of scope | Covered | Lossy | Missing | Answered share |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `1` | 1 | 0 | 1 | 0 | 0 | 0 | — |
+| `10` | 45 | 4 | 41 | 0 | 0 | 4 | 0.0% |
+| `11` | 2 | 0 | 2 | 0 | 0 | 0 | — |
+| `2` | 21 | 4 | 17 | 0 | 0 | 4 | 0.0% |
+| `3` | 44 | 4 | 40 | 0 | 0 | 4 | 0.0% |
+| `4` | 71 | 4 | 67 | 0 | 0 | 4 | 0.0% |
+| `5` | 17 | 1 | 16 | 0 | 0 | 1 | 0.0% |
+| `6` | 10 | 0 | 10 | 0 | 0 | 0 | — |
+| `7` | 8 | 1 | 7 | 0 | 0 | 1 | 0.0% |
+| `8` | 13 | 0 | 13 | 0 | 0 | 0 | — |
+| `9` | 1 | 0 | 1 | 0 | 0 | 0 | — |
+| `B` | 1 | 1 | 0 | 0 | 0 | 1 | 0.0% |
+
+## rfc 6750 — `rfc/rfc6750.txt`
+
+| Section (id after `rfc6750.`) | Total | In scope | Out of scope | Covered | Lossy | Missing | Answered share |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `2` | 14 | 4 | 10 | 1 | 0 | 3 | 25.0% |
+| `3` | 20 | 1 | 19 | 0 | 0 | 1 | 0.0% |
+| `5` | 22 | 7 | 15 | 1 | 0 | 6 | 14.3% |
+
+## rfc 7578 — `rfc/rfc7578.txt`
+
+| Section (id after `rfc7578.`) | Total | In scope | Out of scope | Covered | Lossy | Missing | Answered share |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `4` | 13 | 10 | 3 | 9 | 0 | 1 | 90.0% |
+| `5` | 6 | 3 | 3 | 3 | 0 | 0 | 100.0% |
+
+## rfc 7617 — `rfc/rfc7617.txt`
+
+| Section (id after `rfc7617.`) | Total | In scope | Out of scope | Covered | Lossy | Missing | Answered share |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `2` | 9 | 2 | 7 | 1 | 0 | 1 | 50.0% |
+| `4` | 1 | 1 | 0 | 0 | 0 | 1 | 0.0% |
+
+## rfc 9110 — `rfc/rfc9110.xml`
+
+| Section (id after `rfc9110.`) | Total | In scope | Out of scope | Covered | Lossy | Missing | Answered share |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `10` | 33 | 1 | 32 | 0 | 0 | 1 | 0.0% |
+| `11` | 11 | 0 | 11 | 0 | 0 | 0 | — |
+| `12` | 12 | 0 | 12 | 0 | 0 | 0 | — |
+| `13` | 40 | 0 | 40 | 0 | 0 | 0 | — |
+| `14` | 23 | 0 | 23 | 0 | 0 | 0 | — |
+| `15` | 75 | 14 | 61 | 2 | 0 | 12 | 14.3% |
+| `16` | 17 | 0 | 17 | 0 | 0 | 0 | — |
+| `2` | 7 | 0 | 7 | 0 | 0 | 0 | — |
+| `3` | 2 | 0 | 2 | 0 | 0 | 0 | — |
+| `4` | 19 | 1 | 18 | 0 | 0 | 1 | 0.0% |
+| `5` | 29 | 0 | 29 | 0 | 0 | 0 | — |
+| `6` | 19 | 0 | 19 | 0 | 0 | 0 | — |
+| `7` | 45 | 0 | 45 | 0 | 0 | 0 | — |
+| `8` | 34 | 2 | 32 | 2 | 0 | 0 | 100.0% |
+| `9` | 46 | 6 | 40 | 0 | 0 | 6 | 0.0% |
+
 ## Markers per file
 
 | File | Requirements |
 | --- | ---: |
 | `conformance/coverage/suite.md` | 134 |
-| `conformance/sdk/cases.json` | 46 |
+| `conformance/sdk/cases.json` | 74 |
 | `crates/flowapi-cli/tests/documents_cli.rs` | 8 |
 | `crates/flowapi-cli/tests/openapi_cli.rs` | 30 |
 | `crates/flowapi-sdk/tests/cases/defaults.json` | 12 |
 | `crates/flowapi-sdk/tests/cases/encoding.json` | 1 |
 | `crates/flowapi-sdk/tests/cases/security.json` | 22 |
 | `crates/flowapi-sdk/tests/cases/servers.json` | 15 |
+| `crates/flowapi-sdk/tests/cases/swagger-host.json` | 1 |
+| `crates/flowapi-sdk/tests/cases/swagger-nohost.json` | 1 |
+| `crates/flowapi-sdk/tests/cases/swagger20.json` | 15 |
 | `crates/flowapi-sdk/tests/cases/v32.json` | 12 |
-| `crates/flowapi-ts/tests/print.rs` | 267 |
+| `crates/flowapi-sdk/tests/client/auth.mjs` | 4 |
+| `crates/flowapi-sdk/tests/client/runtime.mjs` | 1 |
+| `crates/flowapi-sdk/tests/client/wire.mjs` | 2 |
+| `crates/flowapi-ts/tests/print.rs` | 310 |
 | `crates/flowapi/tests/documents.rs` | 14 |
 | `crates/flowapi/tests/repo.rs` | 2 |
 
 ## Markers on out-of-scope requirements
 
-- `oas-3.1.encoding-object.contentType` in `crates/flowapi-sdk/tests/cases/encoding.json:61`
+None.

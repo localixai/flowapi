@@ -3,8 +3,10 @@
 //! Headings nest by level; the level-1 title is the document and is left out of paths. Fenced
 //! code is skipped: examples state no requirement. A table whose first header cell is
 //! `Field Name` or `Field Pattern` gives one field unit per row; any other table gives one prose
-//! unit per cell. Under a heading "JSON Schema Keywords", a list item that opens with a keyword
-//! gives a keyword unit.
+//! unit per cell. A table's rows may leave out the leading `|` (OpenAPI 2.0 writes them so): a
+//! paragraph line with a `|` followed by a delimiter row (`---|:---:|---`) is a table's header,
+//! and the lines with a `|` after it are its rows. Under a heading "JSON Schema Keywords", a list
+//! item that opens with a keyword gives a keyword unit.
 
 use crate::doc::{Doc, Heading, Unit, UnitKind};
 use crate::text::{clean_inline, heading_slug};
@@ -48,8 +50,11 @@ impl Reader {
             self.heading(number, level, title);
         } else if trimmed.is_empty() {
             self.flush();
-        } else if trimmed.starts_with('|') {
+        } else if trimmed.starts_with('|') || (!self.table.is_empty() && trimmed.contains('|')) {
             self.flush_block();
+            self.table.push((number, trimmed.to_owned()));
+        } else if let Some(header) = self.bare_header(trimmed) {
+            self.table.push(header);
             self.table.push((number, trimmed.to_owned()));
         } else if let Some(item) = list_item(trimmed) {
             self.flush();
@@ -96,6 +101,24 @@ impl Reader {
         };
         *seen += 1;
         anchor
+    }
+
+    /// A delimiter row under a one-line paragraph with a `|`: that line, taken as a table's header.
+    fn bare_header(&mut self, line: &str) -> Option<(usize, String)> {
+        let delimiter = line.contains('|')
+            && line.contains('-')
+            && line.chars().all(|c| matches!(c, '-' | ':' | '|' | ' '));
+        let header = match &self.block {
+            Some((start, lines, false)) if delimiter && lines.len() == 1 => lines
+                .first()
+                .filter(|l| l.contains('|'))
+                .map(|l| (*start, l.clone())),
+            _ => None,
+        };
+        if header.is_some() {
+            self.block = None;
+        }
+        header
     }
 
     fn current(&self) -> Option<usize> {

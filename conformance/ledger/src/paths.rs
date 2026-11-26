@@ -31,3 +31,9 @@ pub fn scope() -> PathBuf {
 pub fn report() -> PathBuf {
     conformance().join("REPORT.md")
 }
+
+/// `conformance/MISSING.md`: the requirements in scope that no marker names yet. Beside
+/// `REPORT.md`, not under `coverage/`: that folder holds the markers' Markdown, read by the scan.
+pub fn missing() -> PathBuf {
+    conformance().join("MISSING.md")
+}

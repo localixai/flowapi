@@ -2,12 +2,13 @@
 //! covers a requirement; `lossy: jsonschema-2020-12.validation.minLength — no TS type has a
 //! length` says the type is wider than the schema there, and why. A lossy marker needs its reason.
 //!
-//! Every `.rs`, `.ts` and `.json` file under `crates/` and `conformance/` is read, and the `.md`
+//! Every `.rs`, `.ts`, `.mjs` and `.json` file under `crates/` and `conformance/` is read (`.mjs`:
+//! the SDK client's Node tests), and the `.md`
 //! files of `conformance/coverage/` (evidence grouped by oracle), except build output (`target/`,
 //! `out/`), installed packages (`node_modules/`), ignored work folders (`scratch/`), the pinned texts and suites
 //! (`conformance/specs/`, `conformance/suites/`) and the ledger's own files. A marker is `req:` or
-//! `lossy:` followed by an id that starts with `oas-` or `jsonschema-`, so `req: Request` in code
-//! is not one.
+//! `lossy:` followed by an id that starts with `oas-`, `jsonschema-` or `rfc` and a digit
+//! (`rfc6749.`), so `req: Request` in code is not one.
 
 use std::path::{Path, PathBuf};
 
@@ -35,7 +36,7 @@ pub struct Marker {
     pub reason: String,
 }
 
-const EXTENSIONS: [&str; 3] = ["rs", "ts", "json"];
+const EXTENSIONS: [&str; 4] = ["rs", "ts", "mjs", "json"];
 /// Where `.md` files are read too: the evidence grouped by oracle.
 const MARKDOWN_UNDER: &str = "conformance/coverage/";
 /// Names of folders never read, wherever they are: build output, installed packages, git's own,
@@ -112,6 +113,15 @@ fn walk(root: &Path, dir: &Path, files: &mut Vec<(String, PathBuf)>) -> Result<(
     Ok(())
 }
 
+/// Whether a word is a requirement id: one of OpenAPI (`oas-`), JSON Schema (`jsonschema-`) or
+/// an RFC (`rfc` and its number).
+fn is_spec_id(id: &str) -> bool {
+    let rfc = id
+        .strip_prefix("rfc")
+        .is_some_and(|rest| rest.starts_with(|c: char| c.is_ascii_digit()));
+    rfc || id.starts_with("oas-") || id.starts_with("jsonschema-")
+}
+
 /// The ids the `req:` markers of one line name.
 pub fn ids_in(line: &str) -> Vec<String> {
     markers_in(line)
@@ -141,7 +151,7 @@ pub fn markers_in(line: &str) -> Vec<(Kind, String, String)> {
                 .take_while(|c| c.is_ascii_alphanumeric() || "$._-".contains(*c))
                 .collect();
             let id = id.trim_end_matches(['.', '-']).to_owned();
-            if boundary && (id.starts_with("oas-") || id.starts_with("jsonschema-")) {
+            if boundary && is_spec_id(&id) {
                 found.push((at, start + id.len(), kind, id));
             }
         }

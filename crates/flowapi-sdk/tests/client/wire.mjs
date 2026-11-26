@@ -148,6 +148,8 @@ export function tests(built) {
       await b.pets.retrieve({ path: { pet_id: 'p1' } })
       assert.equal(fetch.calls[0].headers['x-api-key'], 'k')
     }],
+    // req: rfc9110.15.4.should-automatically-following-redirected-request-user-agent — a 303 followed as GET with no body or Content-Type, the other headers sent again
+    // req: rfc6750.5.3.must-safeguard-bearer-tokens-client-implementations-ensure — a redirect to another origin refused, and allowed only without the credentials (the logs mask them: R29)
     ['R34: a redirect to another origin is refused; allowed, it loses the credentials', async () => {
       const away = (url) => (url.startsWith('https://api.') ? reply(307, null, { location: 'https://evil.example/steal' }) : reply(200, pet))
       const refused = stub(away)

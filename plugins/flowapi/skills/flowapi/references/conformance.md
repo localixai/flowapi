@@ -36,9 +36,11 @@ the whole suite), says which values are valid, and every valid one must type-che
 flowapi's type ([conformance/results/props.md](https://github.com/localixai/flowapi/blob/main/conformance/results/props.md)). And every valid
 example description the OAI keeps beside its schemas generates and type-checks
 ([conformance/results/oai.md](https://github.com/localixai/flowapi/blob/main/conformance/results/oai.md)). A requirements ledger lists every
-MUST, SHOULD and MAY of OpenAPI 3.0.4, 3.1.2, 3.2.1 and JSON Schema 2020-12 that a types
-generator answers to, each held by a test or named as something a type cannot state
-([conformance/REPORT.md](https://github.com/localixai/flowapi/blob/main/conformance/REPORT.md)).
+MUST, SHOULD and MAY of Swagger 2.0, OpenAPI 3.0.4, 3.1.2, 3.2.1, JSON Schema 2020-12 and the RFCs
+the SDK's client follows (OAuth 2.0 and its bearer tokens, Basic, `multipart/form-data`, HTTP
+semantics) that flowapi answers to, each held by a test or named as something a type cannot
+state ([conformance/REPORT.md](https://github.com/localixai/flowapi/blob/main/conformance/REPORT.md)); those no test holds yet are listed in
+[conformance/MISSING.md](https://github.com/localixai/flowapi/blob/main/conformance/MISSING.md).
 
 One TypeScript limit shows in rare cases: an object literal with a key named like a member
 every object inherits (`constructor`, `toString`) is checked against `Object`'s member when the

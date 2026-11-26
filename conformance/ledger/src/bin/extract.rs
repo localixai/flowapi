@@ -8,7 +8,7 @@
 use flowapi_ledger::requirements::{Requirement, parse, render};
 use flowapi_ledger::rfc::KEYWORDS;
 use flowapi_ledger::sources::{Format, SOURCES};
-use flowapi_ledger::{extract, markdown, paths, rfc, xml};
+use flowapi_ledger::{extract, markdown, paths, rfc, rfc_text, rfc_xml, xml};
 use std::collections::BTreeSet;
 use std::process::ExitCode;
 
@@ -33,6 +33,10 @@ fn run() -> Result<ExitCode, String> {
             Format::Rfc => {
                 rfc::read(&xml::parse(&text).map_err(|e| format!("{}: {e}", source.file))?)
             }
+            Format::RfcXml => {
+                rfc_xml::read(&xml::parse(&text).map_err(|e| format!("{}: {e}", source.file))?)
+            }
+            Format::RfcText => rfc_text::read(&text),
         };
         all.extend(extract::requirements(&doc, source));
     }

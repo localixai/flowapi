@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- The requirements ledger (`conformance/ledger`, O1) reads Swagger 2.0 and five RFCs (6749, 6750,
+  7578, 7617 and 9110, pinned in `conformance/specs/`) beside OpenAPI 3.x and JSON Schema, and its
+  scope is decided for the SDK: servers, security, the Encoding Object and what the client sends
+  (`conformance/triage-3.md`). `report` also writes `conformance/MISSING.md`, every requirement
+  in scope that no test names yet.
 - The agent plugin `flowapi` (`plugins/flowapi`), installed from this repository as a
   marketplace (`claude plugin marketplace add localixai/flowapi`, then
   `claude plugin install flowapi@flowapi`). It is a Claude Code plugin and an Agent Plugins 1.1.0

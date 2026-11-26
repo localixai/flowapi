@@ -328,7 +328,51 @@ fn generate(uri: &str, text: &str) -> String {
 // req: oas-3.1.header-object.deprecated — headers.json: @deprecated on the header X-Old
 // req: oas-3.0.header-object.deprecated — headers.json's reader serves 3.0 the same way
 // req: oas-3.2.header-object.deprecated — headers.json's reader serves 3.2 the same way
-// swagger20-*.json: Swagger 2.0, which the ledger does not hold (no requirement ids). Petstore:
+// swagger20-*.json: Swagger 2.0 (the ledger's oas-2.0 ids).
+// req: oas-2.0.swagger-object.swagger — swagger20-petstore.json: the document read as Swagger 2.0
+// req: oas-2.0.swagger-object.definitions — swagger20-petstore.json: Category, Tag, Pet, ApiResponse as named types
+// req: oas-2.0.definitions-object.pattern-name — swagger20-petstore.json: each definition's name names its type
+// req: oas-2.0.swagger-object.consumes — swagger20-petstore.json: AddPet: the body under each of the global consumes
+// req: oas-2.0.swagger-object.produces — swagger20-petstore.json: GetPetById: the response under the global produces
+// req: oas-2.0.swagger-object.paths — swagger20-petstore.json: every operation's type
+// req: oas-2.0.paths-object.pattern-path — swagger20-petstore.json: /pet/{petId}: path parameters from the template
+// req: oas-2.0.swagger-object.parameters — swagger20-petstore.json: FindPetsByStatus: limit from #/parameters/Limit
+// req: oas-2.0.parameters-definitions-object.pattern-name — swagger20-petstore.json: #/parameters/Limit found by its name
+// req: oas-2.0.swagger-object.responses — swagger20-petstore.json: #/responses/BadRequest followed
+// req: oas-2.0.responses-definitions-object.pattern-name — swagger20-petstore.json: #/responses/BadRequest found by its name
+// req: oas-2.0.reference-object.$ref — swagger20-petstore.json: #/definitions, #/parameters and #/responses references followed
+// req: oas-2.0.path-item-object.get — swagger20-petstore.json: GetPetById
+// req: oas-2.0.path-item-object.put — swagger20-petstore.json: UpdatePet
+// req: oas-2.0.path-item-object.post — swagger20-petstore.json: AddPet
+// req: oas-2.0.path-item-object.delete — swagger20-petstore.json: DeletePet
+// req: oas-2.0.path-item-object.parameters — swagger20-petstore.json: petId from the Path Item in each of its operations
+// req: oas-2.0.operation-object.operationId — swagger20-petstore.json: each type named by its operationId
+// req: oas-2.0.operation-object.operationId.may-tools-libraries-use-operationid-uniquely-identify — swagger20-petstore.json: each type named by its operationId
+// req: oas-2.0.operation-object.consumes — swagger20-petstore.json: UpdatePet: its own consumes over the global ones
+// req: oas-2.0.operation-object.produces — swagger20-petstore.json: FindPetsByStatus: its own produces over the global ones
+// req: oas-2.0.operation-object.parameters — swagger20-petstore.json: FindPetsByStatus: query parameters
+// req: oas-2.0.operation-object.responses — swagger20-petstore.json: each response by status
+// req: oas-2.0.operation-object.deprecated — swagger20-petstore.json: DeletePet: @deprecated
+// req: oas-2.0.parameter-object.name — swagger20-petstore.json: each parameter by its name
+// req: oas-2.0.parameter-object.in — swagger20-petstore.json: query, path, header and body parameters apart
+// req: oas-2.0.parameter-object.required — swagger20-petstore.json: FindPetsByStatus: status required
+// req: oas-2.0.parameter-object.required.may-otherwise-property-included-default-value-false — swagger20-petstore.json: FindPetsByStatus: limit, without required, optional
+// req: oas-2.0.parameter-object.schema — swagger20-petstore.json: AddPet: the body's schema
+// req: oas-2.0.parameter-object.type — swagger20-petstore.json: petId: integer as number
+// req: oas-2.0.parameter-object.items — swagger20-petstore.json: FindPetsByStatus: status an array of its items
+// req: oas-2.0.items-object.type — swagger20-petstore.json: FindPetsByStatus: status items strings
+// req: oas-2.0.items-object.enum — swagger20-petstore.json: FindPetsByStatus: status items one of available, pending, sold
+// req: oas-2.0.responses-object.pattern-http-status-code — swagger20-petstore.json: each response by its status
+// req: oas-2.0.responses-object.default — swagger20-petstore.json: GetPetById: the default response
+// req: oas-2.0.response-object.schema — swagger20-petstore.json: FindPetsByStatus: Pet[] under each produced type
+// req: oas-2.0.response-object.headers — swagger20-petstore.json: FindPetsByStatus: X-Rate-Limit and X-Expires-After
+// req: oas-2.0.headers-object.pattern-name — swagger20-petstore.json: X-Rate-Limit by its name
+// req: oas-2.0.header-object.type — swagger20-petstore.json: X-Rate-Limit: integer as number
+// req: oas-2.0.parameter-object.enum — swagger20-forms.json: UpdatePetWithForm: status one of available, sold
+// req: oas-2.0.schema-object.discriminator — swagger20-schema.json: Pet: discriminator read as a property's name, the type unchanged
+// req: oas-2.0.schema-object.readOnly — swagger20-schema.json: Pet: a required readOnly id optional
+// req: oas-2.0.schema-object.pattern-x — swagger20-schema.json: Ext: x-internal read and kept, never an error
+// Petstore:
 // `definitions` as named types, `body` under each type of `consumes`, a response's `schema` under
 // each of `produces`, non-body parameters and headers as their own schemas, `#/parameters/…`
 // and `#/responses/…` followed, `trace` not a method. Forms: `formData` as a closed form under
