@@ -395,8 +395,9 @@ purpose), of a scheme an operation needs that `auth` does not list (`config.auth
 that names no variable (`config.auth.env`), and of the description's own: a scheme that answers a
 challenge (`config.auth.refused`), a client certificate (`config.auth.mutual_tls`), a deprecated
 scheme (`config.auth.deprecated`). The draft lists every scheme with a variable named after the
-API and the scheme, and, for a description without security, a commented example and
-`security: []`. The generated repository's mock answers 401 with what is missing, its token
+API and the scheme, and, for a description without security, a commented example and no
+`security`, so `config check` warns `config.auth.none` until it is declared or `security: []` is
+written. The generated repository's mock answers 401 with what is missing, its token
 endpoint holds the client to RFC 6749, its tests send made-up credentials of each kind, and its
 README has a row for every scheme.
 

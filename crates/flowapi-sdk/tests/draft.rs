@@ -45,6 +45,14 @@ fn issues(name: &str, spec: &str, yaml: &str) -> String {
     flowapi_sdk::issues_text(&found, "draft.yml", &|o| config.place(o))
 }
 
+/// The codes of an issues text, as its lines open them (`warning[config.auth.none`).
+fn codes(found: &str) -> Vec<&str> {
+    found
+        .lines()
+        .filter_map(|l| l.split_once(']').map(|(c, _)| c))
+        .collect()
+}
+
 /// A JSON value written with each object's members in the order `reverse` says: sorted (as
 /// `serde_json` keeps them), or the reverse.
 fn write(v: &Value, reverse: bool, out: &mut String) {
@@ -111,10 +119,13 @@ fn drafts_print_as_kept_and_pass_check() {
     for (name, spec, kept) in cases() {
         let text = std::fs::read_to_string(&spec).expect("the description");
         let printed = draft(&name, &text);
-        assert_eq!(
-            issues(&name, &text, &printed),
-            "",
-            "{name}: the draft fails its own check:\n{printed}"
+        // A draft has no issue but, where the description needs no credential, `config.auth.none`.
+        let found = issues(&name, &text, &printed);
+        let silent = !printed.contains("\n# security:\n");
+        assert!(
+            (silent && found.is_empty())
+                || (!silent && codes(&found) == ["warning[config.auth.none"]),
+            "{name}: the draft fails its own check:\n{found}\n{printed}"
         );
         if bless {
             std::fs::write(&kept, &printed).expect("written");
@@ -174,12 +185,8 @@ fn a_draft_warns_only_of_what_the_description_holds() {
         assert!(printed.contains(listed), "{listed:?} in:\n{printed}");
     }
     let issues = issues("tokens.json", &text, &printed);
-    let codes: Vec<&str> = issues
-        .lines()
-        .filter_map(|l| l.split_once(']').map(|(c, _)| c))
-        .collect();
     assert_eq!(
-        codes,
+        codes(&issues),
         [
             "warning[config.auth.mutual_tls",
             "warning[config.auth.refused",
@@ -187,4 +194,30 @@ fn a_draft_warns_only_of_what_the_description_holds() {
         ],
         "{issues}"
     );
+}
+
+/// A description that declares no security: its draft leaves `security` unset (never
+/// `security: []`, the config's own word that the API takes no credentials), so `config check`
+/// gives exactly one warning, `config.auth.none`, and no error.
+#[test]
+fn a_draft_without_security_warns_that_there_is_no_auth() {
+    for name in ["github.json", "rpc.json"] {
+        let text = std::fs::read_to_string(root().join("draft").join(name)).expect("description");
+        let printed = draft(name, &text);
+        assert!(
+            !printed.lines().any(|l| l.starts_with("security:")),
+            "{name}: a live security in:\n{printed}"
+        );
+        assert!(
+            printed.contains("# security:\n#   - "),
+            "{name}: no example"
+        );
+        let found = issues(name, &text, &printed);
+        assert_eq!(
+            codes(&found),
+            ["warning[config.auth.none"],
+            "{name}: {found}"
+        );
+        assert!(!found.contains("error["), "{name}: {found}");
+    }
 }

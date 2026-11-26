@@ -3,9 +3,12 @@
 //! credentials flow's id and secret beside a ready token); one no variable can give (a client
 //! certificate, an HTTP scheme that answers a challenge) listed with none, and it and a
 //! deprecated one said why in a comment. `config check` warns of those three whatever the config
-//! says, as they are the description's: they are the only issues a draft may have. When no operation needs a credential, the
-//! draft says so with `security: []` and a commented example of declaring one, so that the
-//! person, or the agent, decides from the API's own documentation and never by a guess.
+//! says, as they are the description's, and so does `config.auth.none` when no operation needs a
+//! credential: they are the only issues a draft may have, and none is an error. In that case the
+//! draft leaves `security` unset, with a commented example of declaring one, never writing
+//! `security: []` (the config's own statement that the API takes no credentials, which would
+//! silence the warning): the person, or the agent, decides from the API's own documentation and
+//! never by a guess.
 
 use crate::config::auth::{CHALLENGED, has_token_flow, is_basic};
 use crate::doc::ROOT;
@@ -86,9 +89,10 @@ pub(super) fn auth(out: &mut String, ops: &Ops<'_, '_>, title: &[String]) {
     let first = schemes.first().map(|s| s.name.as_str());
     let example = var("token", &[]);
     out.push_str(
-        "# No operation of the description needs a credential, so the client sends none. If the API\n\
-         # takes one, find it in the API's documentation, declare it under `auth` when the\n\
-         # description lacks it, and name it in `security`, for example:\n",
+        "# The description declares no security scheme that an operation uses. Most APIs take a\n\
+         # credential: find it in the API's documentation, declare it under `auth` and name it in\n\
+         # `security`, as in the example below, or write `security: []` when the API truly takes\n\
+         # none. Until then `config check` warns `config.auth.none`.\n",
     );
     if first.is_none() {
         let _ = writeln!(
@@ -98,7 +102,7 @@ pub(super) fn auth(out: &mut String, ops: &Ops<'_, '_>, title: &[String]) {
     }
     let _ = writeln!(
         out,
-        "# security:\n#   - {}: []\nsecurity: []",
+        "# security:\n#   - {}: []",
         yaml_str(first.unwrap_or("token"))
     );
 }

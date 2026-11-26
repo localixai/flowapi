@@ -48,11 +48,14 @@ the person's own goes in `src/lib/` and `examples/`, which flowapi never touches
      reason. Never skip an operation only because its name is hard.
    - `package.name`, `package.client`, `package.license`.
    - Credentials, before generating: every `config.auth.*` issue resolved. Keep the draft's
-     `auth.<scheme>.env_var` names or set the person's. When the description declares no scheme
-     (the draft says `security: []`), take the API's authentication from the documentation the
-     person names, or ask them; then declare it under `auth` with `type` and name it in
-     `security`. Never invent a scheme, and never leave `security: []` for an API that takes a
-     credential.
+     `auth.<scheme>.env_var` names or set the person's. For `config.auth.none` (the description
+     declares no scheme; the draft leaves `security` unset on purpose): ask the person how the API
+     authenticates, or take it from the documentation they named, then declare it under `auth`
+     with `type` and name it in `security`. When you cannot ask (a non-interactive run), you may
+     declare the scheme the API's public documentation gives, and must say in your report that it
+     is not in the description and not verified. Write `security: []` only when the API takes no
+     credentials. Never invent a scheme, and never write `security: []` to silence the warning
+     for an API that takes a credential.
    - What the package says of itself: `readme.title` (the README's heading), `readme.intro` or
      `package.description` (its first paragraph; the description also goes into `package.json`),
      `package.keywords`, `readme.headline_method`. Their defaults come from the description's

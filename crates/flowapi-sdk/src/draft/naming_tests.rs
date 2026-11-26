@@ -122,3 +122,27 @@ fn the_package_name_is_one_npm_takes() {
         );
     }
 }
+
+/// A resource name that meets a schema's takes its English plural, a plural already stays.
+#[test]
+fn a_resource_takes_its_english_plural() {
+    let cases = [
+        ("activity", Some("activities")),
+        ("policy", Some("policies")),
+        ("key", Some("keys")),
+        ("day", Some("days")),
+        ("y", Some("ys")),
+        ("address", Some("addresses")),
+        ("box", Some("boxes")),
+        ("branch", Some("branches")),
+        ("dish", Some("dishes")),
+        ("pet", Some("pets")),
+        ("issues", None),
+        ("repos", None),
+        ("actions", None),
+        ("activities", None),
+    ];
+    for (name, want) in cases {
+        assert_eq!(super::plural(name).as_deref(), want, "{name}");
+    }
+}

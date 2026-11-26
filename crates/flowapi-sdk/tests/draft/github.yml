@@ -12,14 +12,14 @@ environments:
   production: "https://api.github.example"
   default: production
   env_var: GITHUB_LIKE_BASE_URL
-# No operation of the description needs a credential, so the client sends none. If the API
-# takes one, find it in the API's documentation, declare it under `auth` when the
-# description lacks it, and name it in `security`, for example:
+# The description declares no security scheme that an operation uses. Most APIs take a
+# credential: find it in the API's documentation, declare it under `auth` and name it in
+# `security`, as in the example below, or write `security: []` when the API truly takes
+# none. Until then `config check` warns `config.auth.none`.
 # auth:
 #   token: { type: http, scheme: bearer, env_var: GITHUB_LIKE_TOKEN }
 # security:
 #   - token: []
-security: []
 defaults:
   retries: 1
   timeout: 60

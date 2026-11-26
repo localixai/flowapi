@@ -87,7 +87,9 @@
   `config.auth.option` and `config.security.unknown`, and warns with `config.auth.none`,
   `config.auth.unlisted`, `config.auth.env`, `config.auth.refused`, `config.auth.mutual_tls` and
   `config.auth.deprecated`. `config draft` names a variable for every scheme and, for a
-  description without security, writes a commented example and `security: []`. The summary shows
+  description without security, writes a commented example and leaves `security` unset, so that
+  `config check` warns `config.auth.none` until the person declares the API's credential, or
+  writes `security: []` for an API that takes none. The summary shows
   the description's and each operation's own security and an OAuth 2.0 token URL.
 - The generated repository: the mock answers 401 with JSON naming what is missing and serves a
   token endpoint held to RFC 6749; `tests/auth.test.mjs` sends made-up credentials of each kind
@@ -114,7 +116,8 @@
 - `config draft` names a method without the words its resource already says
   (`actions.get_cache_retention_limit_for_enterprise`, `repos.list_for_org`), keeps a run of them
   that a word qualifies, maps a `POST` to an item that has no `PUT` or `PATCH` to `update`, and
-  where two names meet gives both their next longer name.
+  where two names meet gives both their next longer name; a resource that meets a schema's name
+  takes its English plural (`activity` is `activities`, `address` `addresses`; it was `activitys`).
 - The generated texts, rewritten: the README has a resources table linked to `api.md`, what a
   method takes and gives, `withResponse()`, a table of error classes, the retry rule as the
   runtime keeps it (with `retries: 0`, that nothing is retried by default, the rule said for a

@@ -84,8 +84,27 @@ pub(crate) fn group(op: &Op) -> Vec<String> {
     out
 }
 
+/// The English plural of a name's last word, or `None` when it is plural already: a consonant and
+/// `y` is `ies` (`activity`, `policy`; `key` is `keys`), a word ending in `s` after another `s`,
+/// or in `x`, `z`, `ch` or `sh`, takes `es` (`address`, `box`, `branch`), a word ending in any
+/// other `s` is plural already (`issues`, `repos`), else an `s`.
+fn plural(name: &str) -> Option<String> {
+    let consonant_y = name.strip_suffix('y').filter(|stem| {
+        stem.chars()
+            .last()
+            .is_some_and(|c| c.is_ascii_alphabetic() && !"aeiou".contains(c))
+    });
+    if let Some(stem) = consonant_y {
+        return Some(format!("{stem}ies"));
+    }
+    if name.ends_with("ss") || ["x", "z", "ch", "sh"].iter().any(|e| name.ends_with(e)) {
+        return Some(format!("{name}es"));
+    }
+    (!name.ends_with('s')).then(|| format!("{name}s"))
+}
+
 /// A resource's name that no schema, client member or the client itself has: its words, else
-/// with an `s`, else with `api` and a number.
+/// its plural (`plural`), else with `api` and a number.
 pub(crate) fn resource(
     w: &[String],
     models: &BTreeSet<String>,
@@ -102,8 +121,10 @@ pub(crate) fn resource(
     if free(&name) {
         return name;
     }
-    if !name.ends_with('s') && free(&format!("{name}s")) {
-        return format!("{name}s");
+    if let Some(plural) = plural(&name)
+        && free(&plural)
+    {
+        return plural;
     }
     (1..)
         .map(|n| {
