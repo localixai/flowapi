@@ -170,6 +170,7 @@ pub(crate) fn build(tree: &Tree<'_>, declared: &[(NodeId, At)], issues: &mut Iss
         c.settings.timeout = timeout.and_then(|(n, _)| b.number(n));
         let delay = b.field(d, &at, shape::DEFAULTS, "max_retry_delay");
         c.settings.max_retry_delay = delay.and_then(|(n, _)| b.number(n));
+        c.settings.idempotency_key = b.text(d, &at, shape::DEFAULTS, "idempotency_key");
         c.default_paging = b.named(d, &at, shape::DEFAULTS, "pagination");
     }
     if let Some((p, at)) = b.field(root, &top, shape::ROOT, "pagination") {

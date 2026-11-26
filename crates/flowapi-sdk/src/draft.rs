@@ -100,7 +100,7 @@ pub fn draft(docs: &Documents<'_>, spec: &str) -> Option<String> {
     head(&mut out, spec, &prose, &client);
     environments(&mut out, &ops.doc, &prose);
     auth(&mut out, &ops.doc, &prose);
-    out.push_str("defaults:\n  retries: 2\n  timeout: 60\n  max_retry_delay: 60\n");
+    out.push_str("defaults:\n  retries: 1\n  timeout: 60\n  max_retry_delay: 60\n");
     if !schemes.is_empty() {
         out.push_str("pagination:\n");
         for (s, name) in schemes.iter().zip(&names) {

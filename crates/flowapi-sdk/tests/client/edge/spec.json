@@ -1,0 +1,15 @@
+{
+ "openapi": "3.1.1",
+ "info": { "title": "Edge", "version": "1" },
+ "servers": [
+  { "url": "https://{zone}.edge.example/{version}", "variables": { "zone": { "default": "a", "enum": ["a", "b"] }, "version": { "default": "v3" } } },
+  { "url": "../api" }
+ ],
+ "paths": {
+  "/status": { "get": { "operationId": "status", "summary": "Whether the edge is up", "responses": { "200": { "description": "up", "content": { "application/json": { "schema": { "type": "object", "properties": { "up": { "type": "boolean" } } } } } } } } },
+  "/near": {
+   "servers": [{ "url": "./near" }],
+   "get": { "operationId": "near", "summary": "The nearest edge, beside the description", "responses": { "200": { "description": "up", "content": { "application/json": { "schema": { "type": "object", "properties": { "up": { "type": "boolean" } } } } } } } }
+  }
+ }
+}

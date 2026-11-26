@@ -8,7 +8,7 @@ environments:
   production: api.petshop.example
   2nd: https://api.petshop.example
   env_var: pet_shop_url
-defaults: { retries: "2", timeout: 0, max_retry_delay: -1 }
+defaults: { retries: "2", timeout: 0, max_retry_delay: -1, idempotency_key: "Idempotency Key" }
 pagination:
   cursor:
     type: cursr

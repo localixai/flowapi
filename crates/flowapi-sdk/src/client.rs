@@ -30,6 +30,7 @@ const CORE: &[(&str, &str)] = &[
     ("request.ts", include_str!("client/core/request.ts")),
     ("retry.ts", include_str!("client/core/retry.ts")),
     ("send.ts", include_str!("client/core/send.ts")),
+    ("servers.ts", include_str!("client/core/servers.ts")),
     ("streaming.ts", include_str!("client/core/streaming.ts")),
 ];
 

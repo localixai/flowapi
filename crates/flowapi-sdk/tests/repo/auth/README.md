@@ -56,6 +56,18 @@ Each credential is an option of the client, else read from its environment varia
 const client = new AuthClient({ queryKey: '…', cookieKey: '…', basic: { username: '…', password: '…' }, token: '…', oauth: '…' })
 ```
 
+## Servers
+
+The servers' URLs have variables. The client sends each one's default unless `serverVariables` gives another value:
+
+| Variable | Default | Values |
+| --- | --- | --- |
+| `version` | `v2` | any |
+
+```ts
+const other = new AuthClient({ serverVariables: { version: 'v2' } })
+```
+
 ## Errors
 
 A response whose status is not a success throws an `APIError` with its `status`, `headers`, `body` and `requestId`, of the class for its status (any other status is an `APIError` itself):
@@ -87,7 +99,7 @@ try {
 
 ## Retries and timeouts
 
-A request that cannot connect, or is answered 408, 409, 429 or 5xx, is not retried by default (the server's `x-should-retry` header decides first, where it sends one). Before each retry the client waits as long as the server asks in `retry-after-ms` or `Retry-After`, else 0.5 s doubled for each retry made, at most 8 s; when the server asks for more than 60 s, the error is thrown at once. Each attempt may take 60 s, its body read.
+A request that cannot connect, or is answered 408, 409, 429 or 5xx, is not retried by default when sending it twice does what sending it once does: its method is GET, HEAD, OPTIONS, TRACE, PUT or DELETE. A POST or a PATCH that failed may have been applied already, so it is retried only when the server's `x-should-retry: true` asks. The server's `x-should-retry` header decides first, where it sends one; a 403 is never retried. A retry that failed is not tried again: more retries are the caller's choice. Before each retry the client waits as long as the server asks in `retry-after-ms` or `Retry-After`, else 0.5 s doubled for each retry made, at most 8 s; when the server asks for more than 60 s, the error is thrown at once. Each attempt may take 60 s, its body read.
 
 `maxRetries`, `timeout` and `maxRetryDelay` change these for the client, the last two in milliseconds; `maxRetries` and `timeout` change them for one call, in its options:
 

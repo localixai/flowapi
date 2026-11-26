@@ -6,9 +6,17 @@
 // not by `fetch` (`redirect: "manual"`), so that one to another origin can be refused: `fetch` drops
 // `Authorization` there, but not an API key sent in a header of its own. A browser hides a manual
 // redirect from the page; there `fetchOptions: { redirect: "follow" }` gives it back to `fetch`.
+// As RFC 9110 15.4 says: a 3xx with a `Location` is followed, a code no one defines (`399`) too,
+// but 304 (an answer to a condition the client never sends) and 305 and 306 (deprecated and
+// unused); 303 is sent again as a GET with no content (HEAD stays HEAD), 301 and 302 change a POST
+// into a GET as browsers do (15.4.2, 15.4.3), 300, 307, 308 and the rest keep the method and the
+// content (15.4.8, 15.4.9). A `Location`
+// with no fragment keeps the request's (10.2.2). A request sent again to where it was already
+// sent is a loop and refused at once; more than 20 redirects are refused too.
 
 import { APIConnectionError, APIConnectionTimeoutError, APIUserAbortError, CrossOriginRedirectError, SdkError } from "./errors.js";
 import { type Fetch, type FetchInit, type FetchResponse, type Signal, originOf, platform, resolveURL } from "./platform.js";
+import { refuseUserinfo } from "./servers.js";
 
 /** A request as one attempt sends it. */
 export type Wire = { method: string; url: string; headers: Record<string, string>; body: string | Uint8Array | undefined };
@@ -36,7 +44,10 @@ export type Answer = {
   readonly abort: () => void;
 };
 
-const REDIRECTS = new Set([301, 302, 303, 307, 308]);
+/** Whether an answer of this status with a `Location` is followed. */
+function redirects(status: number): boolean {
+  return status >= 300 && status <= 399 && status !== 304 && status !== 305 && status !== 306;
+}
 const MAX_REDIRECTS = 20;
 
 /** The listener that aborts an attempt when the caller's signal does; made here so that it holds
@@ -97,7 +108,9 @@ export async function attempt(wire: Wire, o: AttemptOptions): Promise<Answer> {
     if (o.signal?.aborted) throw new APIUserAbortError();
     let { method, url, body } = wire;
     let headers = { ...wire.headers };
+    const sent = new Set<string>();
     for (let hop = 0; ; hop++) {
+      sent.add(`${method} ${url}`);
       const init: FetchInit = { ...o.fetchOptions, method, headers, signal: controller.signal, redirect: (o.fetchOptions["redirect"] as string | undefined) ?? "manual" };
       if (body !== undefined) init.body = body;
       const f = o.fetch;
@@ -106,12 +119,15 @@ export async function attempt(wire: Wire, o: AttemptOptions): Promise<Answer> {
         throw new SdkError('the platform hides a redirect from `redirect: "manual"` (a browser does): pass `fetchOptions: { redirect: "follow" }`');
       }
       const location = response.headers.get("location");
-      if (!REDIRECTS.has(response.status) || location === null) {
+      if (!redirects(response.status) || location === null) {
         return { response, url, headers: headersOf(response), release, timedOut: () => fired, abort: listener };
       }
       discard(response);
-      const next = resolveURL(location, url);
+      let next = resolveURL(location, url);
       if (next === null) throw new SdkError(`${response.status} redirect to a location that is no URL: ${location}`);
+      const hash = url.indexOf("#");
+      if (hash >= 0 && !next.includes("#")) next += url.slice(hash);
+      refuseUserinfo(next);
       if (hop === MAX_REDIRECTS) throw new SdkError(`more than ${MAX_REDIRECTS} redirects, the last to ${next}`);
       if (originOf(next) !== originOf(url)) {
         if (!o.crossOrigin) throw new CrossOriginRedirectError(response.status, next);
@@ -124,6 +140,7 @@ export async function attempt(wire: Wire, o: AttemptOptions): Promise<Answer> {
         delete headers["content-length"];
       }
       url = next;
+      if (sent.has(`${method} ${url}`)) throw new SdkError(`${response.status} redirect loop: ${method} ${url} was sent already`);
     }
   } catch (error) {
     release();

@@ -1,0 +1,23 @@
+# Where requests go and how HTTP is used: a server with variables (one with an `enum`), one
+# relative to where the description is served, a Path Item's and an operation's own servers (a
+# variable there too), every method RFC 9110 names idempotent but TRACE and two it does not (POST,
+# PATCH), content with DELETE and OPTIONS, and an idempotency key for the methods that need one.
+version: 1
+spec: spec.json
+package: { name: hosts-sdk, client: Hosts, license: MIT }
+defaults: { idempotency_key: Idempotency-Key }
+resources:
+  items:
+    methods:
+      all: listItems
+      create: createItem
+      replace: replaceItem
+      edit: editItem
+      delete: deleteItem
+      check: checkItem
+      describe: describeItem
+      purge: purgeItems
+  places:
+    methods:
+      local: localStatus
+      edge: edgeStatus

@@ -21,7 +21,8 @@ not listed here is an error.
 | `environments.default` | The environment used when the caller names none |
 | `environments.env_var` | The variable that overrides the base URL (`ACME_BASE_URL`) |
 | `auth.<scheme>.env_var` | The variable a scheme's credential is read from; `<scheme>` is its name in the description |
-| `defaults.retries` | Retries of a failed request (2) |
+| `defaults.retries` | Retries of a failed request (1). A POST, a PATCH or another method that is not idempotent (RFC 9110 9.2.2) is retried only with an idempotency key, or when the server answers `x-should-retry: true`; a 403 never |
+| `defaults.idempotency_key` | The header (`Idempotency-Key`) each call of a method that is not idempotent sends a random key in, the same on its retries, so that those calls are retried too; none unless given. Set it only when the API reads that header |
 | `defaults.timeout` | Seconds a request may take, its body read (60) |
 | `defaults.max_retry_delay` | The longest wait in seconds a server may ask for before a retry; longer is an error, not a sleep |
 | `defaults.pagination` | The scheme of every method named `list` that names none |

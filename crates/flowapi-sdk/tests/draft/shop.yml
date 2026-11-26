@@ -19,7 +19,7 @@ auth:
   bearer:
     env_var: PET_SHOP_BEARER
 defaults:
-  retries: 2
+  retries: 1
   timeout: 60
   max_retry_delay: 60
 pagination:

@@ -102,7 +102,7 @@ try {
 
 ## Retries and timeouts
 
-A request that cannot connect, or is answered 408, 409, 429 or 5xx, is retried 2 times by default (the server's `x-should-retry` header decides first, where it sends one). Before each retry the client waits as long as the server asks in `retry-after-ms` or `Retry-After`, else 0.5 s doubled for each retry made, at most 8 s; when the server asks for more than 20 s, the error is thrown at once. Each attempt may take 30 s, its body read.
+A request that cannot connect, or is answered 408, 409, 429 or 5xx, is retried 2 times by default when sending it twice does what sending it once does: its method is GET, HEAD, OPTIONS, TRACE, PUT or DELETE. A POST or a PATCH that failed may have been applied already, so it is retried only when the server's `x-should-retry: true` asks. The server's `x-should-retry` header decides first, where it sends one; a 403 is never retried. This SDK's config retries more than once, so a retry that failed is tried again. Before each retry the client waits as long as the server asks in `retry-after-ms` or `Retry-After`, else 0.5 s doubled for each retry made, at most 8 s; when the server asks for more than 20 s, the error is thrown at once. Each attempt may take 30 s, its body read.
 
 `maxRetries`, `timeout` and `maxRetryDelay` change these for the client, the last two in milliseconds; `maxRetries` and `timeout` change them for one call, in its options:
 

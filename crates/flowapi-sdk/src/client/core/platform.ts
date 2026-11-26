@@ -2,7 +2,7 @@
 //
 // What the client needs of the platform, typed here so that the SDK type-checks with neither the
 // DOM's nor Node's declarations (`lib: ["es2022"]` alone): `fetch` and its response, abort
-// signals, timers, the UTF-8 coders, `URL`, the console and the environment. Each is looked up on
+// signals, timers, the UTF-8 coders, `URL`, random values, the console and the environment. Each is looked up on
 // `globalThis` when it is used, so a polyfill or a test's fake is seen. The platform's own
 // `fetch`, `Response` and `AbortSignal` are assignable to these types.
 
@@ -72,7 +72,8 @@ type Globals = Coders & {
   setTimeout(callback: () => void, ms: number): unknown;
   clearTimeout(timer: unknown): void;
   AbortController: new () => { readonly signal: Signal; abort(reason?: unknown): void };
-  URL: new (url: string, base?: string) => { readonly origin: string; readonly href: string; readonly protocol: string };
+  URL: new (url: string, base?: string) => { readonly origin: string; readonly href: string; readonly protocol: string; readonly username: string; readonly password: string };
+  crypto?: { randomUUID?(): string; getRandomValues?(bytes: Uint8Array): Uint8Array };
   console?: Logger;
   process?: { env?: { [name: string]: string | undefined } };
   Deno?: { env?: { get(name: string): string | undefined } };
@@ -124,6 +125,19 @@ export function originOf(url: string): string | null {
   } catch {
     return null;
   }
+}
+
+/** A random key that names one call, the same on each of its attempts: a UUID (version 4). */
+export function randomKey(): string {
+  const c = platform().crypto;
+  if (c?.randomUUID !== undefined) return c.randomUUID();
+  const b = new Uint8Array(16);
+  if (c?.getRandomValues !== undefined) c.getRandomValues(b);
+  else for (let i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256);
+  b[6] = ((b[6] ?? 0) & 0x0f) | 0x40;
+  b[8] = ((b[8] ?? 0) & 0x3f) | 0x80;
+  const hex = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 /** A reference resolved against a URL; `null` when it is not one. */

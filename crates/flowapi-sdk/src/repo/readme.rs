@@ -9,6 +9,7 @@
 
 mod api;
 mod sections;
+mod servers;
 
 use super::suite::{args, options};
 use super::{Call, Ctx, HEADER, Kind, RepoFile, generated_file, package};
@@ -87,6 +88,7 @@ fn readme(ctx: &Ctx<'_>) -> String {
     sections::resources(ctx, &mut out);
     auth(ctx, &mut out);
     sections::environments(ctx, &mut out);
+    servers::servers(ctx, &mut out);
     let first = headline(ctx);
     sections::errors(ctx, first, &mut out);
     sections::retries(ctx, first, &mut out);

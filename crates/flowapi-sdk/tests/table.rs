@@ -4,7 +4,9 @@
 //! writes them anew; a change to one is read in review like code. `tests/tsc.mjs` type-checks
 //! each kept table after the `--sdk` output it is appended to, and imports it under Node.
 //!
-//! servers.json: servers with variables (`enum`, `description`), a relative one, and each one
+//! servers.json (3.1), servers30.json and servers32.json (the same in 3.0 and 3.2, with `.` and
+//! `./test`, relative to where the description is served): servers with variables (`enum`,
+//! `description`, an `x-` member read by no one), a relative one, and each one
 //! left out (a variable not defined, no `url`, no `default`) or kept with a warning (a `default`
 //! outside `enum`, an empty `enum`, a query in the URL); a Path Item's servers, an operation's
 //! over them, and empty lists that override nothing. defaults.json: 3.0 with no servers (`/`)
@@ -94,4 +96,26 @@ fn a_schema_reads_nothing() {
     let (service, diags) = flowapi_sdk::read(&docs, &program.expect("no error"));
     assert_eq!(service, flowapi_sdk::Service::default());
     assert!(diags.all().is_empty());
+}
+
+/// A Server Object of another document: a relative URL is relative to that document, printed
+/// relative to the first; one with a scheme, a host, an absolute path or a templated host as it is.
+// req: oas-3.1.relative-references-in-api-urls.may-note-themselves-relative-referring-document — `./v2` of `paths/pets.json` is `paths/v2` from the description
+// req: oas-3.2.server-object.relative-references-in-api-urls.may-note-themselves-relative-referring-document — the same in 3.2
+#[test]
+fn servers_of_another_document_are_relative_to_it() {
+    for version in ["3.1.0", "3.2.0"] {
+        let root = format!(
+            r#"{{"openapi":"{version}","info":{{"title":"t","version":"1"}},"paths":{{"/pets":{{"$ref":"paths/pets.json"}}}}}}"#
+        );
+        let pets = r#"{"servers":[{"url":"./v2"},{"url":"../shared/v1"},{"url":"."},{"url":"/abs"},{"url":"//h.example/x"},{"url":"https://a.example/{v}","variables":{"v":{"default":"1"}}},{"url":"{scheme}://b.example","variables":{"scheme":{"default":"https"}}}],"get":{"operationId":"listPets","responses":{"204":{"description":"none"}}}}"#;
+        let mut docs = Documents::new();
+        docs.add("api/openapi.json", &root).expect("JSON");
+        docs.add("api/paths/pets.json", pets).expect("JSON");
+        let target = flowapi_ts::TypeScript::new("out.ts").with_sdk();
+        let (program, _) = flowapi::program(&docs, &target);
+        let (text, _) = flowapi_sdk::table(&docs, &program.expect("no error"));
+        let want = r#"servers: [{ url: "paths/v2" }, { url: "shared/v1" }, { url: "paths" }, { url: "/abs" }, { url: "//h.example/x" }, { url: "https://a.example/{v}", variables: { "v": { default: "1" } } }, { url: "{scheme}://b.example", variables: { "scheme": { default: "https" } } }],"#;
+        assert!(text.contains(want), "{version}:\n{text}");
+    }
 }

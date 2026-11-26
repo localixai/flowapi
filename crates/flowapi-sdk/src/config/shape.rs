@@ -21,6 +21,8 @@ pub(crate) enum Str {
     Name,
     /// An environment variable's name.
     EnvVar,
+    /// An HTTP header field's name, a token (RFC 9110, 5.1).
+    Header,
     /// An absolute `http` or `https` URL.
     Url,
     /// An npm package name.
@@ -118,6 +120,7 @@ static ANY: Shape = Shape::Str(Str::Any);
 static TEXT: Shape = Shape::Str(Str::Text);
 static NAME: Shape = Shape::Str(Str::Name);
 static ENV_VAR: Shape = Shape::Str(Str::EnvVar);
+static HEADER: Shape = Shape::Str(Str::Header);
 static URL: Shape = Shape::Str(Str::Url);
 static SECONDS: Shape = Shape::Seconds;
 static RETRIES: Shape = Shape::Int(0, 10);
@@ -157,8 +160,13 @@ pub(crate) const DEFAULTS: &[Field] = &[
     def(
         "retries",
         &RETRIES,
-        "2",
-        "How many times a failed request is retried",
+        "1",
+        "How many times a failed request is retried: a POST or a PATCH only with an idempotency key",
+    ),
+    f(
+        "idempotency_key",
+        &HEADER,
+        "The header each call of a POST, a PATCH or another method that is not idempotent sends a key in, the same on its retries",
     ),
     def(
         "timeout",

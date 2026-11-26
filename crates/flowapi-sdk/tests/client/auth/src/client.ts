@@ -32,6 +32,8 @@ export type AuthClientOptions = $core.ClientOptions<never> & {
   token?: $core.Credential | null | undefined;
   /** The credential of the security scheme `Oauth`; `null` reads no variable. */
   oauth?: $core.Credential | null | undefined;
+  /** Values of the servers' variables, over their defaults. */
+  serverVariables?: { "version"?: string | undefined } | undefined;
 };
 
 /** The API's client: a member for each resource (`client.checks`), and `request` for a call no

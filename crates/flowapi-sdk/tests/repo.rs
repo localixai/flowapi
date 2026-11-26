@@ -57,7 +57,7 @@ fn case(name: &str) -> (String, String) {
 fn repositories_print_as_kept() {
     let bless = std::env::var_os("FLOWAPI_BLESS").is_some();
     let mut changed = Vec::new();
-    for name in ["auth", "shop"] {
+    for name in ["auth", "edge", "hosts", "shop"] {
         let (spec, config) = case(name);
         let (repo, found) = generate(&spec, &config, None);
         assert!(!found.contains("error["), "{name}: {found}");

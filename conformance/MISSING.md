@@ -5,7 +5,7 @@ Every requirement `scope.json` puts in scope that no `req:` or `lossy:` marker n
 section in the text's order. After each id, the scope rule that classifies it: its `note` names the
 layer that answers for it.
 
-**282 missing.**
+**226 missing.**
 
 ## openapi 2.0 — `openapi/2.0.md`: 69 missing
 
@@ -135,37 +135,11 @@ layer that answers for it.
 
 - `oas-2.0.scopes-object.pattern-x` (field, by `oas-2.0.scopes-object`): Allows extensions to the Swagger Schema. The field name MUST begin with `x-`, for example, `x-internal-id`. The value can be `null`, a primitive, an array or an object. See Vendor Extensions for further details.
 
-## openapi 3.0.4 — `openapi/3.0.4.md`: 49 missing
+## openapi 3.0.4 — `openapi/3.0.4.md`: 35 missing
 
 ### Specification > Schema > OpenAPI Object > Fixed Fields (`#oas-security`, line 265)
 
 - `oas-3.0.openapi-object.security` (field, by `oas-*.openapi-object.security`): A declaration of which security mechanisms can be used across the API. The list of values includes alternative Security Requirement Objects that can be used. Only one of the Security Requirement Objects need to be satisfied to authorize a request. Individual operations can override this definition. The list can be incomplete, up to being empty or absent. To make security explicitly optional, an empty security requirement (`{}`) can be included in the array.
-
-### Specification > Schema > Server Object > Fixed Fields (`#server-url`, line 388)
-
-- `oas-3.0.server-object.url` (field, by `oas-*.server-object`): REQUIRED. A URL to the target host. This URL supports Server Variables and MAY be relative, to indicate that the host location is relative to the location where the document containing the Server Object is being served. Variable substitutions will be made when a variable is named in `{`braces`}`.
-- `oas-3.0.server-object.url.may-url-supports-server-variables-relative-indicate` (MAY, by `oas-*.server-object`): This URL supports Server Variables and MAY be relative, to indicate that the host location is relative to the location where the document containing the Server Object is being served.
-- `oas-3.0.server-object.url.required` (MUST, by `oas-*.server-object`): REQUIRED.
-- `oas-3.0.server-object.description` (field, by `oas-*.server-object`): An optional string describing the host designated by the URL. CommonMark syntax MAY be used for rich text representation.
-- `oas-3.0.server-object.variables` (field, by `oas-*.server-object`): A map between a variable name and its value. The value is used for substitution in the server's URL template.
-- `oas-3.0.server-object.fixed-fields.may-object-extended-specification-extensions` (MAY, by `oas-*.server-object`): This object MAY be extended with Specification Extensions.
-
-### Specification > Schema > Server Variable Object > Fixed Fields (`#server-variable-enum`, line 494)
-
-- `oas-3.0.server-variable-object.enum` (field, by `oas-*.server-variable-object`): An enumeration of string values to be used if the substitution options are from a limited set. The array SHOULD NOT be empty.
-- `oas-3.0.server-variable-object.enum.should-not-array-empty` (SHOULD, by `oas-*.server-variable-object`): The array SHOULD NOT be empty.
-- `oas-3.0.server-variable-object.default.required` (MUST, by `oas-*.server-variable-object`): REQUIRED.
-- `oas-3.0.server-variable-object.default.should-enum-defined-value-exist-enum-s` (SHOULD, by `oas-*.server-variable-object`): If the `enum` is defined, the value SHOULD exist in the enum's values.
-- `oas-3.0.server-variable-object.description` (field, by `oas-*.server-variable-object`): An optional description for the server variable. CommonMark syntax MAY be used for rich text representation.
-- `oas-3.0.server-variable-object.fixed-fields.may-object-extended-specification-extensions` (MAY, by `oas-*.server-variable-object`): This object MAY be extended with Specification Extensions.
-
-### Specification > Schema > Path Item Object > Fixed Fields (`#path-item-servers`, line 806)
-
-- `oas-3.0.path-item-object.servers` (field, by `oas-*.path-item-object.servers`): An alternative `servers` array to service all operations in this path. If a `servers` array is specified at the OpenAPI Object level, it will be overridden by this value.
-
-### Specification > Schema > Operation Object > Fixed Fields (`#operation-servers`, line 914)
-
-- `oas-3.0.operation-object.servers` (field, by `oas-*.operation-object.servers`): An alternative `servers` array to service this operation. If a `servers` array is specified at the Path Item Object or OpenAPI Object level, it will be overridden by this value.
 
 ### Specification > Schema > Media Type Object > Fixed Fields (`#media-type-encoding`, line 1435)
 
@@ -228,21 +202,7 @@ layer that answers for it.
 
 - `oas-3.0.appendix-f-resolving-security-requirements-in-a-referenced-document.recommended-however-documented-section-tools-resolve-component` (SHOULD, by `oas-*.appendix-f-resolving-security-requirements-in-a-referenced-document`): However, documented in that section, it is RECOMMENDED that tools resolve component names from the entry document.
 
-## openapi 3.1.2 — `openapi/3.1.2.md`: 34 missing
-
-### Specification > Relative References in API URLs (`#relative-references-in-api-urls`, line 305)
-
-- `oas-3.1.relative-references-in-api-urls.may-note-themselves-relative-referring-document` (MAY, by `oas-3.1.relative-references-in-api-urls`): Note that these themselves MAY be relative to the referring document.
-- `oas-3.1.relative-references-in-api-urls.may-unless-specified-otherwise-all-fields-urls` (MAY, by `oas-3.1.relative-references-in-api-urls`): Unless specified otherwise, all fields that are URLs MAY be relative references as defined by RFC3986.
-
-### Specification > Schema > Server Object > Fixed Fields (`#fixed-fields-3`, line 463)
-
-- `oas-3.1.server-object.fixed-fields.may-object-extended-specification-extensions` (MAY, by `oas-*.server-object`): This object MAY be extended with Specification Extensions.
-
-### Specification > Schema > Server Variable Object > Fixed Fields (`#server-variable-default`, line 566)
-
-- `oas-3.1.server-variable-object.default.shall-default-value-use-substitution-sent-alternate` (MUST, by `oas-3.1.server-variable-object.default.shall-default-value-use-substitution-sent-alternate`): The default value to use for substitution, which SHALL be sent if an alternate value is _not_ supplied.
-- `oas-3.1.server-variable-object.fixed-fields.may-object-extended-specification-extensions` (MAY, by `oas-*.server-variable-object`): This object MAY be extended with Specification Extensions.
+## openapi 3.1.2 — `openapi/3.1.2.md`: 29 missing
 
 ### Specification > Schema > Media Type Object > Fixed Fields (`#media-type-encoding`, line 1551)
 
@@ -303,40 +263,11 @@ layer that answers for it.
 
 - `oas-3.1.appendix-f-resolving-security-requirements-in-a-referenced-document.recommended-however-documented-section-tools-resolve-component` (SHOULD, by `oas-*.appendix-f-resolving-security-requirements-in-a-referenced-document`): However, documented in that section, it is RECOMMENDED that tools resolve component names from the entry document.
 
-## openapi 3.2.1 — `openapi/3.2.1.md`: 78 missing
-
-### Objects and Fields > Server Object > Fixed Fields (`#server-url`, line 270)
-
-- `oas-3.2.server-object.url` (field, by `oas-*.server-object`): REQUIRED. A URL to the target host. This URL supports Server Variables and MAY be relative, to indicate that the host location is relative to the location where the document containing the Server Object is being served. Query and fragment MUST NOT be part of this URL. Variable substitutions will be made when a variable is named in `{`braces`}`.
-- `oas-3.2.server-object.url.may-url-supports-server-variables-relative-indicate` (MAY, by `oas-*.server-object`): This URL supports Server Variables and MAY be relative, to indicate that the host location is relative to the location where the document containing the Server Object is being served.
-- `oas-3.2.server-object.url.must-not-query-fragment-part-url` (MUST, by `oas-*.server-object.url.must-not-query-fragment-part-url`): Query and fragment MUST NOT be part of this URL.
-- `oas-3.2.server-object.url.required` (MUST, by `oas-*.server-object`): REQUIRED.
-- `oas-3.2.server-object.variables` (field, by `oas-*.server-object`): A map between a variable name and its value. The value is used for substitution in the server's URL template.
-- `oas-3.2.server-object.fixed-fields.may-object-extended-specification-extensions` (MAY, by `oas-*.server-object`): This object MAY be extended with Specification Extensions.
-
-### Objects and Fields > Server Object > Relative References in API URLs (`#relative-references-in-api-urls`, line 281)
-
-- `oas-3.2.server-object.relative-references-in-api-urls.may-unless-specified-otherwise-all-fields-urls` (MAY, by `oas-*.server-object`): Unless specified otherwise, all fields that are URLs MAY be relative references as defined by RFC3986.
-- `oas-3.2.server-object.relative-references-in-api-urls.may-note-themselves-relative-referring-document` (MAY, by `oas-*.server-object`): Note that these themselves MAY be relative to the referring document.
-
-### Objects and Fields > Server Variable Object > Fixed Fields (`#server-variable-enum`, line 389)
-
-- `oas-3.2.server-variable-object.enum` (field, by `oas-*.server-variable-object`): An enumeration of string values to be used if the substitution options are from a limited set. The array MUST NOT be empty.
-- `oas-3.2.server-variable-object.enum.must-not-array-empty` (MUST, by `oas-*.server-variable-object`): The array MUST NOT be empty.
-- `oas-3.2.server-variable-object.default` (field, by `oas-*.server-variable-object`): REQUIRED. The default value to use for substitution, which SHALL be sent if an alternate value is _not_ supplied. If the `enum` is defined, the value MUST exist in the enum's values. Note that this behavior is different from the Schema Object's `default` keyword, which documents the receiver's behavior rather than inserting the value into the data.
-- `oas-3.2.server-variable-object.default.must-enum-defined-value-exist-enum-s` (MUST, by `oas-*.server-variable-object`): If the `enum` is defined, the value MUST exist in the enum's values.
-- `oas-3.2.server-variable-object.default.required` (MUST, by `oas-*.server-variable-object`): REQUIRED.
-- `oas-3.2.server-variable-object.default.shall-default-value-use-substitution-sent-alternate` (MUST, by `oas-*.server-variable-object`): The default value to use for substitution, which SHALL be sent if an alternate value is _not_ supplied.
-- `oas-3.2.server-variable-object.description` (field, by `oas-*.server-variable-object`): An optional description for the server variable. CommonMark syntax MAY be used for rich text representation.
-- `oas-3.2.server-variable-object.fixed-fields.may-object-extended-specification-extensions` (MAY, by `oas-*.server-variable-object`): This object MAY be extended with Specification Extensions.
+## openapi 3.2.1 — `openapi/3.2.1.md`: 61 missing
 
 ### Objects and Fields > Components Object > Fixed Fields (`#components-security-schemes`, line 410)
 
 - `oas-3.2.components-object.securitySchemes` (field, by `oas-*.components-object.securitySchemes`): An object to hold reusable Security Scheme Objects.
-
-### Objects and Fields > Operation Object > Fixed Fields (`#operation-servers`, line 690)
-
-- `oas-3.2.operation-object.servers` (field, by `oas-*.operation-object.servers`): An alternative `servers` array to service this operation. If a `servers` array is specified at the Path Item Object or OpenAPI Object level, it will be overridden by this value.
 
 ### Objects and Fields > Media Type Object > Fixed Fields (`#media-type-encoding`, line 1274)
 
@@ -545,67 +476,3 @@ layer that answers for it.
 ### Security Considerations (`#section-4`, line 425)
 
 - `rfc7617.4.should-not-because-basic-authentication-involves-cleartext-transmission` (SHOULD, by `rfc7617.4.should-not-because-basic-authentication-involves-cleartext-transmission`): Because Basic authentication involves the cleartext transmission of passwords, it SHOULD NOT be used (without enhancements such as HTTPS [RFC2818]) to protect sensitive or valuable information.
-
-## rfc 9110 — `rfc/rfc9110.xml`: 20 missing
-
-### Identifiers in HTTP > HTTP-Related URI Schemes > Deprecation of userinfo in http(s) URIs (`#section-4.2.4`, line 2289)
-
-- `rfc9110.4.2.4.must-not-sender-generate-userinfo-subcomponent-delimiter-http` (MUST, by `rfc9110.4.2.4.must-not-sender-generate-userinfo-subcomponent-delimiter-http`): A sender MUST NOT generate the userinfo subcomponent (and its "@" delimiter) when an "http" or "https" URI reference is generated within a message as a target URI or field value.
-
-### Methods > Common Method Properties > Idempotent Methods (`#section-9.2.2`, line 5681)
-
-- `rfc9110.9.2.2.should-not-client-automatically-retry-request-non-idempotent` (SHOULD, by `rfc9110.9.2.2.should-not-client-automatically-retry-request-non-idempotent`): A client SHOULD NOT automatically retry a request with a non-idempotent method unless it has some means to know that the request semantics are actually idempotent, regardless of the method, or some means to detect that the original request was never applied.
-- `rfc9110.9.2.2.should-not-client-automatically-retry-failed-automatic-retry` (SHOULD, by `rfc9110.9.2.2.should-not-client-automatically-retry-failed-automatic-retry`): A client SHOULD NOT automatically retry a failed automatic retry.
-
-### Methods > Method Definitions > GET (`#section-9.3.1`, line 5770)
-
-- `rfc9110.9.3.1.should-not-client-generate-content-get-request-unless` (SHOULD, by `rfc9110.9.3.1.should-not-client-generate-content-get-request-unless`): A client SHOULD NOT generate content in a GET request unless it is made directly to an origin server that has previously indicated, in or out of band, that such a request has a purpose and will be adequately supported.
-
-### Methods > Method Definitions > HEAD (`#section-9.3.2`, line 5827)
-
-- `rfc9110.9.3.2.should-not-client-generate-content-head-request-unless` (SHOULD, by `rfc9110.9.3.2.should-not-client-generate-content-head-request-unless`): A client SHOULD NOT generate content in a HEAD request unless it is made directly to an origin server that has previously indicated, in or out of band, that such a request has a purpose and will be adequately supported.
-
-### Methods > Method Definitions > DELETE (`#section-9.3.5`, line 6084)
-
-- `rfc9110.9.3.5.should-not-client-generate-content-delete-request-unless` (SHOULD, by `rfc9110.9.3.5.should-not-client-generate-content-delete-request-unless`): A client SHOULD NOT generate content in a DELETE request unless it is made directly to an origin server that has previously indicated, in or out of band, that such a request has a purpose and will be adequately supported.
-
-### Methods > Method Definitions > OPTIONS (`#section-9.3.7`, line 6238)
-
-- `rfc9110.9.3.7.must-client-generates-options-request-containing-content` (MUST, by `rfc9110.9.3.7.must-client-generates-options-request-containing-content`): A client that generates an OPTIONS request containing content MUST send a valid Content-Type header field describing the representation media type.
-
-### Message Context > Response Context Fields > Location (`#section-10.2.2`, line 6728)
-
-- `rfc9110.10.2.2.must-location-value-provided-3xx-redirection-response` (MUST, by `rfc9110.10.2.2.must-location-value-provided-3xx-redirection-response`): If the Location value provided in a 3xx (Redirection) response does not have a fragment component, a user agent MUST process the redirection as if the value inherits the fragment component of the URI reference used to generate the target URI (i.e., the redirection inherits the original reference's fragment, if any).
-
-### Status Codes (`#section-15`, line 9386)
-
-- `rfc9110.15.must-however-client-understand-class-any-status` (MUST, by `rfc9110.15.must-however-client-understand-class-any-status`): However, a client MUST understand the class of any status code, as indicated by the first digit, and treat an unrecognized status code as being equivalent to the x00 status code of that class.
-- `rfc9110.15.should-client-receives-response-invalid-status-code` (SHOULD, by `rfc9110.15.should-client-receives-response-invalid-status-code`): A client that receives a response with an invalid status code SHOULD process the response as if it had a 5xx (Server Error) status code.
-
-### Status Codes > Redirection 3xx (`#section-15.4`, line 9957)
-
-- `rfc9110.15.4.may-location-header-field-section-10-2` (MAY, by `rfc9110.15.4.may-location-header-field-section-10-2`): If a Location header field (Section 10.2.2) is provided, the user agent MAY automatically redirect its request to the URI referenced by the Location field value, even if the specific status code is not understood.
-- `rfc9110.15.4.should-client-detect-intervene-cyclical-redirections-i` (SHOULD, by `rfc9110.15.4.should-client-detect-intervene-cyclical-redirections-i`): A client SHOULD detect and intervene in cyclical redirections (i.e., "infinite" redirection loops).
-
-### Status Codes > Redirection 3xx > 301 Moved Permanently (`#section-15.4.2`, line 10097)
-
-- `rfc9110.15.4.2.may-user-agent-use-location-field-value` (MAY, by `rfc9110.15.4.2.may-user-agent-use-location-field-value`): The user agent MAY use the Location field value for automatic redirection.
-- `rfc9110.15.4.2.may-note-historical-reasons-user-agent-change` (MAY, by `rfc9110.15.4.2.may-note-historical-reasons-user-agent-change`): Note: For historical reasons, a user agent MAY change the request method from POST to GET for the subsequent request.
-
-### Status Codes > Redirection 3xx > 302 Found (`#section-15.4.3`, line 10126)
-
-- `rfc9110.15.4.3.may-user-agent-use-location-field-value` (MAY, by `rfc9110.15.4.3.may-user-agent-use-location-field-value`): The user agent MAY use the Location field value for automatic redirection.
-- `rfc9110.15.4.3.may-note-historical-reasons-user-agent-change` (MAY, by `rfc9110.15.4.3.may-note-historical-reasons-user-agent-change`): Note: For historical reasons, a user agent MAY change the request method from POST to GET for the subsequent request.
-
-### Status Codes > Redirection 3xx > 307 Temporary Redirect (`#section-15.4.8`, line 10249)
-
-- `rfc9110.15.4.8.must-not-307-temporary-redirect-status-code-indicates` (MUST, by `rfc9110.15.4.8.must-not-307-temporary-redirect-status-code-indicates`): The 307 (Temporary Redirect) status code indicates that the target resource resides temporarily under a different URI and the user agent MUST NOT change the request method if it performs an automatic redirection to that URI.
-- `rfc9110.15.4.8.may-user-agent-use-location-field-value` (MAY, by `rfc9110.15.4.8.may-user-agent-use-location-field-value`): The user agent MAY use the Location field value for automatic redirection.
-
-### Status Codes > Redirection 3xx > 308 Permanent Redirect (`#section-15.4.9`, line 10279)
-
-- `rfc9110.15.4.9.may-user-agent-use-location-field-value` (MAY, by `rfc9110.15.4.9.may-user-agent-use-location-field-value`): The user agent MAY use the Location field value for automatic redirection.
-
-### Status Codes > Client Error 4xx > 403 Forbidden (`#section-15.5.4`, line 10361)
-
-- `rfc9110.15.5.4.should-not-client-automatically-repeat-request-same-credentials` (SHOULD, by `rfc9110.15.5.4.should-not-client-automatically-repeat-request-same-credentials`): The client SHOULD NOT automatically repeat the request with the same credentials.

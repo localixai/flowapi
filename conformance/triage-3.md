@@ -132,3 +132,33 @@ Explicit `oas-2.0.` rules, so that a 3.x rule decides no 2.0 id by accident; eac
 A test for each missing id, or a lossy marker with its reason, in the order: the OAuth client
 credentials step, the TLS rule with the mock's exception, the retry policy, then 3.0 and 3.2's
 cases of the SDK table and Swagger 2.0's validation keywords. `MISSING.md` lists them by section.
+
+## 5. Servers and HTTP, the tests (2026-11-26)
+
+Every in-scope id on servers and on RFC 9110 outside section 11 now has a test that checks it:
+56 ids, 14 of OpenAPI 3.0.4, 5 of 3.1.2, 17 of 3.2.1 and 20 of RFC 9110. The SDK table's cases
+`servers30.json` and `servers32.json` read 3.0 and 3.2's servers as `servers.json` reads 3.1's (an
+`x-` member of a Server or Server Variable Object read by no one), and `tests/table.rs` holds a
+Server Object of another document, its relative URL written from the first. Two client cases,
+`hosts` (3.2) and `edge` (3.1), hold the runtime in `tests/client/servers.mjs` (R43 to R45: a
+URL with a user, a variable's value against its `enum`, a relative URL resolved against
+`descriptionURL`) and `tests/client/http.mjs` (R46 to R55: retries, idempotency keys, status
+classes, redirects, content by method).
+
+What the section 3 findings became, by the owner's decisions (delegated):
+
+- **Retries** (9.2.2). A request whose method is not idempotent is not retried on its own
+  unless the server answers `x-should-retry: true` or it carries an idempotency key (the config's
+  `defaults.idempotency_key` names the header; each call sends one random key, the same on its
+  retries). The default `retries` is 1, so a failed retry is not retried; a larger value is the
+  config's or the caller's explicit choice. A 403 is never retried (15.5.4).
+- **Redirects** (15.4). Every 3xx with a `Location` is followed but 304, 305 and 306: 303 as a GET
+  with no content, 301 and 302 turn a POST into a GET as browsers do (the permission of 15.4.2
+  and 15.4.3 taken), the rest keep the method and the content (15.4.8 holds 307 to it). A loop is
+  refused at once, a chain after 20, and a `Location` without a fragment keeps the request's
+  (10.2.2).
+
+One scope change: `rfc9110.15.4.1.may-user-agent-use-location-field-value` (a 300's `Location`
+used for automatic redirection) is in scope now, as the client follows a 300 with a `Location`
+like a 3xx no one defines (15.4 allows both); the other ids of 15.4.1 stay out, their reason
+corrected (the client makes no choice from a 300's list). No lossy marker was added.

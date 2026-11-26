@@ -42,7 +42,8 @@ work here.
 - `crates/flowapi-sdk`: the SDK layer, above the targets: what a client needs beside a target's
   SDK, which no type depends on. It reads the documents through the core's public modules
   (`doc.rs`: references followed, each endpoint's Operation Object found again), `servers.rs`
-  (3.x `servers` at three levels with variables; 2.0's `host`, `basePath`, `schemes` lifted) and
+  (3.x `servers` at three levels with variables, a relative URL of another document written from
+  the first; 2.0's `host`, `basePath`, `schemes` lifted) and
   `security.rs` (`securitySchemes` or 2.0's `securityDefinitions`, `security`) into `model.rs`,
   and `print.rs` prints the TypeScript table put after `--sdk`'s output (`flowapiServers`,
   `flowapiSecuritySchemes`, `flowapiOperations`), naming the functions as `flowapi-ts` does. No
@@ -70,7 +71,7 @@ work here.
   client (`repo_files`): `repo/package.rs` `package.json`, the TypeScript configs and the
   license, `repo/texts.rs` the scripts, CI, release-please and the repository's `AGENTS.md`,
   `repo/mock.rs` the mock server's routes, `repo/suite.rs` a test per resource, `repo/readme.rs`
-  `README.md` (its sections in `readme/sections.rs`) and `api.md` (`readme/api.rs`), `repo/example.rs` a schema's example value, `repo/lock.rs`
+  `README.md` (its sections in `readme/sections.rs`, the servers' in `readme/servers.rs`) and `api.md` (`readme/api.rs`), `repo/example.rs` a schema's example value, `repo/lock.rs`
   `.flowapi/lock.json` (the shape the agent plugin reads), `repo/plan.rs` what writing the
   repository changes on disk (`plan`: by the lock and what the host found at each path; every host
   runs it, none decides alone); `repo/files/` the texts printed

@@ -18,6 +18,8 @@ error[config.schema.range]: `/defaults/timeout` is 0; it is a number of seconds 
   at format.yml:11:27 (/defaults/timeout)
 error[config.schema.range]: `/defaults/max_retry_delay` is -1; it is a number of seconds above 0
   at format.yml:11:39 (/defaults/max_retry_delay)
+error[config.header]: `/defaults/idempotency_key`: `Idempotency Key` is not a header's name: ASCII letters, digits and any of !#$%&'*+-.^_`|~, no space
+  at format.yml:11:60 (/defaults/idempotency_key)
 error[config.pagination.type]: `cursr` is not a pagination scheme's type: one of cursor, last_item_id, offset, page, link, single
   at format.yml:14:11 (/pagination/cursor/type)
   hint: did you mean `cursor`?

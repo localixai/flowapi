@@ -59,6 +59,8 @@ pub(crate) struct Settings {
     pub(crate) timeout: Option<f64>,
     /// `defaults.max_retry_delay`, in seconds.
     pub(crate) max_retry_delay: Option<f64>,
+    /// `defaults.idempotency_key`: the header an idempotency key is sent in.
+    pub(crate) idempotency_key: Option<String>,
     /// `package.name`, `package.version` and `package.repository`.
     pub(crate) package: Option<String>,
     pub(crate) version: Option<String>,

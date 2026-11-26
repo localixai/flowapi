@@ -5,7 +5,7 @@
 export type { AuthSetting, BasicCredential, Credential, SchemeEntry } from "./auth.js";
 export { ApiCall, type Outcome } from "./call.js";
 export { type Data, type Input, type RawRequest, call, page, request, stream } from "./calls.js";
-export { type ClientOptions, Core, type Operation, type RequestOptions, type ServerEntry, type Settings } from "./core.js";
+export { type ClientOptions, Core, type Operation, type RequestOptions, type Settings } from "./core.js";
 export {
   APIConnectionError,
   APIConnectionTimeoutError,
@@ -27,4 +27,5 @@ export type { LogLevel } from "./log.js";
 export { type ItemOf, type Next, Page, PagePromise, type Paging, linkNext, nextPage } from "./pagination.js";
 export type { Fetch, FetchInit, FetchResponse, Logger, Signal } from "./platform.js";
 export type { HeadersInput, QueryInput } from "./request.js";
+export type { ServerEntry, ServerVariables, VariableEntry } from "./servers.js";
 export { LineDecoder, type ServerSentEvent, SseDecoder, Stream, type StreamOptions } from "./streaming.js";

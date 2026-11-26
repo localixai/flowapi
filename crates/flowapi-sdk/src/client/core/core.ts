@@ -2,22 +2,22 @@
 //
 // The client's runtime: its options resolved once, then every call made the same way. The
 // operation's `<op>Request` writes the request (no I/O, the description's styles); its
-// credentials are attached by its security; the base URL, the caller's headers and query are
-// added; the attempts are made and retried (`retry.ts`); a success's body is read back by
-// `<op>Response`, as bytes or as text by its `Content-Type`, and any other status thrown as an
-// `APIError` with the body read the same way. No middleware: `fetch` and `fetchOptions` are
-// where a caller changes how a request goes.
+// credentials are attached by its security; the base URL (`servers.ts`), the caller's headers
+// and query are added; a call of a method that is not idempotent gets one idempotency key for all
+// its attempts, where the config names its header; the attempts are made and retried
+// (`retry.ts`); a success's body is read back by `<op>Response`, as bytes or as text by its
+// `Content-Type`, and any other status thrown as an `APIError` with the body read the same way.
+// No middleware: `fetch` and `fetchOptions` are where a caller changes how a request goes.
 
 import { type Applied, type AuthSetting, type SchemeEntry, authorize, authorizeEvery } from "./auth.js";
-import { APIConnectionError, APIError, APIUserAbortError, SdkError } from "./errors.js";
+import { APIConnectionError, APIError, APIUserAbortError, SdkError, handledAs } from "./errors.js";
 import { type LogLevel, type Secrets, makeLogger, maskHeaders, redactURL, secretsOf } from "./log.js";
-import { type Fetch, type FetchResponse, type Logger, type Signal, platform, readEnv } from "./platform.js";
+import { type Fetch, type FetchResponse, type Logger, type Signal, platform, randomKey, readEnv } from "./platform.js";
 import { type HeadersInput, type QueryInput, addPairs, joinURL, mergeHeaders, namedHeaders, setQuery } from "./request.js";
-import { MAX_TIMER, backoff, retryable, serverDelay, sleep } from "./retry.js";
+import { MAX_TIMER, backoff, idempotent, retryable, serverDelay, sleep } from "./retry.js";
 import { type Answer, type Wire, attempt, discard, readBody } from "./send.js";
+import { type ServerEntry, type ServerVariables, checkDescriptionURL, isAbsolute, refuseUserinfo, resolved, serverURL } from "./servers.js";
 
-/** A server of the description, as the operations table gives it. */
-export type ServerEntry = { readonly url: string; readonly variables?: { readonly [name: string]: { readonly default: string } } };
 
 /** What the generator decided from the config: printed in the client's module. */
 export type Settings = {
@@ -30,6 +30,8 @@ export type Settings = {
   readonly timeout: number;
   readonly maxRetries: number;
   readonly maxRetryDelay: number;
+  /** The header a call of a method that is not idempotent sends its idempotency key in. */
+  readonly idempotencyHeader?: string;
   readonly servers: readonly ServerEntry[];
   readonly schemes: { readonly [name: string]: SchemeEntry };
   readonly readsBytes: (contentType: string | null | undefined) => boolean;
@@ -41,9 +43,14 @@ export type ClientOptions<Environment extends string = string> = {
   baseURL?: string | null | undefined;
   /** One of the config's environments, by name. */
   environment?: Environment | undefined;
+  /** Values of the servers' variables, by name, over their defaults; each one of its `enum`. */
+  serverVariables?: ServerVariables | undefined;
+  /** Where the description is served: a relative server URL is resolved against it. */
+  descriptionURL?: string | undefined;
   /** Milliseconds an attempt may take, its body read; `null` for no limit. */
   timeout?: number | null | undefined;
-  /** How many times a failed attempt is tried again. */
+  /** How many times a failed attempt is tried again; a request that may not be sent twice (a
+   * POST or a PATCH with no idempotency key) is not, unless the server says so. */
   maxRetries?: number | undefined;
   /** The longest wait in milliseconds a server may ask for before a retry; `null` for any. */
   maxRetryDelay?: number | null | undefined;
@@ -110,13 +117,6 @@ function check(name: string, value: number, integer: boolean, min: number): numb
   return value;
 }
 
-/** A server's URL with each variable's default. */
-function serverURL(s: ServerEntry): string {
-  return s.url.replace(/\{([^}]*)\}/g, (all, name: string) => s.variables?.[name]?.default ?? all);
-}
-
-const ABSOLUTE = /^[a-z][a-z0-9+.-]*:/i;
-
 export class Core {
   readonly settings: Settings;
   readonly options: Readonly<ClientOptions> & { readonly [credential: string]: unknown };
@@ -128,6 +128,7 @@ export class Core {
   readonly log: Logger;
   readonly secrets: Secrets;
   readonly #explicit: boolean;
+  readonly #descriptionURL: string | undefined;
   #calls = 0;
 
   constructor(settings: Settings, options: ClientOptions & { readonly [credential: string]: unknown }) {
@@ -146,20 +147,26 @@ export class Core {
     if (options.environment !== undefined && environment === undefined) throw new RangeError(`no environment is named \`${options.environment}\`: give one of ${Object.keys(settings.environments).map((n) => `\`${n}\``).join(", ") || "none (the config names no environment)"}`);
     const first = settings.servers[0];
     this.#explicit = options.baseURL != null || env !== undefined;
-    this.baseURL = options.baseURL ?? env ?? environment ?? (first === undefined ? null : serverURL(first));
+    this.#descriptionURL = checkDescriptionURL(options.descriptionURL);
+    this.baseURL = options.baseURL ?? env ?? environment ?? (first === undefined ? null : this.#server(first));
     this.log = makeLogger(options.logLevel, settings.logEnv, options.logger);
     this.secrets = secretsOf(settings.schemes);
+  }
+
+  /** A server's URL: its variables' values, resolved against where the description is served. */
+  #server(s: ServerEntry): string {
+    return resolved(serverURL(s, this.options.serverVariables), this.#descriptionURL);
   }
 
   /** The base URL of an operation: the call's, the client's own, the operation's servers', the
    * client's environment. A relative one cannot be sent to. */
   #base(op: Operation | undefined, options: RequestOptions): string {
     const own = op?.servers?.[0];
-    const base = options.baseURL ?? (this.#explicit || own === undefined ? this.baseURL : serverURL(own));
-    if (base === null || !ABSOLUTE.test(base)) {
-      throw new SdkError(`the base URL ${JSON.stringify(base)} is not absolute: give \`baseURL\` to ${this.settings.client}`);
+    const base = options.baseURL ?? (this.#explicit || own === undefined ? this.baseURL : this.#server(own));
+    if (base === null || !isAbsolute(base)) {
+      throw new SdkError(`the base URL ${JSON.stringify(base)} is not absolute: give \`baseURL\` to ${this.settings.client}, or \`descriptionURL\`, where the description is served`);
     }
-    return base;
+    return refuseUserinfo(base);
   }
 
   /** The request a call sends, before its attempts. */
@@ -181,7 +188,14 @@ export class Core {
       const q = url.indexOf("?");
       full = q < 0 ? joinURL(url, "", addPairs("", auth.query)) : url.slice(0, q + 1) + addPairs(url.slice(q + 1), auth.query);
     }
-    return { method: wrote.method.toUpperCase(), url: full, headers, body: wrote.body };
+    const method = wrote.method.toUpperCase();
+    // Fetch sends no content with GET or HEAD (RFC 9110 9.3.1, 9.3.2); content with OPTIONS
+    // says what it is (9.3.7).
+    if (wrote.body !== undefined && (method === "GET" || method === "HEAD")) throw new SdkError(`${what}: a ${method} request carries no content`);
+    if (wrote.body !== undefined && method === "OPTIONS" && headers["content-type"] === undefined) throw new SdkError(`${what}: an OPTIONS request with content needs a Content-Type`);
+    const key = this.settings.idempotencyHeader?.toLowerCase();
+    if (key !== undefined && !idempotent(method) && headers[key] === undefined) headers[key] = randomKey();
+    return { method, url: full, headers, body: wrote.body };
   }
 
   /** A call made: its attempts, retried, and its body read by `mode`. `url` replaces the URL the
@@ -190,6 +204,10 @@ export class Core {
     const maxRetries = options.maxRetries === undefined ? this.maxRetries : check("maxRetries", options.maxRetries, true, 0);
     const timeout = options.timeout === undefined ? this.timeout : options.timeout === null ? null : check("timeout", options.timeout, true, 1);
     const wire = await this.#wire(op, wrote, options, url);
+    // Sent twice, a request that is not idempotent may be applied twice (RFC 9110 9.2.2): it is
+    // retried only with an idempotency key, or when the server asks.
+    const key = this.settings.idempotencyHeader?.toLowerCase();
+    const safe = idempotent(wire.method) || (key !== undefined && wire.headers[key] !== undefined);
     const id = `log_${++this.#calls}`;
     const g = platform();
     const how = {
@@ -207,7 +225,7 @@ export class Core {
       // A connection that failed or timed out, before the headers or while the body was read, is
       // tried again; the caller's abort and errors of ours are not.
       const failed = async (error: unknown): Promise<void> => {
-        const again = can && error instanceof APIConnectionError && !(error instanceof APIUserAbortError);
+        const again = can && safe && error instanceof APIConnectionError && !(error instanceof APIUserAbortError);
         this.log.info(`${id} failed: ${error instanceof Error ? error.message : String(error)}${again ? "; retrying" : ""}`);
         if (!again) throw error;
         await sleep(backoff(retries), options.signal);
@@ -223,8 +241,9 @@ export class Core {
       const header = (name: string): string | null => answer.headers[name] ?? null;
       const requestId = header("x-request-id") ?? header("request-id");
       this.log.info(`${id} ${r.status}`);
-      const ok = r.status >= 200 && r.status < 300;
-      if (!ok && can && retryable(r.status, header)) {
+      const status = handledAs(r.status);
+      const ok = status >= 200 && status < 300;
+      if (!ok && can && retryable(status, header, safe)) {
         const asked = serverDelay(header, Date.now());
         if (asked === undefined || this.maxRetryDelay === null || asked <= this.maxRetryDelay) {
           discard(r);

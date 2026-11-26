@@ -116,8 +116,13 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 10,
-          "description": "How many times a failed request is retried",
-          "default": 2
+          "description": "How many times a failed request is retried: a POST or a PATCH only with an idempotency key",
+          "default": 1
+        },
+        "idempotency_key": {
+          "type": "string",
+          "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+          "description": "The header each call of a POST, a PATCH or another method that is not idempotent sends a key in, the same on its retries"
         },
         "timeout": {
           "type": "number",

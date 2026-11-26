@@ -97,8 +97,11 @@ pub(crate) fn client(c: &Config, service: &Service) -> String {
         .collect();
     let _ = writeln!(out, "  auth: {{ {} }},", auth.join(", "));
     let _ = writeln!(out, "  timeout: {},", ms(s.timeout, 60.0));
-    let _ = writeln!(out, "  maxRetries: {},", s.retries.unwrap_or(2));
+    let _ = writeln!(out, "  maxRetries: {},", s.retries.unwrap_or(1));
     let _ = writeln!(out, "  maxRetryDelay: {},", ms(s.max_retry_delay, 60.0));
+    if let Some(h) = &s.idempotency_key {
+        let _ = writeln!(out, "  idempotencyHeader: {},", lit(h));
+    }
     out.push_str("  servers: $api.flowapiServers,\n  schemes: $api.flowapiSecuritySchemes,\n  readsBytes: $api.flowapiReadsBytes,\n};\n");
     options_type(c, service, &client, &options, &mut out);
     class(c, &client, &options, &top, &mut out);
@@ -150,7 +153,64 @@ fn options_type(c: &Config, service: &Service, client: &str, options: &str, out:
         };
         let _ = writeln!(out, "  {key}?: $core.{kind} | null | undefined;");
     }
+    let variables = server_variables(service);
+    if !variables.is_empty() {
+        out.push_str("  /** Values of the servers' variables, over their defaults. */\n");
+        let members: Vec<String> = variables
+            .iter()
+            .map(|(name, _, values)| {
+                let ty = if values.is_empty() {
+                    String::from("string")
+                } else {
+                    values
+                        .iter()
+                        .map(|v| lit(v))
+                        .collect::<Vec<_>>()
+                        .join(" | ")
+                };
+                format!("{}?: {ty} | undefined", lit(name))
+            })
+            .collect();
+        let _ = writeln!(
+            out,
+            "  serverVariables?: {{ {} }} | undefined;",
+            members.join("; ")
+        );
+    }
     out.push_str("};\n");
+}
+
+/// Every variable of the description's servers and the operations' own, by name, with the first
+/// server's default of it and the values it may take: those of its `enum` where each server that
+/// has it gives one, else none (any).
+pub(crate) fn server_variables(service: &Service) -> Vec<(String, String, Vec<String>)> {
+    let mut out: Vec<(String, String, Option<Vec<String>>)> = Vec::new();
+    let servers = service
+        .servers
+        .iter()
+        .chain(service.operations.iter().flat_map(|a| a.servers.iter()));
+    for v in servers.flat_map(|s| s.variables.iter()) {
+        let values = (!v.values.is_empty()).then(|| v.values.clone());
+        match out.iter_mut().find(|(n, ..)| *n == v.name) {
+            None => out.push((v.name.clone(), v.default.clone(), values)),
+            Some((_, _, seen)) => {
+                *seen = match (seen.take(), values) {
+                    (Some(mut a), Some(b)) => {
+                        for x in b {
+                            if !a.contains(&x) {
+                                a.push(x);
+                            }
+                        }
+                        Some(a)
+                    }
+                    (None, _) | (_, None) => None,
+                }
+            }
+        }
+    }
+    out.into_iter()
+        .map(|(n, d, v)| (n, d, v.unwrap_or_default()))
+        .collect()
 }
 
 /// The client class.

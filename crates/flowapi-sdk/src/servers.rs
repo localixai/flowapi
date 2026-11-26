@@ -3,10 +3,14 @@
 //! `servers`). Swagger 2.0: `host`, `basePath` and `schemes` lifted into servers, an operation's
 //! own `schemes` into servers of its own. A server that cannot be used as written (no `url`, a
 //! variable with no `default` or that the URL names but `variables` does not) is left out, with a
-//! warning; what only breaks a SHOULD or a MUST of the author is a warning and kept.
+//! warning; what only breaks a SHOULD or a MUST of the author is a warning and kept. A relative
+//! URL is relative to the document that holds its Server Object (3.x, `url`; 3.1 and 3.2,
+//! "Relative References in API URLs"): one of another document is printed relative to the first,
+//! which the client resolves against where the description is served (`descriptionURL`).
 
 use crate::doc::{At, Doc, ROOT, oas};
 use crate::model::{Server, Variable};
+use flowapi::id::DocId;
 use flowapi::{Diagnostics, Version};
 
 /// The schemes a 2.0 `schemes` list may name (2.0, "Swagger Object", `schemes`).
@@ -98,6 +102,12 @@ impl Doc<'_, '_> {
                 return None;
             }
         }
+        let url = if at.0 == DocId::FIRST {
+            url
+        } else {
+            let uri = |d: DocId| self.docs.get(d).map_or("", |d| d.uri.as_str());
+            rebased(uri(DocId::FIRST), uri(at.0), url)
+        };
         Some(Server {
             url,
             name: self
@@ -234,6 +244,46 @@ fn plain(url: String) -> Server {
         name: None,
         description: None,
         variables: Vec::new(),
+    }
+}
+
+/// A server URL written in the document at `own`, as a reference from the document at `first`:
+/// a relative path (`./v2`, `../v2`, `v2`) joined to `own`'s folder, then written from `first`'s.
+/// A URL with a scheme, a host (`//`), an absolute path or a variable before its first `/` (a
+/// templated host) is the same from either document.
+fn rebased(first: &str, own: &str, url: String) -> String {
+    let head = url.split('/').next().unwrap_or("");
+    if url.starts_with('/') || head.contains([':', '{']) {
+        return url;
+    }
+    let folder = |uri: &str| -> Vec<String> {
+        let mut parts: Vec<String> = uri.split('/').map(str::to_owned).collect();
+        parts.pop();
+        parts
+    };
+    let mut path = folder(own);
+    for part in url.split('/') {
+        match part {
+            "." | "" => {}
+            ".." if path.last().is_some_and(|p| p != "..") => {
+                path.pop();
+            }
+            _ => path.push(part.to_owned()),
+        }
+    }
+    let base = folder(first);
+    let same = base.iter().zip(&path).take_while(|(a, b)| a == b).count();
+    let mut out: Vec<String> = base
+        .get(same..)
+        .unwrap_or_default()
+        .iter()
+        .map(|_| String::from(".."))
+        .collect();
+    out.extend(path.get(same..).unwrap_or_default().iter().cloned());
+    if out.is_empty() {
+        String::from(".")
+    } else {
+        out.join("/")
     }
 }
 

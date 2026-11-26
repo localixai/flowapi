@@ -114,10 +114,10 @@ export function tests(built) {
     ['R28: fetch is called with no this', async () => {
       assert.equal(await shop(built, stub(() => reply(200, 'up', { 'content-type': 'text/plain' }))).system.health(), 'up')
     }],
-    ['R29: the logs mask credentials, secret query parameters, a URL\'s user and fragment', async () => {
+    ['R29: the logs mask credentials, secret query parameters, a URL\'s fragment (a URL with a user is never sent: R43)', async () => {
       const log = recorder()
       const fetch = stub(() => reply(200, { ok: true }))
-      const shopClient = shop(built, fetch, { logLevel: 'debug', logger: log.logger, baseURL: 'https://me:pw@h.example/v1#frag', bearerAuth: 'tok-secret' })
+      const shopClient = shop(built, fetch, { logLevel: 'debug', logger: log.logger, baseURL: 'https://h.example/v1#frag', bearerAuth: 'tok-secret' })
       await shopClient.pets.retrieve({ path: { pet_id: 'p1' } }, { headers: { cookie: 'sid=cookie-secret' } })
       const auth = new built.auth.AuthClient({ fetch, queryKey: 'query-secret', token: 'tok-secret', logLevel: 'debug', logger: log.logger })
       await auth.checks.both()

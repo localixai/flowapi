@@ -298,13 +298,36 @@ From a config that passes the check, the SDK layer prints the client itself in T
 (`flowapi_sdk::client_files`): `src/api.ts` (the `--sdk` output and the
 operations table), a class for each resource (`client.pets.photos.list(params, options)`), the
 client class with its options, and the runtime in `src/core/`, which needs no dependency and
-type-checks with `lib: ["es2022"]` alone. The runtime retries by status and `x-should-retry`,
-waits what `retry-after-ms` or `Retry-After` ask (and refuses a wait past `maxRetryDelay`), times
-each attempt out with its body read, removes its listener from the caller's `AbortSignal`, sends
-the credentials of the first security alternative it can meet, masks them in its logs, refuses a
-redirect to another origin unless allowed, reads lists by each pagination scheme with a guard
-against a server that loops, and reads server-sent events and JSON lines whatever the chunks. A
-call is awaited for its data; `asResponse()` and `withResponse()` give the raw response.
+type-checks with `lib: ["es2022"]` alone. A call goes to the call's `baseURL`, else the
+client's, else the operation's own servers (an operation's over its Path Item's), else the
+config's environment, else the description's first server: each `{name}` of a server's URL is the
+caller's `serverVariables` value, checked against the variable's `enum`, or else its `default`,
+and a relative server URL (`.`, `./v2`, `/v1`, one of another document written relative to the
+first) is resolved against `descriptionURL`, where the description is served (OpenAPI 3.1 and
+3.2, "Relative References in API URLs"); a URL with a user name or password in it is never sent.
+
+The runtime retries by RFC 9110 9.2.2: a failed connection, or a 408, 409, 429 or 5xx, is retried
+when the request is idempotent (GET, HEAD, OPTIONS, TRACE, PUT, DELETE), when the server answers
+`x-should-retry: true` (`false` stops any retry), or when it carries an idempotency key: with
+`defaults.idempotency_key: Idempotency-Key` in `flowapi-sdk.yml`, every call of another method
+(POST, PATCH) sends a random key in that header, the same on each of its attempts, so that the
+server can apply it once. A POST without one is never sent twice on the client's own. A 403 is
+not retried; a status that is no status code is read as a 5xx. `retries` is 1 unless the config
+says more, as a retry that failed is not retried again; a larger `maxRetries` is the caller's
+choice. The wait is what `retry-after-ms` or `Retry-After` ask (a wait past `maxRetryDelay` is
+refused), else a backoff. Redirects are followed by the runtime, not by `fetch`: every 3xx with a
+`Location` but 304, 305 and 306; a 303 as a GET with no content, a POST redirected by 301 or 302
+as a GET as browsers do, any other method and status with its method and content kept; a
+`Location` with no fragment keeps the request's; a loop is refused at once and a chain after 20; a
+redirect to another origin is refused unless `allowCrossOriginRedirects`, and then goes without
+the credentials. A GET or HEAD with content, and an OPTIONS with content but no `Content-Type`,
+are refused before anything is sent.
+
+It also times each attempt out with its body read, removes its listener from the caller's
+`AbortSignal`, sends the credentials of the first security alternative it can meet, masks them in
+its logs, reads lists by each pagination scheme with a guard against a server that loops, and
+reads server-sent events and JSON lines whatever the chunks. A call is awaited for its data;
+`asResponse()` and `withResponse()` give the raw response.
 
 `flowapi generate` writes the SDK's whole repository around that client:
 

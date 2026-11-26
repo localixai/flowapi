@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+- The SDK's client retries and redirects as RFC 9110 says. A request whose method is
+  not idempotent (POST, PATCH, QUERY; 9.2.2) is not retried on its own unless the server answers
+  `x-should-retry: true` or it carries an idempotency key; `defaults.idempotency_key` in
+  `flowapi-sdk.yml` names the header (`Idempotency-Key`), and each such call then sends a random
+  key in it, the same on all its attempts. The default `retries` is now 1 (it was 2), as a failed
+  retry is not retried again; more is the config's or the caller's choice. A 403 is never retried
+  (15.5.4). A status that is no status code is read as a 5xx, one no class is known for by its
+  class (15). Every 3xx with a `Location` is followed but 304, 305 and 306 (15.4): 303 as a GET,
+  301 and 302 turn a POST into a GET, the rest keep the method and the content; a redirect loop is
+  refused at once, 20 redirects at most, and a `Location` without a fragment keeps the
+  request's (10.2.2). A GET or HEAD with content, and an OPTIONS with content but no
+  `Content-Type`, are refused before they are sent.
+- Servers, as the client uses them: `serverVariables` gives values to the servers' variables over
+  their defaults, each checked against its `enum` (typed in the client's options by the
+  description's servers and the operations' own); `descriptionURL` says where the description is
+  served, and a relative server URL is resolved against it (OpenAPI 3.1 and 3.2, "Relative
+  References in API URLs"); a Server Object of another document is printed relative to the
+  first; a base URL, a `descriptionURL` or a redirect's `Location` with a user name or password
+  in it is refused (RFC 9110 4.2.4). The table's cases now hold OpenAPI 3.0 and 3.2's servers
+  too, and two client cases (`hosts`, 3.2; `edge`, 3.1) hold the runtime to them: 56 ledger ids
+  that had no test have one, every in-scope RFC 9110 id among them.
 - The requirements ledger (`conformance/ledger`, O1) reads Swagger 2.0 and five RFCs (6749, 6750,
   7578, 7617 and 9110, pinned in `conformance/specs/`) beside OpenAPI 3.x and JSON Schema, and its
   scope is decided for the SDK: servers, security, the Encoding Object and what the client sends
